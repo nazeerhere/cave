@@ -8,25 +8,25 @@ export default function AccountInfo() {
         lastname: ""
     })
 
+    console.log("working")
     useEffect(() => {
-        fetch("http://localhost:8000/")
+        fetch("http://localhost:8000/users")
             .then(res => res.json())
             .then(res => {
                 setUser(res[0])
+                console.log(res)
             })
     }, [])
 
-    console.log(user.ussername)
+    console.log(user)
     return(
-        <div>
+        <div className="AccountInfo" >
                    Welcome 
-            <Link to="Login" >
                 <div className="Username" >
                    {user.ussername}
                 </div>
-            </Link>
             |
-            <Link to="Register" >
+            <Link to="/" >
                 Logout
             </Link>
         </div>

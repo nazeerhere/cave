@@ -1,0 +1,57 @@
+import React from "react"
+import Unity, { UnityContext } from "react-unity-webgl"
+
+export default function Game() {
+    // this.unityContext = UnityContext({
+    //     loaderUrl: "../Dagame/Build/UnityLoader",
+    //     dataUrl: "../Dagame/Build/Dagame.data.unityweb",
+    //     frameworkUrl: "../Dagame/Build/Dagame.wasm.framework.unityweb",
+    //     codeUrl: "../Dagame/Build/Dagame.wasm.code.unityweb"
+    //   });
+    function unityContext () {
+        let info = 
+        {
+            loaderUrl: "../Dagame/Build/UnityLoader",
+            dataUrl: "../Dagame/Build/Dagame.data.unityweb",
+            frameworkUrl: "../Dagame/Build/Dagame.wasm.framework.unityweb",
+            codeUrl: "../Dagame/Build/Dagame.wasm.code.unityweb"
+        }
+        return info
+    }
+    
+    return(
+        <div>
+        <Unity unityContent={unityContext}/>
+        <p>
+            something
+        </p>
+        </div>
+
+    )
+}
+
+// export default class Game extends React.Component {
+//     constructor(props) {
+//       super(props);
+  
+//       // Next up create a new Unity Context object to 
+//       // initialise and define your WebGL build. The 
+//       // paths are relative from your index file.
+  
+//       unityContext = UnityContext({
+//         loaderUrl: "../Dagame/Build/UnityLoader",
+//         dataUrl: "../Dagame/Build/Dagame.data.unityweb",
+//         frameworkUrl: "../Dagame/Build/Dagame.wasm.framework.unityweb",
+//         codeUrl: "../Dagame/Build/Dagame.wasm.code.unityweb"
+
+//       });
+//     }
+  
+//     render() {
+  
+//       // Finally render the Unity component and pass 
+//       // the Unity context through the props.
+  
+//       return <Unity unityContext={unityContext} />;
+//     }
+//   }

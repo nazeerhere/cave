@@ -1,3 +1,8 @@
+body {
+  background-color: aliceblue;
+
+}
+
 .App {
   background-color: black;
 }
@@ -38,7 +43,7 @@ a {
 .CommentsBar {
   color: orange;
   border: 4px solid red;
-  width: 30%;
+  width: 55%;
 }
 
 .Login {
@@ -58,3 +63,21 @@ a {
 .Register {
   color: aliceblue;
 }
+
+.Home {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8%;
+}
+.daBorder {
+  border-bottom: 1px solid grey;
+  margin: 10px;
+}
+
+.Game {
+  background: rgb(224, 131, 8);
+  border: 4px solid white;
+  /* width: 30%; */
+}
+
+

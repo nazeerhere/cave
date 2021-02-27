@@ -14,6 +14,7 @@ export default function Comment() {
         .then(res => res.json())
         .then(res => {
             setUser(res)
+            console.log(res)
         })
     }, [])
     // userlist.forEach(obj => console.log(obj))
@@ -32,10 +33,11 @@ export default function Comment() {
                 // let name = user.ussername
                 console.log(user)
                 return(
-                    <h1>{user}</h1>
+                    <div className="daBorder" >
+                        <h1>{user}</h1>
+                    </div>
                 )
             })}
-            sunny
         </div>
     )
 }
