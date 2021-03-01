@@ -6,6 +6,7 @@ export default function Home() {
     return(
         <div className="Home">
             <CommentsBar/>
+            some more text
         </div>
     )
 }

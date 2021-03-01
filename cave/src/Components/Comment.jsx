@@ -7,7 +7,7 @@ export default function Comment() {
         lastname: ""
     })
 
-    const dumb = ["some", "other", "stuff", "yeet"]
+    const dumb = ["List of task to complete for the project", "fix the input bars", "fix how to game renders to the page", "fix the login", "fix the comment url in the backend"]
 
     useEffect(() => {
         fetch("http://localhost:8000/")
@@ -17,8 +17,6 @@ export default function Comment() {
             console.log(res)
         })
     }, [])
-    // userlist.forEach(obj => console.log(obj))
-    // console.log(person.ussername)
     let arr = []
 
     arr.push(dumb.forEach(user => {

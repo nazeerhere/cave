@@ -3,7 +3,7 @@ import AccountInfo from "./AccountInfo"
 import Log from "./Log"
 
 export default function Holder() {
-    const isLoggedIn = false
+    const isLoggedIn = true
     if(isLoggedIn) {
         return(
             <div className="AI" >

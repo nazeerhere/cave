@@ -14,7 +14,6 @@ export default function AccountInfo() {
             .then(res => res.json())
             .then(res => {
                 setUser(res[0])
-                console.log(res)
             })
     }, [])
 

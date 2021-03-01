@@ -29,7 +29,7 @@ export default function Register() {
                     <input type="text"
                             id="firstname"
                             placeholder="First name here"
-                            // value=
+                            // value={useState}
                             // onChange=
                     />
 
@@ -37,7 +37,7 @@ export default function Register() {
                     <input type="text"
                             id="firstname"
                             placeholder="First name here"
-                            // value=
+                            // value={useState}
                             // onChange=
                     />
                 </div>

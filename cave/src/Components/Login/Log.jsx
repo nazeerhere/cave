@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 
 
 export default function Log() {
+
     return(
         <div className="Log" >
             <Link to="Login" >

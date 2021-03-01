@@ -1,8 +1,33 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 
 export default function Login() {
+
+    const [user, setuser] = useState([])
+    const [signIn, setSign] = useState({
+        username: "",
+        password: ""
+    })
+
+    useEffect(() => {
+        fetch("http://localhost:8000/users")
+            .then(res => res.json())
+            .then(res => {
+                setuser(res)
+            })
+    }, [])
+
+    console.log(user)
+
+    const handleChange = event => {
+        const {id , value} = event.target
+        setSign(prestate => ({
+            ...prestate,
+            [id] : value
+        }))
+    }  
+    console.log(signIn)
     return(
         <div className="Login" >
             <div className="space" >
@@ -12,16 +37,16 @@ export default function Login() {
                 <input type="text"
                         id="username"
                         placeholder="Username"
-                        // value=()
-                        // onChange=
+                        // value={signIn.username}
+                        // onChange={handleChange}
                 />
 
                 <label>Password:</label>
                 <input type="text"
                         id="password"
                         placeholder="password"
-                        // value=()
-                        // onChange=
+                        // value={signIn.password}
+                        // onChange={handleChange}
                 />
 
                 <button
