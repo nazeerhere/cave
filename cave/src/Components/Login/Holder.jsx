@@ -2,9 +2,8 @@ import React from "react"
 import AccountInfo from "./AccountInfo"
 import Log from "./Log"
 
-export default function Holder() {
-    const isLoggedIn = true
-    if(isLoggedIn) {
+export default function Holder({ loggedIn }) {
+    if(loggedIn) {
         return(
             <div className="AI" >
             <AccountInfo/>

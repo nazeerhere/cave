@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 
-export default function Login() {
+export default function Login({ setLoggedIn, loggedIn }) {
 
     const [user, setuser] = useState([])
     const [signIn, setSign] = useState({
@@ -55,9 +55,9 @@ export default function Login() {
                 >
                     <Link to="/" >Login</Link>
                 </button>
-                Not a member? <Link to="/register" className="text-warning">
+                {/* Not a member? <Link to="/register" className="text-warning">
                         Register here
-                    </Link>
+                    </Link> */}
             </form>
         </div>
     </div>

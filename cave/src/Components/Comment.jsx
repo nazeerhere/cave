@@ -1,41 +1,46 @@
 import React, { useEffect, useState } from "react";
+import Likes from "./Likes"
 
 export default function Comment() {
-    const [userlist, setUser] = useState({
-        username: "",
-        firstname: "",
-        lastname: ""
-    })
+    const [comments, setComment] = useState([])
 
+    const commentArr = []
     const dumb = ["List of task to complete for the project", "fix the input bars", "fix how to game renders to the page", "fix the login", "fix the comment url in the backend"]
 
     useEffect(() => {
-        fetch("http://localhost:8000/")
-        .then(res => res.json())
-        .then(res => {
-            setUser(res)
-            console.log(res)
-        })
-    }, [])
-    let arr = []
-
-    arr.push(dumb.forEach(user => {
-        let name = user.ussername
-        return(name)
-    }))
-    console.log(arr)
+        async function name12() {
+            let name13 =  await fetch("http://localhost:7000/comments")
+            let name14 = await name13.json()
+            console.log(name14)
+            setComment(name14)
+        }
+        name12()
+    }, []);
+    console.log(comments)
 
     return(
         <div className="comment" >
-            {dumb.map(user => {
-                // let name = user.ussername
-                console.log(user)
+
+        {
+            comments.length > 0
+            &&
+            comments.map(comment => {
+                console.log(comment)
+                console.log(comment.comment)
                 return(
                     <div className="daBorder" >
-                        <h1>{user}</h1>
+                        {comment.user} -
+                        <br/>
+                        <br/>
+                        {comment.comment}
+                        {/* <span>
+                            <Likes  props={comment.likes} />
+                        </span> */}
                     </div>
                 )
-            })}
+            })
+        }
+
         </div>
     )
 }

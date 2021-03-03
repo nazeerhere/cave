@@ -10,10 +10,11 @@ export default function AccountInfo() {
 
     console.log("working")
     useEffect(() => {
-        fetch("http://localhost:8000/users")
+        fetch("http://localhost:5000/users")
             .then(res => res.json())
             .then(res => {
                 setUser(res[0])
+                console.log(res)
             })
     }, [])
 

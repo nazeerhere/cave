@@ -7,7 +7,7 @@ export default function Nav() {
         <div className="Nav" >
             <div className="" >
                 <Link to="/" >
-                <h1>THIS TITLE</h1>
+                <h1 id="title">MINE DEFENDER</h1>
                 </Link>
             </div>
         </div>
