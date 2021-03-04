@@ -6,17 +6,31 @@ import Login from "./Components/Login/Login"
 import Register from './Components/Login/Register';
 import Home from "./Components/Home"
 import Game from "./Components/Game"
-// import Index from "./Dagame/index.html"
+import { useState } from 'react';
 
 function App() {
+  const [loggedIn, setLoggedIn] = useState(false)
   return (
     <div className="App">
-      <Route exact path="/" component={Holder}/>
+      <Route path="/" exact 
+             render={() => {
+                return(
+                  <Holder loggedIn={loggedIn} />
+                )
+               }
+             }
+      />
       <Nav/>
-      {/* <Index/> */}
       <Route exact path="/" component={Game}/>
       <Route exact path="/" component={Home}/>
-      <Route exact path="/login" component={Login}/>
+      <Route path="/login" 
+             render={() => {
+                return(
+                  <Login setLoggedIn={setLoggedIn} loggedIn={loggedIn} />
+                )
+               }
+             }
+      />
       <Route exact path="/register" component={Register}/>
     </div>
   );

@@ -1,25 +1,33 @@
-body {
-  background-color: aliceblue;
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
 
+
+body {
+  background-color: black;
+  
 }
 
 .App {
-  background-color: black;
+  background: linear-gradient(rgba(255, 0, 0, 0.137), rgba(130, 231, 218, 0.115));
+  background-color: rgba(0, 0, 0, 0.377);
+
 }
 
 .Nav {
-  border: 4px solid red;
-  background-color: yellowgreen;
+  border: 4px solid rgba(10, 205, 240, 0.342);
+  background-color: rgb(21, 99, 75);
+  box-shadow: 1px 1px 80px 2px rgb(128, 216, 197) inset;
+  /* box-shadow: 5px 5px 40px 10px rgba(255, 255, 255, 0.26) inset; */
   display: flex;
   justify-content: center;
 }
 
 .AI {
-  background-color: rgb(90, 90, 236);
+  background-color: rgba(28, 28, 97, 0.87);
   display: flex;
   justify-content: flex-end;
   padding: 1%;
   font-size: small;
+  color: pink;
 }
 
 a {
@@ -36,14 +44,20 @@ a {
 }
 
 .comment {
-  border: 3px solid black;
-  color: rgb(207, 143, 207);
+  /* border: 5px solid rgb(78, 47, 1); */
+  font-family: 'DotGothic16', sans-serif;
+  font-weight: bolder;
+  font-size: large;
+  color: rgb(221, 178, 187);
 }
 
 .CommentsBar {
   color: orange;
-  border: 4px solid red;
-  width: 55%;
+  background-color: rgba(24, 12, 131, 0.226);
+  box-shadow: 1px 1px 10px 7px rgb(78, 47, 1) inset;
+  border: 7px groove rgb(160, 54, 5) ;
+  width: 160%;
+  position: relative;
 }
 
 .Login {
@@ -51,6 +65,10 @@ a {
   background-color: brown;
   display: flex;
   justify-content: center;
+}
+
+.Log {
+  display: flex;
 }
 
 .space {
@@ -70,14 +88,62 @@ a {
   padding: 8%;
 }
 .daBorder {
-  border-bottom: 1px solid grey;
-  margin: 10px;
+  border-bottom: 1px solid lightgrey;
+  margin: 20px;
+  font-size: larger;
+  box-shadow: 5px 5px 40px 10px rgba(255, 255, 255, 0.26) inset;
+  text-align: center;
+  padding: 1%;
 }
 
 .Game {
-  background: rgb(224, 131, 8);
-  border: 4px solid white;
-  /* width: 30%; */
+  position: relative;
+  top: 10px;
+  border-bottom: 5px groove darkgrey;
 }
 
 
+#title {
+  color: rgb(208, 247, 186);
+  font-size: 300%;
+}
+
+.crud {
+  color: rgba(162, 219, 223, 0.788);
+  font-weight: bolder;
+  font-size: large;
+  background-color: rgb(177, 108, 19);
+  position: relative;
+  left: 25px;
+}
+
+#typing {
+  margin-top: 25px;
+  background-color: rgba(152, 80, 219, 0.363);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.356), rgba(255, 0, 85, 0.288));
+  /* border: none; */
+  width: 550px;
+  height: 30px;
+  color: aliceblue;
+}
+
+#typing:hover {
+  background-color: rgba(52, 160, 187, 0.651);
+}
+
+.leaveComment {
+  position: relative;
+  left: 20px;
+}
+
+#submit {
+  background-color: rgb(5, 68, 109);
+  height: 35px;
+  color: rgb(187, 197, 100);
+}
+
+ #btnHold {
+   position: relative;
+   top: -22px;
+   left: -5px;
+ }
