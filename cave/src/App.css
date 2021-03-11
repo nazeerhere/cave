@@ -7,7 +7,7 @@ body {
 }
 
 .App {
-  background: linear-gradient(rgba(255, 0, 0, 0.137), rgba(130, 231, 218, 0.115));
+  background: linear-gradient(rgba(218, 2, 2, 0.384), rgba(130, 231, 218, 0.37));
   background-color: rgba(0, 0, 0, 0.377);
 
 }
@@ -22,11 +22,14 @@ body {
 }
 
 .AI {
-  background-color: rgba(28, 28, 97, 0.87);
+  background-image:  radial-gradient(#3f3d22b2 2px, rgba(38, 12, 99, 0.87) 12px), radial-gradient(#994208e1 10px, rgba(185, 30, 178, 0.87) 20px);
+  background-size: 40px 40px;
+  background-position: 0 0,20px 20px;
   display: flex;
   justify-content: flex-end;
   padding: 1%;
-  font-size: small;
+  font-size: 15px;
+  font-weight: bolder;
   color: pink;
 }
 
@@ -52,10 +55,10 @@ a {
 }
 
 .CommentsBar {
-  color: orange;
-  background-color: rgba(24, 12, 131, 0.226);
-  box-shadow: 1px 1px 10px 7px rgb(78, 47, 1) inset;
-  border: 7px groove rgb(160, 54, 5) ;
+  color: rgba(224, 203, 15, 0.87);
+  background-color: rgba(42, 23, 112, 0.356);
+  box-shadow: 2px 2px 45px 7px rgb(112, 70, 6) inset;
+  border: 7px groove rgb(160, 54, 5);
   width: 160%;
   position: relative;
 }
@@ -122,18 +125,19 @@ a {
   background-color: rgba(152, 80, 219, 0.363);
   background-image: linear-gradient(rgba(0, 0, 0, 0.356), rgba(255, 0, 85, 0.288));
   /* border: none; */
-  width: 550px;
+  width: 85%;
   height: 30px;
   color: aliceblue;
 }
 
 #typing:hover {
-  background-color: rgba(52, 160, 187, 0.651);
+  background-color: rgba(52, 160, 187, 0.342);
 }
 
 .leaveComment {
   position: relative;
   left: 20px;
+  bottom: 5px;
 }
 
 #submit {
@@ -146,4 +150,60 @@ a {
    position: relative;
    top: -22px;
    left: -5px;
+   background-color: red;
+ }
+
+ .comText {
+   position: relative;
+   bottom: 15px;
+ }
+
+ #charLimit {
+   position: relative;
+   top: 40px;
+   left: 3px;
+   color: rgb(160, 163, 142);
+   font-size: medium;
+ }
+
+ #EditModal {
+   position: absolute;
+   top: 35%;
+   left: 17%;
+   justify-content: center;
+   z-index: 2;
+   opacity: 0;
+   height: 20vh;
+   border: 4px solid rgb(160, 14, 14);
+   background-color: rgb(182, 104, 16);
+   color: rgb(169, 221, 134);
+ }
+
+ #comText {
+   text-align: center;
+   font-size: 50px;
+   font-weight: bolder;
+   box-shadow: 1px 1px 50px 5px rgba(224, 245, 247, 0.521) inset;
+   border-radius: 30px;
+   width: 45%;
+   position: relative;
+   left: 27.5%;
+ }
+
+ #DeleteModal {
+  z-index: 2;
+  opacity: 0;
+  height: 20vh;
+  border: 4px solid rgb(160, 14, 14);
+  background-color: rgb(182, 104, 16);
+  color: rgb(169, 221, 134);
+
+ }
+
+ #likesBtn {
+   background-color: transparent;
+   border: none;
+   font-size: large;
+   color: white;
+   margin: 0px 5px 0px 5px;
  }

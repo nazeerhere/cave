@@ -1,7 +1,8 @@
 import React, { useState } from "react"
 
-export default function Likes(props) {
-    const [likes, setLikes] = useState(props)
+export default function Likes(liken) {
+    const [likes, setLikes] = useState("")
+    console.log(liken)
 
     const addLike = () => {
         let newCount = setLikes(+1)
@@ -9,9 +10,8 @@ export default function Likes(props) {
 
     return(
         <div>
-            likes:
+            <button onClick={addLike} id="likesBtn" >👍🏽 :</button>
             {likes}
-            <button onClick={addLike} >A button</button>
         </div>
     )
 }

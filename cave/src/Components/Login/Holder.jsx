@@ -1,9 +1,13 @@
-import React from "react"
+import React, { useContext, useState } from "react"
 import AccountInfo from "./AccountInfo"
+import { UserContext } from "../../UserContext"
 import Log from "./Log"
 
-export default function Holder({ loggedIn }) {
-    if(loggedIn) {
+export default function Holder() {
+    const status = useContext(UserContext)
+    // const [logStat, setStat] = useState(status)
+    console.log(status)
+    if(status) {
         return(
             <div className="AI" >
             <AccountInfo/>
@@ -12,7 +16,7 @@ export default function Holder({ loggedIn }) {
     } else {
         return(
             <div className="AI" >
-                <Log/>
+                <Log props={status} />
             </div>
         )
     }
