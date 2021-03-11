@@ -21,7 +21,7 @@ function App() {
         <Route path="/" exact 
               render={() => {
                   return(
-                    <Holder loggedIn={loggedIn} />
+                    <Holder loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>
                   )
                 }
               }

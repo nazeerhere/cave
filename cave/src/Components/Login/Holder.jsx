@@ -3,11 +3,12 @@ import AccountInfo from "./AccountInfo"
 import { UserContext } from "../../UserContext"
 import Log from "./Log"
 
-export default function Holder() {
+export default function Holder({ loggedIn }) {
     const status = useContext(UserContext)
+    console.log(loggedIn)
     // const [logStat, setStat] = useState(status)
     console.log(status)
-    if(status) {
+    if(loggedIn) {
         return(
             <div className="AI" >
             <AccountInfo/>
@@ -16,7 +17,7 @@ export default function Holder() {
     } else {
         return(
             <div className="AI" >
-                <Log props={status} />
+                <Log props={loggedIn} />
             </div>
         )
     }

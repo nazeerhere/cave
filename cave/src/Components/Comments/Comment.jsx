@@ -86,7 +86,7 @@ export default function Comment() {
             comments.length > 0
             &&
             comments.map(comment => {
-                // console.log(comment.id)
+                console.log(comment)
                 // console.log(comment.comment)
                 return(
                     <div >
@@ -121,7 +121,7 @@ export default function Comment() {
             })
         }
 
-        <EditModal id={id} />
+        <EditModal id={id}  style="color: white; background-color: white;"  />
         <DeleteModal id={id} />
         <div className="leaveComment" >
         <p id="charLimit">

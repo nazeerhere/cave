@@ -18,9 +18,9 @@ export default function EditModal({ id }) {
         let modal = document.getElementById("EditModal")
         modal.style.opacity = 0
         document.getElementById("editInput").value = ""
-        // axios.put(`https://uncool-backend.herokuapp.com/comments/${id}`, 
-        
-        // )
+        axios.put(`https://uncool-backend.herokuapp.com/comments/${id}`, 
+        newComment
+        )
         
         console.log(newComment)
     }
