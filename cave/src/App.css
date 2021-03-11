@@ -150,7 +150,7 @@ a {
    position: relative;
    top: -22px;
    left: -5px;
-   background-color: red;
+   /* background-color: red; */
  }
 
  .comText {
