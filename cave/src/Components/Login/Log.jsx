@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 
-export default function Log(props) {
+export default function Log({ props, setLoggedIn }) {
     const [signIn, setSign] = useState({
         username: "",
         password: ""
     })
     const [users, setUsers] = useState([])
-    const [logStat, setStat] = useState(props)
+    // const status = useContext(UserContext)
 
     useEffect(() => {
         fetch("https://uncool-backend.herokuapp.com/users/")
@@ -19,6 +19,7 @@ export default function Log(props) {
     }, [])
 
     console.log(props)
+    // console.log(users[1].id)
     
     const Signin = event => {
         event.preventDefault()
@@ -29,10 +30,10 @@ export default function Log(props) {
                 user.ussername === signIn.username &&
                 user.password === signIn.password
             ) {
-                localStorage.setItem('user-id', JSON.stringify(user._id))
+                localStorage.setItem('user-id', JSON.stringify(user.id))
                 // document.cookie = `username=${user.username}; expires=` + new Date(9999, 0, 1).toUTCString()
-                setStat(true)
-                console.log(logStat)
+                setLoggedIn(true)
+                console.log(props)
             } else {
                 console.log("sorry username or password is incorrect")
             }
@@ -67,7 +68,6 @@ export default function Log(props) {
                                 id="username"
                                 className="form-control" 
                                 placeholder="ex. user123" 
-                                // value={signIn.username}
                                 onChange={handleChange}
                                 />
 

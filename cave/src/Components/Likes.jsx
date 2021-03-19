@@ -1,17 +1,17 @@
 import React, { useState } from "react"
 
-export default function Likes(liken) {
-    const [likes, setLikes] = useState("")
-    console.log(liken)
-
+export default function Likes({ comLikes, setLikes }) {
     const addLike = () => {
-        let newCount = setLikes(+1)
+        setLikes(comLikes + 1)
+        console.warn("this is working")
+        console.log(comLikes)
     }
+    // setLikes(comLikes)
 
     return(
         <div>
             <button onClick={addLike} id="likesBtn" >👍🏽 :</button>
-            {likes}
+            {comLikes}
         </div>
     )
 }

@@ -8,10 +8,10 @@ import Home from "./Components/Home"
 import Game from "./Components/Game"
 import { useState } from 'react';
 import { UserContext } from "./UserContext"
+import Log from "./Components/Login/Log"
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false)
-
   console.log(loggedIn)
 
   return (
@@ -21,7 +21,9 @@ function App() {
         <Route path="/" exact 
               render={() => {
                   return(
-                    <Holder loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>
+                    <div>
+                      <Holder loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>
+                    </div>
                   )
                 }
               }

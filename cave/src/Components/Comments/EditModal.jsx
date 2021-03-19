@@ -17,6 +17,7 @@ export default function EditModal({ id }) {
     const handleSubmit = () => {
         let modal = document.getElementById("EditModal")
         modal.style.opacity = 0
+        modal.style.zIndex = -1
         document.getElementById("editInput").value = ""
         axios.put(`https://uncool-backend.herokuapp.com/comments/${id}`, 
         newComment
@@ -27,6 +28,7 @@ export default function EditModal({ id }) {
 
     const closeModal = () => {
         document.getElementById("EditModal").style.opacity = 0
+        document.getElementById("EditModal").style.zIndex = -1
     }
 
     const handleComment = (event) => {
@@ -43,17 +45,21 @@ export default function EditModal({ id }) {
 
     return(
         <div id="EditModal" >
-            <button onClick={closeModal} >
-                X
-            </button>
+            <button onClick={closeModal} className="closerBtn" >X</button>
+            <span id="idEdit" >
+                #{id}
+            </span>
+            <span id="editText" >
             Enter new text here: 
+            <br/>
             <input type="text"
                     onChange={handleComment}
                     id="editInput"
             />
-            <button onClick={handleSubmit} >
+            <button onClick={handleSubmit} id="Eedit" >
                 Apply changes
             </button>
+            </span>
         </div>
     )
 }

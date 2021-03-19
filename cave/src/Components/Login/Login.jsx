@@ -11,7 +11,7 @@ export default function Login({ setLoggedIn, loggedIn }) {
     })
 
     useEffect(() => {
-        fetch("http://localhost:8000/users")
+        fetch("https://uncool-backend.herokuapp.com/users")
             .then(res => res.json())
             .then(res => {
                 setuser(res)

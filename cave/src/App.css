@@ -16,7 +16,6 @@ body {
   border: 4px solid rgba(10, 205, 240, 0.342);
   background-color: rgb(21, 99, 75);
   box-shadow: 1px 1px 80px 2px rgb(128, 216, 197) inset;
-  /* box-shadow: 5px 5px 40px 10px rgba(255, 255, 255, 0.26) inset; */
   display: flex;
   justify-content: center;
 }
@@ -47,10 +46,13 @@ a {
 }
 
 .comment {
-  /* border: 5px solid rgb(78, 47, 1); */
+  border-top: 2px groove rgba(196, 172, 172, 0.719);
+  border-bottom: 2px groove rgba(196, 172, 172, 0.719);
   font-family: 'DotGothic16', sans-serif;
   font-weight: bolder;
   font-size: large;
+  overflow: scroll;
+  height: 67%;
   color: rgb(221, 178, 187);
 }
 
@@ -60,6 +62,7 @@ a {
   box-shadow: 2px 2px 45px 7px rgb(112, 70, 6) inset;
   border: 7px groove rgb(160, 54, 5);
   width: 160%;
+  height: 820px;
   position: relative;
 }
 
@@ -90,6 +93,7 @@ a {
   justify-content: flex-end;
   padding: 8%;
 }
+
 .daBorder {
   border-bottom: 1px solid lightgrey;
   margin: 20px;
@@ -169,14 +173,44 @@ a {
    position: absolute;
    top: 35%;
    left: 17%;
-   justify-content: center;
-   z-index: 2;
+   width: 53vw;
+   z-index: -1;
    opacity: 0;
    height: 20vh;
-   border: 4px solid rgb(160, 14, 14);
-   background-color: rgb(182, 104, 16);
-   /* color: rgb(169, 221, 134); */
+   border: 12px ridge rgba(124, 0, 52, 0.637);
+   border-radius: 8%;
+   background-color: rgb(214, 86, 0);
+   background-image: rgba(255, 255, 255, 0.616);
+   color: rgb(169, 221, 134);
+   box-shadow: 1px 1px 70px 20px rgba(0, 0, 0, 0.486) inset;
+
  }
+
+ #idEdit {
+  position: relative;
+  top: -4px;
+  left: 30px;
+
+ }
+
+#editText {
+  position: relative;
+  top: 55px;
+  left: 35px;
+}
+
+#editInput {
+  background-image: linear-gradient(rgba(165, 115, 7, 0.925), rgba(126, 153, 4, 0.897));
+  border: 2px ridge rgba(154, 8, 173, 0.541);
+  width: 200px;
+  height: 12%;
+}
+
+#Eedit {
+  background-color: rgba(243, 180, 8, 0.466);
+  color: rgb(4, 84, 138);
+  border: 3px solid rgba(70, 4, 90, 0.514);
+}
 
  #comText {
    text-align: center;
@@ -190,13 +224,50 @@ a {
  }
 
  #DeleteModal {
-  z-index: 2;
+  z-index: -1;
   opacity: 0;
-  height: 20vh;
-  border: 4px solid rgb(160, 14, 14);
-  background-color: rgb(182, 104, 16);
+  height: 13vh;
+  border: 12px ridge rgba(124, 0, 52, 0.637);
+  border-radius: 8%;
+  background-color: rgb(214, 86, 0);
+  background-image: rgba(255, 255, 255, 0.616);
   color: rgb(169, 221, 134);
+  position: absolute;
+  top: 38%;
+  left: 17%;
+  padding: 3%;
+  box-shadow: 1px 1px 70px 20px rgba(0, 0, 0, 0.486) inset;
+ }
 
+#idInfo {
+  position: relative;
+  top: -23px;
+  left: 11px;
+}
+
+ #deleteText {
+   position: relative;
+   top: 12px;
+ }
+
+ .closerBtn {
+   position: absolute;
+   top: -.09%;
+   left: -.09%;
+   background-color: rgba(243, 180, 8, 0.466);
+   color: rgb(4, 84, 138);
+   border: 2px solid rgba(96, 15, 121, 0.384);
+ }
+
+ #Ddelete {
+   background-color: rgba(243, 180, 8, 0.466);
+   color: rgb(4, 84, 138);
+   border: 3px solid rgba(70, 4, 90, 0.514);
+   padding-top: 1%;
+   padding-bottom: 1%;
+   width: 105%;
+   position: relative;
+   left: -10px;
  }
 
  #likesBtn {
@@ -209,7 +280,7 @@ a {
 
  .controlsModal {
    background-color: rgb(1, 20, 24);
-   color: rgba(236, 206, 206, 0.795);
+   color: rgba(236, 206, 206, 0.671);
    height: 160px;
    width: 81.5%;
    position: relative;
@@ -222,4 +293,52 @@ a {
    align-items: center;
    justify-content: center;
    text-align: center;
+ }
+
+ .InputBar {
+   position: relative;
+   top: -41px;
+ }
+
+ .Filter {
+   /* background: red; */
+   position: relative;
+   left: 20px;
+   top: 1px;
+ }
+
+ #filterBtn {
+   position: relative;
+   background-color: rgba(33, 81, 143, 0.534);
+   color: rgba(236, 164, 8, 0.637);
+   font-weight: bolder;
+   font-size: 16px;
+   border-color: rgba(150, 90, 12, 0.692);
+ }
+
+ #filterBtn:active {
+   background-color: rgba(101, 71, 184, 0.808);
+   color: rgba(219, 199, 163, 0.918);
+ }
+
+#filterInput {
+  background-color: rgba(218, 204, 82, 0.74);
+  background-image: linear-gradient(to bottom right, rgba(174, 197, 111, 0.322), rgba(158, 89, 33, 0.993));
+  color: rgb(187, 211, 238);
+  font-size: larger;
+  font-weight: bolder;
+  border-color: rgba(255, 255, 255, 0.219);
+  height: 15px;
+  text-align: center;
+}
+
+#filterInput::placeholder {
+  color: rgba(68, 87, 150, 0.925);
+}
+
+ #logout {
+   background-color: transparent;
+   color: red;
+   border: none;
+   font-size: 15px;
  }
