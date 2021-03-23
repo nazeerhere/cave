@@ -1,23 +1,36 @@
 import React, { useState } from "react"
 
-export default function Filter() {
-    const [filteredText, setFilter] = useState("")
-
+export default function Filter({ comments, filteredText, setFilter }) {
+    let commentHolder = comments
+    
     const handleChange = (event) => {
-        const userInput = event.target.value
-        setFilter(userInput)
+        let userInput = event.target.value
+        userInput = parseFloat(userInput)
+        if (userInput) {
+            let filteredInput = comments.filter(daInput => {
+                if (daInput.user == userInput) {
+                    return daInput
+                }
+            })
+            setFilter(filteredInput)
+        } else {
+            setFilter(commentHolder)
+        }
+        
+        console.log(userInput)
     }
 
     const handleSubmit = (event) => {
-        event.preventDefault()
-
+        // filteredText.length ? setComment(filteredText) : setComment(name14)
+        console.log(filteredText)
     }
  
     return(
         <div  className="Filter">
+            <form>
                 <input type="text"
                        id="filterInput"
-                       placeholder="search by user..." 
+                       placeholder="filter by user..." 
                        onChange={handleChange}
                 />    
                 <button id="filterBtn"  
@@ -26,6 +39,7 @@ export default function Filter() {
                 >
                 FILTER
                 </button>
+            </form>
         </div>
     )
 }

@@ -1,12 +1,16 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
-export default function Likes({ comLikes, setLikes }) {
+export default function Likes({ fakeNumber }) {
+    const [comLikes, setLikes] = useState(0)
+    // let realNumber = comLikes
     const addLike = () => {
-        setLikes(comLikes + 1)
+        setLikes(fakeNumber + 1)
         console.warn("this is working")
-        console.log(comLikes)
+        console.log(fakeNumber)
     }
-    // setLikes(comLikes)
+    useEffect(() => {
+        setLikes(fakeNumber)
+    }, [])
 
     return(
         <div>

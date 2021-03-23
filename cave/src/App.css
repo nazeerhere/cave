@@ -52,7 +52,7 @@ a {
   font-weight: bolder;
   font-size: large;
   overflow: scroll;
-  height: 67%;
+  height: 64%;
   color: rgb(221, 178, 187);
 }
 
@@ -333,7 +333,7 @@ a {
 }
 
 #filterInput::placeholder {
-  color: rgba(68, 87, 150, 0.925);
+  color: rgba(20, 68, 224, 0.719);
 }
 
  #logout {

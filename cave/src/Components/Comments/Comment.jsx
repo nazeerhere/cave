@@ -3,10 +3,8 @@ import DeleteModal from "./DeleteModal"
 import EditModal from "./EditModal"
 import Likes from "../Likes"
 
-export default function Comment() {
-    const [comments, setComment] = useState([])
+export default function Comment({ filteredText }) {
     const [id, setId] = useState(0)
-    const [comLikes, setLikes] = useState(0)
     
     const showEdit = (event) => {
         let modal = document.getElementById("EditModal")
@@ -15,7 +13,7 @@ export default function Comment() {
         setId(event.target.value)
 
     }
-
+    
     const showDelete = (event) => {
         let modal = document.getElementById("DeleteModal")
         modal.style.opacity = 1;
@@ -24,24 +22,13 @@ export default function Comment() {
 
     }
 
-    let name14
-    useEffect(() => {
-        async function name12() {
-            let name13 =  await fetch("https://uncool-backend.herokuapp.com/comments")
-            name14 = await name13.json()
-            setComment(name14)
-        }
-        name12()
-    }, [comments]);
-
     return(
         <div className="comment" >
 
         {
-            comments.length > 0
+            filteredText.length > 0
             &&
-            comments.map(comment => {
-                // setLikes(comment.likes)
+            filteredText.map(comment => {
                 return(
                     <div >
                         <div className="daBorder" >
@@ -53,9 +40,9 @@ export default function Comment() {
                             </span>
 
                             <span>
-                                <Likes comLikes={comment.likes} setLikes={setLikes} />
+                                <Likes fakeNumber={comment.likes}/>
                             </span>
-                            
+
                         </div>
                         <span id="btnHold" >
 

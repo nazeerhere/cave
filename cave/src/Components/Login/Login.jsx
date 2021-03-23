@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 
-export default function Login({ setLoggedIn, loggedIn }) {
+export default function Login() {
 
     const [user, setuser] = useState([])
     const [signIn, setSign] = useState({

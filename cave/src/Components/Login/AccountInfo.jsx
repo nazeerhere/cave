@@ -17,7 +17,7 @@ export default function AccountInfo({ setLoggedIn }) {
         fetch("https://uncool-backend.herokuapp.com/users")
             .then(res => res.json())
             .then(res => {
-                setUser(res[0])
+                setUser(res[2])
                 console.log(res)
             })
     }, [])

@@ -55,3 +55,7 @@ export default function Game() {
 //       return <Unity unityContext={unityContext} />;
 //     }
 //   }
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+// filteredText.length ? setComment(filteredText) : setComment(name14)
