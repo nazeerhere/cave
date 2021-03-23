@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 
-export default function Login({ setLoggedIn, loggedIn }) {
+export default function Login() {
 
     const [user, setuser] = useState([])
     const [signIn, setSign] = useState({
@@ -11,7 +11,7 @@ export default function Login({ setLoggedIn, loggedIn }) {
     })
 
     useEffect(() => {
-        fetch("http://localhost:8000/users")
+        fetch("https://uncool-backend.herokuapp.com/users")
             .then(res => res.json())
             .then(res => {
                 setuser(res)

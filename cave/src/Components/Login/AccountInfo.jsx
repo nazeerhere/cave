@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
-export default function AccountInfo() {
+export default function AccountInfo({ setLoggedIn }) {
     const [user, setUser] = useState({
         username: "",
         firstname: "",
         lastname: ""
     })
 
+    function runFunc() {
+        setLoggedIn(false)
+    }
+
     console.log("working")
     useEffect(() => {
-        fetch("http://localhost:5000/users")
+        fetch("https://uncool-backend.herokuapp.com/users")
             .then(res => res.json())
             .then(res => {
-                setUser(res[0])
+                setUser(res[2])
                 console.log(res)
             })
     }, [])
@@ -26,9 +30,13 @@ export default function AccountInfo() {
                    {user.ussername}
                 </div>
             |
-            <Link to="/" >
-                Logout
-            </Link>
+            {/* <Link to="/" >
+            </Link> */}
+                <button id="logout" 
+                        onClick={runFunc}
+                >
+                    Logout
+                </button>
         </div>
     )
 }

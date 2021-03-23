@@ -1,5 +1,5 @@
 import React from "react"
-import CommentsBar from "./CommentsBar"
+import CommentsBar from "./Comments/CommentsBar"
 
 
 export default function Home() {

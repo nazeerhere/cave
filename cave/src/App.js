@@ -7,31 +7,41 @@ import Register from './Components/Login/Register';
 import Home from "./Components/Home"
 import Game from "./Components/Game"
 import { useState } from 'react';
+import { UserContext } from "./UserContext"
+import Log from "./Components/Login/Log"
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false)
+  console.log(loggedIn)
+
   return (
     <div className="App">
-      <Route path="/" exact 
-             render={() => {
-                return(
-                  <Holder loggedIn={loggedIn} />
-                )
-               }
-             }
-      />
-      <Nav/>
-      <Route exact path="/" component={Game}/>
-      <Route exact path="/" component={Home}/>
-      <Route path="/login" 
-             render={() => {
-                return(
-                  <Login setLoggedIn={setLoggedIn} loggedIn={loggedIn} />
-                )
-               }
-             }
-      />
-      <Route exact path="/register" component={Register}/>
+      <UserContext.Provider value={loggedIn}>
+
+        <Route path="/" exact 
+              render={() => {
+                  return(
+                    <div>
+                      <Holder loggedIn={loggedIn} setLoggedIn={setLoggedIn}/>
+                    </div>
+                  )
+                }
+              }
+        />
+        <Nav/>
+        <Route exact path="/" component={Game}/>
+        <Route exact path="/" component={Home}/>
+        <Route path="/login" 
+              render={() => {
+                  return(
+                    <Login setLoggedIn={setLoggedIn} loggedIn={loggedIn} />
+                  )
+                }
+              }
+        />
+        <Route exact path="/register" component={Register}/>
+      </UserContext.Provider>
+
     </div>
   );
 }
