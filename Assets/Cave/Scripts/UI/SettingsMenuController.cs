@@ -217,6 +217,8 @@ namespace Cave.UI
                     return "Basic Attack";
                 case GameAction.ChargedAttack:
                     return "Charged Attack";
+                case GameAction.FireProjectile:
+                    return "Fire Projectile";
                 default:
                     return InsertSpaces(action.ToString());
             }

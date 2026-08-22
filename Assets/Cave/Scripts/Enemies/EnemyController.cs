@@ -13,6 +13,14 @@ namespace Cave.Enemies
         private float startingX;
         private float direction;
         private float movementSuspendedUntil;
+        private float movementSpeedMultiplier = 1f;
+        private float difficultySpeedMultiplier = 1f;
+        private float archetypeSpeedMultiplier = 1f;
+        private float supportSpeedMultiplier = 1f;
+        private float combatMovementDirection;
+        private float combatMovementUntil;
+
+        public float BaseMoveSpeed => moveSpeed;
 
         private void Awake()
         {
@@ -25,6 +33,15 @@ namespace Cave.Enemies
         {
             if (Time.time < movementSuspendedUntil)
             {
+                body.velocity = new Vector2(0f, body.velocity.y);
+                return;
+            }
+
+            if (Time.time < combatMovementUntil)
+            {
+                body.velocity = new Vector2(
+                    combatMovementDirection * GetCurrentMoveSpeed(),
+                    body.velocity.y);
                 return;
             }
 
@@ -38,19 +55,78 @@ namespace Cave.Enemies
                 direction = 1f;
             }
 
-            body.velocity = new Vector2(direction * moveSpeed, body.velocity.y);
+            body.velocity = new Vector2(
+                direction * GetCurrentMoveSpeed(),
+                body.velocity.y);
         }
 
         public void SuspendMovement(float duration)
         {
             movementSuspendedUntil = Mathf.Max(movementSuspendedUntil, Time.time + duration);
+            if (body != null)
+            {
+                body.velocity = new Vector2(0f, body.velocity.y);
+            }
+        }
+
+        public void SetCombatMovementIntent(float horizontalDirection, float duration)
+        {
+            combatMovementDirection = Mathf.Clamp(horizontalDirection, -1f, 1f);
+            combatMovementUntil = Mathf.Max(combatMovementUntil, Time.time + Mathf.Max(0f, duration));
+        }
+
+        private float GetCurrentMoveSpeed()
+        {
+            return moveSpeed
+                * difficultySpeedMultiplier
+                * archetypeSpeedMultiplier
+                * supportSpeedMultiplier
+                * movementSpeedMultiplier;
+        }
+
+        public void SetMovementSpeedMultiplier(float multiplier)
+        {
+            movementSpeedMultiplier = Mathf.Max(0f, multiplier);
+        }
+
+        public void SetDifficultySpeedMultiplier(float multiplier)
+        {
+            difficultySpeedMultiplier = Mathf.Max(0f, multiplier);
+        }
+
+        public void SetArchetypeSpeedMultiplier(float multiplier)
+        {
+            archetypeSpeedMultiplier = Mathf.Max(0f, multiplier);
+        }
+
+        public void SetSupportSpeedMultiplier(float multiplier)
+        {
+            supportSpeedMultiplier = Mathf.Max(0f, multiplier);
+        }
+
+        public void ResetForRespawn()
+        {
+            startingX = body.position.x;
+            direction = startMovingRight ? 1f : -1f;
+            movementSuspendedUntil = 0f;
+            combatMovementDirection = 0f;
+            combatMovementUntil = 0f;
+            movementSpeedMultiplier = 1f;
+            supportSpeedMultiplier = 1f;
+            combatMovementDirection = 0f;
+            combatMovementUntil = 0f;
+            body.velocity = Vector2.zero;
+            body.angularVelocity = 0f;
         }
 
         private void OnDisable()
         {
+            movementSpeedMultiplier = 1f;
+            supportSpeedMultiplier = 1f;
             if (body != null)
             {
                 body.velocity = Vector2.zero;
+                body.angularVelocity = 0f;
             }
         }
 

@@ -37,13 +37,33 @@ namespace Cave.InputSystem
             }
         }
 
+        public static float AimVertical
+        {
+            get
+            {
+                if (!GameplayInputEnabled)
+                {
+                    return 0f;
+                }
+
+                float down = IsKeyHeld(KeyCode.DownArrow) ? -1f : 0f;
+                float up = IsKeyHeld(KeyCode.UpArrow) ? 1f : 0f;
+                return down + up;
+            }
+        }
+
         public static bool JumpPressed => GameplayInputEnabled && WasPressed(GameAction.Jump);
+        public static bool JumpHeld => GameplayInputEnabled && IsHeld(GameAction.Jump);
         public static bool BasicAttackPressed => GameplayInputEnabled && WasPressed(GameAction.BasicAttack);
         public static bool BasicAttackHeld => GameplayInputEnabled && IsHeld(GameAction.BasicAttack);
         public static bool ChargePressed => GameplayInputEnabled && WasPressed(GameAction.ChargedAttack);
         public static bool ChargeReleased => GameplayInputEnabled && WasReleased(GameAction.ChargedAttack);
         public static bool ChargeHeld => GameplayInputEnabled && IsHeld(GameAction.ChargedAttack);
         public static bool ParryPressed => GameplayInputEnabled && WasPressed(GameAction.Parry);
+        public static bool ParryReleased => GameplayInputEnabled && WasReleased(GameAction.Parry);
+        public static bool ParryHeld => GameplayInputEnabled && IsHeld(GameAction.Parry);
+        public static bool FireProjectilePressed => GameplayInputEnabled && WasPressed(GameAction.FireProjectile);
+        public static bool DashPressed => GameplayInputEnabled && WasPressed(GameAction.Dash);
         public static bool PausePressed => !WasInputConsumedThisFrame && WasPressed(GameAction.Pause);
         public static bool MenuCancelPressed => !WasInputConsumedThisFrame && WasKeyPressed(KeyCode.Escape);
 

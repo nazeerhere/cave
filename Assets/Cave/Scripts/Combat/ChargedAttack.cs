@@ -1,11 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using Cave.Audio;
 using Cave.Enemies;
 using Cave.InputSystem;
+using Cave.Player;
+using Cave.Progression;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Cave.Combat
 {
+    [RequireComponent(typeof(PlayerAimDirection))]
     public sealed class ChargedAttack : MonoBehaviour
     {
         [Header("Charge")]
@@ -13,11 +18,14 @@ namespace Cave.Combat
         [SerializeField, Min(0.01f)] private float maximumChargeTime = 1.5f;
 
         [Header("Attack")]
-        [SerializeField, Min(1)] private int damage = 1;
+        [FormerlySerializedAs("damage")]
+        [SerializeField, Range(1, 3)] private int minimumDamage = 1;
+        [SerializeField, Range(1, 3)] private int maximumDamage = 3;
         [SerializeField, Min(0f)] private float baseKnockback = 5f;
         [SerializeField, Min(0f)] private float maximumKnockback = 10f;
         [SerializeField, Min(0.01f)] private float activeDuration = 0.2f;
         [SerializeField, Min(0f)] private float cooldown = 0.5f;
+        [SerializeField, Min(0f)] private float directionalReach = 1.1f;
         [SerializeField] private LayerMask damageableLayers;
 
         [Header("References")]
@@ -28,14 +36,48 @@ namespace Cave.Combat
         private readonly HashSet<Damageable> hitTargets = new HashSet<Damageable>();
         private float chargeStartedAt;
         private float currentKnockback;
+        private int currentDamage;
         private float nextAttackTime;
         private bool isCharging;
         private bool isAttacking;
+        private PlayerDamageBoost damageBoost;
+        private PlayerResourceMastery resourceMastery;
+        private PlayerAimDirection aimDirection;
+        private SpinSwordAttack spinSwordAttack;
+        private Transform attackTransform;
+        private Transform swordPivot;
+        private Vector2 currentAttackDirection = Vector2.right;
+        private Vector3 restingAttackPosition;
+        private Quaternion restingAttackRotation;
+        private Quaternion restingSwordRotation;
 
         public bool IsCharging => isCharging;
+        public bool IsAttacking => isAttacking;
 
         private void Awake()
         {
+            damageBoost = GetComponent<PlayerDamageBoost>();
+            resourceMastery = GetComponent<PlayerResourceMastery>();
+            aimDirection = GetComponent<PlayerAimDirection>();
+            spinSwordAttack = GetComponent<SpinSwordAttack>();
+            swordPivot = spinSwordAttack != null ? spinSwordAttack.SwordPivot : null;
+            attackTransform = attackCollider != null
+                ? attackCollider.transform
+                : attackVisual != null
+                    ? attackVisual.transform
+                    : null;
+            if (attackTransform != null)
+            {
+                restingAttackPosition = attackTransform.localPosition;
+                restingAttackRotation = attackTransform.localRotation;
+            }
+
+            if (swordPivot != null)
+            {
+                restingSwordRotation = swordPivot.localRotation;
+            }
+
+            currentDamage = minimumDamage;
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
         }
@@ -79,7 +121,29 @@ namespace Cave.Combat
                 return;
             }
 
-            damageable.TakeDamage(damage);
+            if (damageBoost == null)
+            {
+                damageBoost = GetComponent<PlayerDamageBoost>();
+            }
+
+            bool manaWasConsumed = false;
+            int resolvedDamage = damageBoost != null
+                ? damageBoost.ResolveChargedDamage(currentDamage, out manaWasConsumed)
+                : currentDamage;
+            if (resourceMastery == null)
+            {
+                resourceMastery = GetComponent<PlayerResourceMastery>();
+            }
+
+            DamageContext damageContext = default;
+            if (resourceMastery != null)
+            {
+                damageContext = manaWasConsumed
+                    ? resourceMastery.CreateManaDamageContext().WithTraits(DamageTrait.Melee)
+                    : resourceMastery.CreatePlayerDamageContext().WithTraits(DamageTrait.Melee);
+            }
+
+            damageable.TakeDamage(resolvedDamage, damageContext);
 
             if (!damageable.gameObject.activeInHierarchy)
             {
@@ -89,13 +153,9 @@ namespace Cave.Combat
             KnockbackReceiver receiver = damageable.GetComponent<KnockbackReceiver>();
             if (receiver != null)
             {
-                float horizontalDirection = Mathf.Sign(damageable.transform.position.x - transform.position.x);
-                if (Mathf.Approximately(horizontalDirection, 0f))
-                {
-                    horizontalDirection = 1f;
-                }
-
-                Vector2 direction = new Vector2(horizontalDirection, 0.2f).normalized;
+                Vector2 direction = currentAttackDirection.sqrMagnitude > 0.001f
+                    ? currentAttackDirection
+                    : Vector2.right;
                 receiver.ApplyKnockback(direction * currentKnockback);
             }
         }
@@ -121,7 +181,25 @@ namespace Cave.Combat
 
             float chargeAmount = Mathf.InverseLerp(minimumChargeTime, maximumChargeTime, heldDuration);
             currentKnockback = Mathf.Lerp(baseKnockback, maximumKnockback, chargeAmount);
+            currentDamage = CalculateBaseDamage(heldDuration);
+            currentAttackDirection = aimDirection != null
+                ? aimDirection.ReadDirection()
+                : Vector2.right;
+            CaveSfx.Play(CaveSfxCue.Whoosh, 0.9f);
             StartCoroutine(PerformAttack());
+        }
+
+        public int CalculateBaseDamage(float heldDuration)
+        {
+            float normalizedCharge = Mathf.InverseLerp(
+                minimumChargeTime,
+                maximumChargeTime,
+                Mathf.Clamp(heldDuration, minimumChargeTime, maximumChargeTime));
+            int damageStepCount = maximumDamage - minimumDamage + 1;
+            int damageStep = Mathf.Min(
+                damageStepCount - 1,
+                Mathf.FloorToInt(normalizedCharge * damageStepCount));
+            return minimumDamage + damageStep;
         }
 
         private void CancelCharge()
@@ -135,12 +213,44 @@ namespace Cave.Combat
             isAttacking = true;
             nextAttackTime = Time.time + activeDuration + cooldown;
             hitTargets.Clear();
+            OrientAttack(currentAttackDirection);
             SetAttackActive(true);
 
             yield return new WaitForSeconds(activeDuration);
 
             SetAttackActive(false);
+            RestoreAttackOrientation();
             isAttacking = false;
+        }
+
+        private void OrientAttack(Vector2 direction)
+        {
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            if (attackTransform != null)
+            {
+                Vector3 directionalOffset = (Vector3)(direction.normalized * directionalReach);
+                attackTransform.localPosition = restingAttackPosition + directionalOffset;
+                attackTransform.localRotation = restingAttackRotation * Quaternion.Euler(0f, 0f, angle);
+            }
+
+            if (swordPivot != null)
+            {
+                swordPivot.localRotation = restingSwordRotation * Quaternion.Euler(0f, 0f, angle);
+            }
+        }
+
+        private void RestoreAttackOrientation()
+        {
+            if (attackTransform != null)
+            {
+                attackTransform.localPosition = restingAttackPosition;
+                attackTransform.localRotation = restingAttackRotation;
+            }
+
+            if (swordPivot != null)
+            {
+                swordPivot.localRotation = restingSwordRotation;
+            }
         }
 
         private void UpdateChargeIndicator()
@@ -167,7 +277,16 @@ namespace Cave.Combat
         {
             if (attackVisual != null)
             {
-                attackVisual.SetActive(active);
+                bool isPersistentSword = spinSwordAttack != null
+                    && attackVisual == spinSwordAttack.SwordVisualObject;
+                if (!isPersistentSword)
+                {
+                    attackVisual.SetActive(active);
+                }
+                else if (active)
+                {
+                    attackVisual.SetActive(true);
+                }
             }
 
             if (attackCollider != null)
@@ -183,6 +302,14 @@ namespace Cave.Combat
             isAttacking = false;
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
+            RestoreAttackOrientation();
+        }
+
+        private void OnValidate()
+        {
+            maximumChargeTime = Mathf.Max(minimumChargeTime, maximumChargeTime);
+            minimumDamage = Mathf.Clamp(minimumDamage, 1, 3);
+            maximumDamage = Mathf.Clamp(maximumDamage, minimumDamage, 3);
         }
     }
 }

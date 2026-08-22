@@ -7,12 +7,30 @@ namespace Cave.UI
     public sealed class PlayerStaminaHud : MonoBehaviour
     {
         [SerializeField] private Image fillImage;
+        [SerializeField] private Text valueText;
 
         private SpinSwordAttack spinSwordAttack;
 
         public void Configure(Image staminaFillImage)
         {
+            Configure(staminaFillImage, null);
+        }
+
+        public void Configure(Image staminaFillImage, Text staminaValueText)
+        {
             fillImage = staminaFillImage;
+            if (staminaValueText != null)
+            {
+                valueText = staminaValueText;
+            }
+        }
+
+        public void UseValueTextIfMissing(Text staminaValueText)
+        {
+            if (valueText == null)
+            {
+                valueText = staminaValueText;
+            }
         }
 
         public void Bind(SpinSwordAttack attack)
@@ -58,9 +76,17 @@ namespace Cave.UI
         {
             if (fillImage != null)
             {
-                fillImage.fillAmount = maximumStamina > 0f
+                float fillAmount = maximumStamina > 0f
                     ? Mathf.Clamp01(currentStamina / maximumStamina)
                     : 0f;
+                fillImage.rectTransform.localScale = new Vector3(fillAmount, 1f, 1f);
+            }
+
+            if (valueText != null)
+            {
+                valueText.text = Mathf.RoundToInt(currentStamina)
+                    + " / "
+                    + Mathf.RoundToInt(maximumStamina);
             }
         }
 

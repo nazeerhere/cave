@@ -8,6 +8,8 @@ namespace Cave.InputSystem
         BasicAttack,
         ChargedAttack,
         Parry,
+        FireProjectile,
+        Dash,
         Pause
     }
 

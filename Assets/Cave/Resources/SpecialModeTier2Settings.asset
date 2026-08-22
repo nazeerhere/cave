@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d71d2afee04bd1b726be15be717c80, type: 3}
+  m_Name: SpecialModeTier2Settings
+  m_EditorClassIdentifier:
+  slowShotTier2Cost: 25
+  burnShotTier2Cost: 30
+  flightTier2Cost: 35
+  strengthTier2Cost: 40
+  slowShotTier3Cost: 60
+  burnShotTier3Cost: 70
+  flightTier3Cost: 80
+  strengthTier3Cost: 90
+  slowShotTier2DamageBonus: 1
+  slowShotTier3DamageBonus: 2
+  burnShotTier2DamageBonus: 1
+  burnShotTier3DamageBonus: 2
+  strengthTier2DamageMultiplier: 1.75
+  strengthTier3DamageMultiplier: 2
+  strengthTier2DamageBonus: 1
+  strengthTier3DamageBonus: 2
+  flightTier2EfficiencyBonus: 0.05
+  flightTier3EfficiencyBonus: 0.1
+  slowShotTier2PierceCount: 2
+  slowShotTier3PierceCount: 2
+  burnShotTier2PierceCount: 3
+  burnShotTier3PierceCount: 5
+  frostTier2PinDuration: 1
+  frostTier3FreezeDuration: 2
+  bashManaCost: 20
+  bashDamage: 2
+  bashSpeed: 20
+  bashDuration: 0.18
+  bashCooldown: 0.35
+  bashKnockback: 12.0
+  shieldRechargeDelay: 8
+  shieldRechargeDuration: 6
+  shieldFullRechargeManaCost: 20
+  slowFieldRadius: 2.5
+  slowFieldDuration: 5
+  slowFieldMovementMultiplier: 0.8
+  burnSpreadRadius: 2.5
+  maximumBurnSpreadTargets: 3
+  burnStatusColor: {r: 1, g: 0.22, b: 0.03, a: 0.9}
+  burnStatusHighlightColor: {r: 1, g: 0.78, b: 0.12, a: 1}
+  burnParticleRate: 18
+  burnParticleLifetime: 0.55
+  frostStatusColor: {r: 0.12, g: 0.68, b: 1, a: 0.9}
+  frostStatusHighlightColor: {r: 0.75, g: 0.95, b: 1, a: 1}
+  frostParticleRate: 12
+  frostParticleLifetime: 0.7
+  frostFieldOutlineColor: {r: 0.28, g: 0.82, b: 1, a: 0.85}
+  frostFieldFillColor: {r: 0.15, g: 0.55, b: 1, a: 0.16}
+  fireTier1Color: {r: 1, g: 0.35, b: 0.08, a: 1}
+  fireTier2Color: {r: 1, g: 0.68, b: 0.12, a: 1}
+  fireTier3Color: {r: 1, g: 0.92, b: 0.38, a: 1}
+  frostTier1Color: {r: 0.25, g: 0.72, b: 1, a: 1}
+  frostTier2Color: {r: 0.55, g: 0.92, b: 1, a: 1}
+  frostTier3Color: {r: 0.82, g: 0.96, b: 1, a: 1}
+  tier2ProjectileScale: 1.15
+  tier3ProjectileScale: 1.32
+  tier2ProjectileTrailTime: 0.16
+  tier3ProjectileTrailTime: 0.28
+  flightTier2ParticleColor: {r: 0.25, g: 0.82, b: 1, a: 0.85}
+  flightTier3ParticleColor: {r: 0.75, g: 0.4, b: 1, a: 0.95}
+  flightTier2ParticleRate: 14
+  flightTier3ParticleRate: 28
+  flightParticleLifetime: 0.55
+  strengthAuraColor: {r: 1, g: 0.7, b: 0.16, a: 0.75}
+  strengthShieldReadyAuraColor: {r: 0.25, g: 0.9, b: 1, a: 0.85}
+  strengthShieldBrokenAuraColor: {r: 0.35, g: 0.22, b: 0.18, a: 0.55}
+  strengthShieldRechargingAuraColor: {r: 0.38, g: 0.5, b: 0.95, a: 0.7}
+  strengthTier3SwordGlowColor: {r: 1, g: 0.9, b: 0.3, a: 0.62}
+  strengthAuraRadius: 0.85
+  tier3BashAdditionalManaCost: 0
+  bashShockwaveRadius: 2.5
+  bashShockwaveDamage: 2
+  bashShockwaveKnockback: 14
+  deflectionFlashDuration: 0.12
+  deflectionFlashColor: {r: 1, g: 0.9, b: 0.25, a: 1}
+  deflectionKnockback: 6
+  healthPotionCost: 5
+  healthPotionRestorePercent: 0.25
+  manaPotionCost: 4
+  manaPotionRestorePercent: 0.25

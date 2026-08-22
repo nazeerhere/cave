@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cave.Combat;
 using Cave.Player;
 using UnityEngine;
 
@@ -54,7 +55,10 @@ namespace Cave.Hazards
                 PlayerHealth playerHealth = hit.GetComponentInParent<PlayerHealth>();
                 if (playerHealth != null && damagedPlayers.Add(playerHealth))
                 {
-                    playerHealth.TryTakeDamage(explosionDamage);
+                    DamageContext context = new DamageContext(
+                        gameObject,
+                        DamageTrait.Direct | DamageTrait.AreaOfEffect);
+                    playerHealth.TryTakeDamage(explosionDamage, context);
                 }
             }
         }

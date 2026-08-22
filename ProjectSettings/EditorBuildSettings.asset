@@ -4,5 +4,23 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Cave/Scenes/Sprint1_Movement.unity
+    guid: 1089175f9146a4d51a812f2266f953e6
+  - enabled: 1
+    path: Assets/Cave/Scenes/Sprint2_Combat.unity
+    guid: 0a02b049f48c5472184bdd16e3af867a
+  - enabled: 1
+    path: Assets/Cave/Scenes/Sprint3_Enemies.unity
+    guid: a67a8b72be4da4be0a05711e411168e7
+  - enabled: 1
+    path: Assets/Cave/Scenes/Sprint4_RangedCombat.unity
+    guid: 7de17bf107c82447892b39cb305aae18
+  - enabled: 1
+    path: Assets/Cave/Scenes/Sprint5_Hazards.unity
+    guid: 665037cfbe7ee49589d46e8dccf79780
+  - enabled: 1
+    path: Assets/Cave/Scenes/Cave_Level01.unity
+    guid: 5ce81430c991e45ae886974ee6eadf32
   m_configObjects: {}

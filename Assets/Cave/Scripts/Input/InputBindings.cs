@@ -42,6 +42,8 @@ namespace Cave.InputSystem
         [SerializeField] private KeyBinding basicAttack;
         [SerializeField] private KeyBinding chargedAttack;
         [SerializeField] private KeyBinding parry;
+        [SerializeField] private KeyBinding fireProjectile;
+        [SerializeField] private KeyBinding dash;
         [SerializeField] private KeyBinding pause;
 
         public static InputBindings CreateDefault()
@@ -74,6 +76,10 @@ namespace Cave.InputSystem
                     return chargedAttack;
                 case GameAction.Parry:
                     return parry;
+                case GameAction.FireProjectile:
+                    return fireProjectile;
+                case GameAction.Dash:
+                    return dash;
                 case GameAction.Pause:
                     return pause;
                 default:
@@ -111,17 +117,43 @@ namespace Cave.InputSystem
             basicAttack = new KeyBinding(KeyCode.X, KeyCode.W);
             chargedAttack = new KeyBinding(KeyCode.C, KeyCode.None);
             parry = new KeyBinding(KeyCode.V, KeyCode.None);
+            fireProjectile = new KeyBinding(KeyCode.B, KeyCode.None);
+            dash = new KeyBinding(KeyCode.LeftShift, KeyCode.None);
             pause = new KeyBinding(KeyCode.Escape, KeyCode.None);
         }
 
         public void LoadSavedBindings()
         {
             RestoreDefaults();
+            bool hasSavedDashPrimary = PlayerPrefs.HasKey(
+                GetPlayerPrefsKey(GameAction.Dash, BindingSlot.Primary));
+            bool hasSavedDashSecondary = PlayerPrefs.HasKey(
+                GetPlayerPrefsKey(GameAction.Dash, BindingSlot.Secondary));
+            dash = new KeyBinding(KeyCode.None, KeyCode.None);
 
             foreach (GameAction action in Enum.GetValues(typeof(GameAction)))
             {
+                if (action == GameAction.Dash)
+                {
+                    continue;
+                }
+
                 LoadSavedKey(action, BindingSlot.Primary);
                 LoadSavedKey(action, BindingSlot.Secondary);
+            }
+
+            if (hasSavedDashPrimary)
+            {
+                LoadSavedKey(GameAction.Dash, BindingSlot.Primary);
+            }
+            else if (!TryFindConflict(GameAction.Dash, KeyCode.LeftShift, out _))
+            {
+                dash = dash.WithKey(BindingSlot.Primary, KeyCode.LeftShift);
+            }
+
+            if (hasSavedDashSecondary)
+            {
+                LoadSavedKey(GameAction.Dash, BindingSlot.Secondary);
             }
         }
 
@@ -205,6 +237,12 @@ namespace Cave.InputSystem
                     break;
                 case GameAction.Parry:
                     parry = binding;
+                    break;
+                case GameAction.FireProjectile:
+                    fireProjectile = binding;
+                    break;
+                case GameAction.Dash:
+                    dash = binding;
                     break;
                 case GameAction.Pause:
                     pause = binding;

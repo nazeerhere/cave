@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2af04bb9526b4e39b59cf0b4525440bd, type: 3}
+  m_Name: StrategicCombatSettings
+  m_EditorClassIdentifier:
+  tankHealthMultiplier: 3.0
+  tankDamageMultiplier: 1.5
+  tankKnockbackResistance: 0.7
+  tankContactIsPiercing: 1
+  supportRadius: 5
+  supportMoveSpeedMultiplier: 1.2
+  maximumSupportedAllies: 6
+  supportHealInterval: 3
+  supportHealAmount: 1
+  swarmMaximumHealth: 1
+  swarmContactDamage: 1
+  swarmMoveSpeed: 4
+  groundSwarmPrefab: {fileID: 149012, guid: b2b4c47ac718d448f844f494edb80e6a, type: 3}
+  airSwarmPrefab: {fileID: 122490, guid: 7ffbe4ed8c26f4118970760fa39710a1, type: 3}
+  eyeHoverHeight: 2.5
+  eyeMoveSpeed: 3.5
+  eyeHorizontalFollowRange: 4
+  eyeVerticalFollowRange: 3
+  eyeSeparationRadius: 0.75
+  eyeAttackCooldown: 2.5
+  eyeAttackTelegraphDuration: 0.4
+  eyeDiveSpeed: 7
+  eyeDiveDuration: 0.4
+  eyeContactDamage: 1
+  swarmSpawnCount: 3
+  swarmSpawnInterval: 0.25
+  maximumActiveSummons: 6
+  summonCooldown: 10
+  summonSpawnRadius: 1.5
+  meleeMinimumTier: 0
+  rangedMinimumTier: 0
+  mixedEncounterMinimumTier: 2
+  supportMinimumTier: 4
+  tankMinimumTier: 5
+  swarmMinimumTier: 6

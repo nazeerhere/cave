@@ -1,16 +1,72 @@
 using System.Collections;
 using System.Collections.Generic;
+using Cave.Audio;
+using Cave.Enemies;
 using Cave.InputSystem;
+using Cave.Player;
 using Cave.Projectiles;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Cave.Combat
 {
+    public enum ParryPhase
+    {
+        Ready,
+        Perfect,
+        Normal,
+        Late,
+        Broken
+    }
+
     public sealed class SidewaysParryAttack : MonoBehaviour
     {
-        [SerializeField, Min(0.01f)] private float activeDuration = 0.2f;
+        [Header("Held Parry Timing")]
+        [SerializeField, Min(0.01f)] private float perfectParryDuration = 0.07f;
+        [SerializeField, Min(0.02f)] private float normalParryEndTime = 0.18f;
+        [SerializeField, Min(0.03f)] private float lateParryEndTime = 0.30f;
         [SerializeField, Min(0f)] private float cooldown = 0.45f;
-        [SerializeField, Min(1f)] private float reflectionSpeedMultiplier = 1.2f;
+
+        [Header("Timing Scaling / Chain Parry")]
+        [SerializeField, Min(0.1f)] private float parryTimingMultiplier = 1.3f;
+        [SerializeField, Min(0f)] private float successfulParryExtension = 0.12f;
+        [SerializeField, Min(0f)] private float perfectParryExtension = 0.18f;
+        [SerializeField, Min(0f)] private float maximumChainExtension = 0.45f;
+
+        [Header("Melee Guard")]
+        [SerializeField, Range(0f, 1f)] private float lateMeleeDamageReduction = 0.5f;
+        [SerializeField, Min(0f)] private float normalMeleeKnockback = 6f;
+        [SerializeField, Min(0f)] private float perfectMeleeKnockback = 10f;
+        [SerializeField, Min(0f)] private float normalEnemyStaggerDuration = 0.35f;
+        [SerializeField, Min(0f)] private float perfectEnemyStaggerDuration = 0.6f;
+
+        [Header("Perfect Parry")]
+        [SerializeField, Min(1f)] private float perfectReflectionSpeedMultiplier = 1.4f;
+        [SerializeField, Min(1f)] private float perfectReflectionDamageMultiplier = 2f;
+        [SerializeField, Min(0f)] private float perfectManaRestore = 5f;
+        [SerializeField, Min(0f)] private float perfectStaminaRestore = 10f;
+        [SerializeField, Min(0.01f)] private float perfectFeedbackDuration = 0.12f;
+        [SerializeField] private Color perfectFeedbackColor = new Color(1f, 0.9f, 0.35f, 1f);
+
+        [Header("Parry Stage Feedback")]
+        [SerializeField] private Color perfectStageColor = new Color(0.35f, 0.95f, 1f, 1f);
+        [SerializeField] private Color normalStageColor = new Color(0.3f, 0.65f, 1f, 1f);
+        [SerializeField] private Color lateStageColor = new Color(1f, 0.55f, 0.18f, 1f);
+        [SerializeField] private Color brokenStageColor = new Color(1f, 0.18f, 0.12f, 1f);
+        [SerializeField, Min(1f)] private float perfectStageScale = 1.14f;
+        [SerializeField, Min(1f)] private float normalStageScale = 1.08f;
+        [SerializeField, Range(0.5f, 1f)] private float lateStageScale = 0.94f;
+        [SerializeField, Min(0.01f)] private float brokenFeedbackDuration = 0.16f;
+        [SerializeField, Min(0.1f)] private float successfulParryPulseRadius = 0.75f;
+        [SerializeField, Min(0.1f)] private float perfectParryPulseRadius = 1.15f;
+        [SerializeField] private Transform successfulParryEffectAnchor;
+        [SerializeField] private Vector2 successfulParryEffectOffset = new Vector2(0f, 0.15f);
+
+        [Header("Normal / Late Deflection")]
+        [FormerlySerializedAs("reflectionSpeedMultiplier")]
+        [SerializeField, Min(1f)] private float normalReflectionSpeedMultiplier = 1.2f;
+        [SerializeField] private float lateDeflectHorizontalOffset = 0.6f;
+        [SerializeField] private float lateDeflectVerticalOffset = -1f;
         [SerializeField, Min(0f)] private float horizontalOffset = 1.1f;
 
         [Header("References")]
@@ -18,14 +74,53 @@ namespace Cave.Combat
         [SerializeField] private GameObject parryVisual;
         [SerializeField] private Collider2D parryCollider;
 
-        private readonly HashSet<FireballProjectile> parriedProjectiles = new HashSet<FireballProjectile>();
+        [Header("Current State (Read Only)")]
+        [SerializeField] private ParryPhase currentPhase = ParryPhase.Ready;
+        [SerializeField, Min(0f)] private float currentChainExtension;
+
+        private readonly HashSet<IPlayerParryableProjectile> parriedProjectiles =
+            new HashSet<IPlayerParryableProjectile>();
         private float facingDirection = 1f;
-        private float nextAttackTime;
-        private bool isActive;
+        private float stanceStartedAt;
+        private float nextStanceTime;
+        private Vector3 restingParryPosition;
+        private Vector3 restingParryScale;
+        private SpriteRenderer[] feedbackRenderers;
+        private Color[] restingFeedbackColors;
+        private Coroutine feedbackRoutine;
+        private PlayerMana playerMana;
+        private SpinSwordAttack stamina;
+
+        public ParryPhase CurrentPhase => currentPhase;
+        public bool IsActive => currentPhase == ParryPhase.Perfect
+            || currentPhase == ParryPhase.Normal
+            || currentPhase == ParryPhase.Late;
+        public bool IsGuardHeld => IsActive && GameInput.ParryHeld;
 
         private void Awake()
         {
-            SetParryActive(false);
+            playerMana = GetComponent<PlayerMana>();
+            stamina = GetComponent<SpinSwordAttack>();
+
+            if (parryTransform != null)
+            {
+                restingParryPosition = parryTransform.localPosition;
+                restingParryScale = parryTransform.localScale;
+            }
+
+            GameObject feedbackVisual = stamina != null && stamina.SwordVisualObject != null
+                ? stamina.SwordVisualObject
+                : parryVisual;
+            feedbackRenderers = feedbackVisual != null
+                ? feedbackVisual.GetComponentsInChildren<SpriteRenderer>(true)
+                : new SpriteRenderer[0];
+            restingFeedbackColors = new Color[feedbackRenderers.Length];
+            for (int index = 0; index < feedbackRenderers.Length; index++)
+            {
+                restingFeedbackColors[index] = feedbackRenderers[index].color;
+            }
+
+            SetStanceVisualActive(false);
         }
 
         private void Update()
@@ -36,42 +131,448 @@ namespace Cave.Combat
                 facingDirection = Mathf.Sign(horizontalInput);
             }
 
-            if (GameInput.ParryPressed && !isActive && Time.time >= nextAttackTime)
+            if (currentPhase == ParryPhase.Ready)
             {
-                StartCoroutine(PerformParry());
+                if (GameInput.ParryPressed && Time.time >= nextStanceTime)
+                {
+                    BeginStance();
+                }
+
+                return;
             }
+
+            if (currentPhase == ParryPhase.Broken)
+            {
+                if (GameInput.ParryReleased || !GameInput.ParryHeld)
+                {
+                    SetPhase(ParryPhase.Ready);
+                }
+
+                return;
+            }
+
+            if (GameInput.ParryReleased || !GameInput.ParryHeld)
+            {
+                EndStance(false);
+                return;
+            }
+
+            UpdateHeldPhase(Time.time - stanceStartedAt);
         }
 
-        public bool TryParry(FireballProjectile projectile)
+        public bool TryParry(IPlayerParryableProjectile projectile)
         {
-            if (!isActive || projectile == null || !projectile.CanBeParried || !parriedProjectiles.Add(projectile))
+            if (!IsActive || projectile == null || !projectile.CanBeParried || parriedProjectiles.Contains(projectile))
             {
                 return false;
             }
 
             Vector2 fallbackDirection = new Vector2(facingDirection, 0f);
-            return projectile.Parry(gameObject, fallbackDirection, reflectionSpeedMultiplier);
+            bool succeeded;
+            switch (currentPhase)
+            {
+                case ParryPhase.Perfect:
+                    succeeded = projectile.Parry(
+                        gameObject,
+                        fallbackDirection,
+                        perfectReflectionSpeedMultiplier,
+                        perfectReflectionDamageMultiplier);
+                    break;
+                case ParryPhase.Normal:
+                    succeeded = projectile.Parry(
+                        gameObject,
+                        fallbackDirection,
+                        normalReflectionSpeedMultiplier,
+                        1f);
+                    break;
+                case ParryPhase.Late:
+                    Vector2 targetPoint = (Vector2)transform.position + new Vector2(
+                        facingDirection * lateDeflectHorizontalOffset,
+                        lateDeflectVerticalOffset);
+                    succeeded = projectile.DeflectToGround(gameObject, targetPoint);
+                    break;
+                default:
+                    return false;
+            }
+
+            if (succeeded)
+            {
+                parriedProjectiles.Add(projectile);
+                CompleteSuccessfulParry(currentPhase);
+            }
+
+            return succeeded;
         }
 
-        private IEnumerator PerformParry()
+        public bool TryGuardMelee(ref int incomingDamage, DamageContext damageContext)
         {
-            isActive = true;
-            nextAttackTime = Time.time + activeDuration + cooldown;
-            parriedProjectiles.Clear();
-            parryTransform.localPosition = new Vector3(facingDirection * horizontalOffset, 0f, 0f);
-            SetParryActive(true);
+            if (!damageContext.HasTrait(DamageTrait.Melee))
+            {
+                return false;
+            }
 
-            yield return new WaitForSeconds(activeDuration);
+            if (damageContext.HasTrait(DamageTrait.GuardBreak))
+            {
+                if (IsActive || GameInput.ParryHeld)
+                {
+                    BreakGuard();
+                }
 
-            SetParryActive(false);
-            isActive = false;
+                return false;
+            }
+
+            if (!IsActive
+                || damageContext.HasTrait(DamageTrait.AreaOfEffect)
+                || damageContext.HasTrait(DamageTrait.Piercing))
+            {
+                return false;
+            }
+
+            switch (currentPhase)
+            {
+                case ParryPhase.Perfect:
+                    ApplyMeleeStagger(
+                        damageContext.Source,
+                        perfectMeleeKnockback,
+                        perfectEnemyStaggerDuration);
+                    CompleteSuccessfulParry(ParryPhase.Perfect);
+                    return true;
+                case ParryPhase.Normal:
+                    ApplyMeleeStagger(
+                        damageContext.Source,
+                        normalMeleeKnockback,
+                        normalEnemyStaggerDuration);
+                    CompleteSuccessfulParry(ParryPhase.Normal);
+                    return true;
+                case ParryPhase.Late:
+                    incomingDamage = Mathf.Max(
+                        1,
+                        Mathf.CeilToInt(incomingDamage * (1f - lateMeleeDamageReduction)));
+                    AreaPulseEffect.Create(
+                        transform.position,
+                        successfulParryPulseRadius * 0.6f,
+                        lateStageColor,
+                        perfectFeedbackDuration);
+                    return false;
+                default:
+                    return false;
+            }
         }
 
-        private void SetParryActive(bool active)
+        public void BreakGuard()
+        {
+            if (currentPhase == ParryPhase.Broken)
+            {
+                return;
+            }
+
+            AreaPulseEffect.Create(
+                transform.position,
+                successfulParryPulseRadius * 0.7f,
+                brokenStageColor,
+                brokenFeedbackDuration);
+            CaveSfx.Play(CaveSfxCue.Hit, 0.8f);
+            EndStance(true);
+        }
+
+        private void BeginStance()
+        {
+            parriedProjectiles.Clear();
+            currentChainExtension = 0f;
+            stanceStartedAt = Time.time;
+            SetPhase(ParryPhase.Perfect);
+            if (parryTransform != null)
+            {
+                parryTransform.localPosition = new Vector3(
+                    facingDirection * horizontalOffset,
+                    restingParryPosition.y,
+                    restingParryPosition.z);
+            }
+
+            SetStanceVisualActive(true);
+        }
+
+        private void EndStance(bool broken)
+        {
+            SetStanceVisualActive(false);
+            ResetFeedback();
+            RestoreParryTransform();
+            currentChainExtension = 0f;
+            nextStanceTime = Time.time + cooldown;
+            if (broken)
+            {
+                currentPhase = ParryPhase.Broken;
+                PlayFeedbackPulse(brokenStageColor, lateStageScale, brokenFeedbackDuration);
+            }
+            else
+            {
+                SetPhase(ParryPhase.Ready);
+            }
+        }
+
+        private void RestorePerfectParryResources()
+        {
+            if (playerMana == null)
+            {
+                playerMana = GetComponent<PlayerMana>();
+            }
+
+            if (stamina == null)
+            {
+                stamina = GetComponent<SpinSwordAttack>();
+            }
+
+            playerMana?.RestoreMana(perfectManaRestore);
+            stamina?.RestoreStamina(perfectStaminaRestore);
+        }
+
+        private void CompleteSuccessfulParry(ParryPhase phase)
+        {
+            bool isPerfect = phase == ParryPhase.Perfect;
+            if (isPerfect)
+            {
+                RestorePerfectParryResources();
+            }
+
+            float extension = isPerfect ? perfectParryExtension : successfulParryExtension;
+            currentChainExtension = Mathf.Min(
+                maximumChainExtension,
+                currentChainExtension + extension);
+            PlaySuccessfulParryFeedback(phase);
+        }
+
+        private void UpdateHeldPhase(float elapsed)
+        {
+            float perfectEnd = perfectParryDuration * parryTimingMultiplier + currentChainExtension;
+            float normalEnd = normalParryEndTime * parryTimingMultiplier + currentChainExtension;
+            float lateEnd = lateParryEndTime * parryTimingMultiplier + currentChainExtension;
+
+            if (currentPhase == ParryPhase.Perfect && elapsed >= perfectEnd)
+            {
+                SetPhase(ParryPhase.Normal);
+            }
+
+            if (currentPhase == ParryPhase.Normal && elapsed >= normalEnd)
+            {
+                SetPhase(ParryPhase.Late);
+            }
+
+            if (currentPhase == ParryPhase.Late && elapsed > lateEnd)
+            {
+                EndStance(true);
+            }
+        }
+
+        private void ApplyMeleeStagger(GameObject source, float knockback, float staggerDuration)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            EnemyStagger stagger = source.GetComponentInParent<EnemyStagger>();
+            stagger?.TryStagger(staggerDuration);
+
+            if (knockback <= 0f)
+            {
+                return;
+            }
+
+            KnockbackReceiver receiver = source.GetComponentInParent<KnockbackReceiver>();
+            if (receiver == null)
+            {
+                return;
+            }
+
+            Vector2 direction = source.transform.position - transform.position;
+            if (direction.sqrMagnitude <= 0.001f)
+            {
+                direction = Vector2.right;
+            }
+
+            receiver.ApplyKnockback((direction.normalized + Vector2.up * 0.15f).normalized * knockback);
+        }
+
+        private void PlaySuccessfulParryFeedback(ParryPhase phase)
+        {
+            bool isPerfect = phase == ParryPhase.Perfect;
+            Color color = isPerfect ? perfectFeedbackColor : normalStageColor;
+            float scale = isPerfect ? perfectStageScale * 1.08f : normalStageScale;
+            float radius = isPerfect ? perfectParryPulseRadius : successfulParryPulseRadius;
+            AreaPulseEffect.Create(GetSuccessfulParryEffectPosition(), radius, color, perfectFeedbackDuration);
+            CaveSfx.Play(CaveSfxCue.Whoosh, isPerfect ? 1f : 0.8f);
+            if (isPerfect)
+            {
+                CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
+            }
+            PlayFeedbackPulse(color, scale, perfectFeedbackDuration);
+        }
+
+        private Vector2 GetSuccessfulParryEffectPosition()
+        {
+            if (successfulParryEffectAnchor != null)
+            {
+                return (Vector2)successfulParryEffectAnchor.position
+                    + new Vector2(
+                        successfulParryEffectOffset.x * facingDirection,
+                        successfulParryEffectOffset.y);
+            }
+
+            if (parryTransform != null)
+            {
+                return (Vector2)parryTransform.position
+                    + new Vector2(
+                        successfulParryEffectOffset.x * facingDirection,
+                        successfulParryEffectOffset.y);
+            }
+
+            if (stamina != null && stamina.SwordVisualObject != null)
+            {
+                SpriteRenderer swordRenderer = stamina.SwordVisualObject
+                    .GetComponentInChildren<SpriteRenderer>(true);
+                if (swordRenderer != null)
+                {
+                    Bounds bounds = swordRenderer.bounds;
+                    return (Vector2)bounds.center
+                        + new Vector2(
+                            bounds.extents.x * facingDirection,
+                            bounds.extents.y * 0.65f)
+                        + new Vector2(
+                            successfulParryEffectOffset.x * facingDirection,
+                            successfulParryEffectOffset.y);
+                }
+            }
+
+            return (Vector2)transform.position + successfulParryEffectOffset;
+        }
+
+        private void PlayFeedbackPulse(Color color, float scale, float duration)
+        {
+            if (feedbackRoutine != null)
+            {
+                StopCoroutine(feedbackRoutine);
+            }
+
+            feedbackRoutine = StartCoroutine(FeedbackPulseRoutine(color, scale, duration));
+        }
+
+        private IEnumerator FeedbackPulseRoutine(Color color, float scale, float duration)
+        {
+            SetFeedbackColor(color);
+            SetFeedbackScale(scale);
+
+            yield return new WaitForSeconds(duration);
+
+            feedbackRoutine = null;
+            RestoreFeedbackBaseline();
+            ApplyPhaseFeedback();
+        }
+
+        private void ResetFeedback()
+        {
+            if (feedbackRoutine != null)
+            {
+                StopCoroutine(feedbackRoutine);
+                feedbackRoutine = null;
+            }
+
+            RestoreFeedbackBaseline();
+        }
+
+        private void RestoreFeedbackBaseline()
+        {
+            SetFeedbackScale(1f);
+
+            for (int index = 0; index < feedbackRenderers.Length; index++)
+            {
+                if (feedbackRenderers[index] != null)
+                {
+                    feedbackRenderers[index].color = restingFeedbackColors[index];
+                }
+            }
+        }
+
+        private void SetPhase(ParryPhase phase)
+        {
+            if (currentPhase == phase)
+            {
+                return;
+            }
+
+            currentPhase = phase;
+            ApplyPhaseFeedback();
+        }
+
+        private void ApplyPhaseFeedback()
+        {
+            if (feedbackRoutine != null)
+            {
+                return;
+            }
+
+            switch (currentPhase)
+            {
+                case ParryPhase.Perfect:
+                    SetFeedbackColor(perfectStageColor);
+                    SetFeedbackScale(perfectStageScale);
+                    break;
+                case ParryPhase.Normal:
+                    SetFeedbackColor(normalStageColor);
+                    SetFeedbackScale(normalStageScale);
+                    break;
+                case ParryPhase.Late:
+                    SetFeedbackColor(lateStageColor);
+                    SetFeedbackScale(lateStageScale);
+                    break;
+                default:
+                    RestoreFeedbackBaseline();
+                    break;
+            }
+        }
+
+        private void SetFeedbackColor(Color color)
+        {
+            for (int index = 0; index < feedbackRenderers.Length; index++)
+            {
+                if (feedbackRenderers[index] != null)
+                {
+                    feedbackRenderers[index].color = color;
+                }
+            }
+        }
+
+        private void SetFeedbackScale(float multiplier)
+        {
+            if (parryTransform != null)
+            {
+                parryTransform.localScale = Vector3.Scale(
+                    restingParryScale,
+                    new Vector3(multiplier, multiplier, 1f));
+            }
+        }
+
+        private void RestoreParryTransform()
+        {
+            if (parryTransform != null)
+            {
+                parryTransform.localPosition = restingParryPosition;
+                parryTransform.localScale = restingParryScale;
+            }
+        }
+
+        private void SetStanceVisualActive(bool active)
         {
             if (parryVisual != null)
             {
-                parryVisual.SetActive(active);
+                bool isPersistentSword = stamina != null && parryVisual == stamina.SwordVisualObject;
+                if (!isPersistentSword)
+                {
+                    parryVisual.SetActive(active);
+                }
+                else if (active)
+                {
+                    parryVisual.SetActive(true);
+                }
             }
 
             if (parryCollider != null)
@@ -82,9 +583,23 @@ namespace Cave.Combat
 
         private void OnDisable()
         {
-            StopAllCoroutines();
-            isActive = false;
-            SetParryActive(false);
+            ResetFeedback();
+            RestoreParryTransform();
+            currentPhase = ParryPhase.Ready;
+            currentChainExtension = 0f;
+            SetStanceVisualActive(false);
+        }
+
+        private void OnValidate()
+        {
+            perfectParryDuration = Mathf.Max(0.01f, perfectParryDuration);
+            normalParryEndTime = Mathf.Max(perfectParryDuration + 0.01f, normalParryEndTime);
+            lateParryEndTime = Mathf.Max(normalParryEndTime + 0.01f, lateParryEndTime);
+            parryTimingMultiplier = Mathf.Max(0.1f, parryTimingMultiplier);
+            maximumChainExtension = Mathf.Max(0f, maximumChainExtension);
+            successfulParryExtension = Mathf.Min(successfulParryExtension, maximumChainExtension);
+            perfectParryExtension = Mathf.Min(perfectParryExtension, maximumChainExtension);
+            perfectReflectionDamageMultiplier = Mathf.Max(1f, perfectReflectionDamageMultiplier);
         }
     }
 }

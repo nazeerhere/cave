@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using Cave.Player;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,26 +7,36 @@ namespace Cave.UI
 {
     public sealed class PlayerHealthHud : MonoBehaviour
     {
-        [Header("Segments")]
-        [SerializeField] private Color filledColor = new Color(0.9f, 0.16f, 0.12f, 1f);
-        [SerializeField] private Color emptyColor = new Color(0.2f, 0.12f, 0.12f, 0.9f);
+        [Header("Fixed Ratio Display")]
+        [SerializeField] private Image fillImage;
+        [SerializeField] private Text valueText;
 
         [Header("Damage Feedback")]
         [SerializeField, Min(0.01f)] private float feedbackDuration = 0.15f;
         [SerializeField] private Color damageFlashColor = new Color(1f, 0.3f, 0.2f, 0.9f);
 
-        private readonly List<Image> segments = new List<Image>();
         private PlayerHealth playerHealth;
-        private RectTransform segmentContainer;
         private Image background;
         private Color normalBackgroundColor;
         private Coroutine feedbackRoutine;
 
-        public void Configure(RectTransform healthSegmentContainer, Image panelBackground)
+        public void Configure(Image healthFillImage, Text healthValueText, Image panelBackground)
         {
-            segmentContainer = healthSegmentContainer;
+            fillImage = healthFillImage;
+            valueText = healthValueText;
             background = panelBackground;
-            normalBackgroundColor = background.color;
+            if (background != null)
+            {
+                normalBackgroundColor = background.color;
+            }
+        }
+
+        public void Configure(RectTransform healthBarContainer, Image panelBackground)
+        {
+            Configure(
+                healthBarContainer != null ? healthBarContainer.GetComponentInChildren<Image>() : null,
+                null,
+                panelBackground);
         }
 
         public void Bind(PlayerHealth health)
@@ -77,47 +86,17 @@ namespace Cave.UI
 
         private void UpdateHealth(int currentHealth, int maximumHealth)
         {
-            if (segmentContainer == null)
+            if (fillImage != null)
             {
-                return;
+                float fill = maximumHealth > 0
+                    ? Mathf.Clamp01(currentHealth / (float)maximumHealth)
+                    : 0f;
+                fillImage.rectTransform.localScale = new Vector3(fill, 1f, 1f);
             }
 
-            if (segments.Count != maximumHealth)
+            if (valueText != null)
             {
-                RebuildSegments(maximumHealth);
-            }
-
-            for (int index = 0; index < segments.Count; index++)
-            {
-                segments[index].color = index < currentHealth ? filledColor : emptyColor;
-            }
-        }
-
-        private void RebuildSegments(int maximumHealth)
-        {
-            foreach (Image segment in segments)
-            {
-                if (segment != null)
-                {
-                    Destroy(segment.gameObject);
-                }
-            }
-
-            segments.Clear();
-
-            for (int index = 0; index < maximumHealth; index++)
-            {
-                GameObject segmentObject = new GameObject("Health Segment " + (index + 1));
-                segmentObject.layer = gameObject.layer;
-                segmentObject.transform.SetParent(segmentContainer, false);
-
-                Image image = segmentObject.AddComponent<Image>();
-                image.color = filledColor;
-
-                LayoutElement layout = segmentObject.AddComponent<LayoutElement>();
-                layout.preferredWidth = .01f;
-                layout.preferredHeight = 1f;
-                segments.Add(image);
+                valueText.text = currentHealth + " / " + maximumHealth;
             }
         }
 

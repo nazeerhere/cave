@@ -1,4 +1,3 @@
-using Cave.Projectiles;
 using UnityEngine;
 
 namespace Cave.Combat
@@ -7,14 +6,14 @@ namespace Cave.Combat
     {
         [SerializeField] private SidewaysParryAttack attack;
 
-        public bool TryParry(FireballProjectile projectile)
+        public bool TryParry(IPlayerParryableProjectile projectile)
         {
             return attack.TryParry(projectile);
         }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            FireballProjectile projectile = other.GetComponent<FireballProjectile>();
+            IPlayerParryableProjectile projectile = other.GetComponent<IPlayerParryableProjectile>();
             if (projectile != null)
             {
                 TryParry(projectile);

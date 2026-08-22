@@ -1,3 +1,4 @@
+using Cave.Audio;
 using Cave.InputSystem;
 using UnityEngine;
 
@@ -19,6 +20,9 @@ namespace Cave.Player
         private Collider2D bodyCollider;
         private float horizontalInput;
         private bool jumpRequested;
+        private PlayerDash playerDash;
+        private PlayerFlightBash flightBash;
+        private bool wasGrounded;
 
         public bool IsGrounded { get; private set; }
 
@@ -26,6 +30,10 @@ namespace Cave.Player
         {
             body = GetComponent<Rigidbody2D>();
             bodyCollider = GetComponent<Collider2D>();
+            playerDash = GetComponent<PlayerDash>();
+            flightBash = GetComponent<PlayerFlightBash>();
+            IsGrounded = CheckGrounded();
+            wasGrounded = IsGrounded;
         }
 
         private void Update()
@@ -41,7 +49,28 @@ namespace Cave.Player
         private void FixedUpdate()
         {
             IsGrounded = CheckGrounded();
-            body.velocity = new Vector2(horizontalInput * moveSpeed, body.velocity.y);
+            if (!wasGrounded && IsGrounded && body.velocity.y <= 0f)
+            {
+                CaveSfx.Play(CaveSfxCue.Landing, 0.65f);
+            }
+
+            wasGrounded = IsGrounded;
+            if (playerDash == null)
+            {
+                playerDash = GetComponent<PlayerDash>();
+            }
+
+            if (flightBash == null)
+            {
+                flightBash = GetComponent<PlayerFlightBash>();
+            }
+
+            bool horizontalOverrideActive = (playerDash != null && playerDash.IsDashing)
+                || (flightBash != null && flightBash.IsBashing);
+            if (!horizontalOverrideActive)
+            {
+                body.velocity = new Vector2(horizontalInput * moveSpeed, body.velocity.y);
+            }
 
             if (jumpRequested && IsGrounded)
             {

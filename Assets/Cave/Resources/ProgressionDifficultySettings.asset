@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ae4e16793741a68a9c8daf22bd1009, type: 3}
+  m_Name: ProgressionDifficultySettings
+  m_EditorClassIdentifier: 
+  criticalHealthThreshold: 0.25
+  criticalStaminaThreshold: 0.1
+  criticalManaThreshold: 0.1
+  healthIncreasePerMastery: 1
+  staminaIncreasePerMastery: 1
+  manaIncreasePerMastery: 1
+  addIncreaseToCurrentResource: 1
+  dashStaminaCost: 30
+  dashSpeed: 18
+  dashDuration: 0.15
+  dashCooldown: 0.25
+  growthPerDifficultyTier: 0.08
+  difficultyExponentPerTier: 0.18
+  healthGrowthWeight: 1
+  staminaGrowthWeight: 1
+  manaGrowthWeight: 1
+  logDifficultyTierChanges: 1
+  enemyHealthScalingStrength: 1
+  enemyDamageScalingStrength: 0.5
+  enemyMoveSpeedScalingStrength: 0.2
+  enemyProjectileSpeedScalingStrength: 0.15
+  enemyFireRateScalingStrength: 0.15
+  minimumEnemyFireInterval: 0.5
+  scaleRespawnDelay: 1
+  respawnDelayScalingStrength: 0.1
+  minimumRespawnDelay: 2
+  evolutionStartTier: 3
+  splitDistance: 4
+  splitCount: 3
+  splitSpreadAngle: 25
+  splitTelegraphDuration: 0.15
+  childSpeedMultiplier: 1.1
+  childDamageMultiplier: 1
+  maximumSplitCount: 5

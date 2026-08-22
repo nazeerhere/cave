@@ -1,4 +1,5 @@
 using Cave.Projectiles;
+using Cave.World;
 using UnityEngine;
 
 namespace Cave.Enemies
@@ -18,6 +19,21 @@ namespace Cave.Enemies
         [SerializeField, Min(0f)] private float firingRange = 10f;
 
         private float nextFireTime;
+        private float runtimeFireInterval;
+        private float runtimeProjectileSpeed;
+        private int runtimeProjectileDamage;
+        private WorldDifficultyManager difficultyManager;
+
+        public float BaseFireInterval => fireInterval;
+        public float BaseProjectileSpeed => projectileSpeed;
+        public int BaseProjectileDamage => projectileDamage;
+
+        private void Awake()
+        {
+            runtimeFireInterval = fireInterval;
+            runtimeProjectileSpeed = projectileSpeed;
+            runtimeProjectileDamage = projectileDamage;
+        }
 
         private void OnEnable()
         {
@@ -38,7 +54,7 @@ namespace Cave.Enemies
             }
 
             Fire();
-            nextFireTime = Time.time + fireInterval;
+            nextFireTime = Time.time + runtimeFireInterval;
         }
 
         private void Fire()
@@ -55,12 +71,30 @@ namespace Cave.Enemies
                 spawnPosition,
                 Quaternion.identity);
 
+            EnemyDamageModifiers modifiers = GetComponentInParent<EnemyDamageModifiers>();
+            int damage = modifiers != null
+                ? modifiers.ResolveDamage(runtimeProjectileDamage)
+                : runtimeProjectileDamage;
             projectile.Initialize(
                 gameObject,
+                target,
                 direction.normalized,
-                projectileSpeed,
-                projectileDamage,
-                projectileLifetime);
+                runtimeProjectileSpeed,
+                damage,
+                projectileLifetime,
+                difficultyManager);
+        }
+
+        public void SetRuntimeDifficultyValues(int damage, float speed, float interval)
+        {
+            runtimeProjectileDamage = Mathf.Max(1, damage);
+            runtimeProjectileSpeed = Mathf.Max(0.01f, speed);
+            runtimeFireInterval = Mathf.Max(0.01f, interval);
+        }
+
+        public void SetDifficultyManager(WorldDifficultyManager manager)
+        {
+            difficultyManager = manager;
         }
     }
 }
