@@ -18,6 +18,7 @@ namespace Cave.Enemies
         private EnemyDefenseController defense;
         private EnemyStagger stagger;
         private float nextDecisionTime;
+        private bool brainControlled;
 
         public float MinimumRange => minimumRange;
         public float PreferredRange => preferredRange;
@@ -32,6 +33,11 @@ namespace Cave.Enemies
 
         private void Update()
         {
+            if (brainControlled)
+            {
+                return;
+            }
+
             if (Time.time < nextDecisionTime)
             {
                 return;
@@ -66,6 +72,11 @@ namespace Cave.Enemies
             }
 
             controller.SetCombatMovementIntent(intent, decisionInterval * 1.5f);
+        }
+
+        public void SetBrainControlled(bool controlled)
+        {
+            brainControlled = controlled;
         }
 
         private void EnsureTarget()

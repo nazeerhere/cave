@@ -15,7 +15,7 @@ namespace Cave.Enemies
     }
 
     [DisallowMultipleComponent]
-    public sealed class SwarmCaller : MonoBehaviour
+    public sealed class SwarmCaller : MonoBehaviour, IEnemySkillEvolutionReceiver
     {
         [SerializeField] private GameObject swarmPrefab;
         [SerializeField] private GameObject groundSwarmPrefab;
@@ -34,6 +34,12 @@ namespace Cave.Enemies
         [SerializeField, Min(0f)] private float airSpawnHeight = 2f;
         [SerializeField] private Color summonTelegraphColor = new Color(1f, 0.55f, 0.15f, 0.85f);
 
+        [Header("Skill Evolution")]
+        [SerializeField, Min(0)] private int evolutionOneAdditionalSummons = 1;
+        [SerializeField, Range(0.2f, 1f)] private float evolutionOneCooldownMultiplier = 0.85f;
+        [SerializeField] private bool airSummonsRequireEvolutionTwo = true;
+        [SerializeField, Range(1f, 2f)] private float evolutionTwoTelegraphScale = 1.25f;
+
         private readonly HashSet<Damageable> activeSummons = new HashSet<Damageable>();
         private readonly List<Damageable> staleSummons = new List<Damageable>();
         private WorldDifficultyManager difficultyManager;
@@ -42,19 +48,39 @@ namespace Cave.Enemies
         private LineRenderer telegraph;
         private Material telegraphMaterial;
         private int summonSequence;
+        private EnemyEvolutionStage evolutionStage;
+        private bool brainControlled;
 
-        private int SpawnCount => useSharedSettings && sharedSettings != null
-            ? sharedSettings.SwarmSpawnCount
-            : spawnCount;
+        private int SpawnCount
+        {
+            get
+            {
+                int baseCount = useSharedSettings && sharedSettings != null
+                    ? sharedSettings.SwarmSpawnCount
+                    : spawnCount;
+                return evolutionStage >= EnemyEvolutionStage.EvolutionOne
+                    ? baseCount + evolutionOneAdditionalSummons
+                    : baseCount;
+            }
+        }
         private float SpawnInterval => useSharedSettings && sharedSettings != null
             ? sharedSettings.SwarmSpawnInterval
             : spawnInterval;
         private int MaximumActive => useSharedSettings && sharedSettings != null
             ? sharedSettings.MaximumActiveSummons
             : maximumActiveSummons;
-        private float Cooldown => useSharedSettings && sharedSettings != null
-            ? sharedSettings.SummonCooldown
-            : summonCooldown;
+        private float Cooldown
+        {
+            get
+            {
+                float baseCooldown = useSharedSettings && sharedSettings != null
+                    ? sharedSettings.SummonCooldown
+                    : summonCooldown;
+                return evolutionStage >= EnemyEvolutionStage.EvolutionOne
+                    ? baseCooldown * evolutionOneCooldownMultiplier
+                    : baseCooldown;
+            }
+        }
         private float SpawnRadius => useSharedSettings && sharedSettings != null
             ? sharedSettings.SummonSpawnRadius
             : spawnRadius;
@@ -66,6 +92,11 @@ namespace Cave.Enemies
                 && Time.time >= nextSummonTime
                 && activeSummons.Count < MaximumActive
                 && IsEligible());
+        public bool IsReady => !isSummoning
+            && HasAvailablePrefab()
+            && Time.time >= nextSummonTime
+            && activeSummons.Count < MaximumActive
+            && IsEligible();
 
         private GameObject GroundSwarmPrefab => groundSwarmPrefab != null
             ? groundSwarmPrefab
@@ -77,6 +108,10 @@ namespace Cave.Enemies
             : useSharedSettings && sharedSettings != null
                 ? sharedSettings.AirSwarmPrefab
                 : null;
+        private GameObject EffectiveAirSwarmPrefab => airSummonsRequireEvolutionTwo
+            && evolutionStage < EnemyEvolutionStage.EvolutionTwo
+                ? null
+                : AirSwarmPrefab;
 
         private void Awake()
         {
@@ -99,16 +134,29 @@ namespace Cave.Enemies
         private void Update()
         {
             RemoveInactiveSummons();
-            if (isSummoning
-                || !HasAvailablePrefab()
-                || Time.time < nextSummonTime
-                || activeSummons.Count >= MaximumActive
-                || !IsEligible())
+            if (brainControlled)
             {
                 return;
             }
 
+            TrySummon();
+        }
+
+        public bool TrySummon()
+        {
+            RemoveInactiveSummons();
+            if (!IsReady)
+            {
+                return false;
+            }
+
             StartCoroutine(SummonWave());
+            return true;
+        }
+
+        public void SetBrainControlled(bool controlled)
+        {
+            brainControlled = controlled;
         }
 
         private bool IsEligible()
@@ -123,6 +171,14 @@ namespace Cave.Enemies
         {
             isSummoning = true;
             telegraph.enabled = true;
+            if (evolutionStage == EnemyEvolutionStage.EvolutionTwo)
+            {
+                Cave.Combat.AreaPulseEffect.Create(
+                    transform.position,
+                    SpawnRadius * evolutionTwoTelegraphScale,
+                    summonTelegraphColor,
+                    0.35f);
+            }
             yield return new WaitForSeconds(0.35f);
 
             int availableSlots = Mathf.Max(0, MaximumActive - activeSummons.Count);
@@ -172,7 +228,9 @@ namespace Cave.Enemies
                 profile = spawned.AddComponent<EnemyArchetypeProfile>();
             }
 
-            profile.AddRuntimeArchetype(EnemyArchetype.Swarm | EnemyArchetype.Melee);
+            profile.AddRuntimeArchetype(
+                EnemyArchetype.Swarm
+                | (isAirSwarm ? EnemyArchetype.Ranged : EnemyArchetype.Melee));
             EnemySwarm swarm = spawned.GetComponent<EnemySwarm>();
             if (swarm == null)
             {
@@ -183,6 +241,11 @@ namespace Cave.Enemies
             if (spawned.GetComponent<EnemyStatusEffects>() == null)
             {
                 spawned.AddComponent<EnemyStatusEffects>();
+            }
+
+            if (spawned.GetComponent<EnemyStagger>() == null)
+            {
+                spawned.AddComponent<EnemyStagger>();
             }
 
             if (difficultyManager != null)
@@ -214,16 +277,16 @@ namespace Cave.Enemies
                 case SwarmComposition.GroundOnly:
                     return GroundSwarmPrefab != null;
                 case SwarmComposition.AirOnly:
-                    return AirSwarmPrefab != null;
+                    return EffectiveAirSwarmPrefab != null;
                 default:
-                    return GroundSwarmPrefab != null || AirSwarmPrefab != null;
+                    return GroundSwarmPrefab != null || EffectiveAirSwarmPrefab != null;
             }
         }
 
         private GameObject SelectPrefab(out bool isAirSwarm)
         {
             GameObject ground = GroundSwarmPrefab;
-            GameObject air = AirSwarmPrefab;
+            GameObject air = EffectiveAirSwarmPrefab;
             if (composition == SwarmComposition.AirOnly)
             {
                 isAirSwarm = true;
@@ -239,6 +302,12 @@ namespace Cave.Enemies
             bool chooseAir = air != null && (ground == null || summonSequence++ % 2 == 1);
             isAirSwarm = chooseAir;
             return chooseAir ? air : ground;
+        }
+
+        public void ApplyEvolution(EnemyEvolutionStage stage)
+        {
+            evolutionStage = stage;
+            UpdateTelegraphRadius();
         }
 
         private Damageable RealizeSwarmCombatant(GameObject spawned, bool isAirSwarm)

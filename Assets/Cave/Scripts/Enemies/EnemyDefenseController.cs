@@ -26,7 +26,9 @@ namespace Cave.Enemies
 
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Damageable))]
-    public sealed class EnemyDefenseController : MonoBehaviour, IEnemyInterruptible
+    public sealed class EnemyDefenseController : MonoBehaviour,
+        IEnemyInterruptible,
+        IEnemySkillEvolutionReceiver
     {
         [Header("Defense Probabilities")]
         [SerializeField] private EnemyDefensePreset probabilityPreset = EnemyDefensePreset.Custom;
@@ -43,6 +45,23 @@ namespace Cave.Enemies
         [SerializeField] private bool blockProjectiles;
         [SerializeField, Range(-1f, 1f)] private float minimumFrontDot = 0.05f;
 
+        [Header("Skill Evolution")]
+        [SerializeField, Range(0f, 0.25f)] private float evolutionOneBlockBonus = 0.05f;
+        [SerializeField, Range(0f, 0.25f)] private float evolutionTwoBlockBonus = 0.05f;
+        [SerializeField, Range(0f, 0.2f)] private float evolutionOneParryBonus = 0.03f;
+        [SerializeField, Range(0f, 0.2f)] private float evolutionTwoParryBonus = 0.03f;
+        [SerializeField, Range(0.1f, 1f)] private float evolutionOneRecoveryMultiplier = 0.9f;
+        [SerializeField, Range(0.1f, 1f)] private float evolutionTwoRecoveryMultiplier = 0.8f;
+
+        [Header("Hard Probability Caps")]
+        [SerializeField, Range(0f, 0.95f)] private float bruteBlockCap = 0.5f;
+        [SerializeField, Range(0f, 0.95f)] private float trollBlockCap = 0.65f;
+        [SerializeField, Range(0f, 0.95f)] private float trollProjectileParryCap = 0.5f;
+        [SerializeField, Range(0f, 0.95f)] private float necromancerProjectileParryCap = 0.3f;
+        [SerializeField, Range(0f, 0.95f)] private float wizardProjectileParryCap = 0.35f;
+        [SerializeField, Range(0f, 0.95f)] private float customBlockCap = 0.65f;
+        [SerializeField, Range(0f, 0.95f)] private float customProjectileParryCap = 0.5f;
+
         [Header("Feedback Hooks")]
         [SerializeField] private Color blockColor = new Color(0.35f, 0.72f, 1f, 0.9f);
         [SerializeField] private Color projectileParryColor = new Color(0.85f, 0.4f, 1f, 0.9f);
@@ -55,6 +74,7 @@ namespace Cave.Enemies
         private float activeUntil;
         private float recoveryUntil;
         private float nextDecisionTime;
+        private EnemyEvolutionStage evolutionStage;
 
         public event Action<EnemyDefenseState, bool> DefenseResolved;
         public EnemyDefenseState CurrentState => currentState;
@@ -156,34 +176,55 @@ namespace Cave.Enemies
 
         private float ResolveBlockChance()
         {
+            float baseChance;
             switch (probabilityPreset)
             {
                 case EnemyDefensePreset.Brute:
-                    return 0.35f;
+                    baseChance = 0.35f;
+                    break;
                 case EnemyDefensePreset.Troll:
-                    return 0.55f;
+                    baseChance = 0.55f;
+                    break;
                 case EnemyDefensePreset.Custom:
-                    return blockAttemptChance;
+                    baseChance = blockAttemptChance;
+                    break;
                 default:
                     return 0f;
             }
+
+            return Mathf.Min(
+                ResolveBlockCap(),
+                baseChance + ResolveEvolutionBonus(
+                    evolutionOneBlockBonus,
+                    evolutionTwoBlockBonus));
         }
 
         private float ResolveProjectileParryChance()
         {
+            float baseChance;
             switch (probabilityPreset)
             {
                 case EnemyDefensePreset.Necromancer:
-                    return 0.15f;
+                    baseChance = 0.15f;
+                    break;
                 case EnemyDefensePreset.Wizard:
-                    return 0.25f;
+                    baseChance = 0.25f;
+                    break;
                 case EnemyDefensePreset.Troll:
-                    return 0.35f;
+                    baseChance = 0.35f;
+                    break;
                 case EnemyDefensePreset.Custom:
-                    return projectileParryChance;
+                    baseChance = projectileParryChance;
+                    break;
                 default:
                     return 0f;
             }
+
+            return Mathf.Min(
+                ResolveProjectileParryCap(),
+                baseChance + ResolveEvolutionBonus(
+                    evolutionOneParryBonus,
+                    evolutionTwoParryBonus));
         }
 
         private void ResolveAttempt(EnemyDefenseState successfulState, bool succeeded, Color feedbackColor)
@@ -192,7 +233,7 @@ namespace Cave.Enemies
             {
                 currentState = successfulState;
                 activeUntil = Time.time + activeDefenseDuration;
-                recoveryUntil = activeUntil + recoveryDuration;
+                recoveryUntil = activeUntil + recoveryDuration * ResolveRecoveryMultiplier();
                 nextDecisionTime = recoveryUntil + defenseCooldown;
                 ShowDefenseFeedback(feedbackColor);
             }
@@ -205,6 +246,70 @@ namespace Cave.Enemies
             }
 
             DefenseResolved?.Invoke(successfulState, succeeded);
+        }
+
+        private float ResolveEvolutionBonus(float evolutionOneBonus, float evolutionTwoBonus)
+        {
+            if (evolutionStage == EnemyEvolutionStage.EvolutionTwo)
+            {
+                return evolutionOneBonus + evolutionTwoBonus;
+            }
+
+            return evolutionStage == EnemyEvolutionStage.EvolutionOne
+                ? evolutionOneBonus
+                : 0f;
+        }
+
+        private float ResolveRecoveryMultiplier()
+        {
+            return evolutionStage == EnemyEvolutionStage.EvolutionTwo
+                ? evolutionTwoRecoveryMultiplier
+                : evolutionStage == EnemyEvolutionStage.EvolutionOne
+                    ? evolutionOneRecoveryMultiplier
+                    : 1f;
+        }
+
+        private float ResolveBlockCap()
+        {
+            switch (probabilityPreset)
+            {
+                case EnemyDefensePreset.Brute:
+                    return bruteBlockCap;
+                case EnemyDefensePreset.Troll:
+                    return trollBlockCap;
+                default:
+                    return customBlockCap;
+            }
+        }
+
+        private float ResolveProjectileParryCap()
+        {
+            switch (probabilityPreset)
+            {
+                case EnemyDefensePreset.Necromancer:
+                    return necromancerProjectileParryCap;
+                case EnemyDefensePreset.Wizard:
+                    return wizardProjectileParryCap;
+                case EnemyDefensePreset.Troll:
+                    return trollProjectileParryCap;
+                default:
+                    return customProjectileParryCap;
+            }
+        }
+
+        public void ApplyEvolution(EnemyEvolutionStage stage)
+        {
+            evolutionStage = stage;
+        }
+
+        public void SuspendForMajorAbility(float duration)
+        {
+            currentState = EnemyDefenseState.Cooldown;
+            activeUntil = Time.time;
+            recoveryUntil = Time.time;
+            nextDecisionTime = Mathf.Max(
+                nextDecisionTime,
+                Time.time + Mathf.Max(0f, duration));
         }
 
         private void RefreshState()

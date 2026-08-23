@@ -243,16 +243,24 @@ namespace Cave.Pickups
                     profile = damageable.gameObject.AddComponent<EnemyArchetypeProfile>();
                 }
 
-                if (damageable.GetComponentInChildren<EnemyShooter>(true) != null)
+                bool isFlyingRanged = damageable.GetComponent<FlyingSwarmController>() != null;
+                if (damageable.GetComponentInChildren<EnemyShooter>(true) != null
+                    || damageable.GetComponentInChildren<EnemyPoisonShooter>(true) != null
+                    || isFlyingRanged)
                 {
                     profile.AddRuntimeArchetype(EnemyArchetype.Ranged);
                 }
 
                 if (damageable.GetComponent<EnemyController>() != null
-                    || damageable.GetComponent<FlyingSwarmController>() != null
-                    || damageable.GetComponentInChildren<EnemyContactDamage>(true) != null)
+                    || (!isFlyingRanged
+                        && damageable.GetComponentInChildren<EnemyContactDamage>(true) != null))
                 {
                     profile.AddRuntimeArchetype(EnemyArchetype.Melee);
+                }
+
+                if (!damageable.TryGetComponent(out EnemyStagger _))
+                {
+                    damageable.gameObject.AddComponent<EnemyStagger>();
                 }
 
                 EnemyTank tank = damageable.GetComponent<EnemyTank>();
@@ -272,6 +280,7 @@ namespace Cave.Pickups
                 }
 
                 scaler.Configure(difficultyManager);
+
             }
 
             foreach (SwarmCaller caller in Object.FindObjectsOfType<SwarmCaller>(true))

@@ -5,7 +5,9 @@ namespace Cave.Enemies
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Damageable), typeof(EnemyArchetypeProfile))]
-    public sealed class EnemyDamageBuffAbility : MonoBehaviour, IEnemyInterruptible
+    public sealed class EnemyDamageBuffAbility : MonoBehaviour,
+        IEnemyInterruptible,
+        IEnemySkillEvolutionReceiver
     {
         [SerializeField] private EnemyDamageModifierType buffType = EnemyDamageModifierType.NecromancerBuff;
         [SerializeField, Range(0f, 2f)] private float additiveDamageBonus = 0.25f;
@@ -18,6 +20,14 @@ namespace Cave.Enemies
         [SerializeField] private bool preferNonSupportTargets = true;
         [SerializeField] private Color castColor = new Color(0.72f, 0.25f, 1f, 0.85f);
 
+        [Header("Skill Evolution")]
+        [SerializeField, Range(0f, 0.25f)] private float evolutionOneBonusIncrease = 0.05f;
+        [SerializeField, Range(0f, 0.25f)] private float evolutionTwoBonusIncrease = 0.05f;
+        [SerializeField, Range(0f, 1f)] private float maximumAdditiveDamageBonus = 0.45f;
+        [SerializeField, Range(1f, 2f)] private float evolutionOneRangeMultiplier = 1.15f;
+        [SerializeField, Range(1f, 2f)] private float evolutionTwoRangeMultiplier = 1.3f;
+        [SerializeField, Range(1f, 2f)] private float evolutionTwoDurationMultiplier = 1.2f;
+
         private Damageable self;
         private EnemyStagger stagger;
         private float nextCastTime;
@@ -25,8 +35,18 @@ namespace Cave.Enemies
         private Damageable pendingTarget;
         private EnemyHealAbility healAbility;
         private SwarmCaller swarmCaller;
+        private EnemyEvolutionStage evolutionStage;
+        private bool brainControlled;
 
         public bool IsCasting => pendingTarget != null;
+        public bool IsReady => pendingTarget == null
+            && Time.time >= nextCastTime
+            && (stagger == null || stagger.CanAct);
+
+        public bool HasEligibleTarget()
+        {
+            return FindTarget() != null;
+        }
 
         private void Awake()
         {
@@ -34,7 +54,13 @@ namespace Cave.Enemies
             stagger = GetComponent<EnemyStagger>();
             healAbility = GetComponent<EnemyHealAbility>();
             swarmCaller = GetComponent<SwarmCaller>();
-            GetComponent<EnemyArchetypeProfile>().AddRuntimeArchetype(EnemyArchetype.Support);
+            EnemyArchetypeProfile profile = GetComponent<EnemyArchetypeProfile>();
+            if (profile == null)
+            {
+                profile = gameObject.AddComponent<EnemyArchetypeProfile>();
+            }
+
+            profile.AddRuntimeArchetype(EnemyArchetype.Support);
         }
 
         private void Update()
@@ -49,35 +75,56 @@ namespace Cave.Enemies
                 return;
             }
 
-            if (Time.time < nextCastTime || (stagger != null && !stagger.CanAct))
+            if (brainControlled)
             {
                 return;
+            }
+
+            TryUse();
+        }
+
+        public bool TryUse()
+        {
+            if (!IsReady)
+            {
+                return false;
             }
 
             if ((healAbility != null && (healAbility.IsCasting || healAbility.HasEligibleTarget()))
                 || (swarmCaller != null && swarmCaller.ShouldPrioritizeSummon))
             {
                 nextCastTime = Time.time + 0.15f;
-                return;
+                return false;
             }
 
-            Damageable target = EnemySupportTargeting.FindUnbuffedDamageTarget(
-                transform.position,
-                buffRange,
-                allyLayers,
-                self,
-                canBuffSelf,
-                preferNonSupportTargets,
-                buffType);
+            Damageable target = FindTarget();
             if (target == null)
             {
                 nextCastTime = Time.time + 0.25f;
-                return;
+                return false;
             }
 
             pendingTarget = target;
             castCompletesAt = Time.time + castWindup;
             Cave.Combat.AreaPulseEffect.Create(transform.position, 0.7f, castColor, castWindup);
+            return true;
+        }
+
+        public void SetBrainControlled(bool controlled)
+        {
+            brainControlled = controlled;
+        }
+
+        private Damageable FindTarget()
+        {
+            return EnemySupportTargeting.FindUnbuffedDamageTarget(
+                transform.position,
+                EffectiveBuffRange,
+                allyLayers,
+                self,
+                canBuffSelf,
+                preferNonSupportTargets,
+                buffType);
         }
 
         private void CompleteCast()
@@ -88,7 +135,7 @@ namespace Cave.Enemies
             if (target == null
                 || !target.gameObject.activeInHierarchy
                 || ((Vector2)target.transform.position - (Vector2)transform.position).sqrMagnitude
-                    > buffRange * buffRange)
+                    > EffectiveBuffRange * EffectiveBuffRange)
             {
                 return;
             }
@@ -101,10 +148,35 @@ namespace Cave.Enemies
 
             modifiers.ApplyModifier(
                 buffType,
-                additiveDamageBonus,
-                buffDuration,
+                EffectiveDamageBonus,
+                EffectiveBuffDuration,
                 gameObject);
-            Cave.Combat.AreaPulseEffect.Create(target.transform.position, 0.62f, castColor, 0.25f);
+            Cave.Combat.AreaPulseEffect.Create(
+                target.transform.position,
+                evolutionStage == EnemyEvolutionStage.EvolutionTwo ? 0.78f : 0.62f,
+                castColor,
+                0.25f);
+        }
+
+        private float EffectiveDamageBonus => Mathf.Min(
+            maximumAdditiveDamageBonus,
+            additiveDamageBonus
+                + (evolutionStage >= EnemyEvolutionStage.EvolutionOne ? evolutionOneBonusIncrease : 0f)
+                + (evolutionStage >= EnemyEvolutionStage.EvolutionTwo ? evolutionTwoBonusIncrease : 0f));
+
+        private float EffectiveBuffRange => buffRange * (evolutionStage == EnemyEvolutionStage.EvolutionTwo
+            ? evolutionTwoRangeMultiplier
+            : evolutionStage == EnemyEvolutionStage.EvolutionOne
+                ? evolutionOneRangeMultiplier
+                : 1f);
+
+        private float EffectiveBuffDuration => buffDuration * (evolutionStage == EnemyEvolutionStage.EvolutionTwo
+            ? evolutionTwoDurationMultiplier
+            : 1f);
+
+        public void ApplyEvolution(EnemyEvolutionStage stage)
+        {
+            evolutionStage = stage;
         }
 
         public void Interrupt()

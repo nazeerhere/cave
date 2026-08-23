@@ -38,9 +38,12 @@ namespace Cave.Enemies
         private Transform feedbackRoot;
         private Vector3 restingScale;
         private Coroutine attackRoutine;
+        private bool brainControlled;
 
         public int BaseContactDamage => contactDamage;
         public DamageTrait DamageTraits => damageTraits;
+
+        public bool IsAttacking => attackRoutine != null;
 
         private void Awake()
         {
@@ -83,6 +86,11 @@ namespace Cave.Enemies
             guardBreakWindup = Mathf.Max(0f, windup);
             guardBreakDamage = Mathf.Max(1, damage);
             runtimeGuardBreakDamage = guardBreakDamage;
+        }
+
+        public void SetBrainControlled(bool controlled)
+        {
+            brainControlled = controlled;
         }
 
         private void OnEnable()
@@ -133,7 +141,10 @@ namespace Cave.Enemies
 
         private void TryBeginAttack(PlayerHealth target)
         {
-            if (attackRoutine != null || Time.time < nextDamageTime || !IsStillTouching(target))
+            if (brainControlled
+                || attackRoutine != null
+                || Time.time < nextDamageTime
+                || !IsStillTouching(target))
             {
                 return;
             }

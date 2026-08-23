@@ -119,6 +119,11 @@ namespace Cave.Player
             body.gravityScale = originalGravityScale;
         }
 
+        internal void StopForGroundJump()
+        {
+            StopFlying();
+        }
+
         private void ResetFlight()
         {
             StopFlying();

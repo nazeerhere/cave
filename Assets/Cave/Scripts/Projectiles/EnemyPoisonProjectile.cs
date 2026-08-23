@@ -14,6 +14,7 @@ namespace Cave.Projectiles
         IEnemyParryableProjectile
     {
         [SerializeField] private Color enemyProjectileColor = new Color(0.45f, 1f, 0.2f, 1f);
+        [SerializeField] private Color evolvedProjectileColor = new Color(0.72f, 1f, 0.12f, 1f);
         [SerializeField] private Color reflectedProjectileColor = new Color(0.75f, 0.95f, 1f, 1f);
 
         private Rigidbody2D body;
@@ -31,6 +32,9 @@ namespace Cave.Projectiles
         private bool impacted;
         private bool enemyParried;
         private DamageContext reflectedDamageContext;
+        private bool createsPoisonZone;
+        private float poisonZoneRadius;
+        private float poisonZoneDuration;
 
         public bool CanBeParried => !impacted
             && currentTeam == ProjectileTeam.Enemy
@@ -53,7 +57,10 @@ namespace Cave.Projectiles
             int resolvedPoisonDamage,
             float tickInterval,
             float statusDuration,
-            float lifetime)
+            float lifetime,
+            bool createPoisonZone,
+            float zoneRadius,
+            float zoneDuration)
         {
             originalShooter = shooter;
             currentOwner = shooter;
@@ -64,10 +71,13 @@ namespace Cave.Projectiles
             poisonTickDamage = Mathf.Max(1, resolvedPoisonDamage);
             poisonInterval = Mathf.Max(0.05f, tickInterval);
             poisonDuration = Mathf.Max(0.05f, statusDuration);
+            createsPoisonZone = createPoisonZone;
+            poisonZoneRadius = Mathf.Max(0.1f, zoneRadius);
+            poisonZoneDuration = Mathf.Max(0.1f, zoneDuration);
             impacted = false;
             enemyParried = false;
             reflectedDamageContext = default;
-            SetVisualColor(enemyProjectileColor);
+            SetVisualColor(createsPoisonZone ? evolvedProjectileColor : enemyProjectileColor);
             body.simulated = true;
             projectileCollider.enabled = true;
             body.velocity = movementDirection * speed;
@@ -245,10 +255,22 @@ namespace Cave.Projectiles
             body.velocity = Vector2.zero;
             body.simulated = false;
             projectileCollider.enabled = false;
+            if (createsPoisonZone && currentTeam == ProjectileTeam.Enemy)
+            {
+                EnemyPoisonZone.Create(
+                    transform.position,
+                    currentOwner,
+                    poisonZoneRadius,
+                    poisonZoneDuration,
+                    poisonTickDamage,
+                    poisonInterval,
+                    evolvedProjectileColor);
+            }
+
             Cave.Combat.AreaPulseEffect.Create(
                 transform.position,
                 0.45f,
-                enemyProjectileColor,
+                createsPoisonZone ? evolvedProjectileColor : enemyProjectileColor,
                 0.18f);
             Destroy(gameObject);
         }

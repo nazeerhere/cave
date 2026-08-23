@@ -65,6 +65,14 @@ namespace Cave.Combat
                 return;
             }
 
+            if (damageContext.IsPlayerDamage
+                && damageContext.HasTrait(DamageTrait.Melee)
+                && !damageContext.HasTrait(DamageTrait.AreaOfEffect))
+            {
+                EnemyStagger stagger = GetComponent<EnemyStagger>();
+                stagger?.TryStagger(StaggerStrength.Minor);
+            }
+
             if (flashRoutine != null)
             {
                 StopCoroutine(flashRoutine);

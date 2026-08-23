@@ -17,6 +17,7 @@ namespace Cave.Enemies
         private float difficultySpeedMultiplier = 1f;
         private float archetypeSpeedMultiplier = 1f;
         private float supportSpeedMultiplier = 1f;
+        private float brainSpeedMultiplier = 1f;
         private float combatMovementDirection;
         private float combatMovementUntil;
 
@@ -81,6 +82,7 @@ namespace Cave.Enemies
                 * difficultySpeedMultiplier
                 * archetypeSpeedMultiplier
                 * supportSpeedMultiplier
+                * brainSpeedMultiplier
                 * movementSpeedMultiplier;
         }
 
@@ -104,6 +106,20 @@ namespace Cave.Enemies
             supportSpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        public void SetBrainMoveSpeed(float requestedSpeed)
+        {
+            brainSpeedMultiplier = moveSpeed > 0f
+                ? Mathf.Max(0f, requestedSpeed) / moveSpeed
+                : 0f;
+        }
+
+        public void ClearBrainMovement()
+        {
+            combatMovementDirection = 0f;
+            combatMovementUntil = 0f;
+            brainSpeedMultiplier = 1f;
+        }
+
         public void ResetForRespawn()
         {
             startingX = body.position.x;
@@ -113,6 +129,7 @@ namespace Cave.Enemies
             combatMovementUntil = 0f;
             movementSpeedMultiplier = 1f;
             supportSpeedMultiplier = 1f;
+            brainSpeedMultiplier = 1f;
             combatMovementDirection = 0f;
             combatMovementUntil = 0f;
             body.velocity = Vector2.zero;
@@ -123,6 +140,7 @@ namespace Cave.Enemies
         {
             movementSpeedMultiplier = 1f;
             supportSpeedMultiplier = 1f;
+            brainSpeedMultiplier = 1f;
             if (body != null)
             {
                 body.velocity = Vector2.zero;

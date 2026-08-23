@@ -37,7 +37,13 @@ namespace Cave.Enemies
 
         private void Awake()
         {
-            GetComponent<EnemyArchetypeProfile>().AddRuntimeArchetype(EnemyArchetype.Tank);
+            EnemyArchetypeProfile profile = GetComponent<EnemyArchetypeProfile>();
+            if (profile == null)
+            {
+                profile = gameObject.AddComponent<EnemyArchetypeProfile>();
+            }
+
+            profile.AddRuntimeArchetype(EnemyArchetype.Tank);
             ApplyNonHealthIdentity();
         }
 

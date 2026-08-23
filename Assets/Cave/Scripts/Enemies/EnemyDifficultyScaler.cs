@@ -21,8 +21,15 @@ namespace Cave.Enemies
         private EnemyTank enemyTank;
         private EnemySwarm enemySwarm;
         private FlyingSwarmController flyingSwarm;
+        private EnemySkillEvolution skillEvolution;
+        private TrollJumpStomp trollJumpStomp;
 
         private void Awake()
+        {
+            CacheComponents();
+        }
+
+        private void CacheComponents()
         {
             damageable = GetComponent<Damageable>();
             enemyController = GetComponent<EnemyController>();
@@ -34,23 +41,71 @@ namespace Cave.Enemies
             enemyTank = GetComponent<EnemyTank>();
             enemySwarm = GetComponent<EnemySwarm>();
             flyingSwarm = GetComponent<FlyingSwarmController>();
-            poisonShooter = GetComponentInChildren<EnemyPoisonShooter>(true);
-            meleeCombat = GetComponentInChildren<EnemyMeleeCombat>(true);
+            skillEvolution = GetComponent<EnemySkillEvolution>();
+            trollJumpStomp = GetComponent<TrollJumpStomp>();
         }
 
         internal void Configure(WorldDifficultyManager manager)
         {
-            enemyTank = GetComponent<EnemyTank>();
-            enemySwarm = GetComponent<EnemySwarm>();
-            flyingSwarm = GetComponent<FlyingSwarmController>();
+            CacheComponents();
             Unsubscribe();
             difficultyManager = manager;
             Subscribe();
+            if (meleeCombat != null && meleeCombat.IsTrollPreset && trollJumpStomp == null)
+            {
+                trollJumpStomp = gameObject.AddComponent<TrollJumpStomp>();
+            }
+
+            EnsureMobBrain();
+
+            if (skillEvolution == null)
+            {
+                skillEvolution = gameObject.AddComponent<EnemySkillEvolution>();
+            }
+
+            skillEvolution.Configure(difficultyManager);
             ApplyForSpawn();
+        }
+
+        private void EnsureMobBrain()
+        {
+            if (enemyController == null || GetComponent<MobBrainBase>() != null)
+            {
+                return;
+            }
+
+            EnemyHealAbility heal = GetComponentInChildren<EnemyHealAbility>(true);
+            EnemyDamageBuffAbility buff = GetComponentInChildren<EnemyDamageBuffAbility>(true);
+            SwarmCaller summon = GetComponentInChildren<SwarmCaller>(true);
+            if (poisonShooter != null)
+            {
+                gameObject.AddComponent<DetectiveBrain>();
+            }
+            else if (meleeCombat != null && meleeCombat.IsTrollPreset)
+            {
+                gameObject.AddComponent<TrollBrain>();
+            }
+            else if (meleeCombat != null && meleeCombat.IsBrutePreset)
+            {
+                gameObject.AddComponent<BruteBrain>();
+            }
+            else if (summon != null && buff != null)
+            {
+                gameObject.AddComponent<NecromancerBrain>();
+            }
+            else if (heal != null && buff != null)
+            {
+                gameObject.AddComponent<WizardBrain>();
+            }
         }
 
         public void ApplyForSpawn()
         {
+            if (damageable == null)
+            {
+                CacheComponents();
+            }
+
             if (difficultyManager == null)
             {
                 return;
@@ -90,9 +145,10 @@ namespace Cave.Enemies
             if (meleeCombat != null)
             {
                 float tankDamageMultiplier = enemyTank != null ? enemyTank.DamageMultiplier : 1f;
-                meleeCombat.SetRuntimeDamageScale(
-                    tankDamageMultiplier
-                    * difficultyManager.GetStatScale(settings.EnemyDamageScalingStrength));
+                float meleeDamageScale = tankDamageMultiplier
+                    * difficultyManager.GetStatScale(settings.EnemyDamageScalingStrength);
+                meleeCombat.SetRuntimeDamageScale(meleeDamageScale);
+                trollJumpStomp?.SetRuntimeDamageScale(meleeDamageScale);
             }
 
             if (enemyController != null)

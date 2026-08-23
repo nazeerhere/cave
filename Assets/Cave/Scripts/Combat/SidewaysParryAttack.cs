@@ -233,6 +233,7 @@ namespace Cave.Combat
                 case ParryPhase.Perfect:
                     ApplyMeleeStagger(
                         damageContext.Source,
+                        StaggerStrength.Heavy,
                         perfectMeleeKnockback,
                         perfectEnemyStaggerDuration);
                     CompleteSuccessfulParry(ParryPhase.Perfect);
@@ -240,6 +241,7 @@ namespace Cave.Combat
                 case ParryPhase.Normal:
                     ApplyMeleeStagger(
                         damageContext.Source,
+                        StaggerStrength.Normal,
                         normalMeleeKnockback,
                         normalEnemyStaggerDuration);
                     CompleteSuccessfulParry(ParryPhase.Normal);
@@ -363,7 +365,11 @@ namespace Cave.Combat
             }
         }
 
-        private void ApplyMeleeStagger(GameObject source, float knockback, float staggerDuration)
+        private void ApplyMeleeStagger(
+            GameObject source,
+            StaggerStrength strength,
+            float knockback,
+            float staggerDuration)
         {
             if (source == null)
             {
@@ -371,7 +377,10 @@ namespace Cave.Combat
             }
 
             EnemyStagger stagger = source.GetComponentInParent<EnemyStagger>();
-            stagger?.TryStagger(staggerDuration);
+            if (stagger == null || !stagger.TryStagger(strength, staggerDuration))
+            {
+                return;
+            }
 
             if (knockback <= 0f)
             {
