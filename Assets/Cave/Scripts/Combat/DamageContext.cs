@@ -12,7 +12,10 @@ namespace Cave.Combat
         AreaOfEffect = 1 << 2,
         Piercing = 1 << 3,
         Melee = 1 << 4,
-        GuardBreak = 1 << 5
+        GuardBreak = 1 << 5,
+        StaggerNormal = 1 << 6,
+        StaggerHeavy = 1 << 7,
+        FrenzyCritical = 1 << 8
     }
 
     public interface IDeflectableDamageSource
@@ -23,6 +26,7 @@ namespace Cave.Combat
     public readonly struct DamageContext
     {
         private readonly PlayerResourceMastery masterySource;
+        private readonly PlayerPermanentProgression permanentProgressionSource;
         private readonly GameObject explicitSource;
         private readonly bool staminaMasteryEligible;
         private readonly bool manaMasteryEligible;
@@ -34,6 +38,9 @@ namespace Cave.Combat
             bool qualifiesForManaMastery)
         {
             masterySource = source;
+            permanentProgressionSource = source != null
+                ? source.GetComponent<PlayerPermanentProgression>()
+                : null;
             explicitSource = source != null ? source.gameObject : null;
             staminaMasteryEligible = qualifiesForStaminaMastery;
             manaMasteryEligible = qualifiesForManaMastery;
@@ -43,6 +50,7 @@ namespace Cave.Combat
         public DamageContext(GameObject source, DamageTrait traits)
         {
             masterySource = null;
+            permanentProgressionSource = null;
             explicitSource = source;
             staminaMasteryEligible = false;
             manaMasteryEligible = false;
@@ -51,12 +59,14 @@ namespace Cave.Combat
 
         private DamageContext(
             PlayerResourceMastery source,
+            PlayerPermanentProgression progressionSource,
             GameObject sourceObject,
             bool qualifiesForStaminaMastery,
             bool qualifiesForManaMastery,
             DamageTrait traits)
         {
             masterySource = source;
+            permanentProgressionSource = progressionSource;
             explicitSource = sourceObject;
             staminaMasteryEligible = qualifiesForStaminaMastery;
             manaMasteryEligible = qualifiesForManaMastery;
@@ -65,6 +75,7 @@ namespace Cave.Combat
 
         public bool IsPlayerDamage => masterySource != null;
         public GameObject Source => explicitSource;
+        public PlayerPermanentProgression PermanentProgressionSource => permanentProgressionSource;
         public DamageTrait Traits => damageTraits == 0 ? DamageTrait.Direct : damageTraits;
 
         public bool HasTrait(DamageTrait trait)
@@ -76,6 +87,7 @@ namespace Cave.Combat
         {
             return new DamageContext(
                 masterySource,
+                permanentProgressionSource,
                 explicitSource,
                 staminaMasteryEligible,
                 manaMasteryEligible,

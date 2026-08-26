@@ -1,4 +1,6 @@
 using UnityEngine;
+using Cave.Player;
+using Cave.World;
 
 namespace Cave.CameraSystem
 {
@@ -10,8 +12,23 @@ namespace Cave.CameraSystem
 
         private Vector3 velocity;
 
+        public void SetTarget(Transform newTarget)
+        {
+            target = newTarget;
+            velocity = Vector3.zero;
+        }
+
         private void LateUpdate()
         {
+            Transform authoritativePlayer = PlayerRunPersistence.CurrentPlayerTransform;
+            if (authoritativePlayer != null
+                && (target == null || target.GetComponentInParent<PlayerHealth>() != null)
+                && target != authoritativePlayer)
+            {
+                target = authoritativePlayer;
+                velocity = Vector3.zero;
+            }
+
             if (target == null)
             {
                 return;

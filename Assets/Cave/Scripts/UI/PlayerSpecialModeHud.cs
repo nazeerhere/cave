@@ -1,6 +1,7 @@
 using System;
 using Cave.Audio;
 using Cave.Combat;
+using Cave.InputSystem;
 using Cave.Player;
 using Cave.Projectiles;
 using UnityEngine;
@@ -32,6 +33,10 @@ namespace Cave.UI
         [SerializeField] private Text manaPotionText;
         [SerializeField] private Button healthPotionButton;
         [SerializeField] private Button manaPotionButton;
+        [SerializeField] private Text landmineText;
+        [SerializeField] private Button landmineButton;
+        [SerializeField] private RectTransform permanentProgressionMount;
+        [SerializeField] private RectTransform generalShardSummaryMount;
 
         private static readonly SpecialMode[] Modes =
         {
@@ -48,6 +53,10 @@ namespace Cave.UI
         private PlayerHealth playerHealth;
         private PlayerMana playerMana;
         private PlayerProjectileLauncher projectileLauncher;
+        private PlayerLandmineInventory landmines;
+
+        public RectTransform PermanentProgressionMount => permanentProgressionMount;
+        public RectTransform GeneralShardSummaryMount => generalShardSummaryMount;
 
         public void Configure(
             Text modeText,
@@ -67,7 +76,11 @@ namespace Cave.UI
             Text healthProductText,
             Text manaProductText,
             Button healthBuyButton,
-            Button manaBuyButton)
+            Button manaBuyButton,
+            Text landmineProductText,
+            Button landmineBuyButton,
+            RectTransform progressionMount,
+            RectTransform shardSummaryMount)
         {
             currentModeText = modeText;
             selectionCurrentModeText = panelModeText;
@@ -87,12 +100,17 @@ namespace Cave.UI
             manaPotionText = manaProductText;
             healthPotionButton = healthBuyButton;
             manaPotionButton = manaBuyButton;
+            landmineText = landmineProductText;
+            landmineButton = landmineBuyButton;
+            permanentProgressionMount = progressionMount;
+            generalShardSummaryMount = shardSummaryMount;
 
             toggleButton.onClick.AddListener(ToggleSelectionPanel);
             modesTabButton.onClick.AddListener(() => ShowTab(true));
             shopTabButton.onClick.AddListener(() => ShowTab(false));
             healthPotionButton.onClick.AddListener(BuyHealthPotion);
             manaPotionButton.onClick.AddListener(BuyManaPotion);
+            landmineButton.onClick.AddListener(BuyLandmine);
 
             for (int index = 0; index < modeButtons.Length && index < Modes.Length; index++)
             {
@@ -105,7 +123,7 @@ namespace Cave.UI
             }
 
             ShowTab(true);
-            selectionPanel.SetActive(false);
+            selectionPanel.SetActive(true);
         }
 
         public void Bind(PlayerSpecialMode modeState, PlayerCurrency currency)
@@ -138,6 +156,7 @@ namespace Cave.UI
             resourceShop = shop;
             playerHealth = health;
             playerMana = mana;
+            landmines = shop != null ? shop.GetComponent<PlayerLandmineInventory>() : null;
             SubscribeProgression();
             RefreshAll();
         }
@@ -161,6 +180,14 @@ namespace Cave.UI
             }
 
             BindLauncher(FindObjectOfType<PlayerProjectileLauncher>());
+        }
+
+        private void Update()
+        {
+            if (GameInput.GameplayInputEnabled && UnityEngine.Input.GetKeyDown(KeyCode.Tab))
+            {
+                ToggleSelectionPanel();
+            }
         }
 
         private void SelectMode(SpecialMode selectedMode)
@@ -236,17 +263,17 @@ namespace Cave.UI
                 return;
             }
 
-            if (resourceShop.TryBuyHealthPotion(out int restored))
+            if (resourceShop.TryBuyHealthPotion(out int owned))
             {
-                SetFeedback("Health Potion restored " + restored + " health.");
+                SetFeedback("Health Potion stored. Owned: " + owned + ".");
                 CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
             }
             else
             {
-                SetFeedback(playerHealth != null && playerHealth.CurrentHealth >= playerHealth.MaxHealth
-                    ? "Health is already full. No currency spent."
-                    : "Cannot afford Health Potion. No currency spent.");
+                SetFeedback("Cannot afford Health Potion. No currency spent.");
             }
+
+            RefreshShop();
         }
 
         private void BuyManaPotion()
@@ -256,17 +283,39 @@ namespace Cave.UI
                 return;
             }
 
-            if (resourceShop.TryBuyManaPotion(out float restored))
+            if (resourceShop.TryBuyManaPotion(out int owned))
             {
-                SetFeedback("Mana Potion restored " + Mathf.RoundToInt(restored) + " mana.");
+                SetFeedback("Mana Potion stored. Owned: " + owned + ".");
                 CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
             }
             else
             {
-                SetFeedback(playerMana != null && playerMana.CurrentMana >= playerMana.MaximumMana
-                    ? "Mana is already full. No currency spent."
-                    : "Cannot afford Mana Potion. No currency spent.");
+                SetFeedback("Cannot afford Mana Potion. No currency spent.");
             }
+
+            RefreshShop();
+        }
+
+        private void BuyLandmine()
+        {
+            if (resourceShop == null)
+            {
+                return;
+            }
+
+            if (resourceShop.TryBuyLandmine())
+            {
+                SetFeedback(
+                    "Landmine purchased. Place with "
+                    + GameInput.Bindings.GetBinding(GameAction.PlaceLandmine).Primary + ".");
+                CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
+            }
+            else
+            {
+                SetFeedback("Cannot afford Landmine. No currency spent.");
+            }
+
+            RefreshShop();
         }
 
         private void ToggleSelectionPanel()
@@ -275,6 +324,11 @@ namespace Cave.UI
             {
                 selectionPanel.SetActive(!selectionPanel.activeSelf);
             }
+        }
+
+        public void ToggleSelectionPanelFromUi()
+        {
+            ToggleSelectionPanel();
         }
 
         private void ShowTab(bool showModes)
@@ -403,7 +457,8 @@ namespace Cave.UI
                 healthPotionText.text = "HEALTH POTION\nRestore: "
                     + Mathf.RoundToInt(resourceShop.HealthPotionRestorePercent * 100f)
                     + "%  |  Cost: " + resourceShop.HealthPotionCost
-                    + "\nHealth: " + playerHealth.CurrentHealth + " / " + playerHealth.MaxHealth;
+                    + "\nOwned: " + resourceShop.OwnedHealthPotions + "  |  Use: "
+                    + GameInput.Bindings.GetBinding(GameAction.UseHealthPotion).Primary;
             }
 
             if (manaPotionText != null && playerMana != null)
@@ -411,8 +466,16 @@ namespace Cave.UI
                 manaPotionText.text = "MANA POTION\nRestore: "
                     + Mathf.RoundToInt(resourceShop.ManaPotionRestorePercent * 100f)
                     + "%  |  Cost: " + resourceShop.ManaPotionCost
-                    + "\nMana: " + Mathf.RoundToInt(playerMana.CurrentMana)
-                    + " / " + Mathf.RoundToInt(playerMana.MaximumMana);
+                    + "\nOwned: " + resourceShop.OwnedManaPotions + "  |  Use: "
+                    + GameInput.Bindings.GetBinding(GameAction.UseManaPotion).Primary;
+            }
+
+            if (landmineText != null)
+            {
+                landmineText.text = "LANDMINE\nCrowd control  |  Cost: "
+                    + resourceShop.LandmineCost
+                    + "\nOwned: " + resourceShop.OwnedLandmines + "  |  Place: "
+                    + GameInput.Bindings.GetBinding(GameAction.PlaceLandmine).Primary;
             }
         }
 
@@ -528,6 +591,11 @@ namespace Cave.UI
             {
                 playerMana.ManaChanged += HandleManaChanged;
             }
+
+            if (landmines != null)
+            {
+                landmines.ConsumableQuantityChanged += HandleConsumableQuantityChanged;
+            }
         }
 
         private void UnsubscribeProgression()
@@ -547,6 +615,16 @@ namespace Cave.UI
             {
                 playerMana.ManaChanged -= HandleManaChanged;
             }
+
+            if (landmines != null)
+            {
+                landmines.ConsumableQuantityChanged -= HandleConsumableQuantityChanged;
+            }
+        }
+
+        private void HandleConsumableQuantityChanged(PlayerConsumableType type, int owned)
+        {
+            RefreshShop();
         }
 
         private void SetFeedback(string message)

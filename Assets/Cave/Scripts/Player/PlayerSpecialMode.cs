@@ -61,5 +61,16 @@ namespace Cave.Player
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }
         }
+
+        public void ResetRunMode()
+        {
+            if (CurrentMode == startingMode)
+            {
+                return;
+            }
+
+            CurrentMode = startingMode;
+            SpecialModeChanged?.Invoke(CurrentMode);
+        }
     }
 }

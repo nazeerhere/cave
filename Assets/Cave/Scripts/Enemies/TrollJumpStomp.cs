@@ -20,6 +20,7 @@ namespace Cave.Enemies
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(EnemyMeleeCombat))]
     public sealed class TrollJumpStomp : MonoBehaviour,
         IEnemyInterruptible,
+        IEnemyInterruptPolicy,
         IEnemySkillEvolutionReceiver
     {
         [Header("Evolution Unlock")]
@@ -62,6 +63,8 @@ namespace Cave.Enemies
         [Header("Current State (Read Only)")]
         [SerializeField] private TrollJumpStompState currentState = TrollJumpStompState.Locked;
         [SerializeField] private Vector2 committedLandingPosition;
+        [SerializeField] private bool isCommitted;
+        [SerializeField] private bool isInterruptible = true;
 
         private readonly HashSet<PlayerHealth> damagedPlayers = new HashSet<PlayerHealth>();
         private Rigidbody2D body;
@@ -71,6 +74,7 @@ namespace Cave.Enemies
         private EnemyDefenseController defense;
         private EnemyStagger stagger;
         private EnemyDamageModifiers damageModifiers;
+        private CommittedAttackCollisionPhasing collisionPhasing;
         private PlayerHealth target;
         private Coroutine stompRoutine;
         private EnemyEvolutionStage evolutionStage;
@@ -100,12 +104,25 @@ namespace Cave.Enemies
             defense = GetComponent<EnemyDefenseController>();
             stagger = GetComponent<EnemyStagger>();
             damageModifiers = GetComponent<EnemyDamageModifiers>();
+            collisionPhasing = GetComponent<CommittedAttackCollisionPhasing>();
+            if (collisionPhasing == null)
+            {
+                collisionPhasing = gameObject.AddComponent<CommittedAttackCollisionPhasing>();
+            }
             restingScale = transform.localScale;
             restingGravityScale = body.gravityScale;
         }
 
+        private void Start()
+        {
+            defense = GetComponent<EnemyDefenseController>();
+            stagger = GetComponent<EnemyStagger>();
+            damageModifiers = GetComponent<EnemyDamageModifiers>();
+        }
+
         private void Update()
         {
+            RefreshCommitmentDebug();
             if (brainControlled || Time.time < nextDecisionTime)
             {
                 return;
@@ -171,6 +188,13 @@ namespace Cave.Enemies
             brainControlled = controlled;
         }
 
+        public bool CanBeInterruptedBy(StaggerStrength strength)
+        {
+            return currentState != TrollJumpStompState.Airborne
+                && currentState != TrollJumpStompState.Impact
+                && currentState != TrollJumpStompState.Recovering;
+        }
+
         private IEnumerator PerformStomp()
         {
             float totalCommitment = jumpWindup + jumpTravelDuration + landingRecovery;
@@ -194,6 +218,7 @@ namespace Cave.Enemies
             }
 
             currentState = TrollJumpStompState.Airborne;
+            collisionPhasing?.Begin(bodyCollider);
             transform.localScale = restingScale;
             Vector2 start = body.position;
             restingGravityScale = body.gravityScale;
@@ -216,6 +241,7 @@ namespace Cave.Enemies
             body.gravityScale = restingGravityScale;
             currentState = TrollJumpStompState.Impact;
             ResolveImpact();
+            collisionPhasing?.End();
 
             transform.localScale = restingScale * landingScale;
             yield return new WaitForSeconds(0.12f);
@@ -233,6 +259,19 @@ namespace Cave.Enemies
             damagedPlayers.Clear();
             AreaPulseEffect.Create(body.position, impactRadius, landingColor, 0.32f);
             AreaPulseEffect.Create(body.position, impactRadius * 0.45f, Color.white, 0.18f);
+            CombatShapeEffect.Create(
+                body.position + Vector2.left * impactRadius * 0.35f,
+                CombatShape.Arrow,
+                impactRadius * 0.32f,
+                landingColor,
+                0.24f,
+                180f);
+            CombatShapeEffect.Create(
+                body.position + Vector2.right * impactRadius * 0.35f,
+                CombatShape.Arrow,
+                impactRadius * 0.32f,
+                landingColor,
+                0.24f);
 
             foreach (Collider2D overlap in Physics2D.OverlapCircleAll(
                 body.position,
@@ -405,8 +444,15 @@ namespace Cave.Enemies
                 : TrollJumpStompState.Locked;
         }
 
+        private void RefreshCommitmentDebug()
+        {
+            isInterruptible = CanBeInterruptedBy(StaggerStrength.Normal);
+            isCommitted = !isInterruptible && stompRoutine != null;
+        }
+
         private void RestorePhysicalState()
         {
+            collisionPhasing?.End();
             transform.localScale = restingScale;
             if (body != null)
             {

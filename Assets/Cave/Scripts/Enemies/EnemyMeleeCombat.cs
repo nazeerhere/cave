@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Cave.Audio;
 using Cave.Combat;
 using Cave.Player;
@@ -40,7 +41,9 @@ namespace Cave.Enemies
     [RequireComponent(typeof(Damageable), typeof(EnemyArchetypeProfile))]
     public sealed class EnemyMeleeCombat : MonoBehaviour,
         IEnemyInterruptible,
-        IEnemySkillEvolutionReceiver
+        IEnemyInterruptPolicy,
+        IEnemySkillEvolutionReceiver,
+        ICounterableGuardBreak
     {
         [Header("Targeting")]
         [SerializeField] private PlayerHealth target;
@@ -77,6 +80,9 @@ namespace Cave.Enemies
         [SerializeField, Min(0.01f)] private float guardBreakActiveDuration = 0.12f;
         [SerializeField, Min(0f)] private float guardBreakRecovery = 0.65f;
         [SerializeField, Min(0f)] private float guardBreakCooldown = 1.25f;
+        [SerializeField, Min(0.05f)] private float guardBreakCounterWindow = 0.22f;
+        [SerializeField, Min(0f)] private float counteredRecovery = 0.45f;
+        [SerializeField, Range(0f, 1f)] private float guardBreakFollowUpChance = 0.4f;
 
         [Header("Troll Heavy Basic Overrides")]
         [SerializeField] private bool useTrollHeavyOverrides = true;
@@ -93,11 +99,13 @@ namespace Cave.Enemies
         [Header("Troll Charged Heavy Overrides")]
         [SerializeField, Min(1)] private int trollChargedDamage = 6;
         [SerializeField, Min(0.1f)] private float trollChargedRange = 1.8f;
+        [SerializeField, Min(0.1f)] private float trollGuardBreakRange = 1.2f;
         [SerializeField, Min(0f)] private float trollChargedWindup = 1.1f;
         [SerializeField, Min(0.01f)] private float trollChargedActiveDuration = 0.16f;
         [SerializeField, Min(0f)] private float trollChargedRecovery = 0.85f;
         [SerializeField, Min(0f)] private float trollChargedCooldown = 1.45f;
         [SerializeField, Range(0f, 1f)] private float trollChargedFeintChance = 0.33f;
+        [SerializeField, Range(0f, 1f)] private float trollHeavyToGuardBreakSoftFeintChance = 0.25f;
         [SerializeField, Range(0.1f, 0.9f)] private float trollChargedCommitPoint = 0.7f;
         [SerializeField, Min(0f)] private float trollChargedKnockback = 12f;
         [SerializeField, Min(0f)] private float trollKnockbackControlLock = 0.2f;
@@ -109,11 +117,14 @@ namespace Cave.Enemies
 
         [Header("Optional Weapon Presentation")]
         [SerializeField] private Transform weaponPresentation;
+        [SerializeField] private Transform attackOrigin;
+        [SerializeField, Min(0f)] private float maximumAttackOriginForwardOffset = 0.85f;
         [SerializeField] private float basicDrawbackAngle = 32f;
         [SerializeField] private float basicStrikeAngle = -28f;
         [SerializeField] private float chargedDrawbackAngle = 62f;
         [SerializeField] private float chargedStrikeAngle = -48f;
         [SerializeField, Min(1f)] private float chargedWeaponScale = 1.15f;
+        [SerializeField] private float trollChargedVerticalOffset = -0.18f;
 
         [Header("Telegraph Hooks")]
         [SerializeField] private Color basicTelegraphColor = new Color(0.35f, 0.72f, 1f, 1f);
@@ -125,6 +136,9 @@ namespace Cave.Enemies
         [SerializeField] private EnemyMeleeDecision lastRequestedDecision;
         [SerializeField] private EnemyMeleeUseRejection lastUseRejection;
         [SerializeField] private bool attackCommitted;
+        [SerializeField] private EnemyGuardBreakState guardBreakState = EnemyGuardBreakState.Ready;
+        [SerializeField] private EnemyMeleeDecision currentSequenceDecision;
+        [SerializeField] private bool currentlyInterruptible = true;
 
         [Header("Charged Attack Evolution")]
         [SerializeField, Min(1f)] private float evolutionOneChargedDamageMultiplier = 1.15f;
@@ -152,6 +166,10 @@ namespace Cave.Enemies
         private int runtimeTrollBasicDamage;
         private int runtimeTrollChargedDamage;
         private float runtimeDamageScale = 1f;
+        private float runtimeInheritanceAttackSpeedScale = 1f;
+        private bool skeletonGuardBreakEnabled;
+        private bool skeletonGeneralRank;
+        private float skeletonGeneralBasicFollowUpChance;
         private EnemyEvolutionStage evolutionStage;
         private bool brainControlled;
         private bool trollHeavyModeRequested;
@@ -165,19 +183,44 @@ namespace Cave.Enemies
         private float sequenceFinalCooldown;
         private Quaternion restingWeaponRotation;
         private Vector3 restingWeaponScale;
-        private EnemyMeleeDecision currentSequenceDecision;
         private float currentSequenceRecovery;
         private float currentSequenceCooldown;
+        private float reactiveFeintChanceBonus;
+        private bool guardBreakCountered;
+        private bool guardBreakStepSucceeded;
+        private Transform[] mirroredPresentations;
+        private Vector3[] authoredPresentationPositions;
+        private Quaternion[] authoredPresentationRotations;
+        private Vector3[] authoredPresentationScales;
+        private float authoredPresentationFacing = 1f;
+        private float combatFacingDirection = 1f;
+        private bool animatePersistentWeaponOnBasic;
 
         public bool IsAttacking => attackRoutine != null;
         public bool IsBrutePreset => probabilityPreset == EnemyMeleePreset.Brute;
         public bool IsTrollPreset => probabilityPreset == EnemyMeleePreset.Troll;
         public float BasicAttackRange => ResolveAttackRange(EnemyMeleeDecision.Basic);
+        public float BasicEngagementRange
+        {
+            get
+            {
+                Vector2 origin = ResolveCombatOriginPosition();
+                float originForwardOffset =
+                    (origin.x - transform.position.x) * combatFacingDirection;
+                return ResolveAttackRange(EnemyMeleeDecision.Basic)
+                    + Mathf.Max(0f, originForwardOffset);
+            }
+        }
         public float ChargedAttackRange => ResolveAttackRange(EnemyMeleeDecision.Charged);
         public float GuardBreakAttackRange => ResolveAttackRange(EnemyMeleeDecision.GuardBreak);
         public float MaximumCombatRange => MaximumAttackRange();
         public EnemyMeleeUseRejection LastUseRejection => lastUseRejection;
         public bool IsAttackCommitted => attackCommitted;
+        public bool IsGuardBreakInProgress => guardBreakState == EnemyGuardBreakState.Windup
+            || guardBreakState == EnemyGuardBreakState.CounterWindow
+            || guardBreakState == EnemyGuardBreakState.Committed;
+        public bool IsGuardBreakCounterWindowActive => guardBreakState
+            == EnemyGuardBreakState.CounterWindow;
         public bool IsAvailableForMajorAbility => attackRoutine == null
             && Time.time >= nextActionTime
             && (stagger == null || stagger.CanAct)
@@ -185,10 +228,7 @@ namespace Cave.Enemies
 
         private void Awake()
         {
-            movement = GetComponent<EnemyController>();
-            defense = GetComponent<EnemyDefenseController>();
-            stagger = GetComponent<EnemyStagger>();
-            damageModifiers = GetComponent<EnemyDamageModifiers>();
+            RefreshRuntimeDependencies();
             EnemyArchetypeProfile profile = GetComponent<EnemyArchetypeProfile>();
             if (profile == null)
             {
@@ -224,10 +264,26 @@ namespace Cave.Enemies
                 restingWeaponRotation = weaponPresentation.localRotation;
                 restingWeaponScale = weaponPresentation.localScale;
             }
+
+            CacheMirroredPresentations();
+        }
+
+        private void Start()
+        {
+            RefreshRuntimeDependencies();
+        }
+
+        private void RefreshRuntimeDependencies()
+        {
+            movement = GetComponent<EnemyController>();
+            defense = GetComponent<EnemyDefenseController>();
+            stagger = GetComponent<EnemyStagger>();
+            damageModifiers = GetComponent<EnemyDamageModifiers>();
         }
 
         private void Update()
         {
+            currentlyInterruptible = CanBeInterruptedBy(StaggerStrength.Normal);
             EnsureTarget();
             if (brainControlled)
             {
@@ -285,11 +341,13 @@ namespace Cave.Enemies
             }
 
             lastUseRejection = EnemyMeleeUseRejection.None;
-            if (UseTrollHeavyAttacks
-                && (decision == EnemyMeleeDecision.Basic
-                    || decision == EnemyMeleeDecision.Charged))
+            if (UseTrollHeavyAttacks)
             {
                 attackRoutine = StartCoroutine(PerformTrollAttackSequence(decision));
+            }
+            else if (decision == EnemyMeleeDecision.GuardBreak)
+            {
+                attackRoutine = StartCoroutine(PerformStandaloneGuardBreak());
             }
             else
             {
@@ -335,6 +393,49 @@ namespace Cave.Enemies
             brainControlled = controlled;
         }
 
+        public void SetCombatFacing(float horizontalDirection)
+        {
+            if (Mathf.Abs(horizontalDirection) <= 0.01f || IsAttacking)
+            {
+                return;
+            }
+
+            combatFacingDirection = Mathf.Sign(horizontalDirection);
+            ApplyPresentationFacing();
+        }
+
+        public void SetDefensiveWeaponPose(float angle)
+        {
+            if (weaponPresentation == null || IsAttacking)
+            {
+                return;
+            }
+
+            ApplyPresentationFacing();
+            weaponPresentation.localRotation = restingWeaponRotation
+                * Quaternion.Euler(0f, 0f, angle * combatFacingDirection);
+        }
+
+        public void RestoreCombatPresentation()
+        {
+            if (!IsAttacking)
+            {
+                ApplyPresentationFacing();
+            }
+        }
+
+        public bool CanBeInterruptedBy(StaggerStrength strength)
+        {
+            return !(UseTrollHeavyAttacks
+                && currentSequenceDecision == EnemyMeleeDecision.Charged
+                && attackCommitted);
+        }
+
+        public void SetReactiveFeintChanceBonus(float bonus)
+        {
+            reactiveFeintChanceBonus = Mathf.Clamp01(bonus);
+        }
+
         private EnemyMeleeUseRejection GetUseRejection(
             EnemyMeleeDecision decision,
             PlayerHealth requestedTarget)
@@ -375,8 +476,7 @@ namespace Cave.Enemies
                 return EnemyMeleeUseRejection.OutOfRange;
             }
 
-            if (decision == EnemyMeleeDecision.Feint
-                || decision == EnemyMeleeDecision.GuardBreak)
+            if (decision == EnemyMeleeDecision.Feint)
             {
                 SidewaysParryAttack guard = target.GetComponent<SidewaysParryAttack>();
                 if (guard == null || !guard.IsGuardHeld)
@@ -390,6 +490,12 @@ namespace Cave.Enemies
 
         private bool PassesBrainAttemptChance(EnemyMeleeDecision decision, bool guardHeld)
         {
+            if (probabilityPreset == EnemyMeleePreset.Skeleton
+                && decision == EnemyMeleeDecision.GuardBreak)
+            {
+                return skeletonGuardBreakEnabled;
+            }
+
             float chance;
             switch (decision)
             {
@@ -403,7 +509,9 @@ namespace Cave.Enemies
                     chance = guardHeld ? ResolveFeintChance() : 0f;
                     break;
                 case EnemyMeleeDecision.GuardBreak:
-                    chance = guardHeld ? ResolveGuardBreakChance() : 0f;
+                    chance = guardHeld
+                        ? ResolveGuardBreakChance()
+                        : ResolveGuardBreakChance() * 0.35f;
                     break;
                 default:
                     return true;
@@ -416,11 +524,17 @@ namespace Cave.Enemies
         {
             sequenceFinalCooldown = 0f;
             attackCommitted = false;
+            guardBreakStepSucceeded = false;
             yield return PerformTrollAttackStep(openingDecision, true);
 
             if (attackStepFeinted)
             {
                 if (brainMaximumChainDepth > 0
+                    && TryChooseHeavyGuardBreakSoftFeint(openingDecision, out EnemyMeleeDecision softFeint))
+                {
+                    yield return PerformTrollAttackStep(softFeint, false);
+                }
+                else if (brainMaximumChainDepth > 0
                     && TryChooseTrollFollowUp(openingDecision, true, out EnemyMeleeDecision followUp))
                 {
                     yield return PerformTrollAttackStep(followUp, false);
@@ -434,8 +548,12 @@ namespace Cave.Enemies
             }
             else if (brainMaximumChainDepth > 0
                 && (openingDecision == EnemyMeleeDecision.Basic
-                    || openingDecision == EnemyMeleeDecision.Charged)
-                && Random.value < brainPostAttackFollowUpChance
+                    || openingDecision == EnemyMeleeDecision.Charged
+                    || (openingDecision == EnemyMeleeDecision.GuardBreak
+                        && guardBreakStepSucceeded))
+                && Random.value < (openingDecision == EnemyMeleeDecision.GuardBreak
+                    ? guardBreakFollowUpChance
+                    : brainPostAttackFollowUpChance)
                 && TryChooseTrollFollowUp(
                     openingDecision,
                     false,
@@ -460,11 +578,15 @@ namespace Cave.Enemies
             currentSequenceRecovery = attack.Recovery;
             currentSequenceCooldown = attack.Cooldown;
             attackStepFeinted = false;
+            if (decision == EnemyMeleeDecision.GuardBreak)
+            {
+                yield return PerformGuardBreakStep(attack);
+                yield break;
+            }
+
             bool isFeintable = allowFeint
                 && (decision == EnemyMeleeDecision.Basic
                     || decision == EnemyMeleeDecision.Charged);
-            bool shouldFeint = isFeintable
-                && Random.value < ResolveTrollFeintChance(decision);
             float commitDelay = isFeintable
                 ? attack.Windup * attack.CommitPoint
                 : attack.Windup;
@@ -473,14 +595,26 @@ namespace Cave.Enemies
             defense?.SuspendForMajorAbility(
                 attack.Windup + attack.ActiveDuration + attack.Recovery);
             ShowTelegraph(attack.TelegraphColor, attack.TelegraphScale);
-            SetWeaponPose(attack.DrawbackAngle, attack.WeaponScale);
-            Cave.Combat.AreaPulseEffect.Create(
+            SetWeaponPose(
+                attack.DrawbackAngle,
+                attack.WeaponScale,
+                attack.WeaponVerticalOffset);
+            float facing = ResolveTargetFacing();
+            CombatShapeEffect.Create(
                 transform.position,
+                decision == EnemyMeleeDecision.Charged
+                    ? CombatShape.Wedge
+                    : CombatShape.Arc,
                 attack.Range,
                 attack.TelegraphColor,
-                Mathf.Max(0.15f, attack.Windup));
+                Mathf.Max(0.15f, attack.Windup),
+                facing < 0f ? 180f : 0f);
 
             yield return new WaitForSeconds(commitDelay);
+            // The choice remains open until the configured commit point. This lets
+            // the Troll respond to a newly raised guard without reading future input.
+            bool shouldFeint = isFeintable
+                && Random.value < ResolveTrollFeintChance(decision);
             if (shouldFeint)
             {
                 attackStepFeinted = true;
@@ -488,11 +622,13 @@ namespace Cave.Enemies
                 ShowTelegraph(feintTelegraphColor, 0.96f);
                 RestoreWeaponPose();
                 CaveSfx.Play(CaveSfxCue.Whoosh, 0.35f);
-                Cave.Combat.AreaPulseEffect.Create(
+                CombatShapeEffect.Create(
                     transform.position,
+                    CombatShape.Chevron,
                     Mathf.Max(0.5f, attack.Range * 0.55f),
                     feintTelegraphColor,
-                    Mathf.Max(0.12f, feintDelay));
+                    Mathf.Max(0.12f, feintDelay),
+                    facing < 0f ? 180f : 0f);
                 yield return new WaitForSeconds(feintDelay);
                 RestoreFeedback();
                 yield break;
@@ -509,7 +645,10 @@ namespace Cave.Enemies
                 attackCommitted = true;
             }
 
-            SetWeaponPose(attack.StrikeAngle, attack.WeaponScale);
+            SetWeaponPose(
+                attack.StrikeAngle,
+                attack.WeaponScale,
+                attack.WeaponVerticalOffset);
             ResolveTrollAttackHit(attack);
             yield return new WaitForSeconds(attack.ActiveDuration);
             RestoreFeedback();
@@ -528,9 +667,7 @@ namespace Cave.Enemies
                 return;
             }
 
-            int resolvedDamage = damageModifiers != null
-                ? damageModifiers.ResolveDamage(attack.Damage)
-                : attack.Damage;
+            int resolvedDamage = ResolveModifiedDamage(attack.Damage);
             int healthBeforeHit = target.CurrentHealth;
             target.TryTakeDamage(
                 resolvedDamage,
@@ -552,6 +689,159 @@ namespace Cave.Enemies
             playerController?.ApplyExternalKnockback(
                 direction * attack.Knockback,
                 trollKnockbackControlLock);
+        }
+
+        private IEnumerator PerformStandaloneGuardBreak()
+        {
+            sequenceFinalCooldown = 0f;
+            attackCommitted = false;
+            yield return PerformGuardBreakStep(ResolveAttackProfile(EnemyMeleeDecision.GuardBreak));
+            RestoreFeedback();
+            RestoreWeaponPose();
+            attackCommitted = false;
+            nextActionTime = Time.time + Mathf.Max(0f, sequenceFinalCooldown);
+            attackRoutine = null;
+        }
+
+        private IEnumerator PerformGuardBreakStep(AttackProfile attack)
+        {
+            guardBreakCountered = false;
+            guardBreakStepSucceeded = false;
+            guardBreakState = EnemyGuardBreakState.Windup;
+            attackCommitted = false;
+            movement?.SuspendMovement(attack.Windup + attack.ActiveDuration + attack.Recovery);
+            defense?.SuspendForMajorAbility(
+                attack.Windup + attack.ActiveDuration + attack.Recovery);
+            ShowTelegraph(guardBreakTelegraphColor, attack.TelegraphScale);
+            SetWeaponPose(
+                attack.DrawbackAngle,
+                attack.WeaponScale,
+                attack.WeaponVerticalOffset);
+            PlayerGuardBreak playerGuardBreak = target != null
+                ? target.GetComponent<PlayerGuardBreak>()
+                : null;
+            playerGuardBreak?.ObserveIncomingGuardBreak(this);
+
+            float facing = ResolveTargetFacing();
+            Vector2 cuePosition = (Vector2)transform.position
+                + Vector2.right * facing * attack.Range * 0.42f;
+            CombatShapeEffect.Create(
+                cuePosition,
+                CombatShape.Arrow,
+                attack.Range * 0.62f,
+                guardBreakTelegraphColor,
+                Mathf.Max(0.15f, attack.Windup),
+                facing < 0f ? 180f : 0f);
+
+            float openDuration = Mathf.Min(
+                Mathf.Max(0.05f, guardBreakCounterWindow),
+                Mathf.Max(0.05f, attack.Windup));
+            float preCounterWindup = Mathf.Max(0f, attack.Windup - openDuration);
+            if (preCounterWindup > 0f)
+            {
+                yield return new WaitForSeconds(preCounterWindup);
+            }
+
+            guardBreakState = EnemyGuardBreakState.CounterWindow;
+            playerGuardBreak?.OpenCounterWindow(this, openDuration);
+            float counterClosesAt = Time.time + openDuration;
+            while (Time.time < counterClosesAt && !guardBreakCountered)
+            {
+                yield return null;
+            }
+
+            if (guardBreakCountered)
+            {
+                guardBreakState = EnemyGuardBreakState.Countered;
+                RestoreFeedback();
+                RestoreWeaponPose();
+                yield return new WaitForSeconds(counteredRecovery);
+                SetAbilityReadyTime(
+                    EnemyMeleeDecision.GuardBreak,
+                    Time.time + attack.Cooldown);
+                sequenceFinalCooldown = attack.Cooldown;
+                guardBreakState = EnemyGuardBreakState.Ready;
+                yield break;
+            }
+
+            guardBreakState = EnemyGuardBreakState.Committed;
+            attackCommitted = true;
+            SetWeaponPose(
+                attack.StrikeAngle,
+                attack.WeaponScale,
+                attack.WeaponVerticalOffset);
+            guardBreakStepSucceeded = ResolveGuardBreakHit(attack);
+            yield return new WaitForSeconds(attack.ActiveDuration);
+            RestoreFeedback();
+            RestoreWeaponPose();
+            guardBreakState = EnemyGuardBreakState.Recovering;
+            yield return new WaitForSeconds(attack.Recovery);
+
+            SetAbilityReadyTime(
+                EnemyMeleeDecision.GuardBreak,
+                Time.time + attack.Cooldown);
+            sequenceFinalCooldown = attack.Cooldown;
+            attackCommitted = false;
+            guardBreakState = EnemyGuardBreakState.Ready;
+        }
+
+        private bool ResolveGuardBreakHit(AttackProfile attack)
+        {
+            if (target == null || !IsTargetWithinRange(attack.Range))
+            {
+                return false;
+            }
+
+            int resolvedDamage = ResolveModifiedDamage(attack.Damage);
+            bool connected = target.TryTakeDamage(
+                resolvedDamage,
+                new DamageContext(gameObject, DamageTrait.Melee | DamageTrait.GuardBreak));
+            if (!connected)
+            {
+                return false;
+            }
+
+            Vector2 away = target.transform.position - transform.position;
+            target.GetComponent<PlayerGuardBreak>()?.ApplyEnemyGuardBreak(away);
+            CombatShapeEffect.Create(
+                target.transform.position,
+                CombatShape.Slash,
+                0.82f,
+                guardBreakTelegraphColor,
+                0.22f,
+                -25f * ResolveTargetFacing());
+            CaveSfx.Play(CaveSfxCue.Hit, 0.85f);
+            return true;
+        }
+
+        public bool TryCounterGuardBreak(GameObject counteringPlayer)
+        {
+            if (!IsGuardBreakCounterWindowActive
+                || guardBreakCountered
+                || target == null
+                || counteringPlayer != target.gameObject)
+            {
+                return false;
+            }
+
+            guardBreakCountered = true;
+            attackCommitted = false;
+            Vector2 away = transform.position - counteringPlayer.transform.position;
+            KnockbackReceiver receiver = GetComponent<KnockbackReceiver>();
+            receiver?.ApplyKnockback(
+                new Vector2(Mathf.Sign(away.x), 0.18f).normalized * 3f);
+            CombatShapeEffect.Create(
+                transform.position,
+                CombatShape.Diamond,
+                0.76f,
+                new Color(0.3f, 0.95f, 1f, 1f),
+                0.26f);
+            return true;
+        }
+
+        private float ResolveTargetFacing()
+        {
+            return combatFacingDirection;
         }
 
         private bool TryChooseTrollFollowUp(
@@ -576,6 +866,11 @@ namespace Cave.Enemies
             }
             else if (openingDecision == EnemyMeleeDecision.Basic)
             {
+                basic = CanUseSequenceFollowUp(
+                    EnemyMeleeDecision.Basic,
+                    true)
+                        ? followUpBasicWeight
+                        : 0f;
                 charged = CanUseSequenceFollowUp(EnemyMeleeDecision.Charged)
                     ? followUpChargedWeight
                     : 0f;
@@ -586,8 +881,19 @@ namespace Cave.Enemies
                     ? followUpBasicWeight
                     : 0f;
             }
+            else if (openingDecision == EnemyMeleeDecision.GuardBreak)
+            {
+                basic = CanUseSequenceFollowUp(EnemyMeleeDecision.Basic)
+                    ? followUpBasicWeight
+                    : 0f;
+                charged = CanUseSequenceFollowUp(EnemyMeleeDecision.Charged)
+                    ? followUpChargedWeight * 0.45f
+                    : 0f;
+            }
 
-            guardBreak = guardHeld && CanUseSequenceFollowUp(EnemyMeleeDecision.GuardBreak)
+            guardBreak = openingDecision != EnemyMeleeDecision.GuardBreak
+                && guardHeld
+                && CanUseSequenceFollowUp(EnemyMeleeDecision.GuardBreak)
                 ? followUpGuardBreakWeight
                 : 0f;
             float total = basic + charged + guardBreak;
@@ -614,14 +920,26 @@ namespace Cave.Enemies
             return true;
         }
 
-        private bool CanUseSequenceFollowUp(EnemyMeleeDecision decision)
+        private bool TryChooseHeavyGuardBreakSoftFeint(
+            EnemyMeleeDecision openingDecision,
+            out EnemyMeleeDecision decision)
+        {
+            decision = EnemyMeleeDecision.GuardBreak;
+            return openingDecision == EnemyMeleeDecision.Charged
+                && IsTargetGuarding()
+                && Random.value < trollHeavyToGuardBreakSoftFeintChance
+                && CanUseSequenceFollowUp(EnemyMeleeDecision.GuardBreak);
+        }
+
+        private bool CanUseSequenceFollowUp(
+            EnemyMeleeDecision decision,
+            bool ignoreAbilityCooldown = false)
         {
             return target != null
                 && target.gameObject.activeInHierarchy
                 && (stagger == null || stagger.CanAct)
-                && Time.time >= GetAbilityReadyTime(decision)
-                && IsTargetWithinRange(ResolveAttackRange(decision))
-                && (decision != EnemyMeleeDecision.GuardBreak || IsTargetGuarding());
+                && (ignoreAbilityCooldown || Time.time >= GetAbilityReadyTime(decision))
+                && IsTargetWithinRange(ResolveAttackRange(decision));
         }
 
         private float ResolveTrollFeintChance(EnemyMeleeDecision decision)
@@ -632,6 +950,14 @@ namespace Cave.Enemies
             if (IsTargetGuarding())
             {
                 chance += brainGuardHeldFeintChanceBonus;
+            }
+
+            PlayerAttackState playerAttack = target != null
+                ? target.GetComponent<PlayerAttackState>()
+                : null;
+            if (playerAttack != null && playerAttack.IsActivelyAttacking)
+            {
+                chance += reactiveFeintChanceBonus;
             }
 
             return Mathf.Clamp01(chance);
@@ -686,18 +1012,13 @@ namespace Cave.Enemies
                         1.07f);
                     break;
                 case EnemyMeleeDecision.GuardBreak:
-                    yield return PerformAttack(
-                        runtimeGuardBreakDamage,
-                        guardBreakRange,
-                        guardBreakWindup,
-                        guardBreakActiveDuration,
-                        guardBreakRecovery,
-                        guardBreakCooldown,
-                        DamageTrait.GuardBreak,
-                        guardBreakTelegraphColor,
-                        1.18f);
+                    yield return PerformStandaloneGuardBreak();
                     break;
                 default:
+                {
+                    bool useGeneralFollowUp = skeletonGeneralRank
+                        && skeletonGeneralBasicFollowUpChance > 0f
+                        && Random.value < skeletonGeneralBasicFollowUpChance;
                     yield return PerformAttack(
                         runtimeBasicDamage,
                         basicRange,
@@ -708,8 +1029,44 @@ namespace Cave.Enemies
                         DamageTrait.Direct,
                         basicTelegraphColor,
                         1.07f);
+                    if (useGeneralFollowUp
+                        && target != null
+                        && target.gameObject.activeInHierarchy
+                        && target.CurrentHealth > 0
+                        && IsTargetWithinRange(basicRange))
+                    {
+                        if (skeletonGuardBreakEnabled && IsTargetGuarding())
+                        {
+                            sequenceFinalCooldown = 0f;
+                            yield return PerformGuardBreakStep(
+                                ResolveAttackProfile(EnemyMeleeDecision.GuardBreak));
+                            float attackSpeed = Mathf.Max(
+                                0.01f,
+                                runtimeInheritanceAttackSpeedScale);
+                            nextActionTime = Mathf.Max(
+                                nextActionTime,
+                                Time.time + guardBreakCooldown / attackSpeed);
+                        }
+                        else
+                        {
+                            yield return PerformAttack(
+                                runtimeBasicDamage,
+                                basicRange,
+                                basicWindup,
+                                basicActiveDuration,
+                                basicRecovery,
+                                basicCooldown,
+                                DamageTrait.Direct,
+                                basicTelegraphColor,
+                                1.07f);
+                        }
+                    }
+
                     break;
+                }
             }
+
+            attackRoutine = null;
         }
 
         private IEnumerator PerformChosenAttack()
@@ -721,16 +1078,7 @@ namespace Cave.Enemies
                 && resolvedGuardBreakChance > 0f
                 && Random.value < resolvedGuardBreakChance)
             {
-                yield return PerformAttack(
-                    runtimeGuardBreakDamage,
-                    guardBreakRange,
-                    guardBreakWindup,
-                    guardBreakActiveDuration,
-                    guardBreakRecovery,
-                    guardBreakCooldown,
-                    DamageTrait.GuardBreak,
-                    guardBreakTelegraphColor,
-                    1.18f);
+                yield return PerformStandaloneGuardBreak();
                 yield break;
             }
 
@@ -752,6 +1100,7 @@ namespace Cave.Enemies
                     DamageTrait.Direct,
                     basicTelegraphColor,
                     1.07f);
+                attackRoutine = null;
                 yield break;
             }
 
@@ -778,6 +1127,7 @@ namespace Cave.Enemies
                     chargedTelegraphColor,
                     1.15f,
                     true);
+                attackRoutine = null;
                 yield break;
             }
 
@@ -791,6 +1141,7 @@ namespace Cave.Enemies
                 DamageTrait.Direct,
                 basicTelegraphColor,
                 1.07f);
+            attackRoutine = null;
         }
 
         private IEnumerator PerformAttack(
@@ -805,8 +1156,18 @@ namespace Cave.Enemies
             float telegraphScale,
             bool isChargedAttack = false)
         {
+            float attackSpeed = Mathf.Max(0.01f, runtimeInheritanceAttackSpeedScale);
+            windup /= attackSpeed;
+            activeDuration /= attackSpeed;
+            recovery /= attackSpeed;
+            cooldown /= attackSpeed;
             movement?.SuspendMovement(windup + activeDuration);
             ShowTelegraph(telegraphColor, telegraphScale);
+            if (animatePersistentWeaponOnBasic && !isChargedAttack)
+            {
+                SetWeaponPose(basicDrawbackAngle, 1f);
+            }
+
             bool createsShockwave = probabilityPreset != EnemyMeleePreset.Troll
                 && isChargedAttack
                 && ChargedEvolutionStage == EnemyEvolutionStage.EvolutionTwo
@@ -819,6 +1180,11 @@ namespace Cave.Enemies
                 Mathf.Max(0.15f, windup));
             yield return new WaitForSeconds(windup);
 
+            if (animatePersistentWeaponOnBasic && !isChargedAttack)
+            {
+                SetWeaponPose(basicStrikeAngle, 1f);
+            }
+
             bool inMeleeRange = target != null && IsTargetWithinRange(range);
             bool inShockwaveRange = createsShockwave
                 && target != null
@@ -828,9 +1194,7 @@ namespace Cave.Enemies
                 int attackDamage = inMeleeRange
                     ? damage
                     : Mathf.Max(1, Mathf.RoundToInt(damage * shockwaveDamageMultiplier));
-                int resolvedDamage = damageModifiers != null
-                    ? damageModifiers.ResolveDamage(attackDamage)
-                    : attackDamage;
+                int resolvedDamage = ResolveModifiedDamage(attackDamage);
                 DamageTrait traits = DamageTrait.Melee | extraTraits;
                 if (!inMeleeRange)
                 {
@@ -850,15 +1214,62 @@ namespace Cave.Enemies
 
             yield return new WaitForSeconds(activeDuration);
             RestoreFeedback();
+            if (animatePersistentWeaponOnBasic && !isChargedAttack)
+            {
+                RestoreWeaponPose();
+            }
+
             yield return new WaitForSeconds(recovery);
             nextActionTime = Time.time + cooldown;
-            attackRoutine = null;
+        }
+
+        private int ResolveModifiedDamage(int baseDamage)
+        {
+            if (damageModifiers == null)
+            {
+                damageModifiers = GetComponent<EnemyDamageModifiers>();
+            }
+
+            return damageModifiers != null
+                ? damageModifiers.ResolveDamage(baseDamage)
+                : baseDamage;
         }
 
         private bool IsTargetWithinRange(float range)
         {
-            Vector2 delta = target.transform.position - transform.position;
-            return Mathf.Abs(delta.x) <= range && Mathf.Abs(delta.y) <= range * 1.15f;
+            Vector2 origin = ResolveCombatOriginPosition();
+            Vector2 delta = (Vector2)target.transform.position - origin;
+            float forwardDistance = delta.x * combatFacingDirection;
+            return forwardDistance >= -0.05f
+                && forwardDistance <= range
+                && Mathf.Abs(delta.y) <= range * 1.15f;
+        }
+
+        private Vector2 ResolveCombatOriginPosition()
+        {
+            Vector2 root = transform.position;
+            if (!UseTrollHeavyOverrides)
+            {
+                return root;
+            }
+
+            Transform originReference = attackOrigin != null
+                ? attackOrigin
+                : weaponPresentation;
+            if (originReference == null)
+            {
+                return root;
+            }
+
+            Vector2 referenced = originReference.position;
+            float referencedForwardOffset = (referenced.x - root.x) * combatFacingDirection;
+            float forwardOffset = Mathf.Clamp(
+                referencedForwardOffset,
+                0f,
+                maximumAttackOriginForwardOffset);
+            return new Vector2(
+                root.x + combatFacingDirection * forwardOffset,
+                referenced.y);
         }
 
         private float ResolveAttackRange(EnemyMeleeDecision decision)
@@ -868,7 +1279,7 @@ namespace Cave.Enemies
                 case EnemyMeleeDecision.Charged:
                     return UseTrollHeavyOverrides ? trollChargedRange : chargedRange;
                 case EnemyMeleeDecision.GuardBreak:
-                    return guardBreakRange;
+                    return UseTrollHeavyOverrides ? trollGuardBreakRange : guardBreakRange;
                 default:
                     return UseTrollHeavyOverrides ? trollBasicRange : basicRange;
             }
@@ -913,7 +1324,7 @@ namespace Cave.Enemies
             return Mathf.Max(
                 ResolveAttackRange(EnemyMeleeDecision.Basic),
                 evolvedChargedRange,
-                guardBreakRange);
+                ResolveAttackRange(EnemyMeleeDecision.GuardBreak));
         }
 
         private AttackProfile ResolveAttackProfile(EnemyMeleeDecision decision)
@@ -939,6 +1350,7 @@ namespace Cave.Enemies
                     DrawbackAngle = chargedDrawbackAngle,
                     StrikeAngle = chargedStrikeAngle,
                     WeaponScale = chargedWeaponScale,
+                    WeaponVerticalOffset = trollChargedVerticalOffset,
                     IsCharged = true
                 };
             }
@@ -948,11 +1360,11 @@ namespace Cave.Enemies
                 return new AttackProfile
                 {
                     Damage = runtimeGuardBreakDamage,
-                    Range = guardBreakRange,
-                    Windup = guardBreakWindup,
-                    ActiveDuration = guardBreakActiveDuration,
-                    Recovery = guardBreakRecovery,
-                    Cooldown = guardBreakCooldown,
+                    Range = UseTrollHeavyOverrides ? trollGuardBreakRange : guardBreakRange,
+                    Windup = ScaleInheritedAttackTime(guardBreakWindup),
+                    ActiveDuration = ScaleInheritedAttackTime(guardBreakActiveDuration),
+                    Recovery = ScaleInheritedAttackTime(guardBreakRecovery),
+                    Cooldown = ScaleInheritedAttackTime(guardBreakCooldown),
                     CommitPoint = 1f,
                     ExtraTraits = DamageTrait.GuardBreak,
                     TelegraphColor = guardBreakTelegraphColor,
@@ -997,6 +1409,11 @@ namespace Cave.Enemies
             }
         }
 
+        private float ScaleInheritedAttackTime(float duration)
+        {
+            return duration / Mathf.Max(0.01f, runtimeInheritanceAttackSpeedScale);
+        }
+
         private float ResolveGuardBreakChance()
         {
             switch (probabilityPreset)
@@ -1024,6 +1441,27 @@ namespace Cave.Enemies
         {
             runtimeDamageScale = Mathf.Max(0f, multiplier);
             RefreshRuntimeDamage();
+        }
+
+        public void SetRuntimeInheritanceAttackSpeedMultiplier(float multiplier)
+        {
+            runtimeInheritanceAttackSpeedScale = Mathf.Max(0.01f, multiplier);
+        }
+
+        public void ConfigureSkeletonGuardBreak(bool enabled)
+        {
+            RefreshRuntimeDependencies();
+            probabilityPreset = EnemyMeleePreset.Skeleton;
+            chargedAttackChance = 0f;
+            feintChance = 0f;
+            skeletonGuardBreakEnabled = enabled;
+            animatePersistentWeaponOnBasic = weaponPresentation != null;
+        }
+
+        public void ConfigureSkeletonRank(SkeletonRank rank, float generalFollowUpChance)
+        {
+            skeletonGeneralRank = rank == SkeletonRank.General;
+            skeletonGeneralBasicFollowUpChance = Mathf.Clamp01(generalFollowUpChance);
         }
 
         public void SuspendForMajorAbility(float duration)
@@ -1113,30 +1551,116 @@ namespace Cave.Enemies
             }
         }
 
-        private void SetWeaponPose(float angle, float scale)
+        private void SetWeaponPose(float angle, float scale, float verticalOffset = 0f)
         {
             if (weaponPresentation == null)
             {
                 return;
             }
 
-            float facing = target != null && target.transform.position.x < transform.position.x
-                ? -1f
-                : 1f;
+            ApplyPresentationFacing();
+            ApplyPresentationVerticalOffset(verticalOffset);
             weaponPresentation.localRotation = restingWeaponRotation
-                * Quaternion.Euler(0f, 0f, angle * facing);
-            weaponPresentation.localScale = restingWeaponScale * Mathf.Max(0.1f, scale);
+                * Quaternion.Euler(0f, 0f, angle * combatFacingDirection);
+            weaponPresentation.localScale = ResolveMirroredScale(restingWeaponScale)
+                * Mathf.Max(0.1f, scale);
         }
 
         private void RestoreWeaponPose()
         {
-            if (weaponPresentation == null)
+            ApplyPresentationFacing();
+        }
+
+        private void CacheMirroredPresentations()
+        {
+            List<Transform> presentations = new List<Transform>();
+            if (weaponPresentation != null)
+            {
+                presentations.Add(weaponPresentation);
+                if (Mathf.Abs(weaponPresentation.localPosition.x) > 0.01f)
+                {
+                    authoredPresentationFacing = Mathf.Sign(
+                        weaponPresentation.localPosition.x);
+                }
+            }
+
+            foreach (ChargedAttackHitbox hitbox in
+                GetComponentsInChildren<ChargedAttackHitbox>(true))
+            {
+                if (hitbox.transform != transform
+                    && !presentations.Contains(hitbox.transform))
+                {
+                    presentations.Add(hitbox.transform);
+                }
+            }
+
+            mirroredPresentations = presentations.ToArray();
+            authoredPresentationPositions = new Vector3[presentations.Count];
+            authoredPresentationRotations = new Quaternion[presentations.Count];
+            authoredPresentationScales = new Vector3[presentations.Count];
+            for (int index = 0; index < presentations.Count; index++)
+            {
+                authoredPresentationPositions[index] = presentations[index].localPosition;
+                authoredPresentationRotations[index] = presentations[index].localRotation;
+                authoredPresentationScales[index] = presentations[index].localScale;
+            }
+
+            combatFacingDirection = authoredPresentationFacing;
+            ApplyPresentationFacing();
+        }
+
+        private void ApplyPresentationFacing()
+        {
+            if (mirroredPresentations == null)
             {
                 return;
             }
 
-            weaponPresentation.localRotation = restingWeaponRotation;
-            weaponPresentation.localScale = restingWeaponScale;
+            float mirror = combatFacingDirection * authoredPresentationFacing;
+            for (int index = 0; index < mirroredPresentations.Length; index++)
+            {
+                Transform presentation = mirroredPresentations[index];
+                if (presentation == null)
+                {
+                    continue;
+                }
+
+                Vector3 position = authoredPresentationPositions[index];
+                position.x *= mirror;
+                presentation.localPosition = position;
+                presentation.localRotation = authoredPresentationRotations[index];
+                Vector3 scale = authoredPresentationScales[index];
+                scale.x *= mirror;
+                presentation.localScale = scale;
+            }
+        }
+
+        private void ApplyPresentationVerticalOffset(float verticalOffset)
+        {
+            if (Mathf.Approximately(verticalOffset, 0f)
+                || mirroredPresentations == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < mirroredPresentations.Length; index++)
+            {
+                Transform presentation = mirroredPresentations[index];
+                if (presentation == null)
+                {
+                    continue;
+                }
+
+                Vector3 position = presentation.localPosition;
+                position.y += verticalOffset;
+                presentation.localPosition = position;
+            }
+        }
+
+        private Vector3 ResolveMirroredScale(Vector3 authoredScale)
+        {
+            authoredScale.x *= combatFacingDirection * authoredPresentationFacing;
+            return authoredScale;
         }
 
         public void Interrupt()
@@ -1157,6 +1681,9 @@ namespace Cave.Enemies
 
             attackCommitted = false;
             attackStepFeinted = false;
+            guardBreakCountered = false;
+            guardBreakStepSucceeded = false;
+            guardBreakState = EnemyGuardBreakState.Ready;
             RestoreFeedback();
             RestoreWeaponPose();
             float recovery = UseTrollHeavyAttacks
@@ -1190,6 +1717,7 @@ namespace Cave.Enemies
             public float DrawbackAngle;
             public float StrikeAngle;
             public float WeaponScale;
+            public float WeaponVerticalOffset;
             public bool IsCharged;
         }
     }

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Cave.Enemies
 {
-    public sealed class EnemyContactDamage : MonoBehaviour
+    public sealed class EnemyContactDamage : MonoBehaviour, IEnemyInterruptible
     {
         [SerializeField, Min(1)] private int contactDamage = 1;
         [SerializeField, Min(0f)] private float contactCooldown = 0.75f;
@@ -39,6 +39,7 @@ namespace Cave.Enemies
         private Vector3 restingScale;
         private Coroutine attackRoutine;
         private bool brainControlled;
+        private EnemyStagger stagger;
 
         public int BaseContactDamage => contactDamage;
         public DamageTrait DamageTraits => damageTraits;
@@ -50,6 +51,9 @@ namespace Cave.Enemies
             runtimeContactDamage = contactDamage;
             runtimeGuardBreakDamage = guardBreakDamage;
             Damageable owner = GetComponentInParent<Damageable>();
+            stagger = owner != null
+                ? owner.GetComponent<EnemyStagger>()
+                : GetComponentInParent<EnemyStagger>();
             feedbackRoot = owner != null ? owner.transform : transform;
             feedbackRenderers = feedbackRoot.GetComponentsInChildren<SpriteRenderer>(true);
             restingColors = new Color[feedbackRenderers.Length];
@@ -144,6 +148,7 @@ namespace Cave.Enemies
             if (brainControlled
                 || attackRoutine != null
                 || Time.time < nextDamageTime
+                || IsOwnerStaggered()
                 || !IsStillTouching(target))
             {
                 return;
@@ -196,7 +201,8 @@ namespace Cave.Enemies
 
         private void DealDamageIfTouching(PlayerHealth target, bool isGuardBreak)
         {
-            if (!IsStillTouching(target))
+            if (IsOwnerStaggered()
+                || !IsStillTouching(target))
             {
                 return;
             }
@@ -224,6 +230,16 @@ namespace Cave.Enemies
                 && target.gameObject.activeInHierarchy
                 && contactCounts.TryGetValue(target, out int count)
                 && count > 0;
+        }
+
+        private bool IsOwnerStaggered()
+        {
+            if (stagger == null)
+            {
+                stagger = GetComponentInParent<EnemyStagger>();
+            }
+
+            return stagger != null && !stagger.CanAct;
         }
 
         private void ShowTelegraph(Color color, float scale)
@@ -256,13 +272,19 @@ namespace Cave.Enemies
 
         private void OnDisable()
         {
+            Interrupt();
+
+            contactCounts.Clear();
+        }
+
+        public void Interrupt()
+        {
             if (attackRoutine != null)
             {
                 StopCoroutine(attackRoutine);
                 attackRoutine = null;
             }
 
-            contactCounts.Clear();
             RestoreFeedback();
         }
 

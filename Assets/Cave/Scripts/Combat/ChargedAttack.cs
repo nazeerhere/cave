@@ -6,23 +6,27 @@ using Cave.InputSystem;
 using Cave.Player;
 using Cave.Progression;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Cave.Combat
 {
     [RequireComponent(typeof(PlayerAimDirection))]
     public sealed class ChargedAttack : MonoBehaviour
     {
-        [Header("Charge")]
+        [Header("Charge Timing")]
         [SerializeField, Min(0.01f)] private float minimumChargeTime = 0.25f;
+        [SerializeField, Min(0.01f)] private float chargedTwoThreshold = 0.67f;
         [SerializeField, Min(0.01f)] private float maximumChargeTime = 1.5f;
 
-        [Header("Attack")]
-        [FormerlySerializedAs("damage")]
-        [SerializeField, Range(1, 3)] private int minimumDamage = 1;
-        [SerializeField, Range(1, 3)] private int maximumDamage = 3;
+        [Header("Damage Tiers")]
+        [SerializeField, Range(1, 100)] private int chargedOneDamage = 4;
+        [SerializeField, Range(1, 100)] private int chargedTwoDamage = 9;
+        [SerializeField, Range(1, 100)] private int chargedThreeDamage = 18;
+
+        [Header("Knockback")]
         [SerializeField, Min(0f)] private float baseKnockback = 5f;
         [SerializeField, Min(0f)] private float maximumKnockback = 10f;
+
+        [Header("Attack")]
         [SerializeField, Min(0.01f)] private float activeDuration = 0.2f;
         [SerializeField, Min(0f)] private float cooldown = 0.5f;
         [SerializeField, Min(0f)] private float directionalReach = 1.1f;
@@ -37,6 +41,7 @@ namespace Cave.Combat
         private float chargeStartedAt;
         private float currentKnockback;
         private int currentDamage;
+        private int currentChargeTier;
         private float nextAttackTime;
         private bool isCharging;
         private bool isAttacking;
@@ -44,6 +49,10 @@ namespace Cave.Combat
         private PlayerResourceMastery resourceMastery;
         private PlayerAimDirection aimDirection;
         private SpinSwordAttack spinSwordAttack;
+        private PlayerGuardBreak guardBreak;
+        private PlayerCombatFlow combatFlow;
+        private PlayerFlightBash groundSlam;
+        private FrenzyBreakActivation frenzyActivation;
         private Transform attackTransform;
         private Transform swordPivot;
         private Vector2 currentAttackDirection = Vector2.right;
@@ -60,6 +69,9 @@ namespace Cave.Combat
             resourceMastery = GetComponent<PlayerResourceMastery>();
             aimDirection = GetComponent<PlayerAimDirection>();
             spinSwordAttack = GetComponent<SpinSwordAttack>();
+            guardBreak = GetComponent<PlayerGuardBreak>();
+            combatFlow = GetComponent<PlayerCombatFlow>();
+            groundSlam = GetComponent<PlayerFlightBash>();
             swordPivot = spinSwordAttack != null ? spinSwordAttack.SwordPivot : null;
             attackTransform = attackCollider != null
                 ? attackCollider.transform
@@ -77,20 +89,67 @@ namespace Cave.Combat
                 restingSwordRotation = swordPivot.localRotation;
             }
 
-            currentDamage = minimumDamage;
+            currentDamage = chargedOneDamage;
+            currentChargeTier = 1;
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
         }
 
         private void Update()
         {
+            if (guardBreak == null)
+            {
+                guardBreak = GetComponent<PlayerGuardBreak>();
+            }
+
+            if (guardBreak != null && !guardBreak.CanUseCombatActions)
+            {
+                groundSlam?.CancelAerialHeavyPreparation();
+                if (isCharging)
+                {
+                    CancelCharge();
+                }
+
+                return;
+            }
+
             if (isCharging && !GameInput.GameplayInputEnabled)
             {
                 CancelCharge();
                 return;
             }
 
-            if (!isCharging && !isAttacking && Time.time >= nextAttackTime && GameInput.ChargePressed)
+            if (!GameInput.GameplayInputEnabled)
+            {
+                groundSlam?.CancelAerialHeavyPreparation();
+                return;
+            }
+
+            if (combatFlow == null)
+            {
+                combatFlow = GetComponent<PlayerCombatFlow>();
+            }
+
+            if (groundSlam == null)
+            {
+                groundSlam = GetComponent<PlayerFlightBash>();
+            }
+
+            if (!isCharging
+                && !isAttacking
+                && groundSlam != null
+                && groundSlam.HandleAerialHeavyInput())
+            {
+                return;
+            }
+
+            bool heldFormalFollowUp = combatFlow != null
+                && combatFlow.ChargedStartingTier > 0
+                && GameInput.ChargeHeld;
+            if (!isCharging
+                && !isAttacking
+                && Time.time >= nextAttackTime
+                && (GameInput.ChargePressed || heldFormalFollowUp))
             {
                 BeginCharge();
             }
@@ -130,6 +189,17 @@ namespace Cave.Combat
             int resolvedDamage = damageBoost != null
                 ? damageBoost.ResolveChargedDamage(currentDamage, out manaWasConsumed)
                 : currentDamage;
+            int frenzyDamage = resolvedDamage;
+            bool isFrenzyCritical = frenzyActivation != null
+                && frenzyActivation.TryResolveDamage(
+                    resolvedDamage,
+                    damageable,
+                    out frenzyDamage);
+            if (isFrenzyCritical)
+            {
+                resolvedDamage = frenzyDamage;
+                manaWasConsumed |= frenzyActivation.ManaInfused;
+            }
             if (resourceMastery == null)
             {
                 resourceMastery = GetComponent<PlayerResourceMastery>();
@@ -141,9 +211,25 @@ namespace Cave.Combat
                 damageContext = manaWasConsumed
                     ? resourceMastery.CreateManaDamageContext().WithTraits(DamageTrait.Melee)
                     : resourceMastery.CreatePlayerDamageContext().WithTraits(DamageTrait.Melee);
+                damageContext = damageContext.WithTraits(
+                    currentChargeTier >= 3
+                        ? DamageTrait.StaggerHeavy
+                        : DamageTrait.StaggerNormal);
             }
 
-            damageable.TakeDamage(resolvedDamage, damageContext);
+            if (isFrenzyCritical)
+            {
+                damageContext = damageContext.WithTraits(DamageTrait.FrenzyCritical);
+            }
+
+            int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            if (isFrenzyCritical)
+            {
+                frenzyActivation.ApplyImpact(
+                    damageable,
+                    currentAttackDirection,
+                    appliedDamage);
+            }
 
             if (!damageable.gameObject.activeInHierarchy)
             {
@@ -163,7 +249,18 @@ namespace Cave.Combat
         private void BeginCharge()
         {
             isCharging = true;
-            chargeStartedAt = Time.time;
+            if (combatFlow == null)
+            {
+                combatFlow = GetComponent<PlayerCombatFlow>();
+            }
+
+            int startingTier = combatFlow != null ? combatFlow.ConsumeChargedStartingTier() : 0;
+            float startingDuration = startingTier >= 2
+                ? chargedTwoThreshold
+                : startingTier == 1
+                    ? minimumChargeTime
+                    : 0f;
+            chargeStartedAt = Time.time - startingDuration;
             SetChargeIndicatorActive(true);
             UpdateChargeIndicator();
         }
@@ -176,36 +273,56 @@ namespace Cave.Combat
 
             if (heldDuration < minimumChargeTime)
             {
+                combatFlow?.NotifyChargedCancelled();
                 return;
             }
 
             float chargeAmount = Mathf.InverseLerp(minimumChargeTime, maximumChargeTime, heldDuration);
             currentKnockback = Mathf.Lerp(baseKnockback, maximumKnockback, chargeAmount);
-            currentDamage = CalculateBaseDamage(heldDuration);
+            currentChargeTier = CalculateChargeTier(heldDuration);
+            currentDamage = DamageForTier(currentChargeTier);
+            frenzyActivation = null;
+            combatFlow?.TryCommitFrenzyBreak(
+                FrenzyBreakAttackKind.Charged,
+                out frenzyActivation);
             currentAttackDirection = aimDirection != null
                 ? aimDirection.ReadDirection()
                 : Vector2.right;
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.9f);
             StartCoroutine(PerformAttack());
+            combatFlow?.NotifyChargedCommitted();
         }
 
         public int CalculateBaseDamage(float heldDuration)
         {
-            float normalizedCharge = Mathf.InverseLerp(
-                minimumChargeTime,
-                maximumChargeTime,
-                Mathf.Clamp(heldDuration, minimumChargeTime, maximumChargeTime));
-            int damageStepCount = maximumDamage - minimumDamage + 1;
-            int damageStep = Mathf.Min(
-                damageStepCount - 1,
-                Mathf.FloorToInt(normalizedCharge * damageStepCount));
-            return minimumDamage + damageStep;
+            return DamageForTier(CalculateChargeTier(heldDuration));
+        }
+
+        public int CalculateChargeTier(float heldDuration)
+        {
+            if (heldDuration >= maximumChargeTime)
+            {
+                return 3;
+            }
+
+            return heldDuration >= chargedTwoThreshold ? 2 : 1;
+        }
+
+        private int DamageForTier(int tier)
+        {
+            if (tier >= 3)
+            {
+                return chargedThreeDamage;
+            }
+
+            return tier == 2 ? chargedTwoDamage : chargedOneDamage;
         }
 
         private void CancelCharge()
         {
             isCharging = false;
             SetChargeIndicatorActive(false);
+            combatFlow?.NotifyChargedCancelled();
         }
 
         private IEnumerator PerformAttack()
@@ -221,6 +338,8 @@ namespace Cave.Combat
             SetAttackActive(false);
             RestoreAttackOrientation();
             isAttacking = false;
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
         }
 
         private void OrientAttack(Vector2 direction)
@@ -235,7 +354,11 @@ namespace Cave.Combat
 
             if (swordPivot != null)
             {
-                swordPivot.localRotation = restingSwordRotation * Quaternion.Euler(0f, 0f, angle);
+                float swordAngle = spinSwordAttack != null
+                    ? spinSwordAttack.PrepareSwordForDirection(direction)
+                    : angle;
+                swordPivot.localRotation = restingSwordRotation
+                    * Quaternion.Euler(0f, 0f, swordAngle);
             }
         }
 
@@ -300,6 +423,9 @@ namespace Cave.Combat
             StopAllCoroutines();
             isCharging = false;
             isAttacking = false;
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
+            combatFlow?.NotifyChargedCancelled();
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
             RestoreAttackOrientation();
@@ -307,9 +433,11 @@ namespace Cave.Combat
 
         private void OnValidate()
         {
-            maximumChargeTime = Mathf.Max(minimumChargeTime, maximumChargeTime);
-            minimumDamage = Mathf.Clamp(minimumDamage, 1, 3);
-            maximumDamage = Mathf.Clamp(maximumDamage, minimumDamage, 3);
+            chargedTwoThreshold = Mathf.Max(minimumChargeTime, chargedTwoThreshold);
+            maximumChargeTime = Mathf.Max(chargedTwoThreshold, maximumChargeTime);
+            chargedOneDamage = Mathf.Clamp(chargedOneDamage, 1, 100);
+            chargedTwoDamage = Mathf.Clamp(chargedTwoDamage, 1, 100);
+            chargedThreeDamage = Mathf.Clamp(chargedThreeDamage, 1, 100);
         }
     }
 }

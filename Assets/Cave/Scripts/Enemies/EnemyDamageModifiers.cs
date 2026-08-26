@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cave.Player;
 using UnityEngine;
 
 namespace Cave.Enemies
@@ -18,6 +19,9 @@ namespace Cave.Enemies
         [SerializeField] private Color wizardBuffColor = new Color(0.2f, 0.75f, 1f, 0.8f);
         [SerializeField, Min(0.1f)] private float visualRadius = 0.65f;
 
+        [Header("Persistent Runtime Multipliers (Read Only)")]
+        [SerializeField, Min(0f)] private float inheritanceDamageMultiplier = 1f;
+
         private readonly Dictionary<EnemyDamageModifierType, ModifierEntry> modifiers =
             new Dictionary<EnemyDamageModifierType, ModifierEntry>();
         private readonly List<EnemyDamageModifierType> expiredTypes =
@@ -26,6 +30,7 @@ namespace Cave.Enemies
         private LineRenderer wizardVisual;
         private Material necromancerMaterial;
         private Material wizardMaterial;
+        private float fractionalDamageCarry;
 
         private struct ModifierEntry
         {
@@ -81,13 +86,50 @@ namespace Cave.Enemies
             }
 
             modifiers[type] = updated;
+            // Start the fractional cycle near its next whole point so a low-damage
+            // attacker receives visible benefit on its first buffed hit. Later hits
+            // repay that advance and preserve the requested average multiplier.
+            fractionalDamageCarry = 0.999f;
             RefreshVisuals();
+            ModifiersChanged?.Invoke();
+        }
+
+        public void SetInheritanceDamageMultiplier(float multiplier)
+        {
+            float resolved = Mathf.Max(0f, multiplier);
+            if (Mathf.Approximately(inheritanceDamageMultiplier, resolved))
+            {
+                return;
+            }
+
+            inheritanceDamageMultiplier = resolved;
+            ResetFractionalCarry();
             ModifiersChanged?.Invoke();
         }
 
         public int ResolveDamage(int baseDamage)
         {
-            return Mathf.Max(1, Mathf.RoundToInt(baseDamage * (1f + AdditiveBonus)));
+            int safeBaseDamage = Mathf.Max(1, baseDamage);
+            float additiveBonus = AdditiveBonus;
+            float avariceMultiplier = PlayerCurseController.Active != null
+                ? PlayerCurseController.Active.EnemyDangerMultiplier
+                : 1f;
+            if (additiveBonus <= 0f
+                && Mathf.Approximately(inheritanceDamageMultiplier, 1f)
+                && Mathf.Approximately(avariceMultiplier, 1f))
+            {
+                fractionalDamageCarry = 0f;
+                return safeBaseDamage;
+            }
+
+            float exactDamage = safeBaseDamage
+                * inheritanceDamageMultiplier
+                * (1f + additiveBonus)
+                * avariceMultiplier
+                + fractionalDamageCarry;
+            int resolvedDamage = Mathf.Max(1, Mathf.FloorToInt(exactDamage + 0.0001f));
+            fractionalDamageCarry = Mathf.Clamp(exactDamage - resolvedDamage, 0f, 0.999f);
+            return resolvedDamage;
         }
 
         private void Update()
@@ -116,6 +158,7 @@ namespace Cave.Enemies
                 modifiers.Remove(type);
             }
 
+            ResetFractionalCarry();
             RefreshVisuals();
             ModifiersChanged?.Invoke();
         }
@@ -187,7 +230,16 @@ namespace Cave.Enemies
         private void OnDisable()
         {
             modifiers.Clear();
+            ResetFractionalCarry();
             RefreshVisuals();
+        }
+
+        private void ResetFractionalCarry()
+        {
+            fractionalDamageCarry = inheritanceDamageMultiplier > 1f
+                || modifiers.Count > 0
+                    ? 0.999f
+                    : 0f;
         }
 
         private void OnDestroy()

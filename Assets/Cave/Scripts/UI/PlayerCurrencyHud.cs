@@ -7,12 +7,14 @@ namespace Cave.UI
     public sealed class PlayerCurrencyHud : MonoBehaviour
     {
         [SerializeField] private Text valueText;
+        [SerializeField] private bool showLabelInline = true;
 
         private PlayerCurrency playerCurrency;
 
-        public void Configure(Text currencyValueText)
+        public void Configure(Text currencyValueText, bool includeLabel = true)
         {
             valueText = currencyValueText;
+            showLabelInline = includeLabel;
         }
 
         public void Bind(PlayerCurrency currency)
@@ -58,7 +60,9 @@ namespace Cave.UI
         {
             if (valueText != null)
             {
-                valueText.text = "CURRENCY   " + currentCurrency;
+                valueText.text = showLabelInline
+                    ? "CURRENCY   " + currentCurrency
+                    : currentCurrency.ToString();
             }
         }
 

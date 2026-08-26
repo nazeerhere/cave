@@ -20,9 +20,11 @@ namespace Cave.Enemies
         private EnemyRespawner enemyRespawner;
         private EnemyTank enemyTank;
         private EnemySwarm enemySwarm;
+        private SkeletonInheritance skeletonInheritance;
         private FlyingSwarmController flyingSwarm;
         private EnemySkillEvolution skillEvolution;
         private TrollJumpStomp trollJumpStomp;
+        private EnemyCriticalResistance criticalResistance;
 
         private void Awake()
         {
@@ -40,14 +42,21 @@ namespace Cave.Enemies
             enemyRespawner = GetComponent<EnemyRespawner>();
             enemyTank = GetComponent<EnemyTank>();
             enemySwarm = GetComponent<EnemySwarm>();
+            skeletonInheritance = GetComponent<SkeletonInheritance>();
             flyingSwarm = GetComponent<FlyingSwarmController>();
             skillEvolution = GetComponent<EnemySkillEvolution>();
             trollJumpStomp = GetComponent<TrollJumpStomp>();
+            criticalResistance = GetComponent<EnemyCriticalResistance>();
         }
 
         internal void Configure(WorldDifficultyManager manager)
         {
             CacheComponents();
+            if (GetComponent<EnemyDamageModifiers>() == null)
+            {
+                gameObject.AddComponent<EnemyDamageModifiers>();
+            }
+
             Unsubscribe();
             difficultyManager = manager;
             Subscribe();
@@ -57,6 +66,7 @@ namespace Cave.Enemies
             }
 
             EnsureMobBrain();
+            skeletonInheritance = GetComponent<SkeletonInheritance>();
 
             if (skillEvolution == null)
             {
@@ -64,6 +74,12 @@ namespace Cave.Enemies
             }
 
             skillEvolution.Configure(difficultyManager);
+            if (criticalResistance == null)
+            {
+                criticalResistance = gameObject.AddComponent<EnemyCriticalResistance>();
+            }
+
+            criticalResistance.Configure(difficultyManager);
             ApplyForSpawn();
         }
 
@@ -88,6 +104,10 @@ namespace Cave.Enemies
             else if (meleeCombat != null && meleeCombat.IsBrutePreset)
             {
                 gameObject.AddComponent<BruteBrain>();
+            }
+            else if (meleeCombat != null && enemySwarm != null)
+            {
+                gameObject.AddComponent<SkeletonBrain>();
             }
             else if (summon != null && buff != null)
             {
@@ -117,6 +137,14 @@ namespace Cave.Enemies
                 return;
             }
 
+            if (criticalResistance == null)
+            {
+                criticalResistance = GetComponent<EnemyCriticalResistance>();
+            }
+
+            criticalResistance?.Configure(difficultyManager);
+            criticalResistance?.RollForLife();
+
             int archetypeBaseHealth = enemySwarm != null
                 ? enemySwarm.MaximumHealth
                 : damageable.BaseMaximumHealth;
@@ -127,7 +155,19 @@ namespace Cave.Enemies
                     archetypeBaseHealth
                     * tankHealthMultiplier
                     * difficultyManager.GetStatScale(settings.EnemyHealthScalingStrength)));
-            damageable.SetRuntimeMaximumHealth(scaledHealth, true);
+            if (skeletonInheritance != null)
+            {
+                if (damageable.CurrentHealth <= 0)
+                {
+                    skeletonInheritance.ResetForNewLife();
+                }
+
+                skeletonInheritance.SetWorldScaledBaseMaximumHealth(scaledHealth, true);
+            }
+            else
+            {
+                damageable.SetRuntimeMaximumHealth(scaledHealth, true);
+            }
 
             if (contactDamage != null)
             {

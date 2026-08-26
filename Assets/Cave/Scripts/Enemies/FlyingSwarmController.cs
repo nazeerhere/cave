@@ -38,6 +38,8 @@ namespace Cave.Enemies
             new HashSet<FlyingSwarmController>();
 
         private Rigidbody2D body;
+        private Collider2D bodyCollider;
+        private CommittedAttackCollisionPhasing collisionPhasing;
         private SpriteRenderer[] renderers;
         private Color[] restingColors;
         private Vector3 restingScale;
@@ -84,6 +86,12 @@ namespace Cave.Enemies
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
+            bodyCollider = GetComponent<Collider2D>();
+            collisionPhasing = GetComponent<CommittedAttackCollisionPhasing>();
+            if (collisionPhasing == null)
+            {
+                collisionPhasing = gameObject.AddComponent<CommittedAttackCollisionPhasing>();
+            }
             body.gravityScale = 0f;
             body.freezeRotation = true;
             runtimeDamage = contactDamage;
@@ -220,6 +228,7 @@ namespace Cave.Enemies
                 : Vector2.down;
             diveDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.down;
             damagedDuringDive = false;
+            collisionPhasing?.Begin(bodyCollider);
             currentState = FlyingSwarmState.Diving;
             stateEndsAt = Time.time + diveDuration;
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.55f);
@@ -227,6 +236,7 @@ namespace Cave.Enemies
 
         private void BeginRecovery()
         {
+            collisionPhasing?.End();
             currentState = FlyingSwarmState.Recovering;
             stateEndsAt = Time.time + recoveryDuration;
             RestoreFeedback();
@@ -300,6 +310,7 @@ namespace Cave.Enemies
 
         public void ResetForRespawn()
         {
+            collisionPhasing?.End();
             currentState = FlyingSwarmState.Hovering;
             movementMultiplier = 1f;
             movementSuspendedUntil = 0f;
@@ -334,6 +345,7 @@ namespace Cave.Enemies
 
         private void OnDisable()
         {
+            collisionPhasing?.End();
             ActiveControllers.Remove(this);
             if (body != null)
             {

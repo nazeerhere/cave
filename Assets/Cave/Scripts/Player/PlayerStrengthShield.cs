@@ -97,7 +97,7 @@ namespace Cave.Player
             if (fullRechargeManaCost > 0f)
             {
                 float requestedMana = fullRechargeManaCost * timeProgress;
-                float availableMana = Mathf.Min(requestedMana, playerMana.CurrentMana);
+                float availableMana = playerMana.GetAffordableBaseManaCost(requestedMana);
                 if (availableMana <= 0f || !playerMana.TrySpendMana(availableMana))
                 {
                     SetState(StrengthShieldState.Recharging, rechargeProgress);

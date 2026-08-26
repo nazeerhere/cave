@@ -72,6 +72,135 @@ namespace Cave.Enemies
             return null;
         }
 
+        public static Damageable FindHighestValueUnbuffedDamageTarget(
+            Vector2 origin,
+            float radius,
+            LayerMask allyLayers,
+            Damageable self,
+            bool canTargetSelf,
+            EnemyDamageModifierType modifierType,
+            GameObject preferredSkeletonOwner,
+            float ownedSkeletonBonus,
+            float generalRankBonus,
+            float witnessedDeathWeight,
+            float resolvedStrengthWeight,
+            float tankArchetypeBonus,
+            float bruteCombatBonus,
+            float meleeArchetypeBonus,
+            float rangedArchetypeBonus,
+            float maximumDistancePenalty)
+        {
+            List<Damageable> candidates = CollectCandidates(
+                origin,
+                radius,
+                allyLayers,
+                self,
+                canTargetSelf);
+            Damageable selected = null;
+            float selectedScore = float.NegativeInfinity;
+            foreach (Damageable candidate in candidates)
+            {
+                EnemyDamageModifiers modifiers = candidate.GetComponent<EnemyDamageModifiers>();
+                if (modifiers != null && modifiers.HasModifier(modifierType))
+                {
+                    continue;
+                }
+
+                float score = CalculateDamageSupportValue(
+                    candidate,
+                    origin,
+                    radius,
+                    preferredSkeletonOwner,
+                    ownedSkeletonBonus,
+                    generalRankBonus,
+                    witnessedDeathWeight,
+                    resolvedStrengthWeight,
+                    tankArchetypeBonus,
+                    bruteCombatBonus,
+                    meleeArchetypeBonus,
+                    rangedArchetypeBonus,
+                    maximumDistancePenalty);
+                if (selected == null
+                    || score > selectedScore
+                    || (Mathf.Approximately(score, selectedScore)
+                        && candidate.GetInstanceID() < selected.GetInstanceID()))
+                {
+                    selected = candidate;
+                    selectedScore = score;
+                }
+            }
+
+            return selected;
+        }
+
+        private static float CalculateDamageSupportValue(
+            Damageable candidate,
+            Vector2 origin,
+            float radius,
+            GameObject preferredSkeletonOwner,
+            float ownedSkeletonBonus,
+            float generalRankBonus,
+            float witnessedDeathWeight,
+            float resolvedStrengthWeight,
+            float tankArchetypeBonus,
+            float bruteCombatBonus,
+            float meleeArchetypeBonus,
+            float rangedArchetypeBonus,
+            float maximumDistancePenalty)
+        {
+            float score = 1f;
+            EnemyArchetypeProfile profile = candidate.GetComponent<EnemyArchetypeProfile>();
+            if (profile != null)
+            {
+                if (profile.Includes(EnemyArchetype.Tank))
+                {
+                    score += Mathf.Max(0f, tankArchetypeBonus);
+                }
+
+                if (profile.Includes(EnemyArchetype.Melee))
+                {
+                    score += Mathf.Max(0f, meleeArchetypeBonus);
+                }
+
+                if (profile.Includes(EnemyArchetype.Ranged))
+                {
+                    score += Mathf.Max(0f, rangedArchetypeBonus);
+                }
+            }
+
+            EnemyMeleeCombat melee = candidate.GetComponent<EnemyMeleeCombat>();
+            if (melee != null && melee.IsBrutePreset)
+            {
+                score += Mathf.Max(0f, bruteCombatBonus);
+            }
+
+            SkeletonInheritance skeleton = candidate.GetComponent<SkeletonInheritance>();
+            if (skeleton != null)
+            {
+                bool owned = preferredSkeletonOwner != null
+                    && skeleton.Summoner == preferredSkeletonOwner;
+                if (owned)
+                {
+                    score += Mathf.Max(0f, ownedSkeletonBonus);
+                    score += skeleton.CalculateSupportValue(
+                        generalRankBonus,
+                        witnessedDeathWeight,
+                        resolvedStrengthWeight) - 1f;
+                }
+                else
+                {
+                    score += skeleton.WitnessedDeaths
+                        * Mathf.Max(0f, witnessedDeathWeight) * 0.5f;
+                }
+            }
+
+            float radiusSquared = Mathf.Max(0.01f, radius * radius);
+            float normalizedDistance = Mathf.Clamp01(
+                ((Vector2)candidate.transform.position - origin).sqrMagnitude
+                / radiusSquared);
+            return score - normalizedDistance * Mathf.Max(0f, maximumDistancePenalty);
+        }
+
         private static List<Damageable> CollectCandidates(
             Vector2 origin,
             float radius,

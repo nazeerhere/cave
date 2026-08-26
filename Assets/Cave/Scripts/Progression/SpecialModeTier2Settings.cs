@@ -46,13 +46,20 @@ namespace Cave.Progression
         [SerializeField, Min(0f)] private float frostTier2PinDuration = 1f;
         [SerializeField, Min(0f)] private float frostTier3FreezeDuration = 2f;
 
-        [Header("Flight Bash")]
+        [Header("Flight Ground Smash")]
         [SerializeField, Min(0f)] private float bashManaCost = 20f;
         [SerializeField, Min(1)] private int bashDamage = 2;
         [SerializeField, Min(0f)] private float bashSpeed = 20f;
         [SerializeField, Min(0.01f)] private float bashDuration = 0.18f;
         [SerializeField, Min(0f)] private float bashCooldown = 0.35f;
         [SerializeField, Min(0f)] private float bashKnockback = 12f;
+        [SerializeField, Min(0.1f)] private float groundSmashMaximumDescentDuration = 1.5f;
+        [SerializeField, Min(0.1f)] private float groundSmashImpactRadius = 2f;
+        [SerializeField, Min(0f)] private float groundSmashHeavyStaggerDuration = 0.65f;
+        [SerializeField, Range(0f, 1f)] private float groundSmashUpwardKnockbackBias = 0.3f;
+        [SerializeField] private GameObject groundSmashImpactVfxPrefab;
+        [SerializeField, Min(0.01f)] private float groundSmashImpactVfxLifetime = 1.25f;
+        [SerializeField, Min(0.01f)] private float groundSmashImpactVfxScale = 1f;
 
         [Header("Strength Shield")]
         [SerializeField, Min(0f)] private float shieldRechargeDelay = 8f;
@@ -107,7 +114,7 @@ namespace Cave.Progression
         [SerializeField] private Color strengthTier3SwordGlowColor = new Color(1f, 0.9f, 0.3f, 0.62f);
         [SerializeField, Min(0.1f)] private float strengthAuraRadius = 0.85f;
 
-        [Header("Flight Tier 3 Shockwave")]
+        [Header("Flight Tier 3 Ground Smash")]
         [SerializeField, Min(0f)] private float tier3BashAdditionalManaCost;
         [SerializeField, Min(0.1f)] private float bashShockwaveRadius = 2.5f;
         [SerializeField, Min(1)] private int bashShockwaveDamage = 2;
@@ -140,6 +147,13 @@ namespace Cave.Progression
         public float BashDuration => bashDuration;
         public float BashCooldown => bashCooldown;
         public float BashKnockback => bashKnockback;
+        public float GroundSmashMaximumDescentDuration => groundSmashMaximumDescentDuration;
+        public float GroundSmashImpactRadius => groundSmashImpactRadius;
+        public float GroundSmashHeavyStaggerDuration => groundSmashHeavyStaggerDuration;
+        public float GroundSmashUpwardKnockbackBias => groundSmashUpwardKnockbackBias;
+        public GameObject GroundSmashImpactVfxPrefab => groundSmashImpactVfxPrefab;
+        public float GroundSmashImpactVfxLifetime => groundSmashImpactVfxLifetime;
+        public float GroundSmashImpactVfxScale => groundSmashImpactVfxScale;
         public float ShieldRechargeDelay => shieldRechargeDelay;
         public float ShieldRechargeDuration => shieldRechargeDuration;
         public float ShieldFullRechargeManaCost => shieldFullRechargeManaCost;
@@ -279,7 +293,7 @@ namespace Cave.Progression
                 case SpecialMode.BurnShot:
                     return "Pierce";
                 case SpecialMode.Flight:
-                    return "Bash";
+                    return "Ground Smash";
                 case SpecialMode.DamageBoost:
                     return "Shield";
                 default:
@@ -298,7 +312,8 @@ namespace Cave.Progression
                     return "+" + burnShotTier2DamageBonus + " damage; burn and pierce "
                         + burnShotTier2PierceCount;
                 case SpecialMode.Flight:
-                    return "Airborne Mana Bash; drain -" + Mathf.RoundToInt(flightTier2EfficiencyBonus * 100f) + "%";
+                    return "Ground Smash: dive, AOE damage, knockback, Heavy stagger; drain -"
+                        + Mathf.RoundToInt(flightTier2EfficiencyBonus * 100f) + "%";
                 case SpecialMode.DamageBoost:
                     return strengthTier2DamageMultiplier.ToString("0.##") + "x +"
                         + strengthTier2DamageBonus + " damage; Shield";
@@ -316,7 +331,7 @@ namespace Cave.Progression
                 case SpecialMode.BurnShot:
                     return "Spreading Burn";
                 case SpecialMode.Flight:
-                    return "Bash Shockwave";
+                    return "Greater Ground Smash";
                 case SpecialMode.DamageBoost:
                     return "Aggressive Deflection";
                 default:
@@ -335,7 +350,8 @@ namespace Cave.Progression
                     return "+" + burnShotTier3DamageBonus + " damage; pierce "
                         + burnShotTier3PierceCount + "; Burn spreads to " + maximumBurnSpreadTargets;
                 case SpecialMode.Flight:
-                    return "Drain -" + Mathf.RoundToInt(flightTier3EfficiencyBonus * 100f) + "%; Bash Shockwave";
+                    return "Drain -" + Mathf.RoundToInt(flightTier3EfficiencyBonus * 100f)
+                        + "%; larger Ground Smash shockwave";
                 case SpecialMode.DamageBoost:
                     return strengthTier3DamageMultiplier.ToString("0.##") + "x +"
                         + strengthTier3DamageBonus + " damage; deflects";

@@ -28,7 +28,13 @@ namespace Cave.Enemies
 
         private void Awake()
         {
-            GetComponent<EnemyArchetypeProfile>().AddRuntimeArchetype(EnemyArchetype.Swarm);
+            EnemyArchetypeProfile profile = GetComponent<EnemyArchetypeProfile>();
+            if (profile == null)
+            {
+                profile = gameObject.AddComponent<EnemyArchetypeProfile>();
+            }
+
+            profile.AddRuntimeArchetype(EnemyArchetype.Swarm);
         }
 
         private void Start()
@@ -59,7 +65,17 @@ namespace Cave.Enemies
                 return;
             }
 
-            GetComponent<Damageable>().SetRuntimeMaximumHealth(MaximumHealth, true);
+            Damageable damageable = GetComponent<Damageable>();
+            SkeletonInheritance inheritance = GetComponent<SkeletonInheritance>();
+            if (inheritance != null)
+            {
+                inheritance.SetWorldScaledBaseMaximumHealth(MaximumHealth, true);
+            }
+            else
+            {
+                damageable.SetRuntimeMaximumHealth(MaximumHealth, true);
+            }
+
             EnemyContactDamage contact = GetComponentInChildren<EnemyContactDamage>(true);
             contact?.SetRuntimeDamage(ContactDamage);
         }

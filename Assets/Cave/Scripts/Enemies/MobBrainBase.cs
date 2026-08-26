@@ -33,6 +33,11 @@ namespace Cave.Enemies
         [SerializeField, Min(0.1f)] private float combatLeashRadius = 12f;
         [SerializeField, Min(0.05f)] private float decisionInterval = 0.12f;
 
+        [Header("Attention Overrides")]
+        [SerializeField] private bool respondsToDistractions = true;
+        [SerializeField, Min(0f)] private float distractionMoveSpeed = 2f;
+        [SerializeField, Min(0.05f)] private float distractionStoppingDistance = 0.8f;
+
         [Header("Debug")]
         [SerializeField] private bool drawDetectionRange = true;
         [SerializeField] private bool drawPatrolRadius = true;
@@ -65,15 +70,22 @@ namespace Cave.Enemies
 
         protected virtual void Awake()
         {
-            movement = GetComponent<EnemyController>();
-            damageable = GetComponent<Damageable>();
-            stagger = GetComponent<EnemyStagger>();
-            defense = GetComponent<EnemyDefenseController>();
-            contactDamageSources = GetComponentsInChildren<EnemyContactDamage>(true);
+            RefreshRuntimeDependencies();
             SetContactDamageBrainControl(true);
             spawnPosition = transform.position;
             patrolTargetX = spawnPosition.x;
             ConfigureCapabilities();
+            SetCapabilityBrainControl(true);
+        }
+
+        protected virtual void Start()
+        {
+            // Runtime installation deliberately happens after scene deserialization.
+            // Refresh once so brains coordinate the installed capabilities instead
+            // of retaining null references captured during Awake.
+            RefreshRuntimeDependencies();
+            ConfigureCapabilities();
+            SetContactDamageBrainControl(true);
             SetCapabilityBrainControl(true);
         }
 
@@ -93,12 +105,11 @@ namespace Cave.Enemies
 
         private void Update()
         {
-            if (Time.time < nextDecisionTime || movement == null)
+            if (movement == null)
             {
                 return;
             }
 
-            nextDecisionTime = Time.time + decisionInterval;
             if (damageable != null && damageable.CurrentHealth <= 0)
             {
                 HoldPosition(MobBrainState.Recover, "Inactive");
@@ -110,6 +121,13 @@ namespace Cave.Enemies
                 HoldPosition(MobBrainState.Recover, "Staggered");
                 return;
             }
+
+            if (Time.time < nextDecisionTime)
+            {
+                return;
+            }
+
+            nextDecisionTime = Time.time + decisionInterval;
 
             if (defense != null
                 && (defense.CurrentState == EnemyDefenseState.Blocking
@@ -127,10 +145,20 @@ namespace Cave.Enemies
             }
 
             RefreshTarget();
+            if (TryFollowDistraction())
+            {
+                return;
+            }
+
             float targetDistance = target != null
                 ? Vector2.Distance(transform.position, target.transform.position)
                 : float.PositiveInfinity;
-            if (!engaged && targetDistance <= detectionRange)
+            float avariceDetectionMultiplier = PlayerCurseController.Active != null
+                ? PlayerCurseController.Active.EnemyDetectionRangeMultiplier
+                : 1f;
+            float effectiveDetectionRange = detectionRange * avariceDetectionMultiplier;
+            float effectiveLoseTargetRange = loseTargetRange * avariceDetectionMultiplier;
+            if (!engaged && targetDistance <= effectiveDetectionRange)
             {
                 engaged = true;
                 outsideLoseRangeSince = -1f;
@@ -139,7 +167,7 @@ namespace Cave.Enemies
 
             if (engaged)
             {
-                if (target == null || targetDistance > loseTargetRange)
+                if (target == null || targetDistance > effectiveLoseTargetRange)
                 {
                     if (outsideLoseRangeSince < 0f)
                     {
@@ -166,6 +194,11 @@ namespace Cave.Enemies
                 return;
             }
 
+            if (TryOverrideIdleBehavior())
+            {
+                return;
+            }
+
             if (Mathf.Abs(transform.position.x - spawnPosition.x) > patrolRadius + patrolArrivalTolerance)
             {
                 ReturnToPatrol();
@@ -184,6 +217,10 @@ namespace Cave.Enemies
         protected abstract void EvaluateCombat(PlayerHealth player, Vector2 toPlayer);
         protected abstract bool IsCapabilityBusy();
         protected virtual string BusyDecisionLabel => "Committed action";
+        protected virtual bool TryOverrideIdleBehavior()
+        {
+            return false;
+        }
 
         protected void Move(float horizontalDirection, float speed, MobBrainState state, string decision)
         {
@@ -212,6 +249,31 @@ namespace Cave.Enemies
         {
             currentState = state;
             currentDecision = showCurrentState ? decision : string.Empty;
+        }
+
+        private bool TryFollowDistraction()
+        {
+            if (!respondsToDistractions
+                || !CursedDistraction.TryGetInterest(this, out Vector2 interestPosition))
+            {
+                return false;
+            }
+
+            float horizontalDelta = interestPosition.x - transform.position.x;
+            if (Mathf.Abs(horizontalDelta) <= distractionStoppingDistance)
+            {
+                HoldPosition(MobBrainState.Alert, "Investigate cursed distraction");
+            }
+            else
+            {
+                Move(
+                    Mathf.Sign(horizontalDelta),
+                    distractionMoveSpeed,
+                    MobBrainState.Reposition,
+                    "Pursue cursed distraction");
+            }
+
+            return true;
         }
 
         private void Patrol()
@@ -297,6 +359,15 @@ namespace Cave.Enemies
             }
         }
 
+        private void RefreshRuntimeDependencies()
+        {
+            movement = GetComponent<EnemyController>();
+            damageable = GetComponent<Damageable>();
+            stagger = GetComponent<EnemyStagger>();
+            defense = GetComponent<EnemyDefenseController>();
+            contactDamageSources = GetComponentsInChildren<EnemyContactDamage>(true);
+        }
+
         protected virtual void OnDrawGizmosSelected()
         {
             Vector3 center = Application.isPlaying ? (Vector3)spawnPosition : transform.position;
@@ -308,10 +379,14 @@ namespace Cave.Enemies
 
             if (drawDetectionRange)
             {
+                float avariceDetectionMultiplier = Application.isPlaying
+                    && PlayerCurseController.Active != null
+                        ? PlayerCurseController.Active.EnemyDetectionRangeMultiplier
+                        : 1f;
                 Gizmos.color = Color.yellow;
-                Gizmos.DrawWireSphere(transform.position, detectionRange);
+                Gizmos.DrawWireSphere(transform.position, detectionRange * avariceDetectionMultiplier);
                 Gizmos.color = new Color(1f, 0.45f, 0.1f, 0.75f);
-                Gizmos.DrawWireSphere(transform.position, loseTargetRange);
+                Gizmos.DrawWireSphere(transform.position, loseTargetRange * avariceDetectionMultiplier);
             }
         }
 

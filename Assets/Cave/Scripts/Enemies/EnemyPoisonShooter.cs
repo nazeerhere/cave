@@ -6,7 +6,6 @@ using UnityEngine;
 namespace Cave.Enemies
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(EnemyArchetypeProfile))]
     public sealed class EnemyPoisonShooter : MonoBehaviour,
         IEnemyInterruptible,
         IEnemySkillEvolutionReceiver
@@ -53,7 +52,6 @@ namespace Cave.Enemies
         public float BaseFireCooldown => fireCooldown;
         public bool IsBusy => isWindingUp;
         public bool IsReady => !isWindingUp
-            && projectilePrefab != null
             && Time.time >= nextFireTime
             && (stagger == null || stagger.CanAct);
 
@@ -130,7 +128,7 @@ namespace Cave.Enemies
         {
             isWindingUp = false;
             nextFireTime = Time.time + runtimeFireCooldown;
-            if (target == null || projectilePrefab == null)
+            if (target == null)
             {
                 return;
             }
@@ -142,16 +140,20 @@ namespace Cave.Enemies
                 direction = Vector2.left;
             }
 
+            if (damageModifiers == null)
+            {
+                damageModifiers = GetComponent<EnemyDamageModifiers>();
+            }
+
             int resolvedDirectDamage = damageModifiers != null
                 ? damageModifiers.ResolveDamage(runtimeDirectDamage)
                 : runtimeDirectDamage;
             int resolvedPoisonDamage = damageModifiers != null
                 ? damageModifiers.ResolveDamage(runtimePoisonDamage)
                 : runtimePoisonDamage;
-            EnemyPoisonProjectile projectile = Instantiate(
-                projectilePrefab,
-                spawnPosition,
-                Quaternion.identity);
+            EnemyPoisonProjectile projectile = projectilePrefab != null
+                ? Instantiate(projectilePrefab, spawnPosition, Quaternion.identity)
+                : EnemyPoisonProjectile.CreateRuntime(spawnPosition);
             float evolvedProjectileSpeed = runtimeProjectileSpeed
                 * (evolutionStage >= EnemyEvolutionStage.EvolutionOne
                     ? evolutionOneProjectileSpeedMultiplier

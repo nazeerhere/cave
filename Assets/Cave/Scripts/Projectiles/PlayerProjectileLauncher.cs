@@ -5,6 +5,7 @@ using Cave.InputSystem;
 using Cave.Player;
 using Cave.Progression;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Cave.Projectiles
 {
@@ -16,7 +17,8 @@ namespace Cave.Projectiles
         [SerializeField] private PlayerProjectile projectilePrefab;
         [SerializeField] private Transform spawnPoint;
         [SerializeField] private Vector2 spawnOffset = new Vector2(0.8f, 0.1f);
-        [SerializeField, Min(0f)] private float fireCooldown = 0.25f;
+        [FormerlySerializedAs("fireCooldown")]
+        [SerializeField, Min(0.05f)] private float heldFireInterval = 0.35f;
         [SerializeField, Min(0.01f)] private float manaCost = 10f;
 
         private PlayerMana playerMana;
@@ -26,9 +28,11 @@ namespace Cave.Projectiles
         private PlayerSpecialModeUpgradeState upgradeState;
         private PlayerAimDirection aimDirection;
         private PlayerController playerController;
+        private PlayerCombatFlow combatFlow;
         private float nextFireTime;
 
         public event Action<string> FeedbackRequested;
+        public event Action<Vector2> ProjectileFired;
 
         public float ManaCost => manaCost;
 
@@ -49,6 +53,7 @@ namespace Cave.Projectiles
             upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
             aimDirection = GetComponent<PlayerAimDirection>();
             playerController = GetComponent<PlayerController>();
+            combatFlow = GetComponent<PlayerCombatFlow>();
             EnsureSpawnPoint();
         }
 
@@ -56,20 +61,37 @@ namespace Cave.Projectiles
         {
             if (GameInput.FireProjectilePressed)
             {
-                TryFire();
+                TryFire(true);
+            }
+            else if (GameInput.FireProjectileHeld && Time.time >= nextFireTime)
+            {
+                TryFire(false);
             }
         }
 
         public bool TryFire()
         {
-            if (projectilePrefab == null || Time.time < nextFireTime)
+            return TryFire(true);
+        }
+
+        private bool TryFire(bool allowResourceFeedback)
+        {
+            PlayerGuardBreak guardBreak = GetComponent<PlayerGuardBreak>();
+            if ((guardBreak != null && !guardBreak.CanUseCombatActions)
+                || projectilePrefab == null
+                || Time.time < nextFireTime)
             {
                 return false;
             }
 
             if (!playerMana.TrySpendMana(manaCost))
             {
-                FeedbackRequested?.Invoke("Not enough mana.");
+                nextFireTime = Time.time + heldFireInterval;
+                if (allowResourceFeedback)
+                {
+                    FeedbackRequested?.Invoke("Not enough mana.");
+                }
+
                 return false;
             }
 
@@ -117,6 +139,16 @@ namespace Cave.Projectiles
             }
 
             int maximumEnemyHits = ResolveMaximumEnemyHits(specialMode.CurrentMode, currentTier);
+            FrenzyBreakActivation frenzyActivation = null;
+            if (combatFlow == null)
+            {
+                combatFlow = GetComponent<PlayerCombatFlow>();
+            }
+
+            combatFlow?.TryCommitFrenzyBreak(
+                FrenzyBreakAttackKind.Projectile,
+                out frenzyActivation);
+            projectile.SetFrenzyBreakActivation(frenzyActivation);
             projectile.Launch(
                 direction,
                 specialMode.CurrentMode,
@@ -126,7 +158,8 @@ namespace Cave.Projectiles
                 currentTier,
                 upgradeState != null ? upgradeState.Settings : null);
             CaveSfx.Play(CaveSfxCue.Shot, 0.8f);
-            nextFireTime = Time.time + fireCooldown;
+            nextFireTime = Time.time + heldFireInterval;
+            ProjectileFired?.Invoke(direction);
             return true;
         }
 

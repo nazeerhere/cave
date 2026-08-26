@@ -15,9 +15,14 @@ namespace Cave.Progression
         [SerializeField] private float baseMaximumStamina;
         [SerializeField] private float baseMaximumMana;
 
+        [Header("Curse Mastery Scaling (Read Only)")]
+        [SerializeField, Min(0f)] private float healthMasteryFractionCarry;
+        [SerializeField, Min(1f)] private float currentMasteryGainMultiplier = 1f;
+
         private PlayerHealth playerHealth;
         private SpinSwordAttack spinSwordAttack;
         private PlayerMana playerMana;
+        private PlayerCurseController curseController;
 
         public event Action MasteryChanged;
 
@@ -33,6 +38,7 @@ namespace Cave.Progression
             playerHealth = GetComponent<PlayerHealth>();
             spinSwordAttack = GetComponent<SpinSwordAttack>();
             playerMana = GetComponent<PlayerMana>();
+            curseController = GetComponent<PlayerCurseController>();
 
             if (playerHealth == null || spinSwordAttack == null || playerMana == null)
             {
@@ -77,20 +83,37 @@ namespace Cave.Progression
 
             bool changed = false;
             bool addToCurrent = settings.AddIncreaseToCurrentResource;
+            if (curseController == null)
+            {
+                curseController = GetComponent<PlayerCurseController>();
+            }
+
+            currentMasteryGainMultiplier = curseController != null
+                ? curseController.MasteryGainMultiplier
+                : 1f;
 
             if (IsHealthCritical())
             {
-                changed |= playerHealth.IncreaseMaxHealth(settings.HealthIncreasePerMastery, addToCurrent);
+                int healthIncrease = ResolveHealthMasteryIncrease(
+                    settings.HealthIncreasePerMastery,
+                    currentMasteryGainMultiplier);
+                changed |= playerHealth.IncreaseMaxHealth(healthIncrease, addToCurrent);
             }
 
             if (manaMasteryEligible)
             {
-                changed |= playerMana.IncreaseMaximumMana(settings.ManaIncreasePerMastery, addToCurrent);
+                changed |= playerMana.IncreaseMaximumMana(
+                    playerMana.MaximumMana
+                        * settings.ManaIncreasePercentPerMastery
+                        * currentMasteryGainMultiplier,
+                    addToCurrent);
             }
             else if (staminaMasteryEligible)
             {
                 changed |= spinSwordAttack.IncreaseMaximumStamina(
-                    settings.StaminaIncreasePerMastery,
+                    spinSwordAttack.MaximumStamina
+                        * settings.StaminaIncreasePercentPerMastery
+                        * currentMasteryGainMultiplier,
                     addToCurrent);
             }
 
@@ -98,6 +121,15 @@ namespace Cave.Progression
             {
                 MasteryChanged?.Invoke();
             }
+        }
+
+        private int ResolveHealthMasteryIncrease(int baseIncrease, float multiplier)
+        {
+            float scaled = Mathf.Max(1, baseIncrease) * Mathf.Max(1f, multiplier)
+                + healthMasteryFractionCarry;
+            int wholeIncrease = Mathf.Max(1, Mathf.FloorToInt(scaled));
+            healthMasteryFractionCarry = Mathf.Max(0f, scaled - wholeIncrease);
+            return wholeIncrease;
         }
 
         private bool IsHealthCritical()

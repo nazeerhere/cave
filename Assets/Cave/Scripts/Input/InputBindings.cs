@@ -42,7 +42,14 @@ namespace Cave.InputSystem
         [SerializeField] private KeyBinding basicAttack;
         [SerializeField] private KeyBinding chargedAttack;
         [SerializeField] private KeyBinding parry;
+        [SerializeField] private KeyBinding guardBreak;
         [SerializeField] private KeyBinding fireProjectile;
+        [SerializeField] private KeyBinding useHealthPotion;
+        [SerializeField] private KeyBinding useManaPotion;
+        [SerializeField] private KeyBinding placeLandmine;
+        [SerializeField] private KeyBinding useDistraction;
+        [SerializeField] private KeyBinding interact;
+        [SerializeField] private KeyBinding summonCurseAltar;
         [SerializeField] private KeyBinding dash;
         [SerializeField] private KeyBinding pause;
 
@@ -76,8 +83,22 @@ namespace Cave.InputSystem
                     return chargedAttack;
                 case GameAction.Parry:
                     return parry;
+                case GameAction.GuardBreak:
+                    return guardBreak;
                 case GameAction.FireProjectile:
                     return fireProjectile;
+                case GameAction.UseHealthPotion:
+                    return useHealthPotion;
+                case GameAction.UseManaPotion:
+                    return useManaPotion;
+                case GameAction.PlaceLandmine:
+                    return placeLandmine;
+                case GameAction.UseDistraction:
+                    return useDistraction;
+                case GameAction.Interact:
+                    return interact;
+                case GameAction.SummonCurseAltar:
+                    return summonCurseAltar;
                 case GameAction.Dash:
                     return dash;
                 case GameAction.Pause:
@@ -117,7 +138,14 @@ namespace Cave.InputSystem
             basicAttack = new KeyBinding(KeyCode.X, KeyCode.W);
             chargedAttack = new KeyBinding(KeyCode.C, KeyCode.None);
             parry = new KeyBinding(KeyCode.V, KeyCode.None);
+            guardBreak = new KeyBinding(KeyCode.E, KeyCode.None);
             fireProjectile = new KeyBinding(KeyCode.B, KeyCode.None);
+            useHealthPotion = new KeyBinding(KeyCode.Alpha1, KeyCode.None);
+            useManaPotion = new KeyBinding(KeyCode.Alpha2, KeyCode.None);
+            placeLandmine = new KeyBinding(KeyCode.Q, KeyCode.None);
+            useDistraction = new KeyBinding(KeyCode.R, KeyCode.None);
+            interact = new KeyBinding(KeyCode.F, KeyCode.None);
+            summonCurseAltar = new KeyBinding(KeyCode.None, KeyCode.None);
             dash = new KeyBinding(KeyCode.LeftShift, KeyCode.None);
             pause = new KeyBinding(KeyCode.Escape, KeyCode.None);
         }
@@ -238,8 +266,29 @@ namespace Cave.InputSystem
                 case GameAction.Parry:
                     parry = binding;
                     break;
+                case GameAction.GuardBreak:
+                    guardBreak = binding;
+                    break;
                 case GameAction.FireProjectile:
                     fireProjectile = binding;
+                    break;
+                case GameAction.UseHealthPotion:
+                    useHealthPotion = binding;
+                    break;
+                case GameAction.UseManaPotion:
+                    useManaPotion = binding;
+                    break;
+                case GameAction.PlaceLandmine:
+                    placeLandmine = binding;
+                    break;
+                case GameAction.UseDistraction:
+                    useDistraction = binding;
+                    break;
+                case GameAction.Interact:
+                    interact = binding;
+                    break;
+                case GameAction.SummonCurseAltar:
+                    summonCurseAltar = binding;
                     break;
                 case GameAction.Dash:
                     dash = binding;

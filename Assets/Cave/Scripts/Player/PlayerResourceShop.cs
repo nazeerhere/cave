@@ -5,77 +5,87 @@ namespace Cave.Player
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCurrency), typeof(PlayerHealth), typeof(PlayerMana))]
+    [RequireComponent(typeof(PlayerLandmineInventory))]
     public sealed class PlayerResourceShop : MonoBehaviour
     {
         [SerializeField] private SpecialModeTier2Settings settings;
 
         private PlayerCurrency playerCurrency;
-        private PlayerHealth playerHealth;
-        private PlayerMana playerMana;
+        private PlayerLandmineInventory consumables;
 
         public int HealthPotionCost => settings != null ? settings.HealthPotionCost : 0;
         public float HealthPotionRestorePercent => settings != null ? settings.HealthPotionRestorePercent : 0f;
         public int ManaPotionCost => settings != null ? settings.ManaPotionCost : 0;
         public float ManaPotionRestorePercent => settings != null ? settings.ManaPotionRestorePercent : 0f;
+        public int LandmineCost => ResolveConsumables() != null ? consumables.CurrencyCost : 0;
+        public int OwnedHealthPotions => ResolveConsumables() != null
+            ? consumables.OwnedHealthPotions
+            : 0;
+        public int OwnedManaPotions => ResolveConsumables() != null
+            ? consumables.OwnedManaPotions
+            : 0;
+        public int OwnedLandmines => ResolveConsumables() != null
+            ? consumables.OwnedLandmines
+            : 0;
 
         private void Awake()
         {
             playerCurrency = GetComponent<PlayerCurrency>();
-            playerHealth = GetComponent<PlayerHealth>();
-            playerMana = GetComponent<PlayerMana>();
+            consumables = GetComponent<PlayerLandmineInventory>();
         }
 
         internal void Configure(SpecialModeTier2Settings shopSettings)
         {
             settings = shopSettings;
+            ResolveConsumables()?.Configure(shopSettings);
         }
 
-        public bool TryBuyHealthPotion(out int restoredHealth)
+        public bool TryBuyHealthPotion(out int ownedQuantity)
         {
-            restoredHealth = 0;
+            ownedQuantity = OwnedHealthPotions;
+            PlayerLandmineInventory inventory = ResolveConsumables();
             if (settings == null
-                || playerHealth.CurrentHealth >= playerHealth.MaxHealth
-                || !playerCurrency.CanSpend(settings.HealthPotionCost))
+                || inventory == null
+                || !playerCurrency.TrySpend(settings.HealthPotionCost))
             {
                 return false;
             }
 
-            int restoreAmount = Mathf.Max(
-                1,
-                Mathf.CeilToInt(playerHealth.MaxHealth * settings.HealthPotionRestorePercent));
-            if (!playerCurrency.TrySpend(settings.HealthPotionCost))
-            {
-                return false;
-            }
-
-            int healthBefore = playerHealth.CurrentHealth;
-            playerHealth.RestoreHealth(restoreAmount);
-            restoredHealth = playerHealth.CurrentHealth - healthBefore;
-            return restoredHealth > 0;
+            inventory.AddHealthPotion();
+            ownedQuantity = inventory.OwnedHealthPotions;
+            return true;
         }
 
-        public bool TryBuyManaPotion(out float restoredMana)
+        public bool TryBuyManaPotion(out int ownedQuantity)
         {
-            restoredMana = 0f;
+            ownedQuantity = OwnedManaPotions;
+            PlayerLandmineInventory inventory = ResolveConsumables();
             if (settings == null
-                || playerMana.CurrentMana >= playerMana.MaximumMana
-                || !playerCurrency.CanSpend(settings.ManaPotionCost))
+                || inventory == null
+                || !playerCurrency.TrySpend(settings.ManaPotionCost))
             {
                 return false;
             }
 
-            float restoreAmount = Mathf.Max(
-                0.01f,
-                playerMana.MaximumMana * settings.ManaPotionRestorePercent);
-            if (!playerCurrency.TrySpend(settings.ManaPotionCost))
+            inventory.AddManaPotion();
+            ownedQuantity = inventory.OwnedManaPotions;
+            return true;
+        }
+
+        public bool TryBuyLandmine()
+        {
+            PlayerLandmineInventory inventory = ResolveConsumables();
+            return inventory != null && inventory.TryPurchaseLandmine();
+        }
+
+        private PlayerLandmineInventory ResolveConsumables()
+        {
+            if (consumables == null)
             {
-                return false;
+                consumables = GetComponent<PlayerLandmineInventory>();
             }
 
-            float manaBefore = playerMana.CurrentMana;
-            playerMana.RestoreMana(restoreAmount);
-            restoredMana = playerMana.CurrentMana - manaBefore;
-            return restoredMana > 0f;
+            return consumables;
         }
     }
 }

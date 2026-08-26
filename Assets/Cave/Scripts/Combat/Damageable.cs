@@ -18,6 +18,7 @@ namespace Cave.Combat
         private int runtimeMaximumHealth;
 
         public event Action Died;
+        public event Action<DamageContext, bool, int> DamageResolved;
 
         public int CurrentHealth { get; private set; }
         public int MaximumHealth => runtimeMaximumHealth;
@@ -43,18 +44,46 @@ namespace Cave.Combat
 
         public void TakeDamage(int amount, DamageContext damageContext)
         {
+            TakeDamageResolved(amount, damageContext);
+        }
+
+        public int TakeDamageResolved(int amount, DamageContext damageContext)
+        {
             if (amount <= 0 || CurrentHealth <= 0)
             {
-                return;
+                return 0;
+            }
+
+            if (damageContext.PermanentProgressionSource != null)
+            {
+                amount = damageContext.PermanentProgressionSource.ResolvePlayerDamage(amount);
             }
 
             EnemyDefenseController defense = GetComponent<EnemyDefenseController>();
             if (defense != null && defense.TryBlockDamage(damageContext))
             {
-                return;
+                DamageResolved?.Invoke(damageContext, true, 0);
+                return 0;
             }
 
+            NecromancerMeleeShield meleeShield = GetComponent<NecromancerMeleeShield>();
+            if (meleeShield != null)
+            {
+                amount = meleeShield.ResolveIncomingDamage(amount, damageContext);
+                if (amount <= 0)
+                {
+                    DamageResolved?.Invoke(damageContext, false, 0);
+                    return 0;
+                }
+            }
+
+            int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+            int appliedDamage = healthBeforeDamage - CurrentHealth;
+            DamageResolved?.Invoke(
+                damageContext,
+                false,
+                appliedDamage);
             CaveSfx.Play(CaveSfxCue.Hit, 0.75f);
 
             if (CurrentHealth == 0)
@@ -62,15 +91,20 @@ namespace Cave.Combat
                 damageContext.ReportKillingBlow();
                 Died?.Invoke();
                 gameObject.SetActive(false);
-                return;
+                return appliedDamage;
             }
 
-            if (damageContext.IsPlayerDamage
-                && damageContext.HasTrait(DamageTrait.Melee)
-                && !damageContext.HasTrait(DamageTrait.AreaOfEffect))
+            if (damageContext.IsPlayerDamage)
             {
                 EnemyStagger stagger = GetComponent<EnemyStagger>();
-                stagger?.TryStagger(StaggerStrength.Minor);
+                if (damageContext.HasTrait(DamageTrait.StaggerHeavy))
+                {
+                    stagger?.TryStagger(StaggerStrength.Heavy);
+                }
+                else if (damageContext.HasTrait(DamageTrait.StaggerNormal))
+                {
+                    stagger?.TryStagger(StaggerStrength.Normal);
+                }
             }
 
             if (flashRoutine != null)
@@ -79,6 +113,7 @@ namespace Cave.Combat
             }
 
             flashRoutine = StartCoroutine(FlashDamage());
+            return appliedDamage;
         }
 
         public void RestoreToFullHealth()
@@ -110,6 +145,23 @@ namespace Cave.Combat
             CurrentHealth = restoreToFull
                 ? runtimeMaximumHealth
                 : Mathf.Min(CurrentHealth, runtimeMaximumHealth);
+        }
+
+        public void SetRuntimeMaximumHealthPreservingRatio(int maximumHealth)
+        {
+            int previousMaximum = Mathf.Max(1, runtimeMaximumHealth);
+            float healthFraction = CurrentHealth / (float)previousMaximum;
+            runtimeMaximumHealth = Mathf.Max(1, maximumHealth);
+            if (CurrentHealth <= 0)
+            {
+                CurrentHealth = 0;
+                return;
+            }
+
+            CurrentHealth = Mathf.Clamp(
+                Mathf.RoundToInt(runtimeMaximumHealth * healthFraction),
+                1,
+                runtimeMaximumHealth);
         }
 
         private IEnumerator FlashDamage()

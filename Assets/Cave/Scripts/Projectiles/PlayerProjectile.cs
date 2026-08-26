@@ -42,13 +42,24 @@ namespace Cave.Projectiles
         private Color[] baseVisualColors;
         private Vector3 baseScale;
         private float tierScale = 1f;
+        private Transform[] scalableVisualTransforms;
+        private Vector3[] baseVisualScales;
         private TrailRenderer tierTrail;
         private Material tierTrailMaterial;
         private bool reflectedByEnemy;
         private GameObject enemyParryOwner;
+        private FrenzyBreakActivation frenzyActivation;
 
         public int BaseDamage => baseDamage;
+        public int SkillTier => firedTier;
+        public int RemainingEnemyHits => remainingEnemyHits;
+        public bool IsPiercing => remainingEnemyHits > 1;
         public bool CanBeEnemyParried => hasLaunched && !hasImpacted && !reflectedByEnemy;
+
+        public void SetFrenzyBreakActivation(FrenzyBreakActivation activation)
+        {
+            frenzyActivation = activation;
+        }
 
         private void Awake()
         {
@@ -63,6 +74,7 @@ namespace Cave.Projectiles
             }
 
             baseScale = transform.localScale;
+            CacheScalableVisualTransforms();
         }
 
         public void Launch(Vector2 direction, SpecialMode mode, int damage)
@@ -148,7 +160,26 @@ namespace Cave.Projectiles
                     }
 
                     hitTargets.Add(damageable);
-                    damageable.TakeDamage(resolvedDamage, damageContext);
+                    int frenzyDamage = resolvedDamage;
+                    bool isFrenzyCritical = frenzyActivation != null
+                        && frenzyActivation.TryResolveDamage(
+                            resolvedDamage,
+                            damageable,
+                            out frenzyDamage);
+                    int impactDamage = isFrenzyCritical ? frenzyDamage : resolvedDamage;
+                    DamageContext impactContext = isFrenzyCritical
+                        ? damageContext.WithTraits(DamageTrait.FrenzyCritical)
+                        : damageContext;
+                    int appliedDamage = damageable.TakeDamageResolved(
+                        impactDamage,
+                        impactContext);
+                    if (isFrenzyCritical)
+                    {
+                        frenzyActivation.ApplyImpact(
+                            damageable,
+                            body.velocity,
+                            appliedDamage);
+                    }
                     ApplyStatusEffect(damageable);
                     remainingEnemyHits--;
                     if (remainingEnemyHits <= 0)
@@ -214,7 +245,13 @@ namespace Cave.Projectiles
             if (firedMode == SpecialMode.SlowShot)
             {
                 statusEffects.ApplySlow(slowMovementMultiplier, slowDuration);
-                if (tier3Settings != null && firedTier >= 3)
+                if (frenzyActivation != null && frenzyActivation.UseFrostTierThreePin)
+                {
+                    statusEffects.ApplyImmobilize(tier3Settings != null
+                        ? tier3Settings.FrostTier2PinDuration
+                        : slowDuration);
+                }
+                else if (tier3Settings != null && firedTier >= 3)
                 {
                     statusEffects.ApplyImmobilize(tier3Settings.FrostTier3FreezeDuration);
                 }
@@ -251,6 +288,7 @@ namespace Cave.Projectiles
             }
 
             hasImpacted = true;
+            frenzyActivation?.Complete();
             if (firedTier >= 3
                 && tier3Settings != null
                 && firedMode == SpecialMode.SlowShot)
@@ -272,10 +310,11 @@ namespace Cave.Projectiles
 
         private void Update()
         {
+            frenzyActivation?.KeepAlive();
             if (hasLaunched && firedTier >= 3 && !hasImpacted)
             {
                 float pulse = 1f + Mathf.Sin(Time.time * 14f) * 0.07f;
-                transform.localScale = baseScale * tierScale * pulse;
+                ApplyVisualScale(tierScale * pulse);
             }
         }
 
@@ -298,7 +337,7 @@ namespace Cave.Projectiles
                 : firedTier >= 2
                     ? tier3Settings.Tier2ProjectileScale
                     : 1f;
-            transform.localScale = baseScale * tierScale;
+            ApplyVisualScale(tierScale);
 
             if (firedTier < 2)
             {
@@ -318,6 +357,55 @@ namespace Cave.Projectiles
             transparent.a = 0f;
             tierTrail.endColor = transparent;
             tierTrail.sortingOrder = ResolveVisualSortingOrder() - 1;
+        }
+
+        private void CacheScalableVisualTransforms()
+        {
+            List<Transform> transforms = new List<Transform>();
+
+            foreach (SpriteRenderer spriteRenderer in visualRenderers)
+            {
+                if (spriteRenderer == null)
+                {
+                    continue;
+                }
+
+                Transform visualTransform = spriteRenderer.transform;
+
+                // Never scale the projectile root. The Rigidbody2D and Collider2D live
+                // on the root, so scaling it changes the physical collision volume.
+                if (visualTransform == transform || transforms.Contains(visualTransform))
+                {
+                    continue;
+                }
+
+                transforms.Add(visualTransform);
+            }
+
+            scalableVisualTransforms = transforms.ToArray();
+            baseVisualScales = new Vector3[scalableVisualTransforms.Length];
+
+            for (int index = 0; index < scalableVisualTransforms.Length; index++)
+            {
+                baseVisualScales[index] = scalableVisualTransforms[index].localScale;
+            }
+        }
+
+        private void ApplyVisualScale(float scaleMultiplier)
+        {
+            if (scalableVisualTransforms == null || baseVisualScales == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < scalableVisualTransforms.Length; index++)
+            {
+                Transform visualTransform = scalableVisualTransforms[index];
+                if (visualTransform != null)
+                {
+                    visualTransform.localScale = baseVisualScales[index] * scaleMultiplier;
+                }
+            }
         }
 
         private int ResolveVisualSortingOrder()
@@ -344,12 +432,16 @@ namespace Cave.Projectiles
 
         private void OnDisable()
         {
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
             if (body != null)
             {
                 body.velocity = Vector2.zero;
             }
 
             hitTargets.Clear();
+            ApplyVisualScale(1f);
+            transform.localScale = baseScale;
             CancelInvoke();
         }
 

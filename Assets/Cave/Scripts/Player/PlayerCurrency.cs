@@ -42,5 +42,32 @@ namespace Cave.Player
             CurrencyChanged?.Invoke(CurrentCurrency);
             return true;
         }
+
+        public void ResetRunCurrency()
+        {
+            if (CurrentCurrency == 0)
+            {
+                return;
+            }
+
+            CurrentCurrency = 0;
+            CurrencyChanged?.Invoke(CurrentCurrency);
+        }
+
+        public int ApplyDeathClaim(float claimFraction)
+        {
+            if (CurrentCurrency <= 0)
+            {
+                return 0;
+            }
+
+            int claimed = Mathf.Clamp(
+                Mathf.CeilToInt(CurrentCurrency * Mathf.Clamp01(claimFraction)),
+                0,
+                CurrentCurrency);
+            CurrentCurrency -= claimed;
+            CurrencyChanged?.Invoke(CurrentCurrency);
+            return claimed;
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using Cave.Player;
 using Cave.Progression;
 using UnityEngine;
 
@@ -11,14 +12,19 @@ namespace Cave.World
         [SerializeField] private PlayerResourceMastery playerMastery;
 
         [Header("Current Difficulty (Read Only)")]
+        [SerializeField] private float rawCombinedGrowthPercent;
         [SerializeField] private float currentCombinedGrowthPercent;
         [SerializeField] private int currentDifficultyTier;
         [SerializeField] private float currentDifficultyMultiplier = 1f;
+
+        private float lastRawCombinedGrowthPercent;
+        private bool effectiveGrowthInitialized;
 
         public event Action DifficultyChanged;
 
         public ProgressionDifficultySettings Settings => settings;
         public float CombinedGrowthPercent => currentCombinedGrowthPercent;
+        public float RawCombinedGrowthPercent => rawCombinedGrowthPercent;
         public int DifficultyTier => currentDifficultyTier;
         public float DifficultyMultiplier => currentDifficultyMultiplier;
 
@@ -51,7 +57,27 @@ namespace Cave.World
         private void RecalculateDifficulty()
         {
             int previousTier = currentDifficultyTier;
-            currentCombinedGrowthPercent = CalculateCombinedGrowth();
+            rawCombinedGrowthPercent = CalculateCombinedGrowth();
+            if (!effectiveGrowthInitialized)
+            {
+                currentCombinedGrowthPercent = rawCombinedGrowthPercent;
+                effectiveGrowthInitialized = true;
+            }
+            else
+            {
+                float futureGrowth = Mathf.Max(
+                    0f,
+                    rawCombinedGrowthPercent - lastRawCombinedGrowthPercent);
+                PlayerCurseController curse = playerMastery != null
+                    ? playerMastery.GetComponent<PlayerCurseController>()
+                    : null;
+                float progressionMultiplier = curse != null
+                    ? curse.WorldLevelGrowthMultiplier
+                    : 1f;
+                currentCombinedGrowthPercent += futureGrowth * progressionMultiplier;
+            }
+
+            lastRawCombinedGrowthPercent = rawCombinedGrowthPercent;
 
             float growthPerTier = settings != null
                 ? Mathf.Max(0.0001f, settings.GrowthPerDifficultyTier)

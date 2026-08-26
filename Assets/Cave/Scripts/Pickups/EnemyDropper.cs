@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cave.Combat;
+using Cave.Enemies;
 using Cave.World;
 using UnityEngine;
 
@@ -11,6 +12,12 @@ namespace Cave.Pickups
         [SerializeField] private EnemyDropSettings sharedSettings;
         [SerializeField] private DropEntry[] overrideEntries;
         [SerializeField] private Vector2 overrideSpawnOffset = new Vector2(0f, 0.35f);
+
+        [Header("General Drop Quality")]
+        [SerializeField, Min(1f)] private float generalPrimaryChanceMultiplier = 1.25f;
+        [SerializeField, Min(0f)] private float veteranPrimaryChanceBonusPerDeath = 0.05f;
+        [SerializeField, Range(0f, 1f)] private float generalAdditionalCategoryBonus = 0.2f;
+        [SerializeField, Range(0f, 0.2f)] private float veteranAdditionalBonusPerDeath = 0.015f;
 
         private Damageable damageable;
         private bool hasEvaluatedDrop;
@@ -70,7 +77,17 @@ namespace Cave.Pickups
             }
 
             List<DropEntry> eligibleEntries = BuildEligibleEntries(entries);
-            DropEntry primary = ChoosePrimary(eligibleEntries);
+            SkeletonInheritance inheritance = GetComponent<SkeletonInheritance>();
+            bool isGeneral = inheritance != null && inheritance.Rank == SkeletonRank.General;
+            int witnessedDeaths = isGeneral ? inheritance.WitnessedDeaths : 0;
+            float primaryChanceMultiplier = isGeneral
+                ? generalPrimaryChanceMultiplier
+                    + witnessedDeaths * veteranPrimaryChanceBonusPerDeath
+                : 1f;
+            float towerDropMultiplier = DetectiveTower.GetOrdinaryDropRateMultiplier(
+                transform.position);
+            primaryChanceMultiplier *= towerDropMultiplier;
+            DropEntry primary = ChoosePrimary(eligibleEntries, primaryChanceMultiplier);
             if (primary == null)
             {
                 return;
@@ -84,7 +101,17 @@ namespace Cave.Pickups
             SpawnEntry(primary, spawnOffset, band, 0);
             spawnedCategories.Add(GetCategory(primary));
 
-            if (band == null || Random.value >= band.AdditionalCategoryChance)
+            float additionalChance = band != null ? band.AdditionalCategoryChance : 0f;
+            if (isGeneral)
+            {
+                additionalChance = Mathf.Clamp01(
+                    additionalChance
+                    + generalAdditionalCategoryBonus
+                    + witnessedDeaths * veteranAdditionalBonusPerDeath);
+            }
+            additionalChance *= towerDropMultiplier;
+
+            if (Random.value >= additionalChance)
             {
                 return;
             }
@@ -97,7 +124,7 @@ namespace Cave.Pickups
 
             SpawnEntry(second, spawnOffset, band, 1);
             spawnedCategories.Add(GetCategory(second));
-            if (Random.value >= band.ThirdCategoryChance)
+            if (band == null || Random.value >= band.ThirdCategoryChance * towerDropMultiplier)
             {
                 return;
             }
@@ -125,13 +152,18 @@ namespace Cave.Pickups
             return eligible;
         }
 
-        private static DropEntry ChoosePrimary(List<DropEntry> entries)
+        private static DropEntry ChoosePrimary(
+            List<DropEntry> entries,
+            float chanceMultiplier)
         {
             float roll = Random.value;
             float cumulativeChance = 0f;
             foreach (DropEntry entry in entries)
             {
-                cumulativeChance = Mathf.Min(1f, cumulativeChance + Mathf.Clamp01(entry.Chance));
+                cumulativeChance = Mathf.Min(
+                    1f,
+                    cumulativeChance
+                        + Mathf.Clamp01(entry.Chance) * Mathf.Max(0f, chanceMultiplier));
                 if (roll < cumulativeChance)
                 {
                     return entry;

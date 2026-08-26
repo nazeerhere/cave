@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cave.Player
@@ -10,8 +11,25 @@ namespace Cave.Player
 
         public event Action<float, float> ManaChanged;
 
+        private readonly Dictionary<int, float> costMultipliers =
+            new Dictionary<int, float>();
+
         public float CurrentMana { get; private set; }
         public float MaximumMana => maximumMana;
+        public float ManaCostMultiplier
+        {
+            get
+            {
+                float result = 1f;
+                foreach (float multiplier in costMultipliers.Values)
+                {
+                    result = Mathf.Max(result, multiplier);
+                }
+
+                return result;
+            }
+        }
+        public bool HasManaCostPenalty => ManaCostMultiplier > 1.001f;
 
         private void Awake()
         {
@@ -31,13 +49,50 @@ namespace Cave.Player
 
         public bool TrySpendMana(float amount)
         {
-            if (amount <= 0f || CurrentMana < amount)
+            float finalCost = GetModifiedManaCost(amount);
+            if (finalCost <= 0f || CurrentMana < finalCost)
             {
                 return false;
             }
 
-            SetMana(CurrentMana - amount);
+            SetMana(CurrentMana - finalCost);
             return true;
+        }
+
+        public bool CanSpendMana(float baseCost)
+        {
+            float finalCost = GetModifiedManaCost(baseCost);
+            return finalCost > 0f && CurrentMana >= finalCost;
+        }
+
+        public float GetModifiedManaCost(float baseCost)
+        {
+            return Mathf.Max(0f, baseCost) * ManaCostMultiplier;
+        }
+
+        public float GetAffordableBaseManaCost(float requestedBaseCost)
+        {
+            return Mathf.Min(
+                Mathf.Max(0f, requestedBaseCost),
+                CurrentMana / Mathf.Max(1f, ManaCostMultiplier));
+        }
+
+        public void SetCostModifier(UnityEngine.Object source, float multiplier)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            costMultipliers[source.GetInstanceID()] = Mathf.Max(1f, multiplier);
+        }
+
+        public void RemoveCostModifier(UnityEngine.Object source)
+        {
+            if (source != null)
+            {
+                costMultipliers.Remove(source.GetInstanceID());
+            }
         }
 
         public bool IncreaseMaximumMana(float amount, bool addIncreaseToCurrentMana = true)
@@ -57,6 +112,11 @@ namespace Cave.Player
             return true;
         }
 
+        public void ResetCurrentMana()
+        {
+            SetMana(maximumMana);
+        }
+
         private void SetMana(float value)
         {
             float clampedValue = Mathf.Clamp(value, 0f, maximumMana);
@@ -72,6 +132,11 @@ namespace Cave.Player
         private void OnValidate()
         {
             startingMana = Mathf.Clamp(startingMana, 0f, maximumMana);
+        }
+
+        private void OnDisable()
+        {
+            costMultipliers.Clear();
         }
     }
 }

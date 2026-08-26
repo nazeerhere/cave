@@ -22,6 +22,11 @@ namespace Cave.Enemies
         void Interrupt();
     }
 
+    public interface IEnemyInterruptPolicy
+    {
+        bool CanBeInterruptedBy(StaggerStrength strength);
+    }
+
     [DisallowMultipleComponent]
     public sealed class EnemyStagger : MonoBehaviour
     {
@@ -38,6 +43,11 @@ namespace Cave.Enemies
         [SerializeField, Min(0f)] private float staggerImmunityDuration = 0.5f;
         [SerializeField] private bool interruptWindups = true;
 
+        [Header("Current Stagger (Read Only)")]
+        [SerializeField] private StaggerStrength lastAppliedStrength;
+        [SerializeField] private bool wasResisted;
+        [SerializeField, Min(0f)] private float currentStaggerRemaining;
+
         private EnemyController enemyController;
         private FlyingSwarmController flyingController;
         private EnemyArchetypeProfile archetypeProfile;
@@ -49,6 +59,9 @@ namespace Cave.Enemies
         public bool IsStaggered => Time.time < staggeredUntil;
         public bool CanAct => !IsStaggered;
         public bool IsStaggerEligible => ResolveEligibility();
+        public StaggerStrength LastAppliedStrength => lastAppliedStrength;
+        public bool WasResisted => wasResisted;
+        public float CurrentStaggerRemaining => Mathf.Max(0f, staggeredUntil - Time.time);
 
         private void Awake()
         {
@@ -60,6 +73,11 @@ namespace Cave.Enemies
             {
                 visuals = gameObject.AddComponent<EnemyStaggerVisuals>();
             }
+        }
+
+        private void Update()
+        {
+            currentStaggerRemaining = CurrentStaggerRemaining;
         }
 
         public bool TryStagger(float baseDuration)
@@ -74,6 +92,22 @@ namespace Cave.Enemies
 
         public bool TryStagger(StaggerStrength strength, float baseDuration)
         {
+            return TryStaggerInternal(strength, baseDuration, 0f);
+        }
+
+        public bool TryGuardBreakStagger(float baseDuration, float minimumAppliedDuration)
+        {
+            return TryStaggerInternal(
+                StaggerStrength.Heavy,
+                baseDuration,
+                Mathf.Max(0f, minimumAppliedDuration));
+        }
+
+        private bool TryStaggerInternal(
+            StaggerStrength strength,
+            float baseDuration,
+            float minimumAppliedDuration)
+        {
             if (!ResolveEligibility()
                 || baseDuration <= 0f
                 || Time.time < nextAllowedStaggerTime)
@@ -81,29 +115,43 @@ namespace Cave.Enemies
                 return false;
             }
 
-            float duration = baseDuration * Mathf.Clamp(staggerDurationMultiplier, 0.1f, 1f);
+            float duration = Mathf.Max(
+                minimumAppliedDuration,
+                baseDuration * Mathf.Clamp(staggerDurationMultiplier, 0.1f, 1f));
             if (duration <= 0.01f)
             {
                 return false;
             }
 
+            lastAppliedStrength = strength;
+            wasResisted = staggerDurationMultiplier < 0.99f;
             staggeredUntil = Mathf.Max(staggeredUntil, Time.time + duration);
             nextAllowedStaggerTime = staggeredUntil + staggerImmunityDuration;
             enemyController?.SuspendMovement(duration);
             flyingController?.SuspendMovement(duration);
-            if (interruptWindups)
+            bool tankResistedMinor = strength == StaggerStrength.Minor
+                && IsTankArchetype();
+            if (interruptWindups && !tankResistedMinor)
             {
-                foreach (MonoBehaviour behaviour in GetComponents<MonoBehaviour>())
+                // Capabilities such as projectile shooters and contact hitboxes can
+                // live on authored child objects. Interrupt the whole enemy-owned
+                // capability hierarchy, not only components on this root.
+                foreach (MonoBehaviour behaviour in GetComponentsInChildren<MonoBehaviour>(true))
                 {
                     if (behaviour != this && behaviour is IEnemyInterruptible interruptible)
                     {
+                        if (behaviour is IEnemyInterruptPolicy policy
+                            && !policy.CanBeInterruptedBy(strength))
+                        {
+                            continue;
+                        }
+
                         interruptible.Interrupt();
                     }
                 }
             }
 
-            bool resisted = staggerDurationMultiplier < 0.99f;
-            visuals?.Show(strength, duration, resisted);
+            visuals?.Show(strength, duration, wasResisted);
             Staggered?.Invoke(strength, duration);
             return true;
         }
@@ -145,6 +193,17 @@ namespace Cave.Enemies
                 && !archetypeProfile.Includes(EnemyArchetype.Ranged);
         }
 
+        private bool IsTankArchetype()
+        {
+            if (archetypeProfile == null)
+            {
+                archetypeProfile = GetComponent<EnemyArchetypeProfile>();
+            }
+
+            return archetypeProfile != null
+                && archetypeProfile.Includes(EnemyArchetype.Tank);
+        }
+
         private float ResolveBaseDuration(StaggerStrength strength)
         {
             switch (strength)
@@ -162,6 +221,8 @@ namespace Cave.Enemies
         {
             staggeredUntil = 0f;
             nextAllowedStaggerTime = 0f;
+            currentStaggerRemaining = 0f;
+            wasResisted = false;
         }
     }
 }

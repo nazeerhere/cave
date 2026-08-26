@@ -8,7 +8,14 @@ namespace Cave.InputSystem
         BasicAttack,
         ChargedAttack,
         Parry,
+        GuardBreak,
         FireProjectile,
+        UseHealthPotion,
+        UseManaPotion,
+        PlaceLandmine,
+        UseDistraction,
+        Interact,
+        SummonCurseAltar,
         Dash,
         Pause
     }

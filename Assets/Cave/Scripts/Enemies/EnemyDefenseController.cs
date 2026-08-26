@@ -34,6 +34,7 @@ namespace Cave.Enemies
         [SerializeField] private EnemyDefensePreset probabilityPreset = EnemyDefensePreset.Custom;
         [SerializeField, Range(0f, 1f)] private float blockAttemptChance;
         [SerializeField, Range(0f, 1f)] private float projectileParryChance;
+        [SerializeField, Range(0f, 1f)] private float necromancerProjectileParryChance = 0.8f;
 
         [Header("Defense Timing")]
         [SerializeField, Min(0f)] private float defenseCooldown = 0.9f;
@@ -44,6 +45,10 @@ namespace Cave.Enemies
         [SerializeField] private bool startsFacingRight = true;
         [SerializeField] private bool blockProjectiles;
         [SerializeField, Range(-1f, 1f)] private float minimumFrontDot = 0.05f;
+        // [SerializeField] private float BlockHitVfxScale = 0.12f;
+        [SerializeField] private Vector2 blockImpactVfxOffset = new Vector2(0.45f, 0.15f);
+        [SerializeField] private float blockImpactVfxScale = 0.7f;
+        [SerializeField] private GameObject BlockHitVfxPrefab;
 
         [Header("Skill Evolution")]
         [SerializeField, Range(0f, 0.25f)] private float evolutionOneBlockBonus = 0.05f;
@@ -55,7 +60,7 @@ namespace Cave.Enemies
 
         [Header("Hard Probability Caps")]
         [SerializeField, Range(0f, 0.95f)] private float bruteBlockCap = 0.5f;
-        [SerializeField, Range(0f, 0.95f)] private float trollBlockCap = 0.65f;
+        [SerializeField, Range(0f, 0.95f)] private float trollBlockCap = 0.7f;
         [SerializeField, Range(0f, 0.95f)] private float trollProjectileParryCap = 0.5f;
         [SerializeField, Range(0f, 0.95f)] private float necromancerProjectileParryCap = 0.3f;
         [SerializeField, Range(0f, 0.95f)] private float wizardProjectileParryCap = 0.35f;
@@ -65,29 +70,67 @@ namespace Cave.Enemies
         [Header("Feedback Hooks")]
         [SerializeField] private Color blockColor = new Color(0.35f, 0.72f, 1f, 0.9f);
         [SerializeField] private Color projectileParryColor = new Color(0.85f, 0.4f, 1f, 0.9f);
+        [SerializeField] private GameObject blockImpactVfxPrefab;
+        [SerializeField, Range(0.1f, 1f)] private float trollFailedAttemptCooldownMultiplier = 0.25f;
+        [SerializeField, Min(0f)] private float guardBrokenRecovery = 0.8f;
+
+        [Header("Successful Block Recoil")]
+        [SerializeField, Min(0f)] private float normalAttackerRecoilDuration = 0.4f;
+        [SerializeField, Min(0f)] private float heavyAttackerRecoilDuration = 0.55f;
+        [SerializeField, Min(0f)] private float attackerRecoilSpeed = 5.5f;
+
+        [Header("Optional Defensive Posture")]
+        [SerializeField] private Transform weaponPresentation;
+        [SerializeField] private float guardWeaponAngle = 48f;
+        [SerializeField, Min(1f)] private float guardScale = 1.04f;
 
         [Header("Current State (Read Only)")]
         [SerializeField] private EnemyDefenseState currentState = EnemyDefenseState.Ready;
         [SerializeField] private float facingDirection = 1f;
+        [SerializeField, Range(0f, 0.3f)] private float runtimeBlockChanceBonus;
 
         private EnemyStagger stagger;
         private float activeUntil;
         private float recoveryUntil;
         private float nextDecisionTime;
         private EnemyEvolutionStage evolutionStage;
+        private SpriteRenderer[] renderers;
+        private Color[] restingColors;
+        private Vector3 restingScale;
+        private Quaternion restingWeaponRotation;
+        private bool defensePoseApplied;
+        private EnemyMeleeCombat meleePresentation;
 
         public event Action<EnemyDefenseState, bool> DefenseResolved;
+        public event Action GuardBroken;
         public EnemyDefenseState CurrentState => currentState;
         public float EffectiveBlockChance => ResolveBlockChance();
         public float EffectiveProjectileParryChance => ResolveProjectileParryChance();
         public bool CanStartAttack => Time.time >= activeUntil
             && Time.time >= recoveryUntil
             && (stagger == null || stagger.CanAct);
+        public bool CanEnterDefensivePosture
+        {
+            get
+            {
+                RefreshState();
+                return currentState == EnemyDefenseState.Ready
+                    && Time.time >= nextDecisionTime
+                    && (stagger == null || stagger.CanAct);
+            }
+        }
 
         private void Awake()
         {
             facingDirection = startsFacingRight ? 1f : -1f;
             stagger = GetComponent<EnemyStagger>();
+            CachePresentation();
+        }
+
+        private void Start()
+        {
+            stagger = GetComponent<EnemyStagger>();
+            CachePresentation();
         }
 
         private void Update()
@@ -100,6 +143,7 @@ namespace Cave.Enemies
             if (!Mathf.Approximately(horizontalDirection, 0f))
             {
                 facingDirection = Mathf.Sign(horizontalDirection);
+                meleePresentation?.SetCombatFacing(horizontalDirection);
             }
         }
 
@@ -120,8 +164,14 @@ namespace Cave.Enemies
 
             if (currentState == EnemyDefenseState.Blocking && Time.time < activeUntil)
             {
-                ShowDefenseFeedback(blockColor);
-                return true;
+                bool postureBlockedHit = UnityEngine.Random.value < chance;
+                if (postureBlockedHit)
+                {
+                    ShowDefenseImpact(blockColor);
+                    ApplyAttackerRecoil(context);
+                }
+
+                return postureBlockedHit;
             }
 
             if (!CanAttemptDefense())
@@ -131,6 +181,11 @@ namespace Cave.Enemies
 
             bool succeeded = UnityEngine.Random.value < chance;
             ResolveAttempt(EnemyDefenseState.Blocking, succeeded, blockColor);
+            if (succeeded)
+            {
+                ApplyAttackerRecoil(context);
+            }
+
             return succeeded;
         }
 
@@ -149,7 +204,7 @@ namespace Cave.Enemies
                 bool activeDeflection = projectile.TryEnemyParry(gameObject);
                 if (activeDeflection)
                 {
-                    ShowDefenseFeedback(projectileParryColor);
+                    ShowDefenseFeedback(EnemyDefenseState.Parrying, projectileParryColor);
                 }
 
                 return activeDeflection;
@@ -179,6 +234,9 @@ namespace Cave.Enemies
             float baseChance;
             switch (probabilityPreset)
             {
+                case EnemyDefensePreset.Skeleton:
+                    baseChance = blockAttemptChance;
+                    break;
                 case EnemyDefensePreset.Brute:
                     baseChance = 0.35f;
                     break;
@@ -196,17 +254,22 @@ namespace Cave.Enemies
                 ResolveBlockCap(),
                 baseChance + ResolveEvolutionBonus(
                     evolutionOneBlockBonus,
-                    evolutionTwoBlockBonus));
+                    evolutionTwoBlockBonus)
+                    + runtimeBlockChanceBonus);
         }
 
         private float ResolveProjectileParryChance()
         {
+            if (probabilityPreset == EnemyDefensePreset.Necromancer)
+            {
+                // Necromancer defense is deliberately a strong, imperfect
+                // projectile response and is tuned independently of other roles.
+                return Mathf.Clamp01(necromancerProjectileParryChance);
+            }
+
             float baseChance;
             switch (probabilityPreset)
             {
-                case EnemyDefensePreset.Necromancer:
-                    baseChance = 0.15f;
-                    break;
                 case EnemyDefensePreset.Wizard:
                     baseChance = 0.25f;
                     break;
@@ -235,14 +298,18 @@ namespace Cave.Enemies
                 activeUntil = Time.time + activeDefenseDuration;
                 recoveryUntil = activeUntil + recoveryDuration * ResolveRecoveryMultiplier();
                 nextDecisionTime = recoveryUntil + defenseCooldown;
-                ShowDefenseFeedback(feedbackColor);
+                ApplyDefensePose(successfulState);
+                ShowDefenseFeedback(successfulState, feedbackColor);
             }
             else
             {
                 currentState = EnemyDefenseState.Cooldown;
                 activeUntil = Time.time;
                 recoveryUntil = Time.time;
-                nextDecisionTime = Time.time + defenseCooldown;
+                float failedCooldown = probabilityPreset == EnemyDefensePreset.Troll
+                    ? defenseCooldown * trollFailedAttemptCooldownMultiplier
+                    : defenseCooldown;
+                nextDecisionTime = Time.time + failedCooldown;
             }
 
             DefenseResolved?.Invoke(successfulState, succeeded);
@@ -302,6 +369,75 @@ namespace Cave.Enemies
             evolutionStage = stage;
         }
 
+        public void ConfigurePreset(EnemyDefensePreset preset)
+        {
+            probabilityPreset = preset;
+        }
+
+        public void ConfigureSkeletonBlock(
+            float attemptChance,
+            float activeDuration,
+            float recovery,
+            float cooldown)
+        {
+            probabilityPreset = EnemyDefensePreset.Skeleton;
+            blockAttemptChance = Mathf.Clamp01(attemptChance);
+            projectileParryChance = 0f;
+            blockProjectiles = false;
+            activeDefenseDuration = Mathf.Max(0.01f, activeDuration);
+            recoveryDuration = Mathf.Max(0f, recovery);
+            defenseCooldown = Mathf.Max(0f, cooldown);
+            runtimeBlockChanceBonus = 0f;
+        }
+
+        public void SetRuntimeBlockChanceBonus(float bonus)
+        {
+            runtimeBlockChanceBonus = Mathf.Clamp(bonus, 0f, 0.3f);
+        }
+
+        public bool TryEnterDefensivePosture(float duration)
+        {
+            if (!CanEnterDefensivePosture || ResolveBlockChance() <= 0f)
+            {
+                return false;
+            }
+
+            currentState = EnemyDefenseState.Blocking;
+            activeUntil = Time.time + Mathf.Max(activeDefenseDuration, duration);
+            recoveryUntil = activeUntil + recoveryDuration * ResolveRecoveryMultiplier();
+            nextDecisionTime = recoveryUntil + defenseCooldown;
+            ApplyDefensePose(EnemyDefenseState.Blocking);
+            ShowDefenseFeedback(EnemyDefenseState.Blocking, blockColor);
+            DefenseResolved?.Invoke(EnemyDefenseState.Blocking, true);
+            return true;
+        }
+
+        public bool TryReceiveGuardBreak(GameObject source)
+        {
+            RefreshState();
+            if (source == null
+                || currentState != EnemyDefenseState.Blocking
+                || Time.time >= activeUntil)
+            {
+                return false;
+            }
+
+            currentState = EnemyDefenseState.Cooldown;
+            activeUntil = Time.time;
+            recoveryUntil = Time.time;
+            nextDecisionTime = Time.time + guardBrokenRecovery;
+            RestoreDefensePose();
+            CombatShapeEffect.Create(
+                transform.position,
+                CombatShape.Slash,
+                0.78f,
+                blockColor,
+                0.24f,
+                -25f * facingDirection);
+            GuardBroken?.Invoke();
+            return true;
+        }
+
         public void SuspendForMajorAbility(float duration)
         {
             currentState = EnemyDefenseState.Cooldown;
@@ -321,6 +457,7 @@ namespace Cave.Enemies
                 currentState = Time.time < recoveryUntil
                     ? EnemyDefenseState.Recovering
                     : EnemyDefenseState.Cooldown;
+                RestoreDefensePose();
             }
 
             if (currentState == EnemyDefenseState.Recovering && Time.time >= recoveryUntil)
@@ -345,9 +482,149 @@ namespace Cave.Enemies
             return Mathf.Sign(horizontalDelta) * facingDirection >= minimumFrontDot;
         }
 
-        private void ShowDefenseFeedback(Color color)
+        private void ShowDefenseFeedback(EnemyDefenseState state, Color color)
         {
-            Cave.Combat.AreaPulseEffect.Create(transform.position, 0.72f, color, 0.16f);
+            CombatShape shape = state == EnemyDefenseState.Parrying
+                ? CombatShape.Diamond
+                : CombatShape.Hexagon;
+            CombatShapeEffect.Create(transform.position, shape, 0.72f, color, 0.18f);
+        }
+
+        private void ShowDefenseImpact(Color color)
+        {
+            GameObject impactPrefab = blockImpactVfxPrefab != null
+                ? blockImpactVfxPrefab
+                : BlockHitVfxPrefab;
+            if (impactPrefab != null)
+            {
+                Vector3 spawnPosition =
+                    transform.position +
+                    new Vector3(blockImpactVfxOffset.x, blockImpactVfxOffset.y, 0f);
+
+                GameObject instance = Instantiate(
+                    impactPrefab,
+                    spawnPosition,
+                    Quaternion.identity);
+
+                instance.transform.localScale *= blockImpactVfxScale;
+                Destroy(instance, 1.5f);
+            }
+
+            CombatShapeEffect.Create(
+                transform.position,
+                CombatShape.Hexagon,
+                0.78f,
+                color,
+                0.16f);
+        }
+
+        private void ApplyAttackerRecoil(DamageContext context)
+        {
+            if (!context.HasTrait(DamageTrait.Melee)
+                || context.HasTrait(DamageTrait.Projectile)
+                || context.Source == null)
+            {
+                return;
+            }
+
+            Cave.Player.PlayerGuardBreak playerCombatLock =
+                context.Source.GetComponentInParent<Cave.Player.PlayerGuardBreak>();
+            if (playerCombatLock == null)
+            {
+                return;
+            }
+
+            float duration = context.HasTrait(DamageTrait.StaggerHeavy)
+                ? heavyAttackerRecoilDuration
+                : normalAttackerRecoilDuration;
+            Vector2 away = context.Source.transform.position - transform.position;
+            playerCombatLock.ApplyCombatRecoil(away, duration, attackerRecoilSpeed);
+        }
+
+        private void CachePresentation()
+        {
+            renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            restingColors = new Color[renderers.Length];
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                restingColors[index] = renderers[index].color;
+            }
+
+            restingScale = transform.localScale;
+            meleePresentation = GetComponent<EnemyMeleeCombat>();
+            if (weaponPresentation == null)
+            {
+                foreach (EnemyContactDamage contact in GetComponentsInChildren<EnemyContactDamage>(true))
+                {
+                    if (contact.transform != transform
+                        && contact.GetComponent<SpriteRenderer>() != null)
+                    {
+                        weaponPresentation = contact.transform;
+                        break;
+                    }
+                }
+            }
+
+            if (weaponPresentation != null)
+            {
+                restingWeaponRotation = weaponPresentation.localRotation;
+            }
+        }
+
+        private void ApplyDefensePose(EnemyDefenseState state)
+        {
+            defensePoseApplied = true;
+            transform.localScale = new Vector3(
+                restingScale.x * guardScale,
+                restingScale.y,
+                restingScale.z);
+            Color tint = state == EnemyDefenseState.Parrying
+                ? projectileParryColor
+                : blockColor;
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                if (renderers[index] != null)
+                {
+                    renderers[index].color = Color.Lerp(restingColors[index], tint, 0.35f);
+                }
+            }
+
+            if (meleePresentation != null)
+            {
+                meleePresentation.SetDefensiveWeaponPose(guardWeaponAngle);
+            }
+            else if (weaponPresentation != null)
+            {
+                weaponPresentation.localRotation = restingWeaponRotation
+                    * Quaternion.Euler(0f, 0f, guardWeaponAngle * facingDirection);
+            }
+        }
+
+        private void RestoreDefensePose()
+        {
+            if (!defensePoseApplied)
+            {
+                return;
+            }
+
+            defensePoseApplied = false;
+            transform.localScale = restingScale;
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                if (renderers[index] != null)
+                {
+                    renderers[index].color = restingColors[index];
+                }
+            }
+
+            if (meleePresentation != null)
+            {
+                meleePresentation.RestoreCombatPresentation();
+            }
+            else if (weaponPresentation != null)
+            {
+                weaponPresentation.localRotation = restingWeaponRotation;
+            }
         }
 
         public void Interrupt()
@@ -356,6 +633,7 @@ namespace Cave.Enemies
             activeUntil = Time.time;
             recoveryUntil = Time.time;
             nextDecisionTime = Mathf.Max(nextDecisionTime, Time.time + defenseCooldown);
+            RestoreDefensePose();
         }
 
         private void OnDisable()
@@ -364,6 +642,8 @@ namespace Cave.Enemies
             activeUntil = 0f;
             recoveryUntil = 0f;
             nextDecisionTime = 0f;
+            runtimeBlockChanceBonus = 0f;
+            RestoreDefensePose();
         }
     }
 }

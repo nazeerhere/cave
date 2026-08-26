@@ -217,14 +217,36 @@ namespace Cave.UI
                     return "Basic Attack";
                 case GameAction.ChargedAttack:
                     return "Charged Attack";
+                case GameAction.GuardBreak:
+                    return "Guard Break";
                 case GameAction.FireProjectile:
                     return "Fire Projectile";
+                case GameAction.UseHealthPotion:
+                    return "Use Health Potion";
+                case GameAction.UseManaPotion:
+                    return "Use Mana Potion";
+                case GameAction.PlaceLandmine:
+                    return "Place Landmine";
+                case GameAction.UseDistraction:
+                    return "Use Distraction";
+                case GameAction.Interact:
+                    return "Interact";
+                case GameAction.SummonCurseAltar:
+                    return "Summon Curse Altar";
                 default:
                     return InsertSpaces(action.ToString());
             }
         }
 
-        private static string FormatKey(KeyCode key)
+        public static string FormatBinding(GameAction action)
+        {
+            KeyBinding binding = GameInput.Bindings.GetBinding(action);
+            return binding.Secondary == KeyCode.None
+                ? FormatKey(binding.Primary)
+                : FormatKey(binding.Primary) + " / " + FormatKey(binding.Secondary);
+        }
+
+        public static string FormatKey(KeyCode key)
         {
             switch (key)
             {

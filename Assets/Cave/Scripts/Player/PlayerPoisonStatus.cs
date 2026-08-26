@@ -16,6 +16,8 @@ namespace Cave.Player
         private LineRenderer poisonVisual;
         private Material poisonMaterial;
 
+        public bool IsPoisoned => poisonRoutine != null;
+
         private void Awake()
         {
             playerHealth = GetComponent<PlayerHealth>();

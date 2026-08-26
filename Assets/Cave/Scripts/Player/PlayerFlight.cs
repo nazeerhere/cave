@@ -18,6 +18,8 @@ namespace Cave.Player
         private PlayerSpecialMode specialMode;
         private PlayerHealth playerHealth;
         private PlayerSpecialModeUpgradeState upgradeState;
+        private PlayerFlightBash groundSmash;
+        private PlayerGuardBreak actionGate;
         private float originalGravityScale;
 
         public bool IsFlying { get; private set; }
@@ -30,6 +32,8 @@ namespace Cave.Player
             specialMode = GetComponent<PlayerSpecialMode>();
             playerHealth = GetComponent<PlayerHealth>();
             upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
+            groundSmash = GetComponent<PlayerFlightBash>();
+            actionGate = GetComponent<PlayerGuardBreak>();
             originalGravityScale = body.gravityScale;
         }
 
@@ -42,8 +46,15 @@ namespace Cave.Player
 
         private void Update()
         {
+            if (groundSmash == null)
+            {
+                groundSmash = GetComponent<PlayerFlightBash>();
+            }
+
             bool shouldFly = specialMode.CurrentMode == SpecialMode.Flight
+                && (actionGate == null || actionGate.CanUseCombatActions)
                 && !playerController.IsGrounded
+                && (groundSmash == null || !groundSmash.IsBashing)
                 && GameInput.JumpHeld
                 && playerMana.CurrentMana > 0f;
 
@@ -60,7 +71,7 @@ namespace Cave.Player
             }
 
             float requestedDrain = manaDrainPerSecond * GetTierDrainMultiplier() * Time.deltaTime;
-            float actualDrain = Mathf.Min(requestedDrain, playerMana.CurrentMana);
+            float actualDrain = playerMana.GetAffordableBaseManaCost(requestedDrain);
             if (actualDrain > 0f)
             {
                 playerMana.TrySpendMana(actualDrain);
@@ -120,6 +131,11 @@ namespace Cave.Player
         }
 
         internal void StopForGroundJump()
+        {
+            StopFlying();
+        }
+
+        internal void StopForGroundSmash()
         {
             StopFlying();
         }

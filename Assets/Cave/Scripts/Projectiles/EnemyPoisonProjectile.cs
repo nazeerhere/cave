@@ -32,6 +32,8 @@ namespace Cave.Projectiles
         private bool impacted;
         private bool enemyParried;
         private DamageContext reflectedDamageContext;
+        private LineRenderer runtimeVisual;
+        private Material runtimeVisualMaterial;
         private bool createsPoisonZone;
         private float poisonZoneRadius;
         private float poisonZoneDuration;
@@ -41,12 +43,31 @@ namespace Cave.Projectiles
             && !enemyParried;
         public bool CanBeEnemyParried => !impacted && currentTeam == ProjectileTeam.Player;
 
+        public static EnemyPoisonProjectile CreateRuntime(Vector2 position)
+        {
+            GameObject projectileObject = new GameObject("Detective Poison Projectile");
+            projectileObject.transform.position = position;
+            Rigidbody2D runtimeBody = projectileObject.AddComponent<Rigidbody2D>();
+            runtimeBody.gravityScale = 0f;
+            runtimeBody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            runtimeBody.interpolation = RigidbodyInterpolation2D.Interpolate;
+            runtimeBody.constraints = RigidbodyConstraints2D.FreezeRotation;
+            CircleCollider2D runtimeCollider = projectileObject.AddComponent<CircleCollider2D>();
+            runtimeCollider.radius = 0.12f;
+            runtimeCollider.isTrigger = true;
+            return projectileObject.AddComponent<EnemyPoisonProjectile>();
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
             projectileCollider = GetComponent<Collider2D>();
             projectileCollider.isTrigger = true;
             renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            if (renderers.Length == 0)
+            {
+                EnsureRuntimeVisual();
+            }
         }
 
         public void Initialize(
@@ -283,6 +304,40 @@ namespace Cave.Projectiles
                 {
                     spriteRenderer.color = color;
                 }
+            }
+
+            if (runtimeVisual != null)
+            {
+                runtimeVisual.startColor = color;
+                runtimeVisual.endColor = color;
+            }
+        }
+
+        private void EnsureRuntimeVisual()
+        {
+            runtimeVisual = gameObject.AddComponent<LineRenderer>();
+            runtimeVisualMaterial = new Material(Shader.Find("Sprites/Default"));
+            runtimeVisual.material = runtimeVisualMaterial;
+            runtimeVisual.useWorldSpace = false;
+            runtimeVisual.loop = true;
+            runtimeVisual.positionCount = 12;
+            runtimeVisual.startWidth = 0.045f;
+            runtimeVisual.endWidth = 0.045f;
+            runtimeVisual.sortingOrder = 7;
+            for (int index = 0; index < runtimeVisual.positionCount; index++)
+            {
+                float angle = index / (float)runtimeVisual.positionCount * Mathf.PI * 2f;
+                runtimeVisual.SetPosition(
+                    index,
+                    new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * 0.12f);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (runtimeVisualMaterial != null)
+            {
+                Destroy(runtimeVisualMaterial);
             }
         }
     }

@@ -26,15 +26,27 @@ namespace Cave.Combat
         [SerializeField] private GameObject swordVisual;
         [SerializeField] private Collider2D attackCollider;
         [SerializeField] private LayerMask damageableLayers;
+        [SerializeField] private float hitVfxScale = 0.12f;
+        [SerializeField] private GameObject hitVfxPrefab;
 
         private readonly Dictionary<Damageable, int> activeTargetContacts = new Dictionary<Damageable, int>();
         private readonly List<Damageable> inactiveTargetBuffer = new List<Damageable>();
         private Quaternion restingRotation;
+        private Vector3 authoredPivotPosition;
+        private Vector3 authoredPivotScale;
+        private float authoredSwordFacing = 1f;
+        private float currentSwordFacing = 1f;
         private float currentStamina;
         private float regenerationStartsAt;
         private bool isAttacking;
         private PlayerDamageBoost damageBoost;
         private PlayerResourceMastery resourceMastery;
+        private PlayerGuardBreak guardBreak;
+        private PlayerAimDirection aimDirection;
+        private ChargedAttack chargedAttack;
+        private PlayerRecoveryModifiers recoveryModifiers;
+        private PlayerCombatFlow combatFlow;
+        private FrenzyBreakActivation frenzyActivation;
 
         public event Action<float, float> StaminaChanged;
 
@@ -53,18 +65,48 @@ namespace Cave.Combat
         {
             damageBoost = GetComponent<PlayerDamageBoost>();
             resourceMastery = GetComponent<PlayerResourceMastery>();
+            guardBreak = GetComponent<PlayerGuardBreak>();
+            aimDirection = GetComponent<PlayerAimDirection>();
+            chargedAttack = GetComponent<ChargedAttack>();
+            recoveryModifiers = GetComponent<PlayerRecoveryModifiers>();
+            combatFlow = GetComponent<PlayerCombatFlow>();
             if (swordPivot != null)
             {
                 restingRotation = swordPivot.localRotation;
+                authoredPivotPosition = swordPivot.localPosition;
+                authoredPivotScale = swordPivot.localScale;
+                authoredSwordFacing = ResolveAuthoredSwordFacing();
             }
 
             currentStamina = maximumStamina;
+            RefreshSwordFacing();
             SetSwordVisible(true);
             SetAttackColliderActive(false);
         }
 
         private void Update()
         {
+            RefreshSwordFacing();
+
+            if (guardBreak == null)
+            {
+                guardBreak = GetComponent<PlayerGuardBreak>();
+            }
+
+            if (guardBreak != null && !guardBreak.CanUseCombatActions)
+            {
+                if (isAttacking)
+                {
+                    StopAttack();
+                }
+                else
+                {
+                    RegenerateStamina();
+                }
+
+                return;
+            }
+
             if (isAttacking)
             {
                 UpdateAttack();
@@ -85,12 +127,22 @@ namespace Cave.Combat
         {
             isAttacking = true;
             activeTargetContacts.Clear();
+            frenzyActivation = null;
+            if (combatFlow == null)
+            {
+                combatFlow = GetComponent<PlayerCombatFlow>();
+            }
+
+            combatFlow?.TryCommitFrenzyBreak(
+                FrenzyBreakAttackKind.Spin,
+                out frenzyActivation);
             SetAttackColliderActive(true);
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.65f);
         }
 
         private void UpdateAttack()
         {
+            frenzyActivation?.KeepAlive();
             RemoveInactiveTargetContacts();
 
             if (!GameInput.BasicAttackHeld || currentStamina <= 0f)
@@ -101,7 +153,12 @@ namespace Cave.Combat
 
             if (swordPivot != null)
             {
-                swordPivot.Rotate(0f, 0f, -spinDegreesPerSecond * Time.deltaTime, Space.Self);
+                float spinDirection = currentSwordFacing >= 0f ? -1f : 1f;
+                swordPivot.Rotate(
+                    0f,
+                    0f,
+                    spinDegreesPerSecond * spinDirection * Time.deltaTime,
+                    Space.Self);
             }
 
             SetStamina(currentStamina - staminaDrainPerSecond * Time.deltaTime);
@@ -114,6 +171,8 @@ namespace Cave.Combat
         private void StopAttack()
         {
             isAttacking = false;
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
             activeTargetContacts.Clear();
             regenerationStartsAt = Time.time + regenerationDelay;
             SetAttackColliderActive(false);
@@ -124,6 +183,85 @@ namespace Cave.Combat
             }
         }
 
+        public void StopForCommittedFollowUp()
+        {
+            if (isAttacking)
+            {
+                StopAttack();
+            }
+        }
+
+        public float PrepareSwordForDirection(Vector2 direction)
+        {
+            float facing = Mathf.Abs(direction.x) > 0.001f
+                ? Mathf.Sign(direction.x)
+                : currentSwordFacing;
+            ApplySwordFacing(facing);
+
+            Vector2 normalized = direction.sqrMagnitude > 0.001f
+                ? direction.normalized
+                : new Vector2(facing, 0f);
+            float angleFromFacing = Mathf.Atan2(
+                normalized.y,
+                Mathf.Abs(normalized.x)) * Mathf.Rad2Deg;
+            return angleFromFacing * facing;
+        }
+
+        private void RefreshSwordFacing()
+        {
+            if (swordPivot == null || (chargedAttack != null && chargedAttack.IsAttacking))
+            {
+                return;
+            }
+
+            float facing = currentSwordFacing;
+            if (aimDirection != null)
+            {
+                aimDirection.ReadDirection();
+                facing = aimDirection.FacingDirection.x;
+            }
+            else if (!Mathf.Approximately(GameInput.Horizontal, 0f))
+            {
+                facing = Mathf.Sign(GameInput.Horizontal);
+            }
+
+            ApplySwordFacing(facing);
+        }
+
+        private void ApplySwordFacing(float facing)
+        {
+            if (swordPivot == null || Mathf.Abs(facing) <= 0.001f)
+            {
+                return;
+            }
+
+            currentSwordFacing = Mathf.Sign(facing);
+            float mirror = currentSwordFacing == authoredSwordFacing ? 1f : -1f;
+            swordPivot.localPosition = new Vector3(
+                authoredPivotPosition.x * mirror,
+                authoredPivotPosition.y,
+                authoredPivotPosition.z);
+            swordPivot.localScale = new Vector3(
+                authoredPivotScale.x * mirror,
+                authoredPivotScale.y,
+                authoredPivotScale.z);
+        }
+
+        private float ResolveAuthoredSwordFacing()
+        {
+            if (swordVisual != null
+                && swordVisual.transform.IsChildOf(swordPivot)
+                && Mathf.Abs(swordVisual.transform.localPosition.x) > 0.001f)
+            {
+                return Mathf.Sign(
+                    swordVisual.transform.localPosition.x * authoredPivotScale.x);
+            }
+
+            return Mathf.Abs(authoredPivotPosition.x) > 0.001f
+                ? Mathf.Sign(authoredPivotPosition.x)
+                : 1f;
+        }
+
         private void RegenerateStamina()
         {
             if (Time.time < regenerationStartsAt || currentStamina >= maximumStamina)
@@ -131,7 +269,17 @@ namespace Cave.Combat
                 return;
             }
 
-            SetStamina(currentStamina + staminaRegenerationPerSecond * Time.deltaTime);
+            if (recoveryModifiers == null)
+            {
+                recoveryModifiers = GetComponent<PlayerRecoveryModifiers>();
+            }
+
+            float regenerationMultiplier = recoveryModifiers != null
+                ? recoveryModifiers.StaminaRegenerationMultiplier
+                : 1f;
+            SetStamina(
+                currentStamina
+                + staminaRegenerationPerSecond * regenerationMultiplier * Time.deltaTime);
         }
 
         private void SetStamina(float value)
@@ -195,6 +343,16 @@ namespace Cave.Combat
             return true;
         }
 
+        public void ResetCurrentStamina()
+        {
+            if (isAttacking)
+            {
+                StopAttack();
+            }
+
+            SetStamina(maximumStamina);
+        }
+
         private void OnTriggerEnter2D(Collider2D other)
         {
             if (!isAttacking || (damageableLayers.value & (1 << other.gameObject.layer)) == 0)
@@ -226,6 +384,17 @@ namespace Cave.Combat
             int resolvedDamage = damageBoost != null
                 ? damageBoost.ResolveSpinDamage(damage, out manaWasConsumed)
                 : damage;
+            int frenzyDamage = resolvedDamage;
+            bool isFrenzyCritical = frenzyActivation != null
+                && frenzyActivation.TryResolveDamage(
+                    resolvedDamage,
+                    damageable,
+                    out frenzyDamage);
+            if (isFrenzyCritical)
+            {
+                resolvedDamage = frenzyDamage;
+                manaWasConsumed |= frenzyActivation.ManaInfused;
+            }
             if (resourceMastery == null)
             {
                 resourceMastery = GetComponent<PlayerResourceMastery>();
@@ -234,7 +403,29 @@ namespace Cave.Combat
             DamageContext damageContext = resourceMastery != null
                 ? resourceMastery.CreateSpinDamageContext(manaWasConsumed).WithTraits(DamageTrait.Melee)
                 : default;
-            damageable.TakeDamage(resolvedDamage, damageContext);
+            if (isFrenzyCritical)
+            {
+                damageContext = damageContext.WithTraits(DamageTrait.FrenzyCritical);
+            }
+
+            int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            Vector2 hitDirection = damageable.transform.position - transform.position;
+            if (isFrenzyCritical)
+            {
+                frenzyActivation.ApplyImpact(damageable, hitDirection, appliedDamage);
+            }
+            if (hitVfxPrefab != null)
+            {
+                Vector3 hitPosition = other.ClosestPoint(transform.position);
+
+                GameObject vfx = Instantiate(
+                    hitVfxPrefab,
+                    hitPosition,
+                    Quaternion.identity
+                );
+
+                vfx.transform.localScale *= hitVfxScale;
+            }
         }
 
         private void OnTriggerExit2D(Collider2D other)
@@ -280,6 +471,8 @@ namespace Cave.Combat
         private void OnDisable()
         {
             isAttacking = false;
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
             activeTargetContacts.Clear();
 
             if (swordPivot != null)
@@ -287,6 +480,7 @@ namespace Cave.Combat
                 swordPivot.localRotation = restingRotation;
             }
 
+            RefreshSwordFacing();
             SetSwordVisible(true);
             SetAttackColliderActive(false);
         }

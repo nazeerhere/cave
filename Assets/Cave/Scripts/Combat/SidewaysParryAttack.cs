@@ -16,7 +16,16 @@ namespace Cave.Combat
         Perfect,
         Normal,
         Late,
-        Broken
+        Broken,
+        Guard
+    }
+
+    public enum PlayerDefenseQuality
+    {
+        None,
+        Block,
+        NormalParry,
+        PerfectParry
     }
 
     public sealed class SidewaysParryAttack : MonoBehaviour
@@ -34,18 +43,28 @@ namespace Cave.Combat
         [SerializeField, Min(0f)] private float maximumChainExtension = 0.45f;
 
         [Header("Melee Guard")]
+        [SerializeField, Min(0f)] private float sustainedGuardStaminaDrainPerSecond = 20f;
+        [SerializeField, Min(0f)] private float blockedHitStaminaCost = 6f;
+        [SerializeField, Min(0.05f)] private float counterWindowDuration = 0.7f;
         [SerializeField, Range(0f, 1f)] private float lateMeleeDamageReduction = 0.5f;
         [SerializeField, Min(0f)] private float normalMeleeKnockback = 6f;
         [SerializeField, Min(0f)] private float perfectMeleeKnockback = 10f;
         [SerializeField, Min(0f)] private float normalEnemyStaggerDuration = 0.35f;
         [SerializeField, Min(0f)] private float perfectEnemyStaggerDuration = 0.6f;
 
+        [Header("Successful Parry Resource Rewards")]
+        [SerializeField, Range(0f, 1f)] private float normalStaminaRestoreFraction = 0.08f;
+        [SerializeField, Range(0f, 1f)] private float normalManaRestoreFraction = 0.03f;
+        [SerializeField, Range(0f, 1f)] private float perfectStaminaRestoreFraction = 0.15f;
+        [SerializeField, Range(0f, 1f)] private float perfectManaRestoreFraction = 0.08f;
+
         [Header("Perfect Parry")]
         [SerializeField, Min(1f)] private float perfectReflectionSpeedMultiplier = 1.4f;
         [SerializeField, Min(1f)] private float perfectReflectionDamageMultiplier = 2f;
-        [SerializeField, Min(0f)] private float perfectManaRestore = 5f;
-        [SerializeField, Min(0f)] private float perfectStaminaRestore = 10f;
         [SerializeField, Min(0.01f)] private float perfectFeedbackDuration = 0.12f;
+        [SerializeField] private GameObject perfectParryVfxPrefab;
+        [SerializeField, Min(0.01f)] private Vector2 perfectParryVfxOffset = Vector2.zero;
+        [SerializeField, Min(0.01f)] float perfectParryVfxScale = 1f;
         [SerializeField] private Color perfectFeedbackColor = new Color(1f, 0.9f, 0.35f, 1f);
 
         [Header("Parry Stage Feedback")]
@@ -77,6 +96,8 @@ namespace Cave.Combat
         [Header("Current State (Read Only)")]
         [SerializeField] private ParryPhase currentPhase = ParryPhase.Ready;
         [SerializeField, Min(0f)] private float currentChainExtension;
+        [SerializeField] private PlayerDefenseQuality counterWindowQuality;
+        [SerializeField, Min(0f)] private float counterWindowRemaining;
 
         private readonly HashSet<IPlayerParryableProjectile> parriedProjectiles =
             new HashSet<IPlayerParryableProjectile>();
@@ -90,17 +111,26 @@ namespace Cave.Combat
         private Coroutine feedbackRoutine;
         private PlayerMana playerMana;
         private SpinSwordAttack stamina;
+        private PlayerGuardBreak guardBreak;
+
+        public event System.Action<PlayerDefenseQuality> DefenseSucceeded;
 
         public ParryPhase CurrentPhase => currentPhase;
         public bool IsActive => currentPhase == ParryPhase.Perfect
             || currentPhase == ParryPhase.Normal
-            || currentPhase == ParryPhase.Late;
+            || currentPhase == ParryPhase.Late
+            || currentPhase == ParryPhase.Guard;
         public bool IsGuardHeld => IsActive && GameInput.ParryHeld;
+        public bool IsCounterWindowActive => counterWindowQuality != PlayerDefenseQuality.None
+            && Time.time <= counterWindowExpiresAt;
+
+        private float counterWindowExpiresAt;
 
         private void Awake()
         {
             playerMana = GetComponent<PlayerMana>();
             stamina = GetComponent<SpinSwordAttack>();
+            guardBreak = GetComponent<PlayerGuardBreak>();
 
             if (parryTransform != null)
             {
@@ -125,6 +155,29 @@ namespace Cave.Combat
 
         private void Update()
         {
+            counterWindowRemaining = IsCounterWindowActive
+                ? Mathf.Max(0f, counterWindowExpiresAt - Time.time)
+                : 0f;
+            if (!IsCounterWindowActive)
+            {
+                counterWindowQuality = PlayerDefenseQuality.None;
+            }
+
+            if (guardBreak == null)
+            {
+                guardBreak = GetComponent<PlayerGuardBreak>();
+            }
+
+            if (guardBreak != null && !guardBreak.CanUseCombatActions)
+            {
+                if (IsActive)
+                {
+                    BreakGuard();
+                }
+
+                return;
+            }
+
             float horizontalInput = GameInput.Horizontal;
             if (!Mathf.Approximately(horizontalInput, 0f))
             {
@@ -158,6 +211,40 @@ namespace Cave.Combat
             }
 
             UpdateHeldPhase(Time.time - stanceStartedAt);
+
+            if (currentPhase == ParryPhase.Guard
+                && (stamina == null
+                    || !stamina.TrySpendStamina(
+                        sustainedGuardStaminaDrainPerSecond * Time.deltaTime)))
+            {
+                BreakGuard();
+            }
+        }
+
+        public bool TryGetCounterWindow(out PlayerDefenseQuality quality)
+        {
+            quality = IsCounterWindowActive
+                ? counterWindowQuality
+                : PlayerDefenseQuality.None;
+            return quality != PlayerDefenseQuality.None;
+        }
+
+        public bool TryConsumeCounterWindow(out PlayerDefenseQuality quality)
+        {
+            if (!TryGetCounterWindow(out quality))
+            {
+                return false;
+            }
+
+            counterWindowQuality = PlayerDefenseQuality.None;
+            counterWindowExpiresAt = 0f;
+            counterWindowRemaining = 0f;
+            if (IsActive)
+            {
+                EndStance(false);
+            }
+
+            return true;
         }
 
         public bool TryParry(IPlayerParryableProjectile projectile)
@@ -191,6 +278,12 @@ namespace Cave.Combat
                         lateDeflectVerticalOffset);
                     succeeded = projectile.DeflectToGround(gameObject, targetPoint);
                     break;
+                case ParryPhase.Guard:
+                    Vector2 guardedTargetPoint = (Vector2)transform.position + new Vector2(
+                        facingDirection * lateDeflectHorizontalOffset,
+                        lateDeflectVerticalOffset);
+                    succeeded = projectile.DeflectToGround(gameObject, guardedTargetPoint);
+                    break;
                 default:
                     return false;
             }
@@ -198,7 +291,14 @@ namespace Cave.Combat
             if (succeeded)
             {
                 parriedProjectiles.Add(projectile);
-                CompleteSuccessfulParry(currentPhase);
+                if (currentPhase == ParryPhase.Guard)
+                {
+                    CompleteSuccessfulDefense(PlayerDefenseQuality.Block);
+                }
+                else
+                {
+                    CompleteSuccessfulParry(currentPhase);
+                }
             }
 
             return succeeded;
@@ -256,6 +356,21 @@ namespace Cave.Combat
                         lateStageColor,
                         perfectFeedbackDuration);
                     return false;
+                case ParryPhase.Guard:
+                    if (stamina == null)
+                    {
+                        stamina = GetComponent<SpinSwordAttack>();
+                    }
+
+                    if (stamina == null || !stamina.TrySpendStamina(blockedHitStaminaCost))
+                    {
+                        BreakGuard();
+                        return false;
+                    }
+
+                    incomingDamage = 0;
+                    CompleteSuccessfulDefense(PlayerDefenseQuality.Block);
+                    return true;
                 default:
                     return false;
             }
@@ -312,7 +427,7 @@ namespace Cave.Combat
             }
         }
 
-        private void RestorePerfectParryResources()
+        private void RestoreParryResources(bool isPerfect)
         {
             if (playerMana == null)
             {
@@ -324,16 +439,49 @@ namespace Cave.Combat
                 stamina = GetComponent<SpinSwordAttack>();
             }
 
-            playerMana?.RestoreMana(perfectManaRestore);
-            stamina?.RestoreStamina(perfectStaminaRestore);
+            float staminaFraction = isPerfect
+                ? perfectStaminaRestoreFraction
+                : normalStaminaRestoreFraction;
+            float manaFraction = isPerfect
+                ? perfectManaRestoreFraction
+                : normalManaRestoreFraction;
+            if (stamina != null)
+            {
+                stamina.RestoreStamina(stamina.MaximumStamina * staminaFraction);
+            }
+
+            if (playerMana != null)
+            {
+                playerMana.RestoreMana(playerMana.MaximumMana * manaFraction);
+            }
         }
 
         private void CompleteSuccessfulParry(ParryPhase phase)
         {
             bool isPerfect = phase == ParryPhase.Perfect;
+            RestoreParryResources(isPerfect);
             if (isPerfect)
             {
-                RestorePerfectParryResources();
+                if (perfectParryVfxPrefab != null)
+                    {
+                        Vector3 spawnPosition =
+                            transform.position +
+                            new Vector3(
+                                perfectParryVfxOffset.x,
+                                perfectParryVfxOffset.y,
+                                0f
+                            );
+
+                        GameObject vfx = Instantiate(
+                            perfectParryVfxPrefab,
+                            spawnPosition,
+                            Quaternion.identity
+                        );
+
+                        vfx.transform.localScale *= perfectParryVfxScale;
+
+                        Destroy(vfx, 1.5f);
+                    }
             }
 
             float extension = isPerfect ? perfectParryExtension : successfulParryExtension;
@@ -341,6 +489,23 @@ namespace Cave.Combat
                 maximumChainExtension,
                 currentChainExtension + extension);
             PlaySuccessfulParryFeedback(phase);
+            CompleteSuccessfulDefense(isPerfect
+                ? PlayerDefenseQuality.PerfectParry
+                : PlayerDefenseQuality.NormalParry);
+        }
+
+        private void CompleteSuccessfulDefense(PlayerDefenseQuality quality)
+        {
+            if (!IsCounterWindowActive || quality > counterWindowQuality)
+            {
+                counterWindowQuality = quality;
+            }
+
+            counterWindowExpiresAt = Mathf.Max(
+                counterWindowExpiresAt,
+                Time.time + counterWindowDuration);
+            counterWindowRemaining = Mathf.Max(0f, counterWindowExpiresAt - Time.time);
+            DefenseSucceeded?.Invoke(quality);
         }
 
         private void UpdateHeldPhase(float elapsed)
@@ -361,7 +526,7 @@ namespace Cave.Combat
 
             if (currentPhase == ParryPhase.Late && elapsed > lateEnd)
             {
-                EndStance(true);
+                SetPhase(ParryPhase.Guard);
             }
         }
 
@@ -533,6 +698,10 @@ namespace Cave.Combat
                     SetFeedbackColor(lateStageColor);
                     SetFeedbackScale(lateStageScale);
                     break;
+                case ParryPhase.Guard:
+                    SetFeedbackColor(normalStageColor);
+                    SetFeedbackScale(1f);
+                    break;
                 default:
                     RestoreFeedbackBaseline();
                     break;
@@ -596,6 +765,9 @@ namespace Cave.Combat
             RestoreParryTransform();
             currentPhase = ParryPhase.Ready;
             currentChainExtension = 0f;
+            counterWindowQuality = PlayerDefenseQuality.None;
+            counterWindowExpiresAt = 0f;
+            counterWindowRemaining = 0f;
             SetStanceVisualActive(false);
         }
 

@@ -62,7 +62,22 @@ namespace Cave.InputSystem
         public static bool ParryPressed => GameplayInputEnabled && WasPressed(GameAction.Parry);
         public static bool ParryReleased => GameplayInputEnabled && WasReleased(GameAction.Parry);
         public static bool ParryHeld => GameplayInputEnabled && IsHeld(GameAction.Parry);
+        public static bool GuardBreakPressed => GameplayInputEnabled
+            && WasPressed(GameAction.GuardBreak);
         public static bool FireProjectilePressed => GameplayInputEnabled && WasPressed(GameAction.FireProjectile);
+        public static bool FireProjectileHeld => GameplayInputEnabled && IsHeld(GameAction.FireProjectile);
+        public static bool UseHealthPotionPressed => GameplayInputEnabled
+            && WasPressed(GameAction.UseHealthPotion);
+        public static bool UseManaPotionPressed => GameplayInputEnabled
+            && WasPressed(GameAction.UseManaPotion);
+        public static bool PlaceLandminePressed => GameplayInputEnabled && WasPressed(GameAction.PlaceLandmine);
+        public static bool UseDistractionPressed => GameplayInputEnabled
+            && WasPressed(GameAction.UseDistraction);
+        public static bool InteractPressed => GameplayInputEnabled && WasPressed(GameAction.Interact);
+        public static bool InteractHeld => GameplayInputEnabled && IsHeld(GameAction.Interact);
+        public static bool InteractReleased => GameplayInputEnabled && WasReleased(GameAction.Interact);
+        public static bool SummonCurseAltarPressed => GameplayInputEnabled
+            && WasPressed(GameAction.SummonCurseAltar);
         public static bool DashPressed => GameplayInputEnabled && WasPressed(GameAction.Dash);
         public static bool PausePressed => !WasInputConsumedThisFrame && WasPressed(GameAction.Pause);
         public static bool MenuCancelPressed => !WasInputConsumedThisFrame && WasKeyPressed(KeyCode.Escape);
@@ -91,6 +106,11 @@ namespace Cave.InputSystem
         {
             gameplayInputRequested = true;
             suppressGameplayUntilRelease = AnyGameplayKeyHeld();
+        }
+
+        public static void ConsumeMenuInputForCurrentFrame()
+        {
+            consumedInputFrame = Time.frameCount;
         }
 
         public static bool TryRebind(

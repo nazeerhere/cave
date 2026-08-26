@@ -4,6 +4,7 @@ using Cave.Player;
 using Cave.Progression;
 using Cave.Projectiles;
 using Cave.World;
+using Cave.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -60,6 +61,19 @@ namespace Cave.Pickups
                     dropper.UseSharedSettings(settings);
                 }
 
+                if (damageable.TryGetComponent(out SkeletonInheritance _))
+                {
+                    if (!damageable.TryGetComponent(out GeneralShardReward _))
+                    {
+                        damageable.gameObject.AddComponent<GeneralShardReward>();
+                    }
+
+                    if (!damageable.TryGetComponent(out GeneralExperienceIndicator _))
+                    {
+                        damageable.gameObject.AddComponent<GeneralExperienceIndicator>();
+                    }
+                }
+
                 if (damageable.TryGetComponent(out EnemyController _)
                     || damageable.TryGetComponent(out FlyingSwarmController _))
                 {
@@ -88,6 +102,17 @@ namespace Cave.Pickups
                     continue;
                 }
 
+                PlayerRunPersistence runPersistence;
+                if (!playerHealth.TryGetComponent(out runPersistence))
+                {
+                    runPersistence = playerHealth.gameObject.AddComponent<PlayerRunPersistence>();
+                }
+
+                if (!runPersistence.IsAuthoritative)
+                {
+                    continue;
+                }
+
                 if (!playerHealth.TryGetComponent(out HitFlash _))
                 {
                     playerHealth.gameObject.AddComponent<HitFlash>();
@@ -96,6 +121,11 @@ namespace Cave.Pickups
                 if (!playerHealth.TryGetComponent(out PlayerHitFeedback _))
                 {
                     playerHealth.gameObject.AddComponent<PlayerHitFeedback>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerGuardBreak _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerGuardBreak>();
                 }
 
                 if (!playerHealth.TryGetComponent(out PlayerMana _))
@@ -108,6 +138,11 @@ namespace Cave.Pickups
                     playerHealth.gameObject.AddComponent<PlayerCurrency>();
                 }
 
+                if (!playerHealth.TryGetComponent(out PlayerLandmineInventory _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerLandmineInventory>();
+                }
+
                 if (!playerHealth.TryGetComponent(out PlayerSpecialMode _))
                 {
                     playerHealth.gameObject.AddComponent<PlayerSpecialMode>();
@@ -116,6 +151,26 @@ namespace Cave.Pickups
                 if (!playerHealth.TryGetComponent(out PlayerAimDirection _))
                 {
                     playerHealth.gameObject.AddComponent<PlayerAimDirection>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerCurseController _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerCurseController>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerRunResourceReset _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerRunResourceReset>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerCurseAltarController _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerCurseAltarController>();
+                }
+
+                if (!playerHealth.TryGetComponent(out DetectiveCurseHordeDirector _))
+                {
+                    playerHealth.gameObject.AddComponent<DetectiveCurseHordeDirector>();
                 }
 
                 if (!playerHealth.TryGetComponent(out PlayerDamageBoost _))
@@ -176,6 +231,11 @@ namespace Cave.Pickups
 
                 if (playerHealth.TryGetComponent(out SpinSwordAttack _))
                 {
+                    if (!playerHealth.TryGetComponent(out PlayerCombatFlow _))
+                    {
+                        playerHealth.gameObject.AddComponent<PlayerCombatFlow>();
+                    }
+
                     PlayerDash playerDash;
                     if (!playerHealth.TryGetComponent(out playerDash))
                     {
@@ -200,6 +260,22 @@ namespace Cave.Pickups
 
                     resourceMastery.Configure(progressionSettings);
 
+                    if (!playerHealth.TryGetComponent(out PlayerPermanentProgression _))
+                    {
+                        playerHealth.gameObject.AddComponent<PlayerPermanentProgression>();
+                    }
+
+                    if (!playerHealth.TryGetComponent(out PlayerPermanentProgressionHud _))
+                    {
+                        playerHealth.gameObject.AddComponent<PlayerPermanentProgressionHud>();
+                    }
+
+                    if (playerHealth.GetComponent<SidewaysParryAttack>() != null
+                        && !playerHealth.TryGetComponent(out PlayerCrowdResponse _))
+                    {
+                        playerHealth.gameObject.AddComponent<PlayerCrowdResponse>();
+                    }
+
                     if (difficultyManager == null)
                     {
                         difficultyManager = playerHealth.gameObject.AddComponent<WorldDifficultyManager>();
@@ -217,6 +293,11 @@ namespace Cave.Pickups
                 if (combatSettings != null)
                 {
                     launcher.UseProjectilePrefabIfMissing(combatSettings.ProjectilePrefab);
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerActionObserver _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerActionObserver>();
                 }
             }
 
@@ -264,6 +345,27 @@ namespace Cave.Pickups
                 }
 
                 EnemyTank tank = damageable.GetComponent<EnemyTank>();
+                if (tank != null)
+                {
+                    if (!damageable.TryGetComponent(out KnockbackReceiver _))
+                    {
+                        damageable.gameObject.AddComponent<KnockbackReceiver>();
+                    }
+
+                    if (!damageable.TryGetComponent(out EnemyDamageModifiers _))
+                    {
+                        damageable.gameObject.AddComponent<EnemyDamageModifiers>();
+                    }
+
+                    EnemyDefenseController tankDefense;
+                    if (!damageable.TryGetComponent(out tankDefense))
+                    {
+                        tankDefense = damageable.gameObject.AddComponent<EnemyDefenseController>();
+                    }
+
+                    tankDefense.ConfigurePreset(EnemyDefensePreset.Troll);
+                }
+
                 tank?.ConfigureIfMissing(strategicSettings);
                 EnemySwarm swarm = damageable.GetComponent<EnemySwarm>();
                 swarm?.ConfigureIfMissing(strategicSettings);

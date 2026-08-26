@@ -10,6 +10,7 @@ namespace Cave.Enemies
         [SerializeField] private bool startMovingRight = true;
 
         private Rigidbody2D body;
+        private EnemyStagger stagger;
         private float startingX;
         private float direction;
         private float movementSuspendedUntil;
@@ -17,6 +18,7 @@ namespace Cave.Enemies
         private float difficultySpeedMultiplier = 1f;
         private float archetypeSpeedMultiplier = 1f;
         private float supportSpeedMultiplier = 1f;
+        private float inheritanceSpeedMultiplier = 1f;
         private float brainSpeedMultiplier = 1f;
         private float combatMovementDirection;
         private float combatMovementUntil;
@@ -26,13 +28,20 @@ namespace Cave.Enemies
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
+            stagger = GetComponent<EnemyStagger>();
             startingX = body.position.x;
             direction = startMovingRight ? 1f : -1f;
         }
 
         private void FixedUpdate()
         {
-            if (Time.time < movementSuspendedUntil)
+            if (stagger == null)
+            {
+                stagger = GetComponent<EnemyStagger>();
+            }
+
+            if ((stagger != null && !stagger.CanAct)
+                || Time.time < movementSuspendedUntil)
             {
                 body.velocity = new Vector2(0f, body.velocity.y);
                 return;
@@ -82,6 +91,7 @@ namespace Cave.Enemies
                 * difficultySpeedMultiplier
                 * archetypeSpeedMultiplier
                 * supportSpeedMultiplier
+                * inheritanceSpeedMultiplier
                 * brainSpeedMultiplier
                 * movementSpeedMultiplier;
         }
@@ -104,6 +114,11 @@ namespace Cave.Enemies
         public void SetSupportSpeedMultiplier(float multiplier)
         {
             supportSpeedMultiplier = Mathf.Max(0f, multiplier);
+        }
+
+        public void SetInheritanceSpeedMultiplier(float multiplier)
+        {
+            inheritanceSpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
         public void SetBrainMoveSpeed(float requestedSpeed)
@@ -129,6 +144,7 @@ namespace Cave.Enemies
             combatMovementUntil = 0f;
             movementSpeedMultiplier = 1f;
             supportSpeedMultiplier = 1f;
+            inheritanceSpeedMultiplier = 1f;
             brainSpeedMultiplier = 1f;
             combatMovementDirection = 0f;
             combatMovementUntil = 0f;
@@ -140,6 +156,7 @@ namespace Cave.Enemies
         {
             movementSpeedMultiplier = 1f;
             supportSpeedMultiplier = 1f;
+            inheritanceSpeedMultiplier = 1f;
             brainSpeedMultiplier = 1f;
             if (body != null)
             {
