@@ -2,6 +2,7 @@ using System;
 using Cave.Combat;
 using Cave.Enemies;
 using Cave.InputSystem;
+using Cave.UI;
 using UnityEngine;
 
 namespace Cave.Player
@@ -146,13 +147,9 @@ namespace Cave.Player
 
         public void CloseSelection()
         {
-            if (selectedAltar == null)
-            {
-                return;
-            }
-
             selectedAltar = null;
             AnySelectionOpen = false;
+            FindObjectOfType<CurseAltarHud>(true)?.Close();
             GameInput.EnableGameplayAfterInputRelease();
             SelectionChanged?.Invoke();
         }
@@ -180,8 +177,24 @@ namespace Cave.Player
 
         private void OpenSelection(CurseAltar altar)
         {
+            if (altar == null || selectedAltar != null)
+            {
+                return;
+            }
+
             selectedAltar = altar;
             AnySelectionOpen = true;
+            CurseAltarHud altarHud = FindObjectOfType<CurseAltarHud>(true);
+            if (altarHud == null || !altarHud.TryOpen(this))
+            {
+                // The visual menu is the authority for whether interaction can
+                // lock movement. A missing/failed HUD must remain a no-op.
+                selectedAltar = null;
+                AnySelectionOpen = false;
+                GameInput.EnableGameplayAfterInputRelease();
+                return;
+            }
+
             GameInput.SetGameplayInputEnabled(false);
             SelectionChanged?.Invoke();
         }

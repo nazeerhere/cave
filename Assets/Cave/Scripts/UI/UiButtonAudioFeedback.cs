@@ -7,12 +7,12 @@ namespace Cave.UI
     {
         public void OnPointerEnter(PointerEventData eventData)
         {
-            CaveSfx.Play(CaveSfxCue.ButtonHover, 0.65f);
+            CaveSfx.PlayUi(CaveSfxCue.ButtonHover, 0.65f);
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            CaveSfx.Play(CaveSfxCue.ButtonPress, 0.8f);
+            CaveSfx.PlayUi(CaveSfxCue.ButtonPress, 0.8f);
         }
     }
 }

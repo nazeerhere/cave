@@ -20,14 +20,21 @@ namespace Cave.Enemies
         private float supportSpeedMultiplier = 1f;
         private float inheritanceSpeedMultiplier = 1f;
         private float brainSpeedMultiplier = 1f;
+        private float corruptionSpeedMultiplier = 1f;
+        private float possessionSpeedMultiplier = 1f;
         private float combatMovementDirection;
         private float combatMovementUntil;
+        private float committedMovementDirection;
+        private float committedMovementSpeed;
+        private float committedMovementUntil;
 
         public float BaseMoveSpeed => moveSpeed;
 
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             stagger = GetComponent<EnemyStagger>();
             startingX = body.position.x;
             direction = startMovingRight ? 1f : -1f;
@@ -44,6 +51,12 @@ namespace Cave.Enemies
                 || Time.time < movementSuspendedUntil)
             {
                 body.velocity = new Vector2(0f, body.velocity.y);
+                return;
+            }
+
+            if (Time.time < committedMovementUntil)
+            {
+                body.velocity = new Vector2(committedMovementDirection * committedMovementSpeed, body.velocity.y);
                 return;
             }
 
@@ -85,6 +98,25 @@ namespace Cave.Enemies
             combatMovementUntil = Mathf.Max(combatMovementUntil, Time.time + Mathf.Max(0f, duration));
         }
 
+        /// <summary>Used by brief committed attacks without introducing a second Rigidbody writer.</summary>
+        public void BeginCommittedMovement(float horizontalDirection, float speed, float duration)
+        {
+            if (Mathf.Abs(horizontalDirection) <= 0.001f || speed <= 0f || duration <= 0f)
+            {
+                return;
+            }
+
+            committedMovementDirection = Mathf.Sign(horizontalDirection);
+            committedMovementSpeed = Mathf.Max(0f, speed);
+            committedMovementUntil = Time.time + duration;
+        }
+
+        public void CancelCommittedMovement()
+        {
+            committedMovementUntil = 0f;
+            committedMovementSpeed = 0f;
+        }
+
         private float GetCurrentMoveSpeed()
         {
             return moveSpeed
@@ -93,6 +125,8 @@ namespace Cave.Enemies
                 * supportSpeedMultiplier
                 * inheritanceSpeedMultiplier
                 * brainSpeedMultiplier
+                * corruptionSpeedMultiplier
+                * possessionSpeedMultiplier
                 * movementSpeedMultiplier;
         }
 
@@ -121,6 +155,16 @@ namespace Cave.Enemies
             inheritanceSpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        public void SetCorruptionSpeedMultiplier(float multiplier)
+        {
+            corruptionSpeedMultiplier = Mathf.Max(0.05f, multiplier);
+        }
+
+        public void SetPossessionSpeedMultiplier(float multiplier)
+        {
+            possessionSpeedMultiplier = Mathf.Max(0.05f, multiplier);
+        }
+
         public void SetBrainMoveSpeed(float requestedSpeed)
         {
             brainSpeedMultiplier = moveSpeed > 0f
@@ -132,6 +176,7 @@ namespace Cave.Enemies
         {
             combatMovementDirection = 0f;
             combatMovementUntil = 0f;
+            CancelCommittedMovement();
             brainSpeedMultiplier = 1f;
         }
 
@@ -142,10 +187,13 @@ namespace Cave.Enemies
             movementSuspendedUntil = 0f;
             combatMovementDirection = 0f;
             combatMovementUntil = 0f;
+            CancelCommittedMovement();
             movementSpeedMultiplier = 1f;
             supportSpeedMultiplier = 1f;
             inheritanceSpeedMultiplier = 1f;
             brainSpeedMultiplier = 1f;
+            corruptionSpeedMultiplier = 1f;
+            possessionSpeedMultiplier = 1f;
             combatMovementDirection = 0f;
             combatMovementUntil = 0f;
             body.velocity = Vector2.zero;
@@ -154,10 +202,12 @@ namespace Cave.Enemies
 
         private void OnDisable()
         {
+            CancelCommittedMovement();
             movementSpeedMultiplier = 1f;
             supportSpeedMultiplier = 1f;
             inheritanceSpeedMultiplier = 1f;
             brainSpeedMultiplier = 1f;
+            corruptionSpeedMultiplier = 1f;
             if (body != null)
             {
                 body.velocity = Vector2.zero;

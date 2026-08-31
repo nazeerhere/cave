@@ -268,6 +268,8 @@ namespace Cave.Enemies
                     feedbackRenderers[index].color = restingColors[index];
                 }
             }
+
+            GetComponentInParent<Damageable>()?.ReapplyPersistentTint();
         }
 
         private void OnDisable()

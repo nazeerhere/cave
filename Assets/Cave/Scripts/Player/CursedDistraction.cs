@@ -17,6 +17,8 @@ namespace Cave.Player
         private float influenceRadius;
         private float attentionPriority;
         private float expiresAt;
+        private float resistanceDuration;
+        private readonly HashSet<MobBrainBase> affectedBrains = new HashSet<MobBrainBase>();
 
         public float InfluenceRadius => influenceRadius;
         public float AttentionPriority => attentionPriority;
@@ -26,7 +28,8 @@ namespace Cave.Player
             Vector2 position,
             float lifetime,
             float radius,
-            float priority)
+            float priority,
+            float postRecoveryResistanceDuration = 20f)
         {
             GameObject distractionObject = new GameObject("Cursed Distraction");
             distractionObject.transform.position = position;
@@ -35,6 +38,7 @@ namespace Cave.Player
             distraction.influenceRadius = Mathf.Max(0.1f, radius);
             distraction.attentionPriority = Mathf.Max(0f, priority);
             distraction.expiresAt = Time.time + Mathf.Max(0.1f, lifetime);
+            distraction.resistanceDuration = Mathf.Max(0f, postRecoveryResistanceDuration);
             CombatShapeEffect.Create(
                 position,
                 CombatShape.Diamond,
@@ -50,6 +54,12 @@ namespace Cave.Player
         {
             interestPosition = default;
             if (brain == null || brain.GetComponent<BossPhaseController>() != null)
+            {
+                return false;
+            }
+
+            EnemyDistractionResistance resistance = brain.GetComponent<EnemyDistractionResistance>();
+            if (resistance != null && resistance.IsResistant)
             {
                 return false;
             }
@@ -87,6 +97,7 @@ namespace Cave.Player
             }
 
             interestPosition = selected.transform.position;
+            selected.affectedBrains.Add(brain);
             return true;
         }
 
@@ -160,7 +171,26 @@ namespace Cave.Player
 
         private void OnDestroy()
         {
+            foreach (MobBrainBase brain in affectedBrains)
+            {
+                if (brain == null)
+                {
+                    continue;
+                }
+
+                EnemyDistractionResistance resistance =
+                    brain.GetComponent<EnemyDistractionResistance>();
+                if (resistance == null)
+                {
+                    resistance = brain.gameObject.AddComponent<EnemyDistractionResistance>();
+                }
+
+                resistance.Apply(resistanceDuration);
+            }
+
+            affectedBrains.Clear();
             ActiveDistractions.Remove(this);
         }
     }
+
 }

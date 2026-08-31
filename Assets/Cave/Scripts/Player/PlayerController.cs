@@ -23,6 +23,9 @@ namespace Cave.Player
         [Header("Jump Request")]
         [SerializeField, Min(0f)] private float jumpBufferTime = 0.1f;
 
+        [Header("Character Body Contact")]
+        [SerializeField] private bool useFrictionlessCharacterContacts = true;
+
         private Rigidbody2D body;
         private Collider2D bodyCollider;
         private float horizontalInput;
@@ -31,15 +34,17 @@ namespace Cave.Player
         private PlayerFlightBash flightBash;
         private bool wasGrounded;
         private bool jumpConsumedForAirborneCycle;
-        private bool hasBeenAirborneSinceJump;
         private float jumpRequestExpiresAt = float.NegativeInfinity;
         private float externalMovementLockUntil;
         private float statusMovementMultiplier = 1f;
         private float curseMovementMultiplier = 1f;
+        private float braceMovementMultiplier = 1f;
         private float temporarySpeedMultiplier = 1f;
         private float temporarySpeedEndsAt;
         private PhysicsMaterial2D originalCollisionMaterial;
         private PhysicsMaterial2D runtimeFrictionlessMaterial;
+        private PhysicsMaterial2D runtimeCharacterContactMaterial;
+        private bool usingCharacterContactMaterial;
         private readonly Collider2D[] groundCheckResults = new Collider2D[8];
 
         public bool IsGrounded { get; private set; }
@@ -54,6 +59,7 @@ namespace Cave.Player
             flightBash = GetComponent<PlayerFlightBash>();
             ConfigureCollisionMaterial();
             IsGrounded = CheckGrounded();
+            UpdateCharacterBodyFriction();
             wasGrounded = IsGrounded;
         }
 
@@ -77,14 +83,12 @@ namespace Cave.Player
         private void FixedUpdate()
         {
             IsGrounded = CheckGrounded();
-            if (!IsGrounded)
+            if (IsGrounded && body.velocity.y <= 0.1f)
             {
-                hasBeenAirborneSinceJump = true;
-            }
-            else if (hasBeenAirborneSinceJump)
-            {
+                // A valid world-floor contact always closes the previous airborne
+                // cycle. Character support/depenetration can otherwise skip the
+                // airborne observation that previously released this latch.
                 jumpConsumedForAirborneCycle = false;
-                hasBeenAirborneSinceJump = false;
             }
 
             if (!wasGrounded && IsGrounded && body.velocity.y <= 0f)
@@ -118,6 +122,7 @@ namespace Cave.Player
                         * moveSpeed
                         * statusMovementMultiplier
                         * curseMovementMultiplier
+                        * braceMovementMultiplier
                         * temporarySpeedMultiplier,
                     body.velocity.y);
             }
@@ -138,7 +143,6 @@ namespace Cave.Player
                 playerFlight?.StopForGroundJump();
                 body.velocity = new Vector2(body.velocity.x, jumpVelocity);
                 jumpConsumedForAirborneCycle = true;
-                hasBeenAirborneSinceJump = false;
                 jumpRequestExpiresAt = float.NegativeInfinity;
                 IsGrounded = false;
                 Jumped?.Invoke();
@@ -171,7 +175,12 @@ namespace Cave.Player
 
         public void SetCurseMovementMultiplier(float multiplier)
         {
-            curseMovementMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
+            curseMovementMultiplier = Mathf.Max(0.1f, multiplier);
+        }
+
+        public void SetBraceMovementMultiplier(float multiplier)
+        {
+            braceMovementMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
         }
 
         public void ApplyTemporarySpeedMultiplier(float multiplier, float duration)
@@ -258,6 +267,73 @@ namespace Cave.Player
             return false;
         }
 
+        private void UpdateCharacterBodyFriction()
+        {
+            if (!useFrictionlessCharacterContacts || bodyCollider == null)
+            {
+                return;
+            }
+
+            bool touchingCharacter = false;
+            ContactFilter2D filter = new ContactFilter2D
+            {
+                useTriggers = false,
+                useLayerMask = false
+            };
+            int contactCount = bodyCollider.GetContacts(filter, groundCheckResults);
+            for (int index = 0; index < contactCount; index++)
+            {
+                Collider2D candidate = groundCheckResults[index];
+                if (candidate != null && IsCharacterBody(candidate))
+                {
+                    touchingCharacter = true;
+                    break;
+                }
+            }
+
+            if (touchingCharacter == usingCharacterContactMaterial)
+            {
+                return;
+            }
+
+            usingCharacterContactMaterial = touchingCharacter;
+            if (touchingCharacter)
+            {
+                EnsureCharacterContactMaterial();
+                bodyCollider.sharedMaterial = runtimeCharacterContactMaterial;
+            }
+            else
+            {
+                bodyCollider.sharedMaterial = originalCollisionMaterial != null
+                    ? originalCollisionMaterial
+                    : runtimeFrictionlessMaterial;
+            }
+        }
+
+        private static bool IsCharacterBody(Collider2D candidate)
+        {
+            return candidate.GetComponentInParent<EnemyController>() != null
+                || candidate.GetComponentInParent<EnemyArchetypeProfile>() != null
+                || candidate.GetComponentInParent<FlyingSwarmController>() != null;
+        }
+
+        private void EnsureCharacterContactMaterial()
+        {
+            if (runtimeCharacterContactMaterial != null)
+            {
+                return;
+            }
+
+            runtimeCharacterContactMaterial = new PhysicsMaterial2D("Player Character Contact No Friction")
+            {
+                friction = 0f,
+                bounciness = originalCollisionMaterial != null
+                    ? originalCollisionMaterial.bounciness
+                    : 0f,
+                hideFlags = HideFlags.DontSave
+            };
+        }
+
         private void GetGroundCheckGeometry(out Vector2 checkCenter, out Vector2 checkSize)
         {
             Bounds bounds = bodyCollider.bounds;
@@ -286,7 +362,9 @@ namespace Cave.Player
 
         private void OnDestroy()
         {
-            if (bodyCollider != null && bodyCollider.sharedMaterial == runtimeFrictionlessMaterial)
+            if (bodyCollider != null
+                && (bodyCollider.sharedMaterial == runtimeFrictionlessMaterial
+                    || bodyCollider.sharedMaterial == runtimeCharacterContactMaterial))
             {
                 bodyCollider.sharedMaterial = originalCollisionMaterial;
             }
@@ -294,6 +372,11 @@ namespace Cave.Player
             if (runtimeFrictionlessMaterial != null)
             {
                 Destroy(runtimeFrictionlessMaterial);
+            }
+
+            if (runtimeCharacterContactMaterial != null)
+            {
+                Destroy(runtimeCharacterContactMaterial);
             }
         }
 

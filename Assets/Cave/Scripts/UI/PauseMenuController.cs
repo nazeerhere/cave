@@ -1,7 +1,9 @@
 using Cave.InputSystem;
 using Cave.Player;
+using Cave.Enemies;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 namespace Cave.UI
 {
@@ -10,6 +12,8 @@ namespace Cave.UI
         private GameObject pauseMenu;
         private GameObject settingsPanel;
         private GameObject movesListPanel;
+        private GameObject ledgerPanel;
+        private Text ledgerBodyText;
         private Text movesLeftText;
         private Text movesRightText;
         private Text movesChainLeftText;
@@ -25,12 +29,17 @@ namespace Cave.UI
             GameObject pauseMenuObject,
             GameObject settingsPanelObject,
             Button resumeButton,
+            Button resetLevelButton,
             Button settingsButton,
             Button backButton,
             SettingsMenuController configuredSettingsController,
             GameObject movesPanelObject,
             Button movesButton,
             Button movesBackButton,
+            GameObject ledgerPanelObject,
+            Button ledgerButton,
+            Button ledgerBackButton,
+            Text configuredLedgerBodyText,
             Text configuredMovesLeftText,
             Text configuredMovesRightText,
             Text configuredMovesChainLeftText,
@@ -42,6 +51,8 @@ namespace Cave.UI
             settingsPanel = settingsPanelObject;
             settingsController = configuredSettingsController;
             movesListPanel = movesPanelObject;
+            ledgerPanel = ledgerPanelObject;
+            ledgerBodyText = configuredLedgerBodyText;
             movesLeftText = configuredMovesLeftText;
             movesRightText = configuredMovesRightText;
             movesChainLeftText = configuredMovesChainLeftText;
@@ -50,15 +61,19 @@ namespace Cave.UI
             movesPageButton = configuredMovesPageButton;
 
             resumeButton.onClick.AddListener(Resume);
+            resetLevelButton.onClick.AddListener(ResetCurrentLevel);
             settingsButton.onClick.AddListener(ShowSettings);
             backButton.onClick.AddListener(ShowPauseMenu);
             movesButton.onClick.AddListener(ShowMovesList);
             movesBackButton.onClick.AddListener(ShowPauseMenu);
+            ledgerButton.onClick.AddListener(ShowLedger);
+            ledgerBackButton.onClick.AddListener(ShowPauseMenu);
             movesPageButton.onClick.AddListener(ToggleMovesPage);
 
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
+            ledgerPanel.SetActive(false);
         }
 
         private void Update()
@@ -84,7 +99,8 @@ namespace Cave.UI
             else if (GameInput.PausePressed || GameInput.MenuCancelPressed)
             {
                 if ((settingsPanel != null && settingsPanel.activeSelf)
-                    || (movesListPanel != null && movesListPanel.activeSelf))
+                    || (movesListPanel != null && movesListPanel.activeSelf)
+                    || (ledgerPanel != null && ledgerPanel.activeSelf))
                 {
                     ShowPauseMenu();
                 }
@@ -108,6 +124,7 @@ namespace Cave.UI
             GameInput.SetGameplayInputEnabled(false);
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
+            if (ledgerPanel != null) ledgerPanel.SetActive(false);
             pauseMenu.SetActive(true);
         }
 
@@ -123,8 +140,34 @@ namespace Cave.UI
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
+            if (ledgerPanel != null) ledgerPanel.SetActive(false);
             Time.timeScale = previousTimeScale;
             GameInput.EnableGameplayAfterInputRelease();
+        }
+
+        public void ResetCurrentLevel()
+        {
+            settingsController?.CancelRebind();
+            isPaused = false;
+            if (pauseMenu != null)
+            {
+                pauseMenu.SetActive(false);
+            }
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
+            }
+
+            if (movesListPanel != null)
+            {
+                movesListPanel.SetActive(false);
+            }
+
+            Time.timeScale = 1f;
+            GameInput.EnableGameplayAfterInputRelease();
+            Scene activeScene = SceneManager.GetActiveScene();
+            SceneManager.LoadScene(activeScene.buildIndex, LoadSceneMode.Single);
         }
 
         public void ShowSettings()
@@ -154,6 +197,23 @@ namespace Cave.UI
             RefreshMovesList();
         }
 
+        public void ShowLedger()
+        {
+            if (!isPaused || ledgerPanel == null)
+            {
+                return;
+            }
+
+            pauseMenu.SetActive(false);
+            settingsPanel.SetActive(false);
+            movesListPanel.SetActive(false);
+            ledgerPanel.SetActive(true);
+            if (ledgerBodyText != null)
+            {
+                ledgerBodyText.text = EnemyLedger.BuildSummary();
+            }
+        }
+
         public void ShowPauseMenu()
         {
             if (!isPaused)
@@ -163,6 +223,7 @@ namespace Cave.UI
 
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
+            if (ledgerPanel != null) ledgerPanel.SetActive(false);
             settingsController?.CancelRebind();
             pauseMenu.SetActive(true);
         }
@@ -180,7 +241,8 @@ namespace Cave.UI
                     + Key(GameAction.Parry) + "  Hold — Guard / Parry\n"
                     + "Normal Parry → Charged starts Tier 1\n"
                     + "Perfect Parry → Charged starts Tier 2\n"
-                    + "Successful Guard Break → Charged starts Tier 1\n\n"
+                    + "Successful Guard Break → Charged starts Tier 1\n"
+                    + "After Parry timing: Guard + GB → Brace\n\n"
                     + "MOVEMENT\n"
                     + Key(GameAction.MoveLeft) + " / " + Key(GameAction.MoveRight) + "  Move\n"
                     + Key(GameAction.Jump) + "  Jump\n"
@@ -222,6 +284,8 @@ namespace Cave.UI
                     + "Perfect Parry → Charged II\n"
                     + "Successful GB → Charged I\n"
                     + "Spin → GB input becomes Bash\n"
+                    + "Guard after Parry + GB → Brace\n"
+                    + "Brace + Spin / Heavy → discounted exit\n"
                     + "Air Tap Heavy → Vertical Slam\n"
                     + "Air Hold Heavy → 40° Diagonal Slam";
             }

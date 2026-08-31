@@ -84,9 +84,17 @@ namespace Cave.Projectiles
                 return false;
             }
 
-            if (!playerMana.TrySpendMana(manaCost))
+            if (upgradeState == null)
             {
-                nextFireTime = Time.time + heldFireInterval;
+                upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
+            }
+
+            int currentTier = upgradeState != null
+                ? upgradeState.GetCurrentTier(specialMode.CurrentMode)
+                : 1;
+            if (!playerMana.TrySpendMana(manaCost, currentTier))
+            {
+                nextFireTime = Time.time + EffectiveFireInterval;
                 if (allowResourceFeedback)
                 {
                     FeedbackRequested?.Invoke("Not enough mana.");
@@ -123,14 +131,6 @@ namespace Cave.Projectiles
             DamageContext damageContext = resourceMastery != null
                 ? resourceMastery.CreateManaDamageContext()
                 : default;
-            if (upgradeState == null)
-            {
-                upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
-            }
-
-            int currentTier = upgradeState != null
-                ? upgradeState.GetCurrentTier(specialMode.CurrentMode)
-                : 1;
             if (upgradeState != null && upgradeState.Settings != null)
             {
                 projectileDamage += upgradeState.Settings.GetProjectileDamageBonus(
@@ -158,9 +158,20 @@ namespace Cave.Projectiles
                 currentTier,
                 upgradeState != null ? upgradeState.Settings : null);
             CaveSfx.Play(CaveSfxCue.Shot, 0.8f);
-            nextFireTime = Time.time + heldFireInterval;
+            nextFireTime = Time.time + EffectiveFireInterval;
             ProjectileFired?.Invoke(direction);
             return true;
+        }
+
+        private float EffectiveFireInterval
+        {
+            get
+            {
+                PlayerCurseController curses = GetComponent<PlayerCurseController>();
+                return heldFireInterval / Mathf.Max(
+                    0.01f,
+                    curses != null ? curses.AttackSpeedMultiplier : 1f);
+            }
         }
 
         private bool IsGroundedPureDownAim(Vector2 direction)

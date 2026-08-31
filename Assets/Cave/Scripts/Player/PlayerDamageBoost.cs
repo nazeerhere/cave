@@ -54,7 +54,9 @@ namespace Cave.Player
                 return baseDamage;
             }
 
-            if (manaCost > 0f && !playerMana.TrySpendMana(manaCost))
+            if (manaCost > 0f && !playerMana.TrySpendMana(
+                    manaCost,
+                    ResolveDamageBoostTier()))
             {
                 return baseDamage;
             }
@@ -64,6 +66,18 @@ namespace Cave.Player
         }
 
         private bool IsDamageBoostSelected => specialMode.CurrentMode == SpecialMode.DamageBoost;
+
+        private int ResolveDamageBoostTier()
+        {
+            if (upgradeState == null)
+            {
+                upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
+            }
+
+            return upgradeState != null
+                ? upgradeState.GetCurrentTier(SpecialMode.DamageBoost)
+                : 1;
+        }
 
         private int ApplyMultiplier(int baseDamage)
         {

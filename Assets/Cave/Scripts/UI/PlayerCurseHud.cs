@@ -77,7 +77,7 @@ namespace Cave.UI
         {
             if (distractionIcon != null)
             {
-                distractionIcon.SetActive(curses != null && curses.CurseOfDistractionActive);
+                distractionIcon.SetActive(curses != null && curses.CurseOfInsanityActive);
             }
 
             if (detectiveIcon != null)

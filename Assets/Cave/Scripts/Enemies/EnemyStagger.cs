@@ -50,6 +50,7 @@ namespace Cave.Enemies
 
         private EnemyController enemyController;
         private FlyingSwarmController flyingController;
+        private WizardFlightMotor wizardFlightMotor;
         private EnemyArchetypeProfile archetypeProfile;
         private EnemyStaggerVisuals visuals;
         private float staggeredUntil;
@@ -67,12 +68,15 @@ namespace Cave.Enemies
         {
             enemyController = GetComponent<EnemyController>();
             flyingController = GetComponent<FlyingSwarmController>();
+            wizardFlightMotor = GetComponent<WizardFlightMotor>();
             archetypeProfile = GetComponent<EnemyArchetypeProfile>();
             visuals = GetComponent<EnemyStaggerVisuals>();
             if (visuals == null)
             {
                 visuals = gameObject.AddComponent<EnemyStaggerVisuals>();
             }
+
+            EnemyWorldStatusIndicators.EnsureOn(gameObject);
         }
 
         private void Update()
@@ -129,6 +133,7 @@ namespace Cave.Enemies
             nextAllowedStaggerTime = staggeredUntil + staggerImmunityDuration;
             enemyController?.SuspendMovement(duration);
             flyingController?.SuspendMovement(duration);
+            wizardFlightMotor?.SuspendMovement(duration);
             bool tankResistedMinor = strength == StaggerStrength.Minor
                 && IsTankArchetype();
             if (interruptWindups && !tankResistedMinor)

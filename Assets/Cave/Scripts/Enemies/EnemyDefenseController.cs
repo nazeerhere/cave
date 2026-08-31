@@ -106,6 +106,15 @@ namespace Cave.Enemies
         public EnemyDefenseState CurrentState => currentState;
         public float EffectiveBlockChance => ResolveBlockChance();
         public float EffectiveProjectileParryChance => ResolveProjectileParryChance();
+        public bool IsActivelyBlocking
+        {
+            get
+            {
+                RefreshState();
+                return currentState == EnemyDefenseState.Blocking
+                    && Time.time < activeUntil;
+            }
+        }
         public bool CanStartAttack => Time.time >= activeUntil
             && Time.time >= recoveryUntil
             && (stagger == null || stagger.CanAct);
@@ -374,6 +383,20 @@ namespace Cave.Enemies
             probabilityPreset = preset;
         }
 
+        /// <summary>
+        /// Runtime fallback for a Brute that was authored without the shared
+        /// defense capability. Existing configured components are intentionally
+        /// left alone; this only gives dynamically installed Brutes a real Guard.
+        /// </summary>
+        public void ConfigureBruteDefaults()
+        {
+            probabilityPreset = EnemyDefensePreset.Brute;
+            blockProjectiles = false;
+            activeDefenseDuration = Mathf.Max(activeDefenseDuration, 0.32f);
+            recoveryDuration = Mathf.Max(recoveryDuration, 0.25f);
+            defenseCooldown = Mathf.Max(defenseCooldown, 0.9f);
+        }
+
         public void ConfigureSkeletonBlock(
             float attemptChance,
             float activeDuration,
@@ -616,6 +639,8 @@ namespace Cave.Enemies
                     renderers[index].color = restingColors[index];
                 }
             }
+
+            GetComponent<Damageable>()?.ReapplyPersistentTint();
 
             if (meleePresentation != null)
             {

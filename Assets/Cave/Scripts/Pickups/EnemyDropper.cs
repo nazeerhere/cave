@@ -58,6 +58,12 @@ namespace Cave.Pickups
 
         private void HandleDeath()
         {
+            EnemyCorruptionLifecycle corruption = GetComponent<EnemyCorruptionLifecycle>();
+            if (corruption != null && corruption.SuppressDeathRewards)
+            {
+                return;
+            }
+
             if (hasEvaluatedDrop)
             {
                 return;
@@ -86,7 +92,10 @@ namespace Cave.Pickups
                 : 1f;
             float towerDropMultiplier = DetectiveTower.GetOrdinaryDropRateMultiplier(
                 transform.position);
-            primaryChanceMultiplier *= towerDropMultiplier;
+            float insanityDropMultiplier = Cave.Player.PlayerCurseController.Active != null
+                ? Cave.Player.PlayerCurseController.Active.OrdinaryDropChanceMultiplier
+                : 1f;
+            primaryChanceMultiplier *= towerDropMultiplier * insanityDropMultiplier;
             DropEntry primary = ChoosePrimary(eligibleEntries, primaryChanceMultiplier);
             if (primary == null)
             {
@@ -109,7 +118,7 @@ namespace Cave.Pickups
                     + generalAdditionalCategoryBonus
                     + witnessedDeaths * veteranAdditionalBonusPerDeath);
             }
-            additionalChance *= towerDropMultiplier;
+            additionalChance *= towerDropMultiplier * insanityDropMultiplier;
 
             if (Random.value >= additionalChance)
             {
@@ -124,7 +133,10 @@ namespace Cave.Pickups
 
             SpawnEntry(second, spawnOffset, band, 1);
             spawnedCategories.Add(GetCategory(second));
-            if (band == null || Random.value >= band.ThirdCategoryChance * towerDropMultiplier)
+            if (band == null
+                || Random.value >= band.ThirdCategoryChance
+                    * towerDropMultiplier
+                    * insanityDropMultiplier)
             {
                 return;
             }

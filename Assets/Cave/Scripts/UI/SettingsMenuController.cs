@@ -1,5 +1,6 @@
 using System.Text;
 using Cave.Audio;
+using Cave.CameraSystem;
 using Cave.InputSystem;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -16,6 +17,8 @@ namespace Cave.UI
         private Slider sfxVolumeSlider;
         private Text masterVolumeValue;
         private Text sfxVolumeValue;
+        private Slider cameraZoomSlider;
+        private Text cameraZoomValue;
         private Button cancelButton;
         private GameAction actionBeingRebound;
         private bool isWaitingForKey;
@@ -32,6 +35,8 @@ namespace Cave.UI
             Text masterValue,
             Slider sfxSlider,
             Text sfxValue,
+            Slider zoomSlider,
+            Text zoomValue,
             Button restoreDefaultsButton,
             Button cancelRebindButton)
         {
@@ -42,6 +47,8 @@ namespace Cave.UI
             masterVolumeValue = masterValue;
             sfxVolumeSlider = sfxSlider;
             sfxVolumeValue = sfxValue;
+            cameraZoomSlider = zoomSlider;
+            cameraZoomValue = zoomValue;
             cancelButton = cancelRebindButton;
 
             for (int index = 0; index < actions.Length; index++)
@@ -54,9 +61,11 @@ namespace Cave.UI
             cancelButton.onClick.AddListener(CancelRebind);
             masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
             sfxVolumeSlider.onValueChanged.AddListener(SetSfxVolume);
+            cameraZoomSlider.onValueChanged.AddListener(SetCameraZoom);
 
             masterVolumeSlider.SetValueWithoutNotify(CaveAudioSettings.MasterVolume);
             sfxVolumeSlider.SetValueWithoutNotify(CaveAudioSettings.SfxVolume);
+            cameraZoomSlider.SetValueWithoutNotify(CameraZoomSettings.ZoomScale);
             cancelButton.gameObject.SetActive(false);
             RefreshBindingLabels();
             RefreshVolumeLabels();
@@ -101,6 +110,7 @@ namespace Cave.UI
             CancelRebind("Select a control to change its primary key.");
             masterVolumeSlider.SetValueWithoutNotify(CaveAudioSettings.MasterVolume);
             sfxVolumeSlider.SetValueWithoutNotify(CaveAudioSettings.SfxVolume);
+            cameraZoomSlider.SetValueWithoutNotify(CameraZoomSettings.ZoomScale);
             RefreshBindingLabels();
             RefreshVolumeLabels();
         }
@@ -162,6 +172,12 @@ namespace Cave.UI
             RefreshVolumeLabels();
         }
 
+        private void SetCameraZoom(float value)
+        {
+            CameraZoomSettings.SetZoomScale(value);
+            RefreshVolumeLabels();
+        }
+
         private void RefreshBindingLabels()
         {
             if (actions == null || bindingButtons == null)
@@ -194,6 +210,11 @@ namespace Cave.UI
             if (sfxVolumeValue != null)
             {
                 sfxVolumeValue.text = Mathf.RoundToInt(CaveAudioSettings.SfxVolume * 100f) + "%";
+            }
+
+            if (cameraZoomValue != null)
+            {
+                cameraZoomValue.text = Mathf.RoundToInt(CameraZoomSettings.ZoomScale * 100f) + "%";
             }
         }
 

@@ -75,7 +75,8 @@ namespace Cave.Pickups
                 }
 
                 if (damageable.TryGetComponent(out EnemyController _)
-                    || damageable.TryGetComponent(out FlyingSwarmController _))
+                    || damageable.TryGetComponent(out FlyingSwarmController _)
+                    || damageable.TryGetComponent(out WizardFlightMotor _))
                 {
                     EnemyStatusEffects statusEffects;
                     if (!damageable.TryGetComponent(out statusEffects))
@@ -87,7 +88,8 @@ namespace Cave.Pickups
                 }
 
                 if ((damageable.TryGetComponent(out EnemyController _)
-                        || damageable.TryGetComponent(out FlyingSwarmController _))
+                        || damageable.TryGetComponent(out FlyingSwarmController _)
+                        || damageable.TryGetComponent(out WizardFlightMotor _))
                     && !damageable.TryGetComponent(out EnemyRespawner _))
                 {
                     damageable.gameObject.AddComponent<EnemyRespawner>();
@@ -126,6 +128,11 @@ namespace Cave.Pickups
                 if (!playerHealth.TryGetComponent(out PlayerGuardBreak _))
                 {
                     playerHealth.gameObject.AddComponent<PlayerGuardBreak>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerWarpStatus _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerWarpStatus>();
                 }
 
                 if (!playerHealth.TryGetComponent(out PlayerMana _))
@@ -310,6 +317,8 @@ namespace Cave.Pickups
             {
                 bool isEnemy = damageable.GetComponent<EnemyController>() != null
                     || damageable.GetComponent<FlyingSwarmController>() != null
+                    || damageable.GetComponent<WizardFlightMotor>() != null
+                    || damageable.GetComponent<WizardBrain>() != null
                     || damageable.GetComponentInChildren<EnemyContactDamage>(true) != null
                     || damageable.GetComponentInChildren<EnemyShooter>(true) != null
                     || damageable.GetComponent<EnemyRespawner>() != null;
@@ -382,6 +391,10 @@ namespace Cave.Pickups
                 }
 
                 scaler.Configure(difficultyManager);
+
+                WizardSupportAbilities wizardSupport =
+                    damageable.GetComponent<WizardSupportAbilities>();
+                wizardSupport?.ConfigureRuntime(strategicSettings, difficultyManager);
 
             }
 

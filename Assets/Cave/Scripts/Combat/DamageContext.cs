@@ -1,4 +1,5 @@
 using System;
+using Cave.Enemies;
 using Cave.Progression;
 using UnityEngine;
 
@@ -15,7 +16,9 @@ namespace Cave.Combat
         GuardBreak = 1 << 5,
         StaggerNormal = 1 << 6,
         StaggerHeavy = 1 << 7,
-        FrenzyCritical = 1 << 8
+        FrenzyCritical = 1 << 8,
+        /// <summary>Cannot be negated by ordinary Guard; parry remains a separate rule.</summary>
+        Unblockable = 1 << 9
     }
 
     public interface IDeflectableDamageSource
@@ -54,7 +57,18 @@ namespace Cave.Combat
             explicitSource = source;
             staminaMasteryEligible = false;
             manaMasteryEligible = false;
-            damageTraits = traits;
+            damageTraits = ApplyEnemyFrenzyTrait(source, traits);
+        }
+
+        private static DamageTrait ApplyEnemyFrenzyTrait(GameObject source, DamageTrait traits)
+        {
+            if (source != null
+                && source.GetComponentInParent<EnemyCorruptionLifecycle>()?.IsFrenzied == true)
+            {
+                traits |= DamageTrait.Unblockable;
+            }
+
+            return traits;
         }
 
         private DamageContext(
@@ -99,6 +113,8 @@ namespace Cave.Combat
             if (masterySource != null)
             {
                 masterySource.ProcessKillingBlow(staminaMasteryEligible, manaMasteryEligible);
+                masterySource.GetComponent<Cave.Player.PlayerCurseController>()
+                    ?.NotifyPlayerKillingBlow();
             }
         }
     }

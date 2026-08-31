@@ -14,6 +14,7 @@ namespace Cave.Player
     public sealed class PlayerGuardBreak : MonoBehaviour
     {
         public event Action OffensiveGuardBreakSucceeded;
+        public event Action<Damageable> OffensiveGuardBreakTargetSucceeded;
 
         [Header("Offensive Guard Break")]
         [SerializeField, Min(0.1f)] private float range = 1.55f;
@@ -37,6 +38,7 @@ namespace Cave.Player
         [SerializeField, Min(0f)] private float bashKnockback = 8f;
         [SerializeField, Min(0f)] private float bashStaggerDuration = 0.65f;
         [SerializeField, Min(0f)] private float bashCooldown = 0.35f;
+        [SerializeField, Min(0f)] private float spinBashRecovery = 0.75f;
 
         [Header("Feedback")]
         [SerializeField] private Color offensiveColor = new Color(1f, 0.25f, 0.08f, 1f);
@@ -49,12 +51,15 @@ namespace Cave.Player
         [SerializeField] private bool isGuardBreaking;
         [SerializeField] private bool isBashing;
         [SerializeField] private bool counterWindowAvailable;
+        [SerializeField] private bool successfulOffensiveGuardBreakCanBranch;
         [SerializeField] private float vulnerableUntil;
         [SerializeField] private float externallyInterruptedUntil;
+        [SerializeField] private float spinBashRecoveryRemaining;
 
         private ICounterableGuardBreak counterSource;
         private float counterExpiresAt;
         private float nextUseTime;
+        private float spinBashRecoveryUntil;
         private Coroutine attackRoutine;
         private SpinSwordAttack spinAttack;
         private ChargedAttack chargedAttack;
@@ -70,6 +75,9 @@ namespace Cave.Player
         public bool IsGuardBreaking => isGuardBreaking;
         public bool IsBashing => isBashing;
         public bool IsVulnerableFromGuardBreak => Time.time < vulnerableUntil;
+        public bool CanReleaseSuccessfulGuardBreakForCrossStep => isGuardBreaking
+            && successfulOffensiveGuardBreakCanBranch
+            && attackRoutine != null;
         public bool CanUseCombatActions => !isGuardBreaking
             && !IsVulnerableFromGuardBreak
             && Time.time >= externallyInterruptedUntil;
@@ -86,6 +94,7 @@ namespace Cave.Player
 
         private void Update()
         {
+            spinBashRecoveryRemaining = Mathf.Max(0f, spinBashRecoveryUntil - Time.time);
             if (counterSource != null && !counterSource.IsGuardBreakInProgress)
             {
                 ClearCounterWindow();
@@ -98,6 +107,20 @@ namespace Cave.Player
 
             if (!GameInput.GuardBreakPressed)
             {
+                return;
+            }
+
+            // This is intentionally narrower than normal Guard Break cooldown:
+            // only a completed Spin follow-up suppresses a new GB press.
+            if (Time.time < spinBashRecoveryUntil)
+            {
+                return;
+            }
+
+            PlayerWarpStatus warpStatus = GetComponent<PlayerWarpStatus>();
+            if (warpStatus != null && warpStatus.IsMarked)
+            {
+                warpStatus.TryReject();
                 return;
             }
 
@@ -122,6 +145,12 @@ namespace Cave.Player
                 // The same input is consumed by the incoming contest. Pressing it
                 // outside the announced window fails instead of becoming a second,
                 // unrelated offensive interrupt.
+                return;
+            }
+
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.TryEnterFromGuardBreak())
+            {
                 return;
             }
 
@@ -175,6 +204,9 @@ namespace Cave.Player
 
         public void ApplyEnemyGuardBreak(Vector2 awayFromEnemy)
         {
+            GetComponent<PlayerBrace>()?.BreakForEnemyGuardBreak();
+            GetComponent<PlayerCrossStep>()?.InterruptForEnemyGuardBreak();
+            ApplyExternalInterruption(vulnerabilityDuration);
             ClearCounterWindow();
             SpawnGuardBreakVfx(transform.position);
             vulnerableUntil = Mathf.Max(vulnerableUntil, Time.time + vulnerabilityDuration);
@@ -225,6 +257,24 @@ namespace Cave.Player
 
             EndBashMotion();
             isGuardBreaking = false;
+            successfulOffensiveGuardBreakCanBranch = false;
+            spinBashRecoveryUntil = 0f;
+            spinBashRecoveryRemaining = 0f;
+        }
+
+        public bool TryReleaseSuccessfulGuardBreakForCrossStep()
+        {
+            if (!CanReleaseSuccessfulGuardBreakForCrossStep)
+            {
+                return false;
+            }
+
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+            isGuardBreaking = false;
+            successfulOffensiveGuardBreakCanBranch = false;
+            nextUseTime = Mathf.Max(nextUseTime, Time.time + cooldown);
+            return true;
         }
 
         public void ApplyPlayerStagger(float duration)
@@ -235,6 +285,7 @@ namespace Cave.Player
                 return;
             }
 
+            GetComponent<PlayerBrace>()?.BreakForEnemyGuardBreak();
             ApplyExternalInterruption(resolvedDuration);
             if (controller == null)
             {
@@ -320,6 +371,7 @@ namespace Cave.Player
             EndBashMotion();
             isGuardBreaking = false;
             nextUseTime = Time.time + bashCooldown;
+            spinBashRecoveryUntil = Time.time + spinBashRecovery;
             attackRoutine = null;
         }
 
@@ -391,6 +443,7 @@ namespace Cave.Player
         private IEnumerator PerformOffensiveGuardBreak()
         {
             isGuardBreaking = true;
+            successfulOffensiveGuardBreakCanBranch = false;
             float facing = ResolveFacingDirection();
             Vector2 effectPosition = (Vector2)transform.position + Vector2.right * facing * range * 0.45f;
             CombatShapeEffect.Create(
@@ -406,6 +459,7 @@ namespace Cave.Player
             ResolveOffensiveHit(facing);
             yield return new WaitForSeconds(activeDuration + recovery);
             isGuardBreaking = false;
+            successfulOffensiveGuardBreakCanBranch = false;
             nextUseTime = Time.time + cooldown;
             attackRoutine = null;
         }
@@ -457,7 +511,9 @@ namespace Cave.Player
                 return;
             }
 
+            successfulOffensiveGuardBreakCanBranch = true;
             OffensiveGuardBreakSucceeded?.Invoke();
+            OffensiveGuardBreakTargetSucceeded?.Invoke(closest);
 
             Vector3 guardBreakImpactPosition = closest.transform.position;
 
@@ -572,6 +628,9 @@ namespace Cave.Player
 
             EndBashMotion();
             isGuardBreaking = false;
+            successfulOffensiveGuardBreakCanBranch = false;
+            spinBashRecoveryUntil = 0f;
+            spinBashRecoveryRemaining = 0f;
             vulnerableUntil = 0f;
             externallyInterruptedUntil = 0f;
             nextUseTime = 0f;

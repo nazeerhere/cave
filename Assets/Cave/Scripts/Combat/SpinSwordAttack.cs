@@ -30,6 +30,7 @@ namespace Cave.Combat
         [SerializeField] private GameObject hitVfxPrefab;
 
         private readonly Dictionary<Damageable, int> activeTargetContacts = new Dictionary<Damageable, int>();
+        private readonly Dictionary<object, float> staminaCostModifiers = new Dictionary<object, float>();
         private readonly List<Damageable> inactiveTargetBuffer = new List<Damageable>();
         private Quaternion restingRotation;
         private Vector3 authoredPivotPosition;
@@ -52,6 +53,7 @@ namespace Cave.Combat
 
         public float CurrentStamina => currentStamina;
         public float MaximumStamina => maximumStamina;
+        public float StaminaCostMultiplier => ResolveStaminaCostMultiplier();
         public bool IsAttacking => isAttacking;
         public GameObject SwordVisualObject => swordVisual;
         public Transform SwordPivot => swordPivot;
@@ -79,6 +81,12 @@ namespace Cave.Combat
             }
 
             currentStamina = maximumStamina;
+            if (GetComponent<PlayerBrace>() == null)
+            {
+                // Brace is an additive player capability. Installing it here keeps
+                // manually authored player prefabs and scene instances untouched.
+                gameObject.AddComponent<PlayerBrace>();
+            }
             RefreshSwordFacing();
             SetSwordVisible(true);
             SetAttackColliderActive(false);
@@ -87,6 +95,13 @@ namespace Cave.Combat
         private void Update()
         {
             RefreshSwordFacing();
+
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (!isAttacking && brace != null && brace.IsBraced && GameInput.BasicAttackPressed)
+            {
+                brace.LeaveForSpin();
+                return;
+            }
 
             if (guardBreak == null)
             {
@@ -126,6 +141,7 @@ namespace Cave.Combat
         private void BeginAttack()
         {
             isAttacking = true;
+            GetComponent<PlayerCurseController>()?.NotifyOffensiveCommitment();
             activeTargetContacts.Clear();
             frenzyActivation = null;
             if (combatFlow == null)
@@ -154,18 +170,36 @@ namespace Cave.Combat
             if (swordPivot != null)
             {
                 float spinDirection = currentSwordFacing >= 0f ? -1f : 1f;
+                PlayerCurseController curses = GetComponent<PlayerCurseController>();
                 swordPivot.Rotate(
                     0f,
                     0f,
-                    spinDegreesPerSecond * spinDirection * Time.deltaTime,
+                    spinDegreesPerSecond
+                        * (curses != null ? curses.AttackSpeedMultiplier : 1f)
+                        * spinDirection
+                        * Time.deltaTime,
                     Space.Self);
             }
 
-            SetStamina(currentStamina - staminaDrainPerSecond * Time.deltaTime);
-            if (currentStamina <= 0f)
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            float braceExitMultiplier = brace != null
+                ? brace.ConsumeExitActionStaminaMultiplier()
+                : 1f;
+            if (!TrySpendStamina(staminaDrainPerSecond * braceExitMultiplier * Time.deltaTime))
             {
                 StopAttack();
             }
+        }
+
+        public bool TryBeginBraceExitAttack()
+        {
+            if (isAttacking || currentStamina < MinimumStartStamina)
+            {
+                return false;
+            }
+
+            BeginAttack();
+            return true;
         }
 
         private void StopAttack()
@@ -307,23 +341,63 @@ namespace Cave.Combat
 
         public bool CanSpendStamina(float amount)
         {
-            return amount >= 0f && currentStamina >= amount;
+            return amount >= 0f && currentStamina >= ResolveStaminaCost(amount);
         }
 
         public bool TrySpendStamina(float amount)
         {
-            if (amount < 0f || currentStamina < amount)
+            float resolvedAmount = ResolveStaminaCost(amount);
+            if (amount < 0f || currentStamina < resolvedAmount)
             {
                 return false;
             }
 
-            if (amount > 0f)
+            if (resolvedAmount > 0f)
             {
-                SetStamina(currentStamina - amount);
+                SetStamina(currentStamina - resolvedAmount);
                 regenerationStartsAt = Time.time + regenerationDelay;
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Registers a temporary multiplier for authoritative Stamina costs.  Each
+        /// source owns its entry so status effects can be removed without affecting
+        /// another modifier that happens to be active at the same time.
+        /// </summary>
+        public void SetStaminaCostModifier(object source, float multiplier)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            staminaCostModifiers[source] = Mathf.Clamp(multiplier, 0.01f, 10f);
+        }
+
+        public void RemoveStaminaCostModifier(object source)
+        {
+            if (source != null)
+            {
+                staminaCostModifiers.Remove(source);
+            }
+        }
+
+        private float ResolveStaminaCost(float baseAmount)
+        {
+            return Mathf.Max(0f, baseAmount) * ResolveStaminaCostMultiplier();
+        }
+
+        private float ResolveStaminaCostMultiplier()
+        {
+            float multiplier = 1f;
+            foreach (KeyValuePair<object, float> entry in staminaCostModifiers)
+            {
+                multiplier *= entry.Value;
+            }
+
+            return Mathf.Max(0f, multiplier);
         }
 
         public bool IncreaseMaximumStamina(float amount, bool addIncreaseToCurrentStamina = true)
@@ -339,6 +413,22 @@ namespace Cave.Combat
                 currentStamina = Mathf.Min(maximumStamina, currentStamina + amount);
             }
 
+            StaminaChanged?.Invoke(currentStamina, maximumStamina);
+            return true;
+        }
+
+        public bool ReduceMaximumStamina(float amount, float minimumMaximumStamina = 1f)
+        {
+            float permitted = Mathf.Min(
+                Mathf.Max(0f, amount),
+                Mathf.Max(0f, maximumStamina - Mathf.Max(1f, minimumMaximumStamina)));
+            if (permitted <= 0f)
+            {
+                return false;
+            }
+
+            maximumStamina -= permitted;
+            currentStamina = Mathf.Min(currentStamina, maximumStamina);
             StaminaChanged?.Invoke(currentStamina, maximumStamina);
             return true;
         }

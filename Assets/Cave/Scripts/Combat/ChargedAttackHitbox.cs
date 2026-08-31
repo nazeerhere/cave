@@ -6,9 +6,30 @@ namespace Cave.Combat
     {
         [SerializeField] private ChargedAttack attack;
 
+        private void Awake()
+        {
+            ResolveAttackOwner();
+        }
+
+        private void OnEnable()
+        {
+            ResolveAttackOwner();
+        }
+
         private void OnTriggerEnter2D(Collider2D other)
         {
-            attack.HandleHit(other);
+            if (attack != null)
+            {
+                attack.HandleHit(other);
+            }
+        }
+
+        private void ResolveAttackOwner()
+        {
+            if (attack == null)
+            {
+                attack = GetComponentInParent<ChargedAttack>();
+            }
         }
     }
 }

@@ -30,8 +30,19 @@ namespace Cave.Progression
         public float BaseMaximumStamina => baseMaximumStamina;
         public float BaseMaximumMana => baseMaximumMana;
         public float HealthGrowthPercent => CalculateGrowth(playerHealth.MaxHealth, baseMaximumHealth);
-        public float StaminaGrowthPercent => CalculateGrowth(spinSwordAttack.MaximumStamina, baseMaximumStamina);
-        public float ManaGrowthPercent => CalculateGrowth(playerMana.MaximumMana, baseMaximumMana);
+        public float StaminaGrowthPercent => CalculateGrowth(
+            spinSwordAttack.MaximumStamina - StoneglassStaminaGrowth,
+            baseMaximumStamina);
+        public float ManaGrowthPercent => CalculateGrowth(
+            playerMana.MaximumMana - StoneglassManaGrowth,
+            baseMaximumMana);
+
+        private float StoneglassStaminaGrowth => curseController != null
+            ? curseController.StoneglassStaminaMaximumGrowth
+            : 0f;
+        private float StoneglassManaGrowth => curseController != null
+            ? curseController.StoneglassManaMaximumGrowth
+            : 0f;
 
         private void Awake()
         {
@@ -121,6 +132,42 @@ namespace Cave.Progression
             {
                 MasteryChanged?.Invoke();
             }
+        }
+
+        public bool ConsumeMasteryGrowth(
+            int maximumHealthAmount,
+            float maximumStaminaAmount,
+            float maximumManaAmount)
+        {
+            bool changed = false;
+            int availableHealth = Mathf.Max(0, playerHealth.MaxHealth - baseMaximumHealth);
+            float availableStamina = Mathf.Max(
+                0f,
+                spinSwordAttack.MaximumStamina
+                    - baseMaximumStamina
+                    - StoneglassStaminaGrowth);
+            float availableMana = Mathf.Max(
+                0f,
+                playerMana.MaximumMana
+                    - baseMaximumMana
+                    - StoneglassManaGrowth);
+
+            changed |= playerHealth.ReduceMaxHealth(
+                Mathf.Min(Mathf.Max(0, maximumHealthAmount), availableHealth),
+                baseMaximumHealth);
+            changed |= spinSwordAttack.ReduceMaximumStamina(
+                Mathf.Min(Mathf.Max(0f, maximumStaminaAmount), availableStamina),
+                baseMaximumStamina + StoneglassStaminaGrowth);
+            changed |= playerMana.ReduceMaximumMana(
+                Mathf.Min(Mathf.Max(0f, maximumManaAmount), availableMana),
+                baseMaximumMana + StoneglassManaGrowth);
+
+            if (changed)
+            {
+                MasteryChanged?.Invoke();
+            }
+
+            return changed;
         }
 
         private int ResolveHealthMasteryIncrease(int baseIncrease, float multiplier)

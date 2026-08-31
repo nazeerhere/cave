@@ -52,6 +52,9 @@ namespace Cave.Combat
         [SerializeField, Min(0f)] private float normalEnemyStaggerDuration = 0.35f;
         [SerializeField, Min(0f)] private float perfectEnemyStaggerDuration = 0.6f;
 
+        [Header("Brace Entry")]
+        [SerializeField, Min(0.05f)] private float braceEntryWindow = 0.65f;
+
         [Header("Successful Parry Resource Rewards")]
         [SerializeField, Range(0f, 1f)] private float normalStaminaRestoreFraction = 0.08f;
         [SerializeField, Range(0f, 1f)] private float normalManaRestoreFraction = 0.03f;
@@ -123,8 +126,12 @@ namespace Cave.Combat
         public bool IsGuardHeld => IsActive && GameInput.ParryHeld;
         public bool IsCounterWindowActive => counterWindowQuality != PlayerDefenseQuality.None
             && Time.time <= counterWindowExpiresAt;
+        public bool IsBraceEntryWindowActive => currentPhase == ParryPhase.Guard
+            && IsGuardHeld
+            && Time.time <= guardPhaseStartedAt + braceEntryWindow;
 
         private float counterWindowExpiresAt;
+        private float guardPhaseStartedAt;
 
         private void Awake()
         {
@@ -212,10 +219,14 @@ namespace Cave.Combat
 
             UpdateHeldPhase(Time.time - stanceStartedAt);
 
+            PlayerBrace brace = GetComponent<PlayerBrace>();
             if (currentPhase == ParryPhase.Guard
+                && (brace == null || !brace.IsBraced)
                 && (stamina == null
                     || !stamina.TrySpendStamina(
-                        sustainedGuardStaminaDrainPerSecond * Time.deltaTime)))
+                        sustainedGuardStaminaDrainPerSecond
+                        * (GetComponent<PlayerCurseController>()?.GuardStaminaDrainMultiplier ?? 1f)
+                        * Time.deltaTime)))
             {
                 BreakGuard();
             }
@@ -306,6 +317,13 @@ namespace Cave.Combat
 
         public bool TryGuardMelee(ref int incomingDamage, DamageContext damageContext)
         {
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.TryDeflectIncoming(damageContext))
+            {
+                incomingDamage = 0;
+                return true;
+            }
+
             if (!damageContext.HasTrait(DamageTrait.Melee))
             {
                 return false;
@@ -324,6 +342,15 @@ namespace Cave.Combat
             if (!IsActive
                 || damageContext.HasTrait(DamageTrait.AreaOfEffect)
                 || damageContext.HasTrait(DamageTrait.Piercing))
+            {
+                return false;
+            }
+
+            // Frenzied enemy attacks can still be deliberately parried.  Only the
+            // sustained Guard phase is bypassed, keeping unblockable and
+            // unparryable as separate combat properties.
+            if (damageContext.HasTrait(DamageTrait.Unblockable)
+                && currentPhase == ParryPhase.Guard)
             {
                 return false;
             }
@@ -674,6 +701,10 @@ namespace Cave.Combat
             }
 
             currentPhase = phase;
+            if (phase == ParryPhase.Guard)
+            {
+                guardPhaseStartedAt = Time.time;
+            }
             ApplyPhaseFeedback();
         }
 
@@ -768,6 +799,7 @@ namespace Cave.Combat
             counterWindowQuality = PlayerDefenseQuality.None;
             counterWindowExpiresAt = 0f;
             counterWindowRemaining = 0f;
+            guardPhaseStartedAt = 0f;
             SetStanceVisualActive(false);
         }
 

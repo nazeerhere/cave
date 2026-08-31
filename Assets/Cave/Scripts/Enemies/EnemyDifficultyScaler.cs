@@ -22,6 +22,7 @@ namespace Cave.Enemies
         private EnemySwarm enemySwarm;
         private SkeletonInheritance skeletonInheritance;
         private FlyingSwarmController flyingSwarm;
+        private WizardFlightMotor wizardFlightMotor;
         private EnemySkillEvolution skillEvolution;
         private TrollJumpStomp trollJumpStomp;
         private EnemyCriticalResistance criticalResistance;
@@ -44,6 +45,7 @@ namespace Cave.Enemies
             enemySwarm = GetComponent<EnemySwarm>();
             skeletonInheritance = GetComponent<SkeletonInheritance>();
             flyingSwarm = GetComponent<FlyingSwarmController>();
+            wizardFlightMotor = GetComponent<WizardFlightMotor>();
             skillEvolution = GetComponent<EnemySkillEvolution>();
             trollJumpStomp = GetComponent<TrollJumpStomp>();
             criticalResistance = GetComponent<EnemyCriticalResistance>();
@@ -55,6 +57,12 @@ namespace Cave.Enemies
             if (GetComponent<EnemyDamageModifiers>() == null)
             {
                 gameObject.AddComponent<EnemyDamageModifiers>();
+            }
+
+            if (GetComponent<EnemyCorruptionLifecycle>() == null
+                && GetComponent<DetectiveTower>() == null)
+            {
+                gameObject.AddComponent<EnemyCorruptionLifecycle>();
             }
 
             Unsubscribe();
@@ -125,6 +133,8 @@ namespace Cave.Enemies
             {
                 CacheComponents();
             }
+
+            GetComponent<EnemyCorruptionLifecycle>()?.ResetForUncorruptedStandardSpawn();
 
             if (difficultyManager == null)
             {
@@ -215,6 +225,12 @@ namespace Cave.Enemies
                 flyingSwarm.SetRuntimeDamage(scaledFlyingDamage);
             }
 
+            if (wizardFlightMotor != null)
+            {
+                wizardFlightMotor.SetDifficultySpeedMultiplier(
+                    difficultyManager.GetStatScale(settings.EnemyMoveSpeedScalingStrength));
+            }
+
             if (enemyShooter != null)
             {
                 enemyShooter.SetDifficultyManager(difficultyManager);
@@ -242,9 +258,6 @@ namespace Cave.Enemies
                 int scaledDirectDamage = Mathf.Max(
                     1,
                     Mathf.RoundToInt(poisonShooter.BaseDirectDamage * damageScale));
-                int scaledPoisonDamage = Mathf.Max(
-                    1,
-                    Mathf.RoundToInt(poisonShooter.BasePoisonDamage * damageScale));
                 float scaledProjectileSpeed = poisonShooter.BaseProjectileSpeed
                     * difficultyManager.GetStatScale(settings.EnemyProjectileSpeedScalingStrength);
                 float scaledFireCooldown = Mathf.Max(
@@ -253,7 +266,7 @@ namespace Cave.Enemies
                         / difficultyManager.GetStatScale(settings.EnemyFireRateScalingStrength));
                 poisonShooter.SetRuntimeDifficultyValues(
                     scaledDirectDamage,
-                    scaledPoisonDamage,
+                    0,
                     scaledProjectileSpeed,
                     scaledFireCooldown);
             }

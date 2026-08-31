@@ -1,4 +1,5 @@
 using Cave.Combat;
+using Cave.Player;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,8 @@ namespace Cave.UI
         [SerializeField] private Text valueText;
 
         private SpinSwordAttack spinSwordAttack;
+        private PlayerCurseController curses;
+        private CanvasGroup canvasGroup;
 
         public void Configure(Image staminaFillImage)
         {
@@ -53,6 +56,26 @@ namespace Cave.UI
             if (spinSwordAttack == null)
             {
                 Bind(FindObjectOfType<SpinSwordAttack>());
+            }
+
+            curses = FindObjectOfType<PlayerCurseController>();
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        private void Update()
+        {
+            if (curses == null)
+            {
+                curses = FindObjectOfType<PlayerCurseController>();
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = curses != null && curses.IsBurnoutActive ? 0f : 1f;
             }
         }
 

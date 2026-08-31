@@ -48,6 +48,7 @@ namespace Cave.Projectiles
         private bool canSplit;
         private bool splitTelegraphStarted;
         private DamageContext reflectedDamageContext;
+        private bool suppressOwnerSecondaryEffects;
         private Vector3 normalVisualScale;
         private Color normalVisualColor;
 
@@ -59,6 +60,18 @@ namespace Cave.Projectiles
         public int Damage { get; private set; }
         public bool IsParried { get; private set; }
         public bool CanBeParried => !explosionStarted && CurrentTeam == ProjectileTeam.Enemy && !IsParried;
+
+        public void ConfigureAsSecondaryEcho(Color tint, float visualScaleMultiplier)
+        {
+            suppressOwnerSecondaryEffects = true;
+            transform.localScale *= Mathf.Max(0.1f, visualScaleMultiplier);
+            normalVisualScale = transform.localScale;
+            if (projectileRenderer != null)
+            {
+                projectileRenderer.color *= tint;
+                normalVisualColor = projectileRenderer.color;
+            }
+        }
 
         private void Awake()
         {
@@ -384,7 +397,9 @@ namespace Cave.Projectiles
                 if (playerHealth != null)
                 {
                     DamageContext incomingContext = new DamageContext(
-                        gameObject,
+                        !suppressOwnerSecondaryEffects && currentOwner != null
+                            ? currentOwner
+                            : gameObject,
                         DamageTrait.Direct | DamageTrait.Projectile);
                     playerHealth.TryTakeDamage(Damage, incomingContext);
                     if (CurrentTeam == ProjectileTeam.Enemy)

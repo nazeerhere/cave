@@ -31,6 +31,33 @@ namespace Cave.Enemies
             return count;
         }
 
+        public static int CountEngagedHostiles(Vector2 center, float radius)
+        {
+            int count = 0;
+            float radiusSquared = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+            foreach (Damageable candidate in Object.FindObjectsOfType<Damageable>())
+            {
+                if (!IsRealHostile(candidate)
+                    || ((Vector2)candidate.transform.position - center).sqrMagnitude > radiusSquared)
+                {
+                    continue;
+                }
+
+                MobBrainBase brain = candidate.GetComponent<MobBrainBase>();
+                EyeBrain eye = candidate.GetComponent<EyeBrain>();
+                bool engaged = (brain != null
+                    && brain.CurrentState != MobBrainState.Patrol
+                    && brain.CurrentState != MobBrainState.ReturnToPatrol)
+                    || (eye != null && eye.IsMeaningfullyEngaged);
+                if (engaged)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         public static bool IsRealHostile(Damageable candidate)
         {
             if (candidate == null

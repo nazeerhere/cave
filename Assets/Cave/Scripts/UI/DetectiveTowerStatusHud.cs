@@ -1,4 +1,5 @@
 using Cave.Enemies;
+using Cave.Player;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,7 @@ namespace Cave.UI
         private float nextRefreshTime;
         private Color stageColor = CaveUiTheme.BronzeLight;
         private int visibleStage;
+        private Transform player;
 
         public void Configure(
             CanvasGroup group,
@@ -86,7 +88,16 @@ namespace Cave.UI
         private void RefreshDisplay()
         {
             DetectiveTower tower = coordinator != null ? coordinator.ActiveTower : null;
-            bool visible = tower != null && tower.gameObject.activeInHierarchy;
+            if (player == null)
+            {
+                PlayerHealth playerHealth = FindObjectOfType<PlayerHealth>();
+                player = playerHealth != null ? playerHealth.transform : null;
+            }
+
+            bool visible = tower != null
+                && tower.gameObject.activeInHierarchy
+                && player != null
+                && tower.ContainsPosition(player.position);
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = visible ? 1f : 0f;

@@ -6,6 +6,13 @@ namespace Cave.Enemies
     [DisallowMultipleComponent]
     public sealed class EnemyStatusVisuals : MonoBehaviour
     {
+        [Header("Mob-Relative Status Scale")]
+        [SerializeField, Min(0.01f)] private float baseVisualScaleMultiplier = 1f;
+        [SerializeField, Min(0.01f)] private float minimumVisualScale = 0.55f;
+        [SerializeField, Min(0.01f)] private float maximumVisualScale = 1.75f;
+        [Tooltip("Zero derives scale from visible render bounds.")]
+        [SerializeField, Min(0f)] private float visualScaleOverride;
+
         private ParticleSystem burnParticles;
         private ParticleSystem frostParticles;
         private Material burnMaterial;
@@ -169,9 +176,18 @@ namespace Cave.Enemies
             }
 
             Vector3 localSize = transform.InverseTransformVector(bounds.size);
+            float width = Mathf.Abs(localSize.x);
+            float height = Mathf.Abs(localSize.y);
+            float referenceSize = Mathf.Max(width, height, 0.01f);
+            float minimum = Mathf.Min(minimumVisualScale, maximumVisualScale);
+            float maximum = Mathf.Max(minimumVisualScale, maximumVisualScale);
+            float resolvedReference = visualScaleOverride > 0f
+                ? visualScaleOverride
+                : Mathf.Clamp(referenceSize * baseVisualScaleMultiplier, minimum, maximum);
+            float boundedRatio = resolvedReference / referenceSize;
             return new Vector3(
-                Mathf.Max(0.45f, Mathf.Abs(localSize.x) * 0.75f),
-                Mathf.Max(0.65f, Mathf.Abs(localSize.y) * 0.75f),
+                Mathf.Max(0.2f, width * 0.75f * boundedRatio),
+                Mathf.Max(0.3f, height * 0.75f * boundedRatio),
                 0.1f);
         }
 

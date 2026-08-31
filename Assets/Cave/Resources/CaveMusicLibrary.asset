@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60da05740f9b046dbb416048269899d8, type: 3}
+  m_Name: CaveMusicLibrary
+  m_EditorClassIdentifier: 
+  starting: {fileID: 8300000, guid: 6e00323df0ce1ee4e8279032835ba3e8, type: 3}
+  exploration: {fileID: 8300000, guid: d971a2d173b1d324199cc4b621e3ae3c, type: 3}
+  combat: {fileID: 8300000, guid: d4574d65a4f31f54e997ecccc7ffb44f, type: 3}
+  intenseCombat: {fileID: 8300000, guid: 0b8e5bc1987eeb54896c6b398776db0c, type: 3}
+  heart: {fileID: 8300000, guid: 532daca5960c6eb429376d646f93e9f5, type: 3}

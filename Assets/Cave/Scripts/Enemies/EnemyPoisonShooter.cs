@@ -17,7 +17,9 @@ namespace Cave.Enemies
 
         [Header("Poison Projectile")]
         [SerializeField, Min(1)] private int directDamage = 1;
-        [SerializeField, Min(1)] private int poisonTickDamage = 1;
+        [SerializeField, Range(0f, 0.25f)] private float poisonDamagePercentPerTick = 0.015f;
+        [SerializeField, Min(1)] private int minimumPoisonTickDamage = 1;
+        [SerializeField, Min(1)] private int maximumPoisonTickDamage = 99;
         [SerializeField, Min(0.05f)] private float poisonInterval = 1.5f;
         [SerializeField, Min(0.1f)] private float poisonDuration = 6f;
         [SerializeField, Min(0.01f)] private float projectileSpeed = 6f;
@@ -40,14 +42,13 @@ namespace Cave.Enemies
         private float fireCompletesAt;
         private bool isWindingUp;
         private int runtimeDirectDamage;
-        private int runtimePoisonDamage;
         private float runtimeProjectileSpeed;
         private float runtimeFireCooldown;
         private EnemyEvolutionStage evolutionStage;
         private bool brainControlled;
 
         public int BaseDirectDamage => directDamage;
-        public int BasePoisonDamage => poisonTickDamage;
+        public float PoisonDamagePercentPerTick => poisonDamagePercentPerTick;
         public float BaseProjectileSpeed => projectileSpeed;
         public float BaseFireCooldown => fireCooldown;
         public bool IsBusy => isWindingUp;
@@ -67,7 +68,6 @@ namespace Cave.Enemies
 
             profile.AddRuntimeArchetype(EnemyArchetype.Ranged);
             runtimeDirectDamage = directDamage;
-            runtimePoisonDamage = poisonTickDamage;
             runtimeProjectileSpeed = projectileSpeed;
             runtimeFireCooldown = fireCooldown;
         }
@@ -148,9 +148,6 @@ namespace Cave.Enemies
             int resolvedDirectDamage = damageModifiers != null
                 ? damageModifiers.ResolveDamage(runtimeDirectDamage)
                 : runtimeDirectDamage;
-            int resolvedPoisonDamage = damageModifiers != null
-                ? damageModifiers.ResolveDamage(runtimePoisonDamage)
-                : runtimePoisonDamage;
             EnemyPoisonProjectile projectile = projectilePrefab != null
                 ? Instantiate(projectilePrefab, spawnPosition, Quaternion.identity)
                 : EnemyPoisonProjectile.CreateRuntime(spawnPosition);
@@ -163,7 +160,9 @@ namespace Cave.Enemies
                 direction.normalized,
                 evolvedProjectileSpeed,
                 resolvedDirectDamage,
-                resolvedPoisonDamage,
+                poisonDamagePercentPerTick,
+                minimumPoisonTickDamage,
+                maximumPoisonTickDamage,
                 poisonInterval,
                 EffectivePoisonDuration,
                 projectileLifetime,
@@ -175,12 +174,11 @@ namespace Cave.Enemies
 
         public void SetRuntimeDifficultyValues(
             int resolvedDirectDamage,
-            int resolvedPoisonDamage,
+            int _,
             float resolvedSpeed,
             float resolvedCooldown)
         {
             runtimeDirectDamage = Mathf.Max(1, resolvedDirectDamage);
-            runtimePoisonDamage = Mathf.Max(1, resolvedPoisonDamage);
             runtimeProjectileSpeed = Mathf.Max(0.01f, resolvedSpeed);
             runtimeFireCooldown = Mathf.Max(0.01f, resolvedCooldown);
         }

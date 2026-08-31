@@ -24,6 +24,12 @@ namespace Cave.Enemies
         [SerializeField, Min(0.01f)] private float impactVfxScale = 0.42f;
         [SerializeField] private Vector3 statusVfxLocalOffset = new Vector3(0f, 0.04f, 0.01f);
         [SerializeField, Min(0.01f)] private float statusVfxScale = 0.38f;
+        [Header("Mob-Relative VFX Scale")]
+        [SerializeField, Min(0.01f)] private float visualScaleBaseMultiplier = 1f;
+        [SerializeField, Min(0.01f)] private float minimumVisualScaleMultiplier = 0.55f;
+        [SerializeField, Min(0.01f)] private float maximumVisualScaleMultiplier = 1.75f;
+        [Tooltip("Zero derives the scale from the primary visible sprite.")]
+        [SerializeField, Min(0f)] private float visualScaleOverride;
         [SerializeField] private int sortingOrderOffset = 3;
 
         [Header("Optional Impact Prefabs")]
@@ -61,7 +67,9 @@ namespace Cave.Enemies
                 GameObject instance = Instantiate(effectPrefab, transform);
                 instance.transform.localPosition = ResolveTorsoAnchor() + impactVfxLocalOffset;
                 instance.transform.localRotation = Quaternion.identity;
-                instance.transform.localScale = effectPrefab.transform.localScale * impactVfxScale;
+                instance.transform.localScale = effectPrefab.transform.localScale
+                    * impactVfxScale
+                    * ResolveMobRelativeVfxScale();
                 ConfigureAttachedVfx(instance);
 
                 Destroy(instance, Mathf.Max(0.3f, duration + 0.15f));
@@ -119,7 +127,9 @@ namespace Cave.Enemies
                 activeStatusVfx = Instantiate(statusPrefab, transform);
                 activeStatusVfx.transform.localPosition = ResolveTorsoAnchor() + statusVfxLocalOffset;
                 activeStatusVfx.transform.localRotation = Quaternion.identity;
-                activeStatusVfx.transform.localScale = statusPrefab.transform.localScale * statusVfxScale;
+                activeStatusVfx.transform.localScale = statusPrefab.transform.localScale
+                    * statusVfxScale
+                    * ResolveMobRelativeVfxScale();
                 ConfigureAttachedVfx(activeStatusVfx);
 
                 return;
@@ -342,6 +352,26 @@ namespace Cave.Enemies
             }
 
             return primary;
+        }
+
+        private float ResolveMobRelativeVfxScale()
+        {
+            if (visualScaleOverride > 0f)
+            {
+                return visualScaleOverride;
+            }
+
+            if (primarySpriteRenderer == null)
+            {
+                primarySpriteRenderer = FindPrimarySpriteRenderer();
+            }
+
+            float visualSize = primarySpriteRenderer != null
+                ? Mathf.Max(primarySpriteRenderer.bounds.size.x, primarySpriteRenderer.bounds.size.y)
+                : 1f;
+            float minimum = Mathf.Min(minimumVisualScaleMultiplier, maximumVisualScaleMultiplier);
+            float maximum = Mathf.Max(minimumVisualScaleMultiplier, maximumVisualScaleMultiplier);
+            return Mathf.Clamp(visualSize * visualScaleBaseMultiplier, minimum, maximum);
         }
 
         private void ConfigureAttachedVfx(GameObject instance)

@@ -49,6 +49,7 @@ namespace Cave.Enemies
         private float horizontalSlotOffset;
         private float movementMultiplier = 1f;
         private float difficultySpeedMultiplier = 1f;
+        private float corruptionSpeedMultiplier = 1f;
         private float movementSuspendedUntil;
         private int runtimeDamage;
         private bool damagedDuringDive;
@@ -139,7 +140,8 @@ namespace Cave.Enemies
 
                     break;
                 case FlyingSwarmState.Diving:
-                    body.velocity = diveDirection * diveSpeed * difficultySpeedMultiplier;
+                    body.velocity = diveDirection * diveSpeed * difficultySpeedMultiplier
+                        * corruptionSpeedMultiplier;
                     if (Time.time >= stateEndsAt)
                     {
                         BeginRecovery();
@@ -175,7 +177,8 @@ namespace Cave.Enemies
             offset.x = Mathf.Clamp(offset.x, -horizontalFollowRange, horizontalFollowRange);
             offset.y = Mathf.Clamp(offset.y, -verticalFollowRange, verticalFollowRange);
             Vector2 desiredVelocity = offset.sqrMagnitude > 0.01f
-                ? offset.normalized * moveSpeed * difficultySpeedMultiplier * movementMultiplier * speedScale
+                ? offset.normalized * moveSpeed * difficultySpeedMultiplier * movementMultiplier
+                    * corruptionSpeedMultiplier * speedScale
                 : Vector2.zero;
             desiredVelocity += CalculateSeparation();
             body.velocity = Vector2.Lerp(body.velocity, desiredVelocity, 0.18f);
@@ -298,6 +301,11 @@ namespace Cave.Enemies
             difficultySpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        public void SetCorruptionSpeedMultiplier(float multiplier)
+        {
+            corruptionSpeedMultiplier = Mathf.Max(0.05f, multiplier);
+        }
+
         public void SetRuntimeDamage(int damage)
         {
             runtimeDamage = Mathf.Max(1, damage);
@@ -308,11 +316,22 @@ namespace Cave.Enemies
             movementSuspendedUntil = Mathf.Max(movementSuspendedUntil, Time.time + duration);
         }
 
+        public void TeleportTo(Vector2 position)
+        {
+            collisionPhasing?.End();
+            currentState = FlyingSwarmState.Hovering;
+            movementSuspendedUntil = 0f;
+            damagedDuringDive = false;
+            body.position = position;
+            body.velocity = Vector2.zero;
+        }
+
         public void ResetForRespawn()
         {
             collisionPhasing?.End();
             currentState = FlyingSwarmState.Hovering;
             movementMultiplier = 1f;
+            corruptionSpeedMultiplier = 1f;
             movementSuspendedUntil = 0f;
             nextAttackTime = Time.time + attackCooldown;
             body.velocity = Vector2.zero;
@@ -341,12 +360,15 @@ namespace Cave.Enemies
                     renderers[index].color = restingColors[index];
                 }
             }
+
+            GetComponent<Damageable>()?.ReapplyPersistentTint();
         }
 
         private void OnDisable()
         {
             collisionPhasing?.End();
             ActiveControllers.Remove(this);
+            corruptionSpeedMultiplier = 1f;
             if (body != null)
             {
                 body.velocity = Vector2.zero;

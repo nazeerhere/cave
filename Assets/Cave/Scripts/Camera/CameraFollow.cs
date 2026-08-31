@@ -11,11 +11,50 @@ namespace Cave.CameraSystem
         [SerializeField] private Vector2 offset = new Vector2(0f, 1f);
 
         private Vector3 velocity;
+        private Camera gameplayCamera;
+        private float authoredOrthographicSize;
 
         public void SetTarget(Transform newTarget)
         {
             target = newTarget;
             velocity = Vector3.zero;
+        }
+
+        private void Awake()
+        {
+            gameplayCamera = GetComponent<Camera>();
+            if (gameplayCamera != null && gameplayCamera.orthographic)
+            {
+                authoredOrthographicSize = gameplayCamera.orthographicSize;
+                ApplySavedZoom();
+            }
+        }
+
+        private void OnEnable()
+        {
+            ApplySavedZoom();
+        }
+
+        /// <summary>Called by the shared Settings preference whenever it changes.</summary>
+        public void ApplySavedZoom()
+        {
+            if (gameplayCamera == null)
+            {
+                gameplayCamera = GetComponent<Camera>();
+            }
+
+            if (gameplayCamera == null || !gameplayCamera.orthographic)
+            {
+                return;
+            }
+
+            if (authoredOrthographicSize <= 0f)
+            {
+                authoredOrthographicSize = gameplayCamera.orthographicSize;
+            }
+
+            gameplayCamera.orthographicSize = authoredOrthographicSize
+                / CameraZoomSettings.ZoomScale;
         }
 
         private void LateUpdate()

@@ -26,7 +26,9 @@ namespace Cave.Projectiles
         private Vector2 movementDirection;
         private float speed;
         private int directDamage;
-        private int poisonTickDamage;
+        private float poisonDamagePercentPerTick;
+        private int minimumPoisonTickDamage;
+        private int maximumPoisonTickDamage;
         private float poisonInterval;
         private float poisonDuration;
         private bool impacted;
@@ -75,7 +77,9 @@ namespace Cave.Projectiles
             Vector2 direction,
             float projectileSpeed,
             int resolvedDirectDamage,
-            int resolvedPoisonDamage,
+            float resolvedPoisonDamagePercentPerTick,
+            int resolvedMinimumPoisonTickDamage,
+            int resolvedMaximumPoisonTickDamage,
             float tickInterval,
             float statusDuration,
             float lifetime,
@@ -89,7 +93,11 @@ namespace Cave.Projectiles
             movementDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.left;
             speed = Mathf.Max(0.01f, projectileSpeed);
             directDamage = Mathf.Max(1, resolvedDirectDamage);
-            poisonTickDamage = Mathf.Max(1, resolvedPoisonDamage);
+            poisonDamagePercentPerTick = Mathf.Max(0f, resolvedPoisonDamagePercentPerTick);
+            minimumPoisonTickDamage = Mathf.Max(1, resolvedMinimumPoisonTickDamage);
+            maximumPoisonTickDamage = Mathf.Max(
+                minimumPoisonTickDamage,
+                resolvedMaximumPoisonTickDamage);
             poisonInterval = Mathf.Max(0.05f, tickInterval);
             poisonDuration = Mathf.Max(0.05f, statusDuration);
             createsPoisonZone = createPoisonZone;
@@ -214,7 +222,9 @@ namespace Cave.Projectiles
                 {
                     player.TryTakeDamage(
                         directDamage,
-                        new DamageContext(gameObject, DamageTrait.Direct | DamageTrait.Projectile));
+                        new DamageContext(
+                            currentOwner != null ? currentOwner : gameObject,
+                            DamageTrait.Direct | DamageTrait.Projectile));
                     if (currentTeam != ProjectileTeam.Enemy)
                     {
                         return;
@@ -227,7 +237,9 @@ namespace Cave.Projectiles
                     }
 
                     poison.ApplyPoison(
-                        poisonTickDamage,
+                        poisonDamagePercentPerTick,
+                        minimumPoisonTickDamage,
+                        maximumPoisonTickDamage,
                         poisonInterval,
                         poisonDuration,
                         currentOwner);
@@ -283,7 +295,9 @@ namespace Cave.Projectiles
                     currentOwner,
                     poisonZoneRadius,
                     poisonZoneDuration,
-                    poisonTickDamage,
+                    poisonDamagePercentPerTick,
+                    minimumPoisonTickDamage,
+                    maximumPoisonTickDamage,
                     poisonInterval,
                     evolvedProjectileColor);
             }

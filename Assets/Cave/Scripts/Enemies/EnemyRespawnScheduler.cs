@@ -33,9 +33,13 @@ namespace Cave.Enemies
 
         private static IEnumerator RespawnAfterDelay(EnemyRespawner enemyRespawner)
         {
-            if (enemyRespawner.RespawnDelay > 0f)
+            float spawnPressure = Cave.Player.PlayerCurseController.Active != null
+                ? Cave.Player.PlayerCurseController.Active.AvariceSpawnPressureMultiplier
+                : 1f;
+            float adjustedDelay = enemyRespawner.RespawnDelay / Mathf.Max(1f, spawnPressure);
+            if (adjustedDelay > 0f)
             {
-                yield return new WaitForSeconds(enemyRespawner.RespawnDelay);
+                yield return new WaitForSeconds(adjustedDelay);
             }
             else
             {

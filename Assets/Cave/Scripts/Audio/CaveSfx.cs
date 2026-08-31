@@ -36,12 +36,36 @@ namespace Cave.Audio
         {
             EnsureSource();
             AudioClip clip = library != null ? library.GetClip(cue) : null;
+            PlayClip(clip, volumeScale);
+        }
+
+        // Keeps optional Inspector-assigned clips on the same persistent SFX
+        // source as the existing cue library, without creating transient sources.
+        public static void PlayClip(AudioClip clip, float volumeScale = 1f)
+        {
+            EnsureSource();
             if (source == null || clip == null)
             {
                 return;
             }
 
-            source.PlayOneShot(clip, Mathf.Clamp01(volumeScale));
+            source.PlayOneShot(
+                clip,
+                Mathf.Clamp01(volumeScale) * CaveAudioSettings.SfxVolume);
+        }
+
+        public static void PlayUi(CaveSfxCue cue, float volumeScale = 1f)
+        {
+            EnsureSource();
+            AudioClip clip = library != null ? library.GetClip(cue) : null;
+            if (source == null || clip == null)
+            {
+                return;
+            }
+
+            source.PlayOneShot(
+                clip,
+                Mathf.Clamp01(volumeScale) * CaveAudioSettings.UiVolume);
         }
 
         private static void EnsureSource()

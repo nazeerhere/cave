@@ -206,7 +206,9 @@ namespace Cave.Projectiles
                 {
                     bool damageAccepted = player.TryTakeDamage(
                         damage,
-                        new DamageContext(gameObject, DamageTrait.Direct | DamageTrait.Projectile));
+                        new DamageContext(
+                            currentOwner != null ? currentOwner : gameObject,
+                            DamageTrait.Direct | DamageTrait.Projectile));
                     if (currentTeam != ProjectileTeam.Enemy)
                     {
                         return;

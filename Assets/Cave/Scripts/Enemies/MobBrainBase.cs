@@ -158,7 +158,10 @@ namespace Cave.Enemies
                 : 1f;
             float effectiveDetectionRange = detectionRange * avariceDetectionMultiplier;
             float effectiveLoseTargetRange = loseTargetRange * avariceDetectionMultiplier;
-            if (!engaged && targetDistance <= effectiveDetectionRange)
+            bool hasSharedEyeSighting = EyeWatcherNetwork.TryGetSharedLocation(
+                transform.position,
+                out _);
+            if (!engaged && (targetDistance <= effectiveDetectionRange || hasSharedEyeSighting))
             {
                 engaged = true;
                 outsideLoseRangeSince = -1f;
@@ -167,7 +170,7 @@ namespace Cave.Enemies
 
             if (engaged)
             {
-                if (target == null || targetDistance > effectiveLoseTargetRange)
+                if (target == null || (targetDistance > effectiveLoseTargetRange && !hasSharedEyeSighting))
                 {
                     if (outsideLoseRangeSince < 0f)
                     {
@@ -188,6 +191,7 @@ namespace Cave.Enemies
 
             if (engaged && target != null)
             {
+                EnemyLedger.RecordEncounter(this);
                 Vector2 toTarget = target.transform.position - transform.position;
                 defense?.FaceDirection(toTarget.x);
                 EvaluateCombat(target, toTarget);

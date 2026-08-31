@@ -9,6 +9,12 @@ namespace Cave.Player
         [SerializeField, Min(0.01f)] private float maximumMana = 100f;
         [SerializeField, Min(0f)] private float startingMana = 100f;
 
+        [Header("Skill Tier Mana Multipliers")]
+        [SerializeField, Min(0f)] private float tierOneManaCostMultiplier = 1f;
+        [SerializeField, Min(0f)] private float tierTwoManaCostMultiplier = 1.5f;
+        [SerializeField, Min(0f)] private float tierThreeManaCostMultiplier = 2f;
+        [SerializeField, Min(0f)] private float tierFourManaCostMultiplier = 2.75f;
+
         public event Action<float, float> ManaChanged;
 
         private readonly Dictionary<int, float> costMultipliers =
@@ -59,15 +65,49 @@ namespace Cave.Player
             return true;
         }
 
+        public bool TrySpendMana(float baseAmount, int skillTier)
+        {
+            return TrySpendMana(GetTierAdjustedBaseManaCost(baseAmount, skillTier));
+        }
+
+        public float DrainMana(float amount)
+        {
+            float previous = CurrentMana;
+            SetMana(CurrentMana - Mathf.Max(0f, amount));
+            return previous - CurrentMana;
+        }
+
         public bool CanSpendMana(float baseCost)
         {
             float finalCost = GetModifiedManaCost(baseCost);
             return finalCost > 0f && CurrentMana >= finalCost;
         }
 
+        public bool CanSpendMana(float baseCost, int skillTier)
+        {
+            return CanSpendMana(GetTierAdjustedBaseManaCost(baseCost, skillTier));
+        }
+
         public float GetModifiedManaCost(float baseCost)
         {
             return Mathf.Max(0f, baseCost) * ManaCostMultiplier;
+        }
+
+        public float GetFinalManaCost(float baseCost, int skillTier)
+        {
+            return GetModifiedManaCost(GetTierAdjustedBaseManaCost(baseCost, skillTier));
+        }
+
+        public float GetTierAdjustedBaseManaCost(float baseCost, int skillTier)
+        {
+            float multiplier = skillTier >= 4
+                ? tierFourManaCostMultiplier
+                : skillTier == 3
+                    ? tierThreeManaCostMultiplier
+                    : skillTier == 2
+                        ? tierTwoManaCostMultiplier
+                        : tierOneManaCostMultiplier;
+            return Mathf.Max(0f, baseCost) * Mathf.Max(0f, multiplier);
         }
 
         public float GetAffordableBaseManaCost(float requestedBaseCost)
@@ -108,6 +148,22 @@ namespace Cave.Player
                 CurrentMana = Mathf.Min(maximumMana, CurrentMana + amount);
             }
 
+            ManaChanged?.Invoke(CurrentMana, maximumMana);
+            return true;
+        }
+
+        public bool ReduceMaximumMana(float amount, float minimumMaximumMana = 1f)
+        {
+            float permitted = Mathf.Min(
+                Mathf.Max(0f, amount),
+                Mathf.Max(0f, maximumMana - Mathf.Max(1f, minimumMaximumMana)));
+            if (permitted <= 0f)
+            {
+                return false;
+            }
+
+            maximumMana -= permitted;
+            CurrentMana = Mathf.Min(CurrentMana, maximumMana);
             ManaChanged?.Invoke(CurrentMana, maximumMana);
             return true;
         }

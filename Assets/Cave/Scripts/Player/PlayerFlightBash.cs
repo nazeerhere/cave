@@ -155,13 +155,12 @@ namespace Cave.Player
             {
                 if (!GameInput.GameplayInputEnabled
                     || playerController == null
-                    || playerController.IsGrounded)
+                    || (playerController.IsGrounded && body.velocity.y <= 0.1f))
                 {
                     CancelAerialHeavyPreparation();
                     return false;
                 }
 
-                CaptureMeaningfulHorizontalDirection();
                 if (GameInput.ChargeHeld
                     && Time.time - aerialHeavyStartedAt >= aerialHeavyHoldThreshold)
                 {
@@ -180,7 +179,7 @@ namespace Cave.Player
 
             if (!GameInput.ChargePressed
                 || playerController == null
-                || playerController.IsGrounded
+                || (playerController.IsGrounded && body.velocity.y <= 0.1f)
                 || (playerDash != null && playerDash.IsDashing)
                 || Time.time < nextSmashTime)
             {
@@ -190,7 +189,6 @@ namespace Cave.Player
             isPreparingAerialHeavy = true;
             aerialHeavyStartedAt = Time.time;
             preparedHorizontalDirection = 0f;
-            CaptureMeaningfulHorizontalDirection();
             return true;
         }
 
@@ -205,9 +203,9 @@ namespace Cave.Player
                 || (playerDash != null && playerDash.IsDashing)
                 || Time.time < nextSmashTime
                 || playerController == null
-                || playerController.IsGrounded
+                || (playerController.IsGrounded && body.velocity.y <= 0.1f)
                 || playerMana == null
-                || !playerMana.TrySpendMana(GetCurrentManaCost()))
+                || !playerMana.TrySpendMana(GetCurrentManaCost(), GetCurrentSkillTier()))
             {
                 return false;
             }
@@ -231,8 +229,9 @@ namespace Cave.Player
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             playerFlight?.StopForGroundSmash();
             GetComponent<SpinSwordAttack>()?.StopForCommittedFollowUp();
-            collisionPhasing?.Begin(bodyCollider);
+            collisionPhasing?.Begin(bodyCollider, committedDiveDirection);
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.85f);
+            GetComponent<PlayerCurseController>()?.NotifyOffensiveCommitment();
             if (combatFlow == null)
             {
                 combatFlow = GetComponent<PlayerCombatFlow>();
@@ -409,6 +408,16 @@ namespace Cave.Player
             return manaCost + (tier3Owned ? tier3AdditionalManaCost : 0f);
         }
 
+        private int GetCurrentSkillTier()
+        {
+            if (upgrades == null)
+            {
+                upgrades = GetComponent<PlayerSpecialModeUpgradeState>();
+            }
+
+            return upgrades != null ? upgrades.GetCurrentTier(SpecialMode.Flight) : 1;
+        }
+
         private void EndGroundSmash(bool impacted)
         {
             IsBashing = false;
@@ -454,14 +463,18 @@ namespace Cave.Player
 
         private Vector2 ResolveDiagonalDiveDirection()
         {
-            if (Mathf.Abs(preparedHorizontalDirection) < 0.5f)
+            // Direction is intentionally resolved on commitment, not on initial
+            // Heavy press. Releasing horizontal input before commitment selects
+            // the vertical fallback, and committed dives never steer afterward.
+            float currentHorizontal = GameInput.Horizontal;
+            if (Mathf.Abs(currentHorizontal) < minimumHorizontalDirection)
             {
                 return Vector2.down;
             }
 
             float radians = diagonalDiveAngle * Mathf.Deg2Rad;
             return new Vector2(
-                Mathf.Cos(radians) * Mathf.Sign(preparedHorizontalDirection),
+                Mathf.Cos(radians) * Mathf.Sign(currentHorizontal),
                 -Mathf.Sin(radians)).normalized;
         }
 

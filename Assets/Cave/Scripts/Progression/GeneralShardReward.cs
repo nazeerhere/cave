@@ -50,6 +50,11 @@ namespace Cave.Progression
 
         private void HandleDied()
         {
+            if (GetComponent<EnemyCorruptionLifecycle>()?.SuppressDeathRewards == true)
+            {
+                return;
+            }
+
             if (rewardGranted
                 || creditedProgression == null
                 || inheritance.Rank != SkeletonRank.General)

@@ -38,6 +38,18 @@ namespace Cave.Player
             return currentDirection;
         }
 
+        public void SetFacingDirection(float horizontalDirection)
+        {
+            if (Mathf.Abs(horizontalDirection) <= 0.001f)
+            {
+                return;
+            }
+
+            facingDirection = Mathf.Sign(horizontalDirection);
+            currentDirection = FacingDirection;
+            currentOctant = ToOctant(currentDirection);
+        }
+
         private void RefreshDirection()
         {
             float horizontal = GameInput.Horizontal;

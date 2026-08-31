@@ -229,7 +229,7 @@ namespace Cave.Enemies
 
             LayerMask resolvedLineOfSightLayers = lineOfSightBlockingLayers.value != 0
                 ? lineOfSightBlockingLayers
-                : LayerMask.GetMask("Ground");
+                : (LayerMask)LayerMask.GetMask("Ground");
             slowBolt.Configure(
                 slowBoltFirePoint,
                 slowBoltPrefab,

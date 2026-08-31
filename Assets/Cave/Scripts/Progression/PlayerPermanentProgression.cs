@@ -43,6 +43,7 @@ namespace Cave.Progression
         [SerializeField, Min(0)] private int healthRegenerationLevel;
         [SerializeField, Min(0)] private int manaRegenerationLevel;
         [SerializeField, Min(0)] private int powerPurchaseCount;
+        [SerializeField, Min(1f)] private float cavesGlareBaseStrengthMultiplier = 1f;
 
         private PlayerHealth playerHealth;
         private PlayerMana playerMana;
@@ -83,6 +84,9 @@ namespace Cave.Progression
         public int PowerCostPerPurchase => powerCostPerPurchase;
         public float PermanentDamagePercent => powerPurchaseCount * damagePercentPerPurchase;
         public float PermanentDamageMultiplier => 1f + PermanentDamagePercent;
+        public float CavesGlareBaseStrengthMultiplier => cavesGlareBaseStrengthMultiplier;
+        public float AuthoritativeDamageMultiplier =>
+            PermanentDamageMultiplier * cavesGlareBaseStrengthMultiplier;
 
         private void Awake()
         {
@@ -235,7 +239,58 @@ namespace Cave.Progression
         {
             return Mathf.Max(
                 1,
-                Mathf.RoundToInt(Mathf.Max(0, baseDamage) * PermanentDamageMultiplier));
+                Mathf.RoundToInt(
+                    Mathf.Max(0, baseDamage)
+                    * AuthoritativeDamageMultiplier
+                    * (GetComponent<PlayerCurseController>()?.OutgoingDamageMultiplier ?? 1f)));
+        }
+
+        public void AdaptBaseStrengthToward(
+            float killerBenchmark,
+            float adaptationFraction,
+            float minimumStep,
+            float postMatchGain)
+        {
+            float target = Mathf.Max(1f, killerBenchmark);
+            if (cavesGlareBaseStrengthMultiplier < target - 0.001f)
+            {
+                float gap = target - cavesGlareBaseStrengthMultiplier;
+                cavesGlareBaseStrengthMultiplier = Mathf.Min(
+                    target,
+                    cavesGlareBaseStrengthMultiplier
+                        + Mathf.Max(Mathf.Max(0.001f, minimumStep), gap * Mathf.Clamp01(adaptationFraction)));
+            }
+            else
+            {
+                cavesGlareBaseStrengthMultiplier *= 1f + Mathf.Max(0f, postMatchGain);
+            }
+
+            UpgradesChanged?.Invoke();
+        }
+
+        public void ConsumeForCavesGlare(
+            int shards,
+            int powerPurchases,
+            int healthRegenLevels,
+            int manaRegenLevels)
+        {
+            int removedShards = Mathf.Min(generalShards, Mathf.Max(0, shards));
+            if (removedShards > 0)
+            {
+                generalShards -= removedShards;
+                GeneralShardsChanged?.Invoke(generalShards, -removedShards);
+            }
+
+            powerPurchaseCount = Mathf.Max(0, powerPurchaseCount - Mathf.Max(0, powerPurchases));
+            healthRegenerationLevel = Mathf.Max(
+                0,
+                healthRegenerationLevel - Mathf.Max(0, healthRegenLevels));
+            manaRegenerationLevel = Mathf.Max(
+                0,
+                manaRegenerationLevel - Mathf.Max(0, manaRegenLevels));
+            healthRegenerationOwned = healthRegenerationLevel > 0;
+            manaRegenerationOwned = manaRegenerationLevel > 0;
+            UpgradesChanged?.Invoke();
         }
 
         public void NotifyDefensiveCounterUsed(PlayerDefenseQuality quality)
@@ -342,6 +397,7 @@ namespace Cave.Progression
             healthRegenerationLevel = Mathf.Max(0, healthRegenerationLevel);
             manaRegenerationLevel = Mathf.Max(0, manaRegenerationLevel);
             MigrateLegacyUpgradeFlags();
+            cavesGlareBaseStrengthMultiplier = Mathf.Max(1f, cavesGlareBaseStrengthMultiplier);
         }
     }
 }

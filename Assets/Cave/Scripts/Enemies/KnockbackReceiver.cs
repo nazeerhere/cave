@@ -6,6 +6,7 @@ namespace Cave.Enemies
     public sealed class KnockbackReceiver : MonoBehaviour
     {
         [SerializeField, Min(0f)] private float movementLockDuration = 0.25f;
+        [SerializeField, Min(0.1f)] private float maximumKnockbackSpeed = 25f;
 
         private Rigidbody2D body;
         private EnemyController enemyController;
@@ -15,6 +16,8 @@ namespace Cave.Enemies
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             enemyController = GetComponent<EnemyController>();
             flyingController = GetComponent<FlyingSwarmController>();
         }
@@ -39,7 +42,9 @@ namespace Cave.Enemies
 
             enemyController?.SuspendMovement(movementLockDuration * appliedMultiplier);
             flyingController?.SuspendMovement(movementLockDuration * appliedMultiplier);
-            body.velocity = velocity * appliedMultiplier;
+            body.velocity = Vector2.ClampMagnitude(
+                velocity * appliedMultiplier,
+                maximumKnockbackSpeed);
         }
 
         public void SetKnockbackResistance(float resistance)

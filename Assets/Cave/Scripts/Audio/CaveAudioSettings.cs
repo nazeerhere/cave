@@ -6,20 +6,32 @@ namespace Cave.Audio
     {
         public const string MasterVolumePlayerPrefsKey = "Cave.Settings.Audio.v1.Master";
         public const string SfxVolumePlayerPrefsKey = "Cave.Settings.Audio.v1.SFX";
+        public const string MusicVolumePlayerPrefsKey = "Cave.Settings.Audio.v1.Music";
+        public const string UiVolumePlayerPrefsKey = "Cave.Settings.Audio.v1.UI";
+        public const string AmbienceVolumePlayerPrefsKey = "Cave.Settings.Audio.v1.Ambience";
 
         private const float DefaultVolume = 1f;
 
         private static float masterVolume = DefaultVolume;
         private static float sfxVolume = DefaultVolume;
+        private static float musicVolume = DefaultVolume;
+        private static float uiVolume = DefaultVolume;
+        private static float ambienceVolume = DefaultVolume;
 
         public static float MasterVolume => masterVolume;
         public static float SfxVolume => sfxVolume;
+        public static float MusicVolume => musicVolume;
+        public static float UiVolume => uiVolume;
+        public static float AmbienceVolume => ambienceVolume;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void LoadForPlaySession()
         {
             masterVolume = LoadVolume(MasterVolumePlayerPrefsKey);
             sfxVolume = LoadVolume(SfxVolumePlayerPrefsKey);
+            musicVolume = LoadVolume(MusicVolumePlayerPrefsKey);
+            uiVolume = LoadVolume(UiVolumePlayerPrefsKey);
+            ambienceVolume = LoadVolume(AmbienceVolumePlayerPrefsKey);
             ApplyCurrentVolumes();
         }
 
@@ -37,11 +49,32 @@ namespace Cave.Audio
             ApplyCurrentVolumes();
         }
 
+        public static void SetMusicVolume(float value)
+        {
+            musicVolume = Mathf.Clamp01(value);
+            SaveVolume(MusicVolumePlayerPrefsKey, musicVolume);
+            ApplyCurrentVolumes();
+        }
+
+        public static void SetUiVolume(float value)
+        {
+            uiVolume = Mathf.Clamp01(value);
+            SaveVolume(UiVolumePlayerPrefsKey, uiVolume);
+            ApplyCurrentVolumes();
+        }
+
+        public static void SetAmbienceVolume(float value)
+        {
+            ambienceVolume = Mathf.Clamp01(value);
+            SaveVolume(AmbienceVolumePlayerPrefsKey, ambienceVolume);
+            ApplyCurrentVolumes();
+        }
+
         public static void ApplyCurrentVolumes()
         {
-            // All sounds currently in the project are SFX. Multiplying at the listener
-            // keeps manually configured AudioSources untouched until mixer routing is approved.
-            AudioListener.volume = masterVolume * sfxVolume;
+            // Per-route sources apply their own channel gain. The listener remains
+            // Master only, so manually authored AudioSources are not reconfigured.
+            AudioListener.volume = masterVolume;
         }
 
         private static float LoadVolume(string key)

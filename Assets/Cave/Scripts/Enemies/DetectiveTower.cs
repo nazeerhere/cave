@@ -52,6 +52,7 @@ namespace Cave.Enemies
                 : new DetectiveTowerDebuffStage(1f, 1f);
         public float CurrentManaCostMultiplier => ResolveStageValue(manaCostMultipliers, 1f);
         public float CurrentDropRateMultiplier => ResolveStageValue(dropRateMultipliers, 1f);
+        public bool ContainsPosition(Vector2 position) => ContainsPoint(position);
 
         public void Initialize(
             DetectiveEncounterCoordinator owner,

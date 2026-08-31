@@ -12,6 +12,7 @@ namespace Cave.UI
 
         [Header("Visibility / Placement")]
         [SerializeField] private bool showIndicator = true;
+        [Tooltip("Ground clearance used by the Skeleton generation/progress badge.")]
         [SerializeField, Min(0f)] private float headClearance = 0.08f;
         [SerializeField, Min(0.1f)] private float fallbackHeight = 0.65f;
 
@@ -245,13 +246,13 @@ namespace Cave.UI
                 bodyRenderer = FindPrimaryBodyRenderer();
             }
 
-            Vector3 position = transform.position + Vector3.up * fallbackHeight;
+            Vector3 position = transform.position + Vector3.down * fallbackHeight;
             if (bodyRenderer != null && bodyRenderer.enabled)
             {
                 Bounds bounds = bodyRenderer.bounds;
                 position = new Vector3(
                     bounds.center.x,
-                    bounds.max.y + headClearance + badgeHeight * 0.5f,
+                    bounds.min.y - headClearance - badgeHeight * 0.5f,
                     transform.position.z);
             }
 

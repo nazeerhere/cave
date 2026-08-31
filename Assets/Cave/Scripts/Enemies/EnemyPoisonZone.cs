@@ -8,7 +8,9 @@ namespace Cave.Enemies
     {
         private GameObject source;
         private float radius;
-        private int tickDamage;
+        private float tickDamagePercent;
+        private int minimumTickDamage;
+        private int maximumTickDamage;
         private float tickInterval;
         private float expiresAt;
         private bool appliedToPlayer;
@@ -18,7 +20,9 @@ namespace Cave.Enemies
             GameObject damageSource,
             float zoneRadius,
             float zoneDuration,
-            int poisonDamage,
+            float poisonDamagePercent,
+            int requestedMinimumTickDamage,
+            int requestedMaximumTickDamage,
             float poisonTickInterval,
             Color color)
         {
@@ -27,7 +31,9 @@ namespace Cave.Enemies
             EnemyPoisonZone zone = zoneObject.AddComponent<EnemyPoisonZone>();
             zone.source = damageSource;
             zone.radius = Mathf.Max(0.1f, zoneRadius);
-            zone.tickDamage = Mathf.Max(1, poisonDamage);
+            zone.tickDamagePercent = Mathf.Max(0f, poisonDamagePercent);
+            zone.minimumTickDamage = Mathf.Max(1, requestedMinimumTickDamage);
+            zone.maximumTickDamage = Mathf.Max(zone.minimumTickDamage, requestedMaximumTickDamage);
             zone.tickInterval = Mathf.Max(0.05f, poisonTickInterval);
             zone.expiresAt = Time.time + Mathf.Max(0.1f, zoneDuration);
             Cave.Combat.AreaPulseEffect.Create(position, zone.radius, color, 0.35f);
@@ -61,7 +67,9 @@ namespace Cave.Enemies
             }
 
             poison.ApplyPoison(
-                tickDamage,
+                tickDamagePercent,
+                minimumTickDamage,
+                maximumTickDamage,
                 tickInterval,
                 Mathf.Max(tickInterval, expiresAt - Time.time),
                 source);

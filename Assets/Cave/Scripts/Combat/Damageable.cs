@@ -16,6 +16,7 @@ namespace Cave.Combat
         private Color[] originalColors;
         private Coroutine flashRoutine;
         private int runtimeMaximumHealth;
+        private Color persistentTint = Color.white;
 
         public event Action Died;
         public event Action<DamageContext, bool, int> DamageResolved;
@@ -88,6 +89,7 @@ namespace Cave.Combat
 
             if (CurrentHealth == 0)
             {
+                GetComponent<EnemyCorruptionLifecycle>()?.PrepareForDeath();
                 damageContext.ReportKillingBlow();
                 Died?.Invoke();
                 gameObject.SetActive(false);
@@ -130,13 +132,37 @@ namespace Cave.Combat
 
         public bool RestoreHealth(int amount)
         {
+            return RestoreHealthResolved(amount) > 0;
+        }
+
+        public int RestoreHealthResolved(int amount)
+        {
             if (amount <= 0 || CurrentHealth <= 0 || CurrentHealth >= runtimeMaximumHealth)
             {
-                return false;
+                return 0;
             }
 
+            int healthBeforeRestore = CurrentHealth;
             CurrentHealth = Mathf.Min(runtimeMaximumHealth, CurrentHealth + amount);
-            return true;
+            return CurrentHealth - healthBeforeRestore;
+        }
+
+        public void SetPersistentTint(Color tint)
+        {
+            persistentTint = new Color(
+                Mathf.Clamp01(tint.r),
+                Mathf.Clamp01(tint.g),
+                Mathf.Clamp01(tint.b),
+                Mathf.Clamp01(tint.a));
+            ReapplyPersistentTint();
+        }
+
+        public void ReapplyPersistentTint()
+        {
+            if (flashRoutine == null)
+            {
+                RestoreOriginalColors();
+            }
         }
 
         public void SetRuntimeMaximumHealth(int maximumHealth, bool restoreToFull)
@@ -171,7 +197,7 @@ namespace Cave.Combat
 
             for (int index = 0; index < renderers.Length; index++)
             {
-                renderers[index].color = originalColors[index];
+                renderers[index].color = MultiplyColor(originalColors[index], persistentTint);
             }
 
             flashRoutine = null;
@@ -198,6 +224,7 @@ namespace Cave.Combat
                 return;
             }
 
+            persistentTint = Color.white;
             RestoreOriginalColors();
         }
 
@@ -212,9 +239,18 @@ namespace Cave.Combat
             {
                 if (renderers[index] != null)
                 {
-                    renderers[index].color = originalColors[index];
+                    renderers[index].color = MultiplyColor(originalColors[index], persistentTint);
                 }
             }
+        }
+
+        private static Color MultiplyColor(Color authoredColor, Color tint)
+        {
+            return new Color(
+                authoredColor.r * tint.r,
+                authoredColor.g * tint.g,
+                authoredColor.b * tint.b,
+                authoredColor.a * tint.a);
         }
     }
 }

@@ -10,6 +10,8 @@ namespace Cave.UI
         [SerializeField] private Text valueText;
 
         private PlayerMana playerMana;
+        private PlayerCurseController curses;
+        private CanvasGroup canvasGroup;
 
         public void Configure(Image manaFillImage, Text manaValueText)
         {
@@ -37,6 +39,26 @@ namespace Cave.UI
             if (playerMana == null)
             {
                 Bind(FindObjectOfType<PlayerMana>());
+            }
+
+            curses = FindObjectOfType<PlayerCurseController>();
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        private void Update()
+        {
+            if (curses == null)
+            {
+                curses = FindObjectOfType<PlayerCurseController>();
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = curses != null && curses.IsBurnoutActive ? 0f : 1f;
             }
         }
 

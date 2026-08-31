@@ -74,6 +74,7 @@ namespace Cave.Enemies
 
         [Header("Guard Break")]
         [SerializeField, Range(0f, 1f)] private float guardBreakChance = 0.15f;
+        [SerializeField, Range(0f, 1f)] private float bruteGuardBreakAttemptChance = 0.72f;
         [SerializeField, Min(1)] private int guardBreakDamage = 2;
         [SerializeField, Min(0.1f)] private float guardBreakRange = 1.35f;
         [SerializeField, Min(0f)] private float guardBreakWindup = 0.65f;
@@ -1401,7 +1402,7 @@ namespace Cave.Enemies
                 case EnemyMeleePreset.Skeleton:
                     return 0f;
                 case EnemyMeleePreset.Brute:
-                    return 0.15f;
+                    return bruteGuardBreakAttemptChance;
                 case EnemyMeleePreset.Troll:
                     return 0.2f;
                 default:
@@ -1549,6 +1550,8 @@ namespace Cave.Enemies
                     renderers[index].color = restingColors[index];
                 }
             }
+
+            GetComponent<Damageable>()?.ReapplyPersistentTint();
         }
 
         private void SetWeaponPose(float angle, float scale, float verticalOffset = 0f)

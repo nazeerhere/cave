@@ -6,6 +6,23 @@ namespace Cave.Enemies
 {
     public static class EnemySupportTargeting
     {
+        private enum HealthUrgency
+        {
+            Full,
+            Healthy,
+            Damaged,
+            Critical
+        }
+        public static List<Damageable> CollectAllies(
+            Vector2 origin,
+            float radius,
+            LayerMask allyLayers,
+            Damageable self,
+            bool canTargetSelf)
+        {
+            return CollectCandidates(origin, radius, allyLayers, self, canTargetSelf);
+        }
+
         public static Damageable FindLowestHealthTarget(
             Vector2 origin,
             float radius,
@@ -70,6 +87,18 @@ namespace Cave.Enemies
             }
 
             return null;
+        }
+
+        public static void SortForOffensiveSupport(
+            List<Damageable> candidates,
+            Vector2 origin)
+        {
+            if (candidates == null)
+            {
+                return;
+            }
+
+            candidates.Sort((left, right) => CompareBuffTargets(left, right, origin, true));
         }
 
         public static Damageable FindHighestValueUnbuffedDamageTarget(
@@ -236,20 +265,32 @@ namespace Cave.Enemies
             Vector2 origin,
             bool preferNonSupport)
         {
-            if (preferNonSupport)
+            int healthUrgencyComparison = GetHealthUrgency(right).CompareTo(GetHealthUrgency(left));
+            if (healthUrgencyComparison != 0)
             {
-                int supportComparison = IsSupport(left).CompareTo(IsSupport(right));
-                if (supportComparison != 0)
-                {
-                    return supportComparison;
-                }
+                return healthUrgencyComparison;
             }
 
             float leftFraction = left.CurrentHealth / (float)Mathf.Max(1, left.MaximumHealth);
             float rightFraction = right.CurrentHealth / (float)Mathf.Max(1, right.MaximumHealth);
             int healthComparison = leftFraction.CompareTo(rightFraction);
-            return healthComparison != 0
-                ? healthComparison
+            if (healthComparison != 0)
+            {
+                return healthComparison;
+            }
+
+            if (preferNonSupport)
+            {
+                int classComparison = GetClassPriority(right).CompareTo(GetClassPriority(left));
+                if (classComparison != 0)
+                {
+                    return classComparison;
+                }
+            }
+
+            int attackComparison = GetOffensiveValue(right).CompareTo(GetOffensiveValue(left));
+            return attackComparison != 0
+                ? attackComparison
                 : CompareDistanceThenIdentity(left, right, origin);
         }
 
@@ -261,14 +302,17 @@ namespace Cave.Enemies
         {
             if (preferNonSupport)
             {
-                int supportComparison = IsSupport(left).CompareTo(IsSupport(right));
-                if (supportComparison != 0)
+                int classComparison = GetClassPriority(right).CompareTo(GetClassPriority(left));
+                if (classComparison != 0)
                 {
-                    return supportComparison;
+                    return classComparison;
                 }
             }
 
-            return CompareDistanceThenIdentity(left, right, origin);
+            int attackComparison = GetOffensiveValue(right).CompareTo(GetOffensiveValue(left));
+            return attackComparison != 0
+                ? attackComparison
+                : CompareDistanceThenIdentity(left, right, origin);
         }
 
         private static int CompareDistanceThenIdentity(Damageable left, Damageable right, Vector2 origin)
@@ -281,10 +325,60 @@ namespace Cave.Enemies
                 : left.GetInstanceID().CompareTo(right.GetInstanceID());
         }
 
-        private static bool IsSupport(Damageable damageable)
+        private static HealthUrgency GetHealthUrgency(Damageable damageable)
+        {
+            float fraction = damageable.CurrentHealth / (float)Mathf.Max(1, damageable.MaximumHealth);
+            if (fraction >= 0.999f)
+            {
+                return HealthUrgency.Full;
+            }
+
+            if (fraction > 0.7f)
+            {
+                return HealthUrgency.Healthy;
+            }
+
+            return fraction > 0.3f ? HealthUrgency.Damaged : HealthUrgency.Critical;
+        }
+
+        private static float GetClassPriority(Damageable damageable)
         {
             EnemyArchetypeProfile profile = damageable.GetComponent<EnemyArchetypeProfile>();
-            return profile != null && profile.Includes(EnemyArchetype.Support);
+            if (profile == null)
+            {
+                return 0f;
+            }
+
+            if (profile.Includes(EnemyArchetype.Tank) || profile.Includes(EnemyArchetype.Melee)
+                || damageable.GetComponent<SkeletonInheritance>() != null)
+            {
+                return 3f;
+            }
+
+            if (profile.Includes(EnemyArchetype.Ranged))
+            {
+                return 1.5f;
+            }
+
+            return profile.Includes(EnemyArchetype.Support) ? 0.5f : 1f;
+        }
+
+        private static float GetOffensiveValue(Damageable damageable)
+        {
+            float value = GetClassPriority(damageable);
+            EnemyMeleeCombat melee = damageable.GetComponent<EnemyMeleeCombat>();
+            if (melee != null && melee.IsBrutePreset)
+            {
+                value += 1f;
+            }
+
+            SkeletonInheritance skeleton = damageable.GetComponent<SkeletonInheritance>();
+            if (skeleton != null)
+            {
+                value += skeleton.WitnessedDeaths * 0.05f;
+            }
+
+            return value;
         }
     }
 }

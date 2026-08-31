@@ -79,6 +79,7 @@ namespace Cave.UI
                 EnsureActionHotbar(existingHud.transform.parent, font, playerHealth.gameObject);
                 EnsureDetectiveResearchHud(existingHud.transform.parent, font);
                 EnsureStatusEffectHud(existingHud.transform.parent, font, playerHealth.gameObject);
+                EnsureWizardWarpWarningHud(existingHud.transform.parent, font, playerHealth.gameObject);
                 EnsureCurseHud(existingHud.transform.parent, font, playerHealth.gameObject);
                 EnsureCurseAltarHud(existingHud.transform.parent, font);
                 EnsureFrenzyBreakHud(existingHud.transform.parent, font, playerHealth.gameObject);
@@ -181,6 +182,7 @@ namespace Cave.UI
             EnsureActionHotbar(gameplayHud, font, playerHealth.gameObject);
             EnsureDetectiveResearchHud(gameplayHud, font);
             EnsureStatusEffectHud(gameplayHud, font, playerHealth.gameObject);
+            EnsureWizardWarpWarningHud(gameplayHud, font, playerHealth.gameObject);
             EnsureCurseHud(gameplayHud, font, playerHealth.gameObject);
             EnsureCurseAltarHud(gameplayHud, font);
             EnsureFrenzyBreakHud(gameplayHud, font, playerHealth.gameObject);
@@ -220,17 +222,29 @@ namespace Cave.UI
                 font,
                 new Vector2(0f, 36f),
                 new Vector2(270f, 50f));
+            Button resetLevelButton = CreateButton(
+                "RESET LEVEL",
+                pauseMenu.transform,
+                font,
+                new Vector2(0f, -28f),
+                new Vector2(270f, 50f));
             Button movesButton = CreateButton(
                 "MOVES LIST",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -28f),
+                new Vector2(0f, -92f),
                 new Vector2(270f, 50f));
             Button settingsButton = CreateButton(
                 "SETTINGS",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -92f),
+                new Vector2(0f, -156f),
+                new Vector2(270f, 50f));
+            Button ledgerButton = CreateButton(
+                "ENEMY LEDGER",
+                pauseMenu.transform,
+                font,
+                new Vector2(0f, -220f),
                 new Vector2(270f, 50f));
             Text pauseHint = CreateCenteredText(
                 "Pause Hint",
@@ -238,10 +252,12 @@ namespace Cave.UI
                 font,
                 "ESC  •  RESUME",
                 13,
-                new Vector2(0f, -164f));
+                new Vector2(0f, -284f));
             pauseHint.color = CaveUiTheme.SecondaryText;
 
-            GameObject settingsPanel = CreateMenuPanel("Settings Panel", menus, new Vector2(760f, 690f));
+            // The camera row extends the existing Settings menu without reducing
+            // the readable binding spacing or clipping the bottom controls.
+            GameObject settingsPanel = CreateMenuPanel("Settings Panel", menus, new Vector2(760f, 780f));
             Text settingsCrest = CreateCenteredText(
                 "Settings Crest",
                 settingsPanel.transform,
@@ -351,24 +367,32 @@ namespace Cave.UI
                 font,
                 -190f,
                 out Text sfxValue);
+            Slider cameraZoomSlider = CreateVolumeRow(
+                "Camera Zoom",
+                settingsPanel.transform,
+                font,
+                -232f,
+                out Text cameraZoomValue);
+            cameraZoomSlider.minValue = Cave.CameraSystem.CameraZoomSettings.MinimumZoomScale;
+            cameraZoomSlider.maxValue = Cave.CameraSystem.CameraZoomSettings.MaximumZoomScale;
 
             Button restoreDefaultsButton = CreateButton(
                 "Restore Defaults",
                 settingsPanel.transform,
                 font,
-                new Vector2(-130f, -246f),
+                new Vector2(-130f, -288f),
                 new Vector2(240f, 42f));
             Button cancelButton = CreateButton(
                 "Cancel Rebind",
                 settingsPanel.transform,
                 font,
-                new Vector2(130f, -246f),
+                new Vector2(130f, -288f),
                 new Vector2(240f, 42f));
             Button backButton = CreateButton(
                 "Back",
                 settingsPanel.transform,
                 font,
-                new Vector2(0f, -306f));
+                new Vector2(0f, -348f));
 
             SettingsMenuController settingsController = settingsPanel.AddComponent<SettingsMenuController>();
             settingsController.Configure(
@@ -379,6 +403,8 @@ namespace Cave.UI
                 masterValue,
                 sfxSlider,
                 sfxValue,
+                cameraZoomSlider,
+                cameraZoomValue,
                 restoreDefaultsButton,
                 cancelButton);
 
@@ -477,17 +503,36 @@ namespace Cave.UI
                 new Vector2(160f, -306f),
                 new Vector2(220f, 44f));
 
+            GameObject ledgerPanel = CreateMenuPanel("Enemy Ledger Panel", menus, new Vector2(620f, 660f));
+            Text ledgerTitle = CreateCenteredText(
+                "Ledger Title", ledgerPanel.transform, font, "ENEMY LEDGER", 30, new Vector2(0f, 280f));
+            ledgerTitle.fontStyle = FontStyle.Bold;
+            ledgerTitle.color = CaveUiTheme.Gold;
+            CreateCardSurface("Ledger Surface", ledgerPanel.transform, new Vector2(0f, 8f), new Vector2(550f, 520f));
+            Text ledgerBody = CreateCenteredText(
+                "Ledger Body", ledgerPanel.transform, font, string.Empty, 16, new Vector2(0f, 8f), new Vector2(510f, 490f));
+            ledgerBody.alignment = TextAnchor.UpperLeft;
+            ledgerBody.horizontalOverflow = HorizontalWrapMode.Wrap;
+            ledgerBody.verticalOverflow = VerticalWrapMode.Overflow;
+            Button ledgerBackButton = CreateButton(
+                "Back", ledgerPanel.transform, font, new Vector2(0f, -284f), new Vector2(220f, 44f));
+
             PauseMenuController pauseController = menus.gameObject.AddComponent<PauseMenuController>();
             pauseController.Configure(
                 pauseMenu,
                 settingsPanel,
                 resumeButton,
+                resetLevelButton,
                 settingsButton,
                 backButton,
                 settingsController,
                 movesPanel,
                 movesButton,
                 movesBackButton,
+                ledgerPanel,
+                ledgerButton,
+                ledgerBackButton,
+                ledgerBody,
                 movesLeftText,
                 movesRightText,
                 movesChainLeftText,
@@ -1484,8 +1529,8 @@ namespace Cave.UI
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(0f, 112f),
-                new Vector2(600f, 104f));
+                new Vector2(-200f, 112f),
+                new Vector2(520f, 104f));
             Image panelImage = panel.gameObject.AddComponent<Image>();
             panelImage.color = CaveUiTheme.Surface;
             panelImage.raycastTarget = false;
@@ -1511,7 +1556,7 @@ namespace Cave.UI
             observationLabel.fontStyle = FontStyle.Bold;
             observationLabel.color = CaveUiTheme.PrimaryText;
 
-            const int slotCount = 5;
+            const int slotCount = 6;
             Text[] historyTexts = new Text[slotCount];
             Image[] historyFrames = new Image[slotCount];
             for (int index = 0; index < slotCount; index++)
@@ -1632,9 +1677,9 @@ namespace Cave.UI
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(24f, -108f),
-                new Vector2(326f, 28f));
+                new Vector2(350f, 28f));
 
-            const int slotCount = 5;
+            const int slotCount = 6;
             GameObject[] slots = new GameObject[slotCount];
             Text[] labels = new Text[slotCount];
             Color[] colors =
@@ -1643,7 +1688,8 @@ namespace Cave.UI
                 CaveUiTheme.Stamina,
                 CaveUiTheme.Gold,
                 CaveUiTheme.Mana,
-                CaveUiTheme.BorderBright
+                CaveUiTheme.BorderBright,
+                new Color(0.75f, 0.35f, 1f, 1f)
             };
             for (int index = 0; index < slotCount; index++)
             {
@@ -1657,7 +1703,7 @@ namespace Cave.UI
                     new Vector2(50f, 24f));
                 Image image = slot.gameObject.AddComponent<Image>();
                 image.color = CaveUiTheme.SurfaceInset;
-                image.raycastTarget = false;
+                image.raycastTarget = true;
                 AddPanelFrame(slot, colors[index], 1f);
                 labels[index] = CreateCenteredText(
                     "Status Icon",
@@ -1673,8 +1719,93 @@ namespace Cave.UI
                 slots[index] = slot.gameObject;
             }
 
+            RectTransform tooltip = CreateRect(
+                "Status Tooltip",
+                row,
+                Vector2.zero,
+                Vector2.zero,
+                new Vector2(0f, 1f),
+                new Vector2(140f, -8f),
+                new Vector2(300f, 72f));
+            Image tooltipBackground = tooltip.gameObject.AddComponent<Image>();
+            tooltipBackground.color = CaveUiTheme.Surface;
+            tooltipBackground.raycastTarget = false;
+            AddPanelFrame(tooltip, CaveUiTheme.BronzeLight, 2f);
+            Text tooltipTitle = CreateCenteredText(
+                "Tooltip Status Name",
+                tooltip,
+                font,
+                string.Empty,
+                13,
+                new Vector2(0f, 21f),
+                new Vector2(276f, 22f));
+            tooltipTitle.fontStyle = FontStyle.Bold;
+            tooltipTitle.color = CaveUiTheme.Gold;
+            tooltipTitle.raycastTarget = false;
+            Text tooltipBody = CreateCenteredText(
+                "Tooltip Description",
+                tooltip,
+                font,
+                string.Empty,
+                11,
+                new Vector2(0f, -12f),
+                new Vector2(276f, 42f));
+            tooltipBody.color = CaveUiTheme.PrimaryText;
+            tooltipBody.raycastTarget = false;
+            CanvasGroup tooltipGroup = tooltip.gameObject.AddComponent<CanvasGroup>();
+            StatusTooltipPanel tooltipPanel = tooltip.gameObject.AddComponent<StatusTooltipPanel>();
+            tooltipPanel.Configure(tooltipGroup, tooltipTitle, tooltipBody);
+
             PlayerStatusEffectHud hud = row.gameObject.AddComponent<PlayerStatusEffectHud>();
-            hud.Configure(slots, labels, player);
+            hud.Configure(slots, labels, player, tooltipPanel);
+        }
+
+        private static void EnsureWizardWarpWarningHud(
+            Transform gameplayHud,
+            Font font,
+            GameObject player)
+        {
+            if (gameplayHud == null || Object.FindObjectOfType<WizardWarpWarningHud>(true) != null)
+            {
+                return;
+            }
+
+            RectTransform panel = CreateRect(
+                "Wizard Warp Warning",
+                gameplayHud,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -118f),
+                new Vector2(420f, 74f));
+            Image background = panel.gameObject.AddComponent<Image>();
+            background.color = CaveUiTheme.Surface;
+            background.raycastTarget = false;
+            AddPanelFrame(panel, new Color(0.72f, 0.3f, 1f, 1f), 2f);
+
+            Text title = CreateCenteredText(
+                "Warp Warning Title",
+                panel,
+                font,
+                "LOW MANA • WARP MARK",
+                18,
+                new Vector2(0f, 14f),
+                new Vector2(390f, 24f));
+            title.fontStyle = FontStyle.Bold;
+            title.color = new Color(0.88f, 0.68f, 1f, 1f);
+            Text prompt = CreateCenteredText(
+                "Warp Resist Prompt",
+                panel,
+                font,
+                string.Empty,
+                14,
+                new Vector2(0f, -14f),
+                new Vector2(390f, 22f));
+            prompt.color = CaveUiTheme.Gold;
+
+            CanvasGroup group = panel.gameObject.AddComponent<CanvasGroup>();
+            WizardWarpWarningHud hud = panel.gameObject.AddComponent<WizardWarpWarningHud>();
+            hud.Configure(group, title, prompt, player);
         }
 
         private static void EnsureCurseHud(Transform gameplayHud, Font font, GameObject player)
@@ -1780,88 +1911,74 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 Vector2.zero,
-                new Vector2(720f, 590f));
+                new Vector2(1120f, 650f));
             Image background = panel.gameObject.AddComponent<Image>();
             background.color = new Color(0.018f, 0.014f, 0.028f, 0.98f);
             AddPanelFrame(panel, new Color(0.6f, 0.28f, 1f, 1f), 4f);
             AddCornerOrnaments(panel, CaveUiTheme.BronzeLight, 11f);
 
             Text title = CreateCenteredText(
-                "Altar Title", panel, font, "CURSE ALTAR  •  CHOOSE YOUR BARGAIN", 23,
-                new Vector2(0f, 258f), new Vector2(650f, 40f));
+                "Altar Title", panel, font, "THE CAVE'S CURSES", 25,
+                new Vector2(0f, 286f), new Vector2(900f, 40f));
             title.fontStyle = FontStyle.Bold;
             title.color = CaveUiTheme.Gold;
+            Text subtitle = CreateCenteredText(
+                "Altar Subtitle", panel, font, "Desire power? Can you handle its price?", 14,
+                new Vector2(0f, 250f), new Vector2(820f, 28f));
+            subtitle.color = CaveUiTheme.SecondaryText;
 
-            Image distractionCard = CreateCardSurface(
-                "Distraction Curse Card", panel, new Vector2(0f, 166f), new Vector2(650f, 118f));
-            CreateSymbolIcon(
-                "Distraction Sigil", panel, font, new Vector2(-292f, 166f), 48f,
-                "◇", new Color(0.72f, 0.45f, 1f, 1f), 24);
-            Text distractionDescription = CreateCenteredText(
-                "Distraction Description", panel, font,
-                "CURSE OF DISTRACTION\nBenefit: manipulate enemy attention with a distraction.\nRule: committed actions and boss exclusions remain respected.",
-                14, new Vector2(-50f, 166f), new Vector2(450f, 100f));
-            distractionDescription.alignment = TextAnchor.MiddleLeft;
-            Text distractionState = CreateCenteredText(
-                "Distraction State", panel, font, "INACTIVE", 12,
-                new Vector2(252f, 187f), new Vector2(126f, 28f));
-            distractionState.color = CaveUiTheme.BorderBright;
-            Button distractionButton = CreateButton(
-                "ACCEPT", panel, font, new Vector2(252f, 146f), new Vector2(120f, 34f));
+            string[] symbols = { "◉", "⌕", "◆", "◈", "◉" };
+            string[] labels =
+            {
+                "CURSE OF\nINSANITY",
+                "DETECTIVE'S\nCURSE",
+                "CURSE OF\nAVARICE",
+                "CURSE OF\nSTONEGLASS",
+                "THE CAVE'S\nGLARE"
+            };
+            Vector2[] positions =
+            {
+                new Vector2(-432f, 105f), new Vector2(-216f, 105f), new Vector2(0f, 105f),
+                new Vector2(216f, 105f), new Vector2(432f, 105f)
+            };
+            Button[] curseButtons = new Button[5];
+            Image[] curseCards = new Image[5];
+            for (int index = 0; index < curseButtons.Length; index++)
+            {
+                curseButtons[index] = CreateButton(
+                    symbols[index] + "\n\n" + labels[index], panel, font, positions[index], new Vector2(196f, 180f));
+                curseCards[index] = curseButtons[index].GetComponent<Image>();
+                curseCards[index].color = CaveUiTheme.SurfaceInset;
+                AddPanelFrame(curseButtons[index].GetComponent<RectTransform>(), new Color(0.55f, 0.25f, 0.82f, 1f), 1f);
+            }
 
-            Image detectiveCard = CreateCardSurface(
-                "Detective Curse Card", panel, new Vector2(0f, 30f), new Vector2(650f, 136f));
-            CreateSymbolIcon(
-                "Detective Sigil", panel, font, new Vector2(-292f, 30f), 48f,
-                "◉", CaveUiTheme.BorderBright, 22);
-            Text detectiveDescription = CreateCenteredText(
-                "Detective Description", panel, font,
-                "DETECTIVE'S CURSE\nBenefit: mastery gain and slower future World growth.\nCost: harder research and guaranteed horde Detectives.",
-                14, new Vector2(-50f, 30f), new Vector2(450f, 116f));
-            detectiveDescription.alignment = TextAnchor.MiddleLeft;
-            Text detectiveState = CreateCenteredText(
-                "Detective State", panel, font, "INACTIVE", 12,
-                new Vector2(252f, 53f), new Vector2(126f, 28f));
-            detectiveState.color = CaveUiTheme.BorderBright;
-            Button detectiveButton = CreateButton(
-                "ACCEPT", panel, font, new Vector2(252f, 9f), new Vector2(120f, 34f));
-
-            Image avariceCard = CreateCardSurface(
-                "Avarice Curse Card", panel, new Vector2(0f, -150f), new Vector2(650f, 198f));
-            CreateSymbolIcon(
-                "Avarice Sigil", panel, font, new Vector2(-292f, -150f), 48f,
-                "◆", CaveUiTheme.Gold, 22);
-            Text avariceDetails = CreateCenteredText(
-                "Avarice Details", panel, font,
-                "Keep part of your tactical currency after death.\n"
-                    + "More wealth increases enemy pressure and detection,\n"
-                    + "movement burden, and the share claimed on death.",
-                14, new Vector2(-44f, -150f), new Vector2(464f, 172f));
-            avariceDetails.alignment = TextAnchor.MiddleLeft;
-            Text avariceState = CreateCenteredText(
-                "Avarice State", panel, font, "INACTIVE", 12,
-                new Vector2(252f, -120f), new Vector2(126f, 42f));
-            avariceState.color = CaveUiTheme.BorderBright;
-            Button avariceButton = CreateButton(
-                "ACCEPT", panel, font, new Vector2(252f, -178f), new Vector2(120f, 34f));
-
+            Image detailCard = CreateCardSurface(
+                "Selected Curse Detail", panel, new Vector2(0f, -132f), new Vector2(820f, 148f));
+            Text detailTitle = CreateCenteredText(
+                "Selected Curse Name", panel, font, "CURSE OF INSANITY", 20,
+                new Vector2(0f, -88f), new Vector2(730f, 30f));
+            detailTitle.color = CaveUiTheme.Gold;
+            Text detailBody = CreateCenteredText(
+                "Selected Curse Detail", panel, font, string.Empty, 14,
+                new Vector2(0f, -140f), new Vector2(710f, 76f));
+            detailBody.alignment = TextAnchor.MiddleLeft;
+            Text activeState = CreateCenteredText(
+                "Selected Curse State", panel, font, "◇ UNBOUND", 13,
+                new Vector2(-205f, -208f), new Vector2(190f, 28f));
+            Button actionButton = CreateButton(
+                "ACCEPT CURSE", panel, font, new Vector2(115f, -208f), new Vector2(210f, 38f));
             Button close = CreateButton(
-                "LEAVE ALTAR", panel, font, new Vector2(0f, -266f), new Vector2(190f, 38f));
+                "LEAVE ALTAR", panel, font, new Vector2(0f, -284f), new Vector2(200f, 38f));
             CurseAltarHud hud = panel.gameObject.AddComponent<CurseAltarHud>();
             hud.Configure(
                 panel.gameObject,
-                distractionState,
-                detectiveState,
-                detectiveDescription,
-                avariceState,
-                avariceDetails,
-                distractionButton,
-                detectiveButton,
-                avariceButton,
-                close,
-                distractionCard,
-                detectiveCard,
-                avariceCard);
+                curseButtons,
+                curseCards,
+                detailTitle,
+                detailBody,
+                activeState,
+                actionButton,
+                close);
         }
 
         private static void RepositionTopLeftPanel(Transform root, string name, Vector2 position)

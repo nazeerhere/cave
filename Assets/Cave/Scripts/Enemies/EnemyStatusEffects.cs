@@ -12,6 +12,7 @@ namespace Cave.Enemies
         private Damageable damageable;
         private EnemyController enemyController;
         private FlyingSwarmController flyingController;
+        private WizardFlightMotor wizardFlightMotor;
         private Coroutine slowRoutine;
         private Coroutine burnRoutine;
         private Coroutine immobilizeRoutine;
@@ -22,6 +23,10 @@ namespace Cave.Enemies
         private SpecialModeTier2Settings settings;
         private BurnDefinition activeBurn;
         private bool applyingBurnDamage;
+
+        public bool IsBurning => burnRoutine != null;
+        public bool IsSlowed => Time.time < slowEndsAt;
+        public bool IsImmobilized => Time.time < immobilizedUntil;
 
         private struct BurnDefinition
         {
@@ -41,11 +46,14 @@ namespace Cave.Enemies
             damageable = GetComponent<Damageable>();
             enemyController = GetComponent<EnemyController>();
             flyingController = GetComponent<FlyingSwarmController>();
+            wizardFlightMotor = GetComponent<WizardFlightMotor>();
             statusVisuals = GetComponent<EnemyStatusVisuals>();
             if (statusVisuals == null)
             {
                 statusVisuals = gameObject.AddComponent<EnemyStatusVisuals>();
             }
+
+            EnemyWorldStatusIndicators.EnsureOn(gameObject);
 
             damageable.Died += HandleDied;
         }
@@ -63,7 +71,8 @@ namespace Cave.Enemies
 
         public void ApplySlow(float movementMultiplier, float duration)
         {
-            if ((enemyController == null && flyingController == null) || duration <= 0f)
+            if ((enemyController == null && flyingController == null && wizardFlightMotor == null)
+                || duration <= 0f)
             {
                 return;
             }
@@ -82,7 +91,7 @@ namespace Cave.Enemies
 
         public bool ApplyImmobilize(float duration)
         {
-            if ((enemyController == null && flyingController == null)
+            if ((enemyController == null && flyingController == null && wizardFlightMotor == null)
                 || duration <= 0f
                 || GetComponent<BossPhaseController>() != null)
             {
@@ -179,6 +188,40 @@ namespace Cave.Enemies
         {
             enemyController?.SetMovementSpeedMultiplier(multiplier);
             flyingController?.SetMovementSpeedMultiplier(multiplier);
+            wizardFlightMotor?.SetMovementSpeedMultiplier(multiplier);
+        }
+
+        public bool HasRemovableDebuff => Time.time < slowEndsAt || burnRoutine != null;
+
+        public bool DispelRemovableDebuffs()
+        {
+            bool removed = false;
+            if (slowRoutine != null || Time.time < slowEndsAt)
+            {
+                if (slowRoutine != null)
+                {
+                    StopCoroutine(slowRoutine);
+                }
+
+                slowRoutine = null;
+                strongestSlowMultiplier = 1f;
+                slowEndsAt = 0f;
+                removed = true;
+            }
+
+            if (burnRoutine != null)
+            {
+                StopCoroutine(burnRoutine);
+                burnRoutine = null;
+                activeBurn = default;
+                applyingBurnDamage = false;
+                statusVisuals?.SetBurnActive(false);
+                removed = true;
+            }
+
+            ApplyCurrentMovementMultiplier();
+            RefreshFrostVisual();
+            return removed;
         }
 
         private void ApplyCurrentMovementMultiplier()
@@ -247,6 +290,7 @@ namespace Cave.Enemies
             }
 
             flyingController?.SetMovementSpeedMultiplier(1f);
+            wizardFlightMotor?.SetMovementSpeedMultiplier(1f);
 
             strongestSlowMultiplier = 1f;
             slowEndsAt = 0f;

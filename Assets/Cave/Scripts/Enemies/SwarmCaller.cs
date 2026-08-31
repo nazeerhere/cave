@@ -17,7 +17,7 @@ namespace Cave.Enemies
     }
 
     [DisallowMultipleComponent]
-    public sealed class SwarmCaller : MonoBehaviour, IEnemySkillEvolutionReceiver
+    public sealed class SwarmCaller : MonoBehaviour, IEnemySkillEvolutionReceiver, IEnemyInterruptible
     {
         [SerializeField] private GameObject swarmPrefab;
         [SerializeField] private GameObject groundSwarmPrefab;
@@ -62,6 +62,7 @@ namespace Cave.Enemies
         private EnemyEvolutionStage evolutionStage;
         private bool brainControlled;
         private bool useNecromancerBaseOverrides;
+        private bool summonWizardEyes;
         private EncounterGroup skeletonEncounterGroup;
         private int necromancerMaximumActive = 7;
         private int necromancerDesiredGenerals = 2;
@@ -282,6 +283,35 @@ namespace Cave.Enemies
             UpdateTelegraphRadius();
         }
 
+        public void ConfigureWizardEyePair(
+            StrategicCombatSettings settings,
+            WorldDifficultyManager worldDifficulty,
+            GameObject configuredEyePrefab,
+            float configuredCooldown)
+        {
+            useNecromancerBaseOverrides = false;
+            summonWizardEyes = true;
+            useSharedSettings = false;
+            sharedSettings = settings;
+            difficultyManager = worldDifficulty;
+            composition = SwarmComposition.AirOnly;
+            airSwarmPrefab = configuredEyePrefab != null
+                ? configuredEyePrefab
+                : settings != null
+                    ? settings.AirSwarmPrefab
+                    : airSwarmPrefab;
+            requireDifficultyEligibility = false;
+            airSummonsRequireEvolutionTwo = false;
+            spawnCount = 2;
+            spawnInterval = 0f;
+            maximumActiveSummons = 2;
+            summonCooldown = Mathf.Clamp(configuredCooldown, 120f, 180f);
+            summonWindup = 0f;
+            evolutionOneAdditionalSummons = 0;
+            brainControlled = true;
+            UpdateTelegraphRadius();
+        }
+
         public void ConfigureNecromancerFormation(
             GameObject skeletonPrefab,
             GameObject generalSkeletonPrefab,
@@ -296,6 +326,7 @@ namespace Cave.Enemies
             float spawnSeparation)
         {
             useNecromancerBaseOverrides = true;
+            summonWizardEyes = false;
             composition = SwarmComposition.GroundOnly;
             groundSwarmPrefab = skeletonPrefab;
             necromancerGeneralPrefab = generalSkeletonPrefab != null
@@ -380,6 +411,25 @@ namespace Cave.Enemies
         public void SetBrainControlled(bool controlled)
         {
             brainControlled = controlled;
+        }
+
+        public void Interrupt()
+        {
+            if (summonRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(summonRoutine);
+            summonRoutine = null;
+            isSummoning = false;
+            initialDeploymentActive = false;
+            if (telegraph != null)
+            {
+                telegraph.enabled = false;
+            }
+
+            nextSummonTime = Mathf.Max(nextSummonTime, Time.time + 1.5f);
         }
 
         private bool IsEligible()
@@ -649,7 +699,7 @@ namespace Cave.Enemies
                 groundLayers);
             return casterGround.collider != null
                 ? casterGround.point + Vector2.up * 0.05f
-                : transform.position;
+                : (Vector2)transform.position;
         }
 
         private bool HasAvailablePrefab()
@@ -778,6 +828,14 @@ namespace Cave.Enemies
                 }
 
                 flying.Configure(useSharedSettings ? sharedSettings : null);
+                if (summonWizardEyes
+                    && spawned.GetComponent<EyeBrain>() == null)
+                {
+                    // Wizard's evolved AirOnly caller owns the Eye pair. The
+                    // authored prefab stays untouched; the additive brain replaces
+                    // only its generic swarm movement at runtime.
+                    spawned.AddComponent<EyeBrain>();
+                }
             }
             else
             {

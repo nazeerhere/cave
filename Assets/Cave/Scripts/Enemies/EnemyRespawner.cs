@@ -19,6 +19,7 @@ namespace Cave.Enemies
         private Rigidbody2D body;
         private EnemyController enemyController;
         private FlyingSwarmController flyingController;
+        private WizardFlightMotor wizardFlightMotor;
         private Transform originalParent;
         private Vector3 originalPosition;
         private Quaternion originalRotation;
@@ -42,6 +43,7 @@ namespace Cave.Enemies
             body = GetComponent<Rigidbody2D>();
             enemyController = GetComponent<EnemyController>();
             flyingController = GetComponent<FlyingSwarmController>();
+            wizardFlightMotor = GetComponent<WizardFlightMotor>();
             difficultyScaler = GetComponent<EnemyDifficultyScaler>();
             runtimeRespawnDelay = respawnDelay;
 
@@ -82,7 +84,10 @@ namespace Cave.Enemies
 
         private void HandleDeath()
         {
-            if (!respawnEnabled || respawnPending)
+            EnemyCorruptionLifecycle corruption = GetComponent<EnemyCorruptionLifecycle>();
+            if ((corruption != null && corruption.SuppressStandardRespawn)
+                || !respawnEnabled
+                || respawnPending)
             {
                 return;
             }
@@ -143,6 +148,7 @@ namespace Cave.Enemies
             damageable.RestoreToFullHealth();
             enemyController?.ResetForRespawn();
             flyingController?.ResetForRespawn();
+            wizardFlightMotor?.ResetForRespawn();
 
             respawnPending = false;
             gameObject.SetActive(true);

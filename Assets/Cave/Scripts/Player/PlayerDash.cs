@@ -16,6 +16,13 @@ namespace Cave.Player
         [SerializeField, Min(0.01f)] private float dashDuration = 0.15f;
         [SerializeField, Min(0f)] private float dashCooldown = 0.25f;
 
+        [Header("Cross Step Follow-up")]
+        [SerializeField, Min(0.05f)] private float crossStepFollowUpWindow = 0.55f;
+        [SerializeField, Min(0.1f)] private float crossStepSpeed = 22f;
+        [SerializeField, Min(0f)] private float crossStepExtraClearance = 0.6f;
+        [SerializeField, Min(0f)] private float crossStepBlockPushback = 0.5f;
+        [SerializeField, Min(0f)] private float crossStepBlockRecovery = 0.2f;
+
         private Rigidbody2D body;
         private SpinSwordAttack stamina;
         private float facingDirection = 1f;
@@ -26,10 +33,22 @@ namespace Cave.Player
         private PlayerFlightBash flightBash;
         private PlayerCrowdResponse crowdResponse;
         private PlayerGuardBreak actionGate;
+        private PlayerController controller;
+        private Collider2D bodyCollider;
+        private CommittedAttackCollisionPhasing collisionPhasing;
+        private PlayerCrossStep crossStep;
 
         public bool IsDashing { get; private set; }
         public float DashSpeed => dashSpeed;
         public float DashDuration => dashDuration;
+
+        internal void SetFacingDirection(float direction)
+        {
+            if (Mathf.Abs(direction) > 0.001f)
+            {
+                facingDirection = Mathf.Sign(direction);
+            }
+        }
 
         private void Awake()
         {
@@ -38,6 +57,26 @@ namespace Cave.Player
             flightBash = GetComponent<PlayerFlightBash>();
             crowdResponse = GetComponent<PlayerCrowdResponse>();
             actionGate = GetComponent<PlayerGuardBreak>();
+            controller = GetComponent<PlayerController>();
+            bodyCollider = GetComponent<Collider2D>();
+            collisionPhasing = GetComponent<CommittedAttackCollisionPhasing>();
+            if (collisionPhasing == null)
+            {
+                collisionPhasing = gameObject.AddComponent<CommittedAttackCollisionPhasing>();
+            }
+
+            crossStep = GetComponent<PlayerCrossStep>();
+            if (crossStep == null)
+            {
+                crossStep = gameObject.AddComponent<PlayerCrossStep>();
+            }
+
+            crossStep.Configure(
+                crossStepFollowUpWindow,
+                crossStepSpeed,
+                crossStepExtraClearance,
+                crossStepBlockPushback,
+                crossStepBlockRecovery);
         }
 
         internal void Configure(ProgressionDifficultySettings settings)
@@ -66,6 +105,13 @@ namespace Cave.Player
                 PlayerGuardBreak guardBreak = GetComponent<PlayerGuardBreak>();
                 if (guardBreak != null && !guardBreak.CanUseCombatActions)
                 {
+                    if (crossStep != null
+                        && crossStep.CanStartDuringCurrentActionLock
+                        && crossStep.TryStart())
+                    {
+                        return;
+                    }
+
                     return;
                 }
 
@@ -76,6 +122,11 @@ namespace Cave.Player
 
                 if (crowdResponse != null
                     && crowdResponse.TrySlip(horizontalInput, facingDirection))
+                {
+                    return;
+                }
+
+                if (crossStep != null && crossStep.TryStart())
                 {
                     return;
                 }
@@ -115,6 +166,7 @@ namespace Cave.Player
 
             if (IsDashing
                 || (flightBash != null && flightBash.IsBashing)
+                || (controller != null && controller.IsExternallyMovementLocked)
                 || Time.time < nextDashTime
                 || stamina == null
                 || !stamina.TrySpendStamina(staminaCost))
@@ -130,6 +182,8 @@ namespace Cave.Player
             activeDashSpeed = dashSpeed;
             dashEndsAt = Time.time + dashDuration;
             nextDashTime = dashEndsAt + dashCooldown;
+            // Normal Dodge deliberately keeps character bodies solid. Target-only
+            // Cross Step owns its own, earned collision exception.
             body.velocity = new Vector2(dashDirection * dashSpeed, body.velocity.y);
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.75f);
             return true;
@@ -154,6 +208,7 @@ namespace Cave.Player
             activeDashSpeed = dashSpeed * Mathf.Max(0.1f, speedMultiplier);
             dashEndsAt = Time.time + Mathf.Max(0.01f, duration);
             nextDashTime = Mathf.Max(nextDashTime, dashEndsAt + dashCooldown);
+            // Defensive Slip manages its dedicated collision window itself.
             body.velocity = new Vector2(
                 dashDirection * activeDashSpeed,
                 body.velocity.y);
@@ -164,6 +219,7 @@ namespace Cave.Player
         private void EndDash()
         {
             IsDashing = false;
+            collisionPhasing?.End();
             body.velocity = new Vector2(0f, body.velocity.y);
         }
 
@@ -173,6 +229,12 @@ namespace Cave.Player
             {
                 EndDash();
             }
+            collisionPhasing?.End();
+        }
+
+        private void OnDestroy()
+        {
+            collisionPhasing?.End();
         }
     }
 }

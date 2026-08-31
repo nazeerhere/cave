@@ -75,6 +75,8 @@ namespace Cave.Enemies
 
         [Header("Visual Facing")]
         [SerializeField] private SpriteRenderer trollVisual;
+        [SerializeField] private Transform authoredVisualChildRoot;
+        [SerializeField] private Transform weaponVisualRoot;
         [SerializeField, Min(0f)] private float facingVelocityThreshold = 0.05f;
         [SerializeField] private bool sourceSpriteFacesRight = true;
 
@@ -105,6 +107,7 @@ namespace Cave.Enemies
         private float lastPressureEventTime;
         private bool defenseInitiativeQueued;
         private float offensiveInitiativeUntil;
+        private EnemyVisualChildFacing authoredChildFacing;
 
         protected override void ConfigureCapabilities()
         {
@@ -114,6 +117,53 @@ namespace Cave.Enemies
             if (trollVisual == null)
             {
                 trollVisual = GetComponent<SpriteRenderer>();
+            }
+
+            if (authoredVisualChildRoot == null)
+            {
+                foreach (Transform child in GetComponentsInChildren<Transform>(true))
+                {
+                    if (child != transform && child.name.ToLowerInvariant().Contains("corruption"))
+                    {
+                        authoredVisualChildRoot = child;
+                        break;
+                    }
+                }
+            }
+
+            if (weaponVisualRoot == null)
+            {
+                foreach (Transform child in GetComponentsInChildren<Transform>(true))
+                {
+                    string name = child.name.ToLowerInvariant();
+                    if (child != transform
+                        && (name.Contains("axe") || name.Contains("weapon")))
+                    {
+                        weaponVisualRoot = child;
+                        break;
+                    }
+                }
+            }
+
+            if (trollVisual == null
+                && authoredVisualChildRoot == null
+                && weaponVisualRoot == null)
+            {
+                trollVisual = GetComponentInChildren<SpriteRenderer>(true);
+            }
+
+            if (authoredVisualChildRoot != null || weaponVisualRoot != null)
+            {
+                authoredChildFacing = GetComponent<EnemyVisualChildFacing>();
+                if (authoredChildFacing == null)
+                {
+                    authoredChildFacing = gameObject.AddComponent<EnemyVisualChildFacing>();
+                }
+
+                authoredChildFacing.Configure(
+                    authoredVisualChildRoot,
+                    weaponVisualRoot,
+                    sourceSpriteFacesRight);
             }
 
             if (GetComponent<EnemyWorldHealthBar>() == null)
@@ -266,8 +316,15 @@ namespace Cave.Enemies
                     basicRejection,
                     chargedRejection,
                     guardBreakRejection);
-                fallbackDecision = "Wait";
-                HoldPosition(MobBrainState.Recover, $"Melee unavailable: {rejectionReason}");
+                // Cooldowns and a rejected contextual option must not turn an
+                // engaged Troll into a stationary target. Keep deliberate forward
+                // pressure until a normal melee range is actionable again.
+                fallbackDecision = "Maintain pressure while unavailable";
+                Move(
+                    Mathf.Sign(toPlayer.x),
+                    PursuitSpeed * nearBasicApproachSpeedMultiplier,
+                    MobBrainState.Chase,
+                    $"Maintain pressure: {rejectionReason}");
                 return;
             }
 
@@ -295,7 +352,17 @@ namespace Cave.Enemies
             }
 
             fallbackDecision = $"None ({rejectionReason})";
-            SetState(MobBrainState.Recover, $"Rejected {chosenDecision}: {rejectionReason}");
+            if (rejectionReason == EnemyMeleeUseRejection.OutOfRange)
+            {
+                AdvanceIntoBasicRange(toPlayer);
+                return;
+            }
+
+            Move(
+                Mathf.Sign(toPlayer.x),
+                PursuitSpeed * nearBasicApproachSpeedMultiplier,
+                MobBrainState.Chase,
+                $"Maintain pressure after {chosenDecision} rejection");
         }
 
         private void AdvanceIntoBasicRange(Vector2 toPlayer)
@@ -647,6 +714,8 @@ namespace Cave.Enemies
                 bool faceRight = horizontalDirection > 0f;
                 trollVisual.flipX = sourceSpriteFacesRight ? !faceRight : faceRight;
             }
+
+            authoredChildFacing?.Face(horizontalDirection);
 
             melee?.SetCombatFacing(horizontalDirection);
         }

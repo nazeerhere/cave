@@ -1,3 +1,4 @@
+using Cave.Audio;
 using Cave.InputSystem;
 using Cave.Player;
 using UnityEngine;
@@ -9,57 +10,98 @@ namespace Cave.UI
     public sealed class CurseAltarHud : MonoBehaviour
     {
         private GameObject panel;
-        private Text distractionState;
-        private Text detectiveState;
-        private Text detectiveDescription;
-        private Text avariceState;
-        private Text avariceDetails;
-        private Button distractionButton;
-        private Button detectiveButton;
-        private Button avariceButton;
+        private Button[] curseButtons;
+        private Image[] curseCards;
+        private Text detailTitle;
+        private Text detailBody;
+        private Text activeState;
+        private Button actionButton;
         private Button closeButton;
-        private Image distractionCard;
-        private Image detectiveCard;
-        private Image avariceCard;
         private PlayerCurseAltarController altarController;
+        private PlayerCurseType selectedCurse = PlayerCurseType.Insanity;
 
         public void Configure(
             GameObject selectionPanel,
-            Text distractionStatus,
-            Text detectiveStatus,
-            Text configuredDetectiveDescription,
-            Text avariceStatus,
-            Text configuredAvariceDetails,
-            Button distractionToggle,
-            Button detectiveToggle,
-            Button avariceToggle,
-            Button close,
-            Image configuredDistractionCard,
-            Image configuredDetectiveCard,
-            Image configuredAvariceCard)
+            Button[] configuredCurseButtons,
+            Image[] configuredCurseCards,
+            Text configuredDetailTitle,
+            Text configuredDetailBody,
+            Text configuredActiveState,
+            Button configuredActionButton,
+            Button configuredCloseButton)
         {
             panel = selectionPanel;
-            distractionState = distractionStatus;
-            detectiveState = detectiveStatus;
-            detectiveDescription = configuredDetectiveDescription;
-            avariceState = avariceStatus;
-            avariceDetails = configuredAvariceDetails;
-            distractionButton = distractionToggle;
-            detectiveButton = detectiveToggle;
-            avariceButton = avariceToggle;
-            closeButton = close;
-            distractionCard = configuredDistractionCard;
-            detectiveCard = configuredDetectiveCard;
-            avariceCard = configuredAvariceCard;
-            distractionButton.onClick.AddListener(
-                () => altarController?.ToggleCurse(PlayerCurseType.Distraction));
-            detectiveButton.onClick.AddListener(
-                () => altarController?.ToggleCurse(PlayerCurseType.Detective));
-            avariceButton.onClick.AddListener(
-                () => altarController?.ToggleCurse(PlayerCurseType.Avarice));
+            curseButtons = configuredCurseButtons;
+            curseCards = configuredCurseCards;
+            detailTitle = configuredDetailTitle;
+            detailBody = configuredDetailBody;
+            activeState = configuredActiveState;
+            actionButton = configuredActionButton;
+            closeButton = configuredCloseButton;
+
+            PlayerCurseType[] types = CurseTypes;
+            for (int index = 0; index < types.Length && index < curseButtons.Length; index++)
+            {
+                PlayerCurseType capturedType = types[index];
+                curseButtons[index].onClick.AddListener(() => Select(capturedType));
+            }
+
+            actionButton.onClick.AddListener(() => altarController?.ToggleCurse(selectedCurse));
             closeButton.onClick.AddListener(() => altarController?.CloseSelection());
             panel.SetActive(false);
         }
+
+        /// <summary>
+        /// Opens the existing altar UI only when its configured controls are usable.
+        /// This is intentionally an explicit handshake with the altar controller so
+        /// a missing or inactive runtime HUD can never leave gameplay input locked.
+        /// </summary>
+        public bool TryOpen(PlayerCurseAltarController controller)
+        {
+            if (controller == null
+                || panel == null
+                || curseButtons == null
+                || curseCards == null
+                || detailTitle == null
+                || detailBody == null
+                || activeState == null
+                || actionButton == null
+                || closeButton == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                Bind(controller);
+                panel.SetActive(true);
+                Refresh();
+                return panel.activeInHierarchy;
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogWarning("Curse altar UI could not open: " + exception.Message, this);
+                panel.SetActive(false);
+                return false;
+            }
+        }
+
+        public void Close()
+        {
+            if (panel != null)
+            {
+                panel.SetActive(false);
+            }
+        }
+
+        private static PlayerCurseType[] CurseTypes => new[]
+        {
+            PlayerCurseType.Insanity,
+            PlayerCurseType.Detective,
+            PlayerCurseType.Avarice,
+            PlayerCurseType.Stoneglass,
+            PlayerCurseType.CavesGlare
+        };
 
         private void Update()
         {
@@ -68,13 +110,18 @@ namespace Cave.UI
                 Bind(FindObjectOfType<PlayerCurseAltarController>());
             }
 
-            if (altarController != null
-                && altarController.IsSelectionOpen
-                && GameInput.MenuCancelPressed)
+            if (altarController != null && altarController.IsSelectionOpen && GameInput.MenuCancelPressed)
             {
                 GameInput.ConsumeMenuInputForCurrentFrame();
                 altarController.CloseSelection();
             }
+        }
+
+        private void Select(PlayerCurseType type)
+        {
+            selectedCurse = type;
+            CaveSfx.PlayUi(CaveSfxCue.ButtonHover, 0.55f);
+            Refresh();
         }
 
         private void Bind(PlayerCurseAltarController controller)
@@ -117,86 +164,84 @@ namespace Cave.UI
                 return;
             }
 
-            bool distractionActive = curses.CurseOfDistractionActive;
-            bool detectiveActive = curses.DetectivesCurseActive;
-            bool avariceActive = curses.CurseOfAvariceActive;
-            SetState(distractionState, distractionButton, distractionCard, distractionActive, "ACTIVE");
-            SetState(detectiveState, detectiveButton, detectiveCard, detectiveActive, "ACTIVE");
-            SetState(
-                avariceState,
-                avariceButton,
-                avariceCard,
-                avariceActive,
-                "ACTIVE • " + FormatAvariceTier(curses.CurrentAvariceTier));
-
-            if (detectiveDescription != null)
+            PlayerCurseType[] types = CurseTypes;
+            for (int index = 0; index < types.Length && index < curseCards.Length; index++)
             {
-                detectiveDescription.text =
-                    "DETECTIVE'S CURSE\nBenefit: +"
-                    + Mathf.RoundToInt((curses.ConfiguredMasteryGainMultiplier - 1f) * 100f)
-                    + "% mastery • "
-                    + Mathf.RoundToInt(curses.ConfiguredWorldLevelGrowthMultiplier * 100f)
-                    + "% future World growth\nCost: harder research • hordes guarantee "
-                    + curses.ConfiguredGuaranteedRealDetectives + " real Detectives";
+                bool active = curses.IsActive(types[index]);
+                bool selected = types[index] == selectedCurse;
+                curseCards[index].color = selected
+                    ? new Color(0.2f, 0.08f, 0.31f, 1f)
+                    : active ? new Color(0.09f, 0.045f, 0.13f, 1f) : CaveUiTheme.SurfaceInset;
+
+                Text cardLabel = curseButtons[index].GetComponentInChildren<Text>();
+                if (cardLabel != null)
+                {
+                    cardLabel.text = GetCardLabel(types[index])
+                        + "\n\n" + (active ? "◆ ACTIVE" : "◇ AVAILABLE");
+                }
             }
 
-            if (avariceDetails != null)
+            bool isActive = curses.IsActive(selectedCurse);
+            detailTitle.text = GetName(selectedCurse);
+            detailBody.text = GetDetail(selectedCurse, curses);
+            activeState.text = isActive ? "◆ ACTIVE" : "◇ UNBOUND";
+            activeState.color = isActive ? CaveUiTheme.Gold : CaveUiTheme.SecondaryText;
+            Text actionLabel = actionButton.GetComponentInChildren<Text>();
+            if (actionLabel != null)
             {
-                avariceDetails.text = avariceActive
-                    ? FormatAvariceTier(curses.CurrentAvariceTier) + "\nWealth: "
-                        + curses.CurrentAvariceWealth
-                        + "  •  Death Claim: " + FormatPercent(curses.CurrentAvariceDeathClaim)
-                        + "\nMovement: -" + FormatPercent(curses.CurrentAvariceMovementPenalty)
-                        + "  •  Enemy Detection: +" + FormatPercent(curses.CurrentAvariceDetectionBonus)
-                        + "  •  Enemy Pressure: +" + FormatPercent(curses.CurrentAvariceDangerBonus)
-                    : "Keep part of your tactical currency after death.\n"
-                        + "More wealth increases enemy pressure and detection,\n"
-                        + "movement burden, and the share claimed on death.";
+                actionLabel.text = isActive ? "REMOVE CURSE" : "ACCEPT CURSE";
             }
         }
 
-        private static void SetState(
-            Text state,
-            Button button,
-            Image card,
-            bool active,
-            string activeLabel)
+        private static string GetName(PlayerCurseType type)
         {
-            if (state != null)
+            switch (type)
             {
-                state.text = active ? "◆ " + activeLabel : "◇ INACTIVE";
-                state.color = active ? CaveUiTheme.Gold : CaveUiTheme.SecondaryText;
+                case PlayerCurseType.Insanity: return "CURSE OF INSANITY";
+                case PlayerCurseType.Detective: return "DETECTIVE'S CURSE";
+                case PlayerCurseType.Avarice: return "CURSE OF AVARICE";
+                case PlayerCurseType.Stoneglass: return "CURSE OF STONEGLASS";
+                default: return "THE CAVE'S GLARE";
             }
+        }
 
-            Text buttonLabel = button != null ? button.GetComponentInChildren<Text>() : null;
-            if (buttonLabel != null)
+        private static string GetCardLabel(PlayerCurseType type)
+        {
+            switch (type)
             {
-                buttonLabel.text = active ? "REMOVE" : "ACCEPT";
+                case PlayerCurseType.Insanity: return "◉\nCURSE OF INSANITY";
+                case PlayerCurseType.Detective: return "⌕\nDETECTIVE'S CURSE";
+                case PlayerCurseType.Avarice: return "◆\nCURSE OF AVARICE";
+                case PlayerCurseType.Stoneglass: return "◈\nCURSE OF STONEGLASS";
+                default: return "◉\nTHE CAVE'S GLARE";
             }
+        }
 
-            if (card != null)
+        private static string GetDetail(PlayerCurseType type, PlayerCurseController curses)
+        {
+            switch (type)
             {
-                card.color = active
-                    ? new Color(0.075f, 0.045f, 0.105f, 0.99f)
-                    : CaveUiTheme.SurfaceInset;
+                case PlayerCurseType.Insanity:
+                    return "POWER: kills build speed and damage.\nPRICE: that hunger also leaves you fragile.";
+                case PlayerCurseType.Detective:
+                    return "POWER: +" + Mathf.RoundToInt((curses.ConfiguredMasteryGainMultiplier - 1f) * 100f)
+                        + "% mastery; slower future World growth.\nPRICE: harder research and guaranteed Detectives in hordes.";
+                case PlayerCurseType.Avarice:
+                    return "POWER: retain tactical currency after death.\nPRICE: wealth increases pressure, detection, burden, and the death claim.\n"
+                        + "CURRENT: " + FormatAvariceTier(curses.CurrentAvariceTier)
+                        + "  •  WEALTH " + curses.CurrentAvariceWealth;
+                case PlayerCurseType.Stoneglass:
+                    return "POWER: full resources grant strength and growth.\nPRICE: taking damage fractures resistance.\n"
+                        + "FRACTURES: " + curses.StoneglassFractureStacks;
+                default:
+                    return "POWER: death teaches the Cave to adapt its strength.\nPRICE: corrupted mobs may mutate or rise again.\n"
+                        + "DEATHS WITNESSED: " + curses.CavesGlareDeathCount;
             }
         }
 
         private static string FormatAvariceTier(int tier)
         {
-            switch (tier)
-            {
-                case 1: return "AVARICE I";
-                case 2: return "AVARICE II";
-                case 3: return "AVARICE III";
-                case 4: return "AVARICE IV";
-                default: return "AVARICE";
-            }
-        }
-
-        private static string FormatPercent(float value)
-        {
-            return Mathf.RoundToInt(value * 100f) + "%";
+            return tier > 0 ? "AVARICE " + tier : "AVARICE";
         }
 
         private void OnDestroy()

@@ -1,0 +1,433 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &551307686905404078
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1689866831511430, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Name
+      value: LightBandit
+      objectReference: {fileID: 0}
+    - target: {fileID: 1689866831511430, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1689866831511430, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 30.41
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -7.44
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 61252362154681264, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Size.x
+      value: 0.63311577
+      objectReference: {fileID: 0}
+    - target: {fileID: 61252362154681264, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Size.y
+      value: 1.1516917
+      objectReference: {fileID: 0}
+    - target: {fileID: 61252362154681264, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 61252362154681264, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Offset.x
+      value: 0.028307915
+      objectReference: {fileID: 0}
+    - target: {fileID: 61252362154681264, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.6378459
+      objectReference: {fileID: 0}
+    - target: {fileID: 5567095257490324347, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+      propertyPath: maxHealth
+      value: 15
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 114850797635947820, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+--- !u!95 &501058939707899938 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 95346456782871180, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+  m_PrefabInstance: {fileID: 551307686905404078}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &549618956361917736 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1689866831511430, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
+  m_PrefabInstance: {fileID: 551307686905404078}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2099390354
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f27c9f1dd6f1406ca570687bd273fef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 2
+  patrolDistance: 2
+  startMovingRight: 1
+--- !u!114 &2099390355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc57423a07db747aab53a09ab8c650b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contactDamage: 1
+  contactCooldown: 0.75
+  damageTraits: 1
+  normalAttackWindup: 0.18
+  normalTelegraphColor: {r: 0.35, g: 0.7, b: 1, a: 1}
+  feintChance: 0
+  feintDelay: 0.3
+  feintCueColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  guardBreakChance: 0
+  guardBreakWindup: 0.55
+  guardBreakDamage: 2
+  guardBreakTelegraphColor: {r: 1, g: 0.2, b: 0.12, a: 1}
+--- !u!114 &2099390362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdc12cc434e39457bba2ea97fb7f0a1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementLockDuration: 0.25
+  maximumKnockbackSpeed: 25
+--- !u!114 &2099390363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53af64cb5156b43859f5085ba313e4e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patrolRadius: 2.5
+  patrolSpeed: 1.5
+  patrolPause: 0.8
+  patrolArrivalTolerance: 0.2
+  detectionRange: 8
+  loseTargetRange: 12
+  returnToPatrolDelay: 2
+  combatLeashRadius: 12
+  decisionInterval: 0.12
+  respondsToDistractions: 1
+  distractionMoveSpeed: 2
+  distractionStoppingDistance: 0.8
+  drawDetectionRange: 1
+  drawPatrolRadius: 1
+  showCurrentState: 1
+  currentState: 0
+  currentDecision: Patrol
+  pursuitSpeed: 4
+  cautiousPursuitSpeed: 2.7
+  contextRadius: 6
+  retreatVelocityThreshold: 1.2
+  lowStaminaFraction: 0.25
+  basePursuitDashChance: 0.35
+  frontlineDashBonus: 0.18
+  eyeRetreatDashBonus: 0.28
+  guardBashChance: 0.48
+  lowStaminaBashBonus: 0.2
+  evasiveResponseChance: 0.38
+  sidestepCounterChance: 0.28
+--- !u!114 &2099390364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4b5c6d7e8f901234a5b6c7d8e9fa0b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  respawnEnabled: 1
+  respawnDelay: 5
+  playerSafetyRadius: 1.5
+  additionalSafetyDelay: 1
+--- !u!114 &2099390365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f6327c8fba8a4c22a9a5a05f7ad7ca5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sharedSettings: {fileID: 0}
+  overrideEntries: []
+  overrideSpawnOffset: {x: 0, y: 0.35}
+  generalPrimaryChanceMultiplier: 1.25
+  veteranPrimaryChanceBonusPerDeath: 0.05
+  generalAdditionalCategoryBonus: 0.2
+  veteranAdditionalBonusPerDeath: 0.015
+--- !u!114 &2099390366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d4fbc121be419eb8284587b7a4cf5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  difficultyManager: {fileID: 0}
+  currentResistance: 0
+  rolledWorldTier: 0
+  rolledForCurrentLife: 0
+--- !u!114 &2099390367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a9f8c3bd22c46f88d3d4b131e6576e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  evolutionOneWorldTier: 3
+  evolutionTwoWorldTier: 6
+  currentStage: 0
+  evaluatedWorldTier: 0
+--- !u!114 &2099390368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12e53f451cc74fac84828a7d7c707d55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  difficultyManager: {fileID: 0}
+--- !u!114 &2099390369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e5f60718293abcde4f5061728394a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2099390370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c44d4fe80fff4ff4ae1ae350cadc1d5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  eligibilityOverride: 0
+  minorDuration: 0.18
+  normalDuration: 0.35
+  heavyDuration: 0.6
+  staggerDurationMultiplier: 1
+  staggerImmunityDuration: 0.5
+  interruptWindups: 1
+  lastAppliedStrength: 0
+  wasResisted: 0
+  currentStaggerRemaining: 0
+--- !u!114 &2099390371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647328b5aa144416920ad381288025ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 0}
+  awarenessRange: 8
+  probabilityPreset: 0
+  basicDamage: 1
+  basicRange: 1.25
+  basicWindup: 0.2
+  basicActiveDuration: 0.1
+  basicRecovery: 0.35
+  basicCooldown: 0.7
+  chargedAttackChance: 0.2
+  chargedDamage: 3
+  chargedRange: 1.55
+  chargedWindup: 0.75
+  chargedActiveDuration: 0.14
+  chargedRecovery: 0.7
+  chargedCooldown: 1.35
+  chargedAttackIsPiercing: 0
+  feintChance: 0.15
+  feintDelay: 0.3
+  guardBreakChance: 0.15
+  bruteGuardBreakAttemptChance: 0.72
+  guardBreakDamage: 2
+  guardBreakRange: 1.35
+  guardBreakWindup: 0.65
+  guardBreakActiveDuration: 0.12
+  guardBreakRecovery: 0.65
+  guardBreakCooldown: 1.25
+  guardBreakCounterWindow: 0.22
+  counteredRecovery: 0.45
+  guardBreakFollowUpChance: 0.4
+  useTrollHeavyOverrides: 1
+  trollBasicDamage: 3
+  trollBasicRange: 1.45
+  trollBasicWindup: 0.5
+  trollBasicActiveDuration: 0.12
+  trollBasicRecovery: 0.5
+  trollBasicCooldown: 0.9
+  trollBasicFeintChance: 0.23
+  trollBasicCommitPoint: 0.6
+  trollBasicKnockback: 6
+  trollChargedDamage: 6
+  trollChargedRange: 1.8
+  trollGuardBreakRange: 1.2
+  trollChargedWindup: 1.1
+  trollChargedActiveDuration: 0.16
+  trollChargedRecovery: 0.85
+  trollChargedCooldown: 1.45
+  trollChargedFeintChance: 0.33
+  trollHeavyToGuardBreakSoftFeintChance: 0.25
+  trollChargedCommitPoint: 0.7
+  trollChargedKnockback: 12
+  trollKnockbackControlLock: 0.2
+  followUpBasicWeight: 1
+  followUpChargedWeight: 0.75
+  followUpGuardBreakWeight: 0.9
+  weaponPresentation: {fileID: 0}
+  attackOrigin: {fileID: 0}
+  maximumAttackOriginForwardOffset: 0.85
+  basicDrawbackAngle: 32
+  basicStrikeAngle: -28
+  chargedDrawbackAngle: 62
+  chargedStrikeAngle: -48
+  chargedWeaponScale: 1.15
+  trollChargedVerticalOffset: -0.18
+  basicTelegraphColor: {r: 0.35, g: 0.72, b: 1, a: 1}
+  chargedTelegraphColor: {r: 1, g: 0.52, b: 0.12, a: 1}
+  feintTelegraphColor: {r: 0.68, g: 0.68, b: 0.74, a: 1}
+  guardBreakTelegraphColor: {r: 1, g: 0.15, b: 0.08, a: 1}
+  lastRequestedDecision: 0
+  lastUseRejection: 0
+  attackCommitted: 0
+  guardBreakState: 0
+  currentSequenceDecision: 0
+  currentlyInterruptible: 1
+  evolutionOneChargedDamageMultiplier: 1.15
+  evolutionTwoChargedDamageMultiplier: 1.25
+  evolutionOneWindupMultiplier: 0.9
+  evolutionTwoWindupMultiplier: 0.82
+  minimumEvolvedChargedWindup: 0.45
+  evolutionTwoCreatesShockwave: 1
+  shockwaveRadius: 2.25
+  shockwaveDamageMultiplier: 0.65
+  shockwaveColor: {r: 1, g: 0.36, b: 0.08, a: 0.9}
+--- !u!114 &2099390372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6fabeddfea1f40b0b960b5edc3ad238, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 501058939707899938}
+  visualRenderer: {fileID: 0}
+  movementStartThreshold: 0.12
+  movementStopThreshold: 0.06
+  facingDirectionThreshold: 0.05
+  grounded: 0
+  moving: 0
+  deathTriggered: 0

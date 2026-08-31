@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cave.Audio;
@@ -12,6 +13,8 @@ namespace Cave.Combat
     [RequireComponent(typeof(PlayerAimDirection))]
     public sealed class ChargedAttack : MonoBehaviour
     {
+        public event Action<Damageable> HeavyTargetHit;
+
         [Header("Charge Timing")]
         [SerializeField, Min(0.01f)] private float minimumChargeTime = 0.25f;
         [SerializeField, Min(0.01f)] private float chargedTwoThreshold = 0.67f;
@@ -39,10 +42,12 @@ namespace Cave.Combat
 
         private readonly HashSet<Damageable> hitTargets = new HashSet<Damageable>();
         private float chargeStartedAt;
+        private float chargeStartingDuration;
         private float currentKnockback;
         private int currentDamage;
         private int currentChargeTier;
         private float nextAttackTime;
+        private int currentAttackSequence;
         private bool isCharging;
         private bool isAttacking;
         private PlayerDamageBoost damageBoost;
@@ -52,6 +57,7 @@ namespace Cave.Combat
         private PlayerGuardBreak guardBreak;
         private PlayerCombatFlow combatFlow;
         private PlayerFlightBash groundSlam;
+        private PlayerCurseController curseController;
         private FrenzyBreakActivation frenzyActivation;
         private Transform attackTransform;
         private Transform swordPivot;
@@ -62,6 +68,7 @@ namespace Cave.Combat
 
         public bool IsCharging => isCharging;
         public bool IsAttacking => isAttacking;
+        public int CurrentAttackSequence => currentAttackSequence;
 
         private void Awake()
         {
@@ -72,6 +79,7 @@ namespace Cave.Combat
             guardBreak = GetComponent<PlayerGuardBreak>();
             combatFlow = GetComponent<PlayerCombatFlow>();
             groundSlam = GetComponent<PlayerFlightBash>();
+            curseController = GetComponent<PlayerCurseController>();
             swordPivot = spinSwordAttack != null ? spinSwordAttack.SwordPivot : null;
             attackTransform = attackCollider != null
                 ? attackCollider.transform
@@ -122,6 +130,13 @@ namespace Cave.Combat
             if (!GameInput.GameplayInputEnabled)
             {
                 groundSlam?.CancelAerialHeavyPreparation();
+                return;
+            }
+
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (!isCharging && !isAttacking && brace != null && brace.IsBraced && GameInput.ChargePressed)
+            {
+                brace.LeaveForHeavy();
                 return;
             }
 
@@ -223,6 +238,7 @@ namespace Cave.Combat
             }
 
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            HeavyTargetHit?.Invoke(damageable);
             if (isFrenzyCritical)
             {
                 frenzyActivation.ApplyImpact(
@@ -260,14 +276,26 @@ namespace Cave.Combat
                 : startingTier == 1
                     ? minimumChargeTime
                     : 0f;
-            chargeStartedAt = Time.time - startingDuration;
+            chargeStartingDuration = startingDuration;
+            chargeStartedAt = Time.time;
             SetChargeIndicatorActive(true);
             UpdateChargeIndicator();
         }
 
+        public bool TryBeginBraceExitCharge()
+        {
+            if (isCharging || isAttacking || Time.time < nextAttackTime)
+            {
+                return false;
+            }
+
+            BeginCharge();
+            return true;
+        }
+
         private void ReleaseCharge()
         {
-            float heldDuration = Mathf.Min(Time.time - chargeStartedAt, maximumChargeTime);
+            float heldDuration = CurrentChargeDuration;
             isCharging = false;
             SetChargeIndicatorActive(false);
 
@@ -282,6 +310,7 @@ namespace Cave.Combat
             currentChargeTier = CalculateChargeTier(heldDuration);
             currentDamage = DamageForTier(currentChargeTier);
             frenzyActivation = null;
+            curseController?.NotifyOffensiveCommitment();
             combatFlow?.TryCommitFrenzyBreak(
                 FrenzyBreakAttackKind.Charged,
                 out frenzyActivation);
@@ -327,13 +356,17 @@ namespace Cave.Combat
 
         private IEnumerator PerformAttack()
         {
+            currentAttackSequence++;
+            float attackSpeed = ResolveAttackSpeedMultiplier();
+            float resolvedActiveDuration = activeDuration / attackSpeed;
+            float resolvedCooldown = cooldown / attackSpeed;
             isAttacking = true;
-            nextAttackTime = Time.time + activeDuration + cooldown;
+            nextAttackTime = Time.time + resolvedActiveDuration + resolvedCooldown;
             hitTargets.Clear();
             OrientAttack(currentAttackDirection);
             SetAttackActive(true);
 
-            yield return new WaitForSeconds(activeDuration);
+            yield return new WaitForSeconds(resolvedActiveDuration);
 
             SetAttackActive(false);
             RestoreAttackOrientation();
@@ -383,7 +416,7 @@ namespace Cave.Combat
                 return;
             }
 
-            float chargeAmount = Mathf.Clamp01((Time.time - chargeStartedAt) / maximumChargeTime);
+            float chargeAmount = Mathf.Clamp01(CurrentChargeDuration / maximumChargeTime);
             float scale = Mathf.Lerp(0.4f, 1.1f, chargeAmount);
             chargeIndicator.transform.localScale = new Vector3(scale, scale, 1f);
         }
@@ -429,6 +462,18 @@ namespace Cave.Combat
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
             RestoreAttackOrientation();
+        }
+
+        private float CurrentChargeDuration => Mathf.Min(
+            maximumChargeTime,
+            chargeStartingDuration
+                + Mathf.Max(0f, Time.time - chargeStartedAt) * ResolveAttackSpeedMultiplier());
+
+        private float ResolveAttackSpeedMultiplier()
+        {
+            return curseController != null
+                ? Mathf.Max(0.01f, curseController.AttackSpeedMultiplier)
+                : 1f;
         }
 
         private void OnValidate()

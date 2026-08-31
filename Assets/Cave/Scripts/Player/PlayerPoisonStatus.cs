@@ -43,14 +43,46 @@ namespace Cave.Player
             EnsureVisual();
             poisonVisual.enabled = true;
             poisonRoutine = StartCoroutine(PoisonRoutine(
-                damagePerTick,
+                () => damagePerTick,
+                tickInterval,
+                duration,
+                source));
+        }
+
+        public void ApplyPoison(
+            float damagePercentPerTick,
+            int minimumDamagePerTick,
+            int maximumDamagePerTick,
+            float tickInterval,
+            float duration,
+            GameObject source)
+        {
+            if (damagePercentPerTick <= 0f || tickInterval <= 0f || duration <= 0f)
+            {
+                return;
+            }
+
+            if (poisonRoutine != null)
+            {
+                StopCoroutine(poisonRoutine);
+            }
+
+            EnsureVisual();
+            poisonVisual.enabled = true;
+            int minimum = Mathf.Max(1, minimumDamagePerTick);
+            int maximum = Mathf.Max(minimum, maximumDamagePerTick);
+            poisonRoutine = StartCoroutine(PoisonRoutine(
+                () => Mathf.Clamp(
+                    Mathf.CeilToInt(playerHealth.MaxHealth * damagePercentPerTick),
+                    minimum,
+                    maximum),
                 tickInterval,
                 duration,
                 source));
         }
 
         private IEnumerator PoisonRoutine(
-            int damagePerTick,
+            System.Func<int> resolveDamagePerTick,
             float tickInterval,
             float duration,
             GameObject source)
@@ -61,7 +93,7 @@ namespace Cave.Player
             {
                 yield return delay;
                 playerHealth.TryTakeDamage(
-                    damagePerTick,
+                    resolveDamagePerTick(),
                     new DamageContext(source, DamageTrait.AreaOfEffect));
             }
 
