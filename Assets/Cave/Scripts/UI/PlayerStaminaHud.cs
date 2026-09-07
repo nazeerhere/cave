@@ -7,12 +7,20 @@ namespace Cave.UI
 {
     public sealed class PlayerStaminaHud : MonoBehaviour
     {
+        private const float VisualRefreshInterval = 0.1f;
+
         [SerializeField] private Image fillImage;
         [SerializeField] private Text valueText;
 
         private SpinSwordAttack spinSwordAttack;
         private PlayerCurseController curses;
         private CanvasGroup canvasGroup;
+        private float displayedAlpha = -1f;
+        private float nextCurseSearchTime;
+        private float displayedFill = -1f;
+        private int displayedCurrent = int.MinValue;
+        private int displayedMaximum = int.MinValue;
+        private float nextVisualRefreshTime;
 
         public void Configure(Image staminaFillImage)
         {
@@ -68,14 +76,20 @@ namespace Cave.UI
 
         private void Update()
         {
-            if (curses == null)
+            if (curses == null && Time.unscaledTime >= nextCurseSearchTime)
             {
+                nextCurseSearchTime = Time.unscaledTime + 1f;
                 curses = FindObjectOfType<PlayerCurseController>();
             }
 
             if (canvasGroup != null)
             {
-                canvasGroup.alpha = curses != null && curses.IsBurnoutActive ? 0f : 1f;
+                float nextAlpha = curses != null && curses.IsBurnoutActive ? 0f : 1f;
+                if (!Mathf.Approximately(displayedAlpha, nextAlpha))
+                {
+                    displayedAlpha = nextAlpha;
+                    canvasGroup.alpha = nextAlpha;
+                }
             }
         }
 
@@ -97,19 +111,35 @@ namespace Cave.UI
 
         private void UpdateStamina(float currentStamina, float maximumStamina)
         {
+            if (Time.unscaledTime < nextVisualRefreshTime
+                && displayedCurrent != int.MinValue)
+            {
+                return;
+            }
+
+            nextVisualRefreshTime = Time.unscaledTime + VisualRefreshInterval;
             if (fillImage != null)
             {
                 float fillAmount = maximumStamina > 0f
                     ? Mathf.Clamp01(currentStamina / maximumStamina)
                     : 0f;
-                fillImage.rectTransform.localScale = new Vector3(fillAmount, 1f, 1f);
+                if (!Mathf.Approximately(displayedFill, fillAmount))
+                {
+                    displayedFill = fillAmount;
+                    fillImage.rectTransform.localScale = new Vector3(fillAmount, 1f, 1f);
+                }
             }
 
             if (valueText != null)
             {
-                valueText.text = Mathf.RoundToInt(currentStamina)
-                    + " / "
-                    + Mathf.RoundToInt(maximumStamina);
+                int current = Mathf.RoundToInt(currentStamina);
+                int maximum = Mathf.RoundToInt(maximumStamina);
+                if (displayedCurrent != current || displayedMaximum != maximum)
+                {
+                    displayedCurrent = current;
+                    displayedMaximum = maximum;
+                    valueText.text = current + " / " + maximum;
+                }
             }
         }
 

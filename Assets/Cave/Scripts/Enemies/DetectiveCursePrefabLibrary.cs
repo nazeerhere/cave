@@ -9,5 +9,19 @@ namespace Cave.Enemies
         [SerializeField] private GameObject detectivePrefab;
 
         public GameObject DetectivePrefab => detectivePrefab;
+
+        public bool TryGetDetectivePrefab(out GameObject prefab)
+        {
+            prefab = null;
+            try
+            {
+                prefab = detectivePrefab;
+                return prefab != null;
+            }
+            catch (MissingReferenceException)
+            {
+                return false;
+            }
+        }
     }
 }

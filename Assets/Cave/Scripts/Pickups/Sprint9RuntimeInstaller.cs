@@ -238,6 +238,8 @@ namespace Cave.Pickups
 
                 if (playerHealth.TryGetComponent(out SpinSwordAttack _))
                 {
+                    PlayerSwordCosmetics.EnsureInstalled(playerHealth.gameObject);
+
                     if (!playerHealth.TryGetComponent(out PlayerCombatFlow _))
                     {
                         playerHealth.gameObject.AddComponent<PlayerCombatFlow>();

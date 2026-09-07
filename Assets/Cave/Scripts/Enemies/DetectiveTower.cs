@@ -1,6 +1,7 @@
 using System;
 using Cave.Combat;
 using Cave.Player;
+using Cave.World;
 using UnityEngine;
 
 namespace Cave.Enemies
@@ -25,11 +26,13 @@ namespace Cave.Enemies
             new System.Collections.Generic.HashSet<DetectiveTower>();
 
         private DetectiveEncounterCoordinator coordinator;
+        private PlayerHealth player;
         private PlayerRecoveryModifiers affectedPlayer;
         private PlayerMana affectedPlayerMana;
         private Damageable damageable;
         private LineRenderer boundary;
         private LineRenderer core;
+        private DetectiveTowerVisualState visualState;
         private Material boundaryMaterial;
         private Material coreMaterial;
         private float currentRadius;
@@ -80,6 +83,8 @@ namespace Cave.Enemies
                     ? requestedDropRateMultipliers
                     : new[] { 0.9f, 0.75f, 0.55f, 0.35f };
 
+            player = PlayerRunPersistence.CurrentPlayerHealth ?? FindObjectOfType<PlayerHealth>();
+
             EnsureCombatBody(Mathf.Max(1, maximumHealth));
             EnsureVisuals();
             initialized = true;
@@ -89,6 +94,7 @@ namespace Cave.Enemies
         public void ApplyResearchStage(int stage)
         {
             researchStage = Mathf.Clamp(stage, 0, stageMultipliers.Length - 1);
+            visualState?.SetStage(researchStage);
             RefreshPlayerModifier();
         }
 
@@ -108,7 +114,6 @@ namespace Cave.Enemies
 
         private void RefreshPlayerModifier()
         {
-            PlayerHealth player = FindObjectOfType<PlayerHealth>();
             bool playerInside = player != null
                 && player.gameObject.activeInHierarchy
                 && ((Vector2)player.transform.position - (Vector2)transform.position).sqrMagnitude
@@ -268,6 +273,14 @@ namespace Cave.Enemies
                 core.SetPosition(2, new Vector3(0f, 0f));
                 core.SetPosition(3, new Vector3(-0.42f, 0.85f));
             }
+
+            visualState = GetComponent<DetectiveTowerVisualState>();
+            if (visualState == null)
+            {
+                visualState = gameObject.AddComponent<DetectiveTowerVisualState>();
+            }
+
+            visualState.Configure(damageable, core, researchStage);
 
             UpdateBoundary();
         }

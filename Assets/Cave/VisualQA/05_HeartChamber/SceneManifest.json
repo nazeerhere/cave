@@ -1,0 +1,5304 @@
+{
+    "schemaVersion": 1,
+    "sceneName": "05_HeartChamber",
+    "scenePath": "Assets/Cave/Scenes/05_HeartChamber.unity",
+    "exportedAtUtc": "2026-09-03T04:51:11.4907320Z",
+    "overviewBounds": {
+        "center": {
+            "x": 0.0,
+            "y": 3.0,
+            "z": 0.0
+        },
+        "size": {
+            "x": 64.95999908447266,
+            "y": 39.959999084472659,
+            "z": 2.0
+        },
+        "min": {
+            "x": -32.47999954223633,
+            "y": -16.979999542236329,
+            "z": -1.0
+        },
+        "max": {
+            "x": 32.47999954223633,
+            "y": 22.979999542236329,
+            "z": 1.0
+        }
+    },
+    "gameplayCamera": "05_HeartChamber/Camera/Main Camera",
+    "objects": [
+        {
+            "name": "05_HeartChamber",
+            "hierarchyPath": "05_HeartChamber",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Environment",
+            "hierarchyPath": "05_HeartChamber/Environment",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Background",
+            "hierarchyPath": "05_HeartChamber/Environment/Background",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Rear Cave",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Rear Cave",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 3.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 3.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 7.300000190734863,
+                "y": 7.300000190734863,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_LivingCaveBase",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -45,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 13.439000129699707,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 43.80000305175781,
+                    "y": 20.878000259399415,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -21.900001525878908,
+                    "y": 3.0,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 21.900001525878908,
+                    "y": 23.878000259399415,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Left Entry Cave",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Left Entry Cave",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -23.5,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -23.5,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 4.5,
+                "y": 4.5,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_EntryCave",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -40,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -23.5,
+                    "y": 11.925000190734864,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 11.699999809265137,
+                    "y": 23.850000381469728,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -29.350000381469728,
+                    "y": 0.0,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -17.649999618530275,
+                    "y": 23.850000381469728,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Pool",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Pool",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 2.5999999046325685,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 2.5999999046325685,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 5.099999904632568,
+                "y": 5.099999904632568,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_BackgroundPool",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -34,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 5.966000080108643,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 40.79999923706055,
+                    "y": 6.732000350952148,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -20.399999618530275,
+                    "y": 2.5999999046325685,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 20.399999618530275,
+                    "y": 9.332000732421875,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Pool Detail",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Pool Detail",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 2.6500000953674318,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 2.6500000953674318,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 5.5,
+                "y": 5.5,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_WaterPoolDetail",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -33,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 8.095000267028809,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 40.150001525878909,
+                    "y": 10.890000343322754,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -20.075000762939454,
+                    "y": 2.6500000953674318,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 20.075000762939454,
+                    "y": 13.540000915527344,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Ancient Threshold",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Ancient Threshold",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 11.399999618530274,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 11.399999618530274,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 3.0,
+                "y": 3.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_AncientThreshold",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -26,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 15.524999618530274,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 8.700000762939454,
+                    "y": 8.25,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -4.350000381469727,
+                    "y": 11.399999618530274,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 4.350000381469727,
+                    "y": 19.649999618530275,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Left Ceiling",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Left Ceiling",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -17.5,
+                "y": 14.399999618530274,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -17.5,
+                "y": 14.399999618530274,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 4.300000190734863,
+                "y": 4.300000190734863,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CeilingLeft",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -42,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -17.5,
+                    "y": 19.989999771118165,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 13.545001029968262,
+                    "y": 11.180000305175782,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -24.27250099182129,
+                    "y": 14.399999618530274,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -10.727499008178711,
+                    "y": 25.579999923706056,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Center Ceiling",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Center Ceiling",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 15.199999809265137,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 15.199999809265137,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 4.0,
+                "y": 4.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CeilingCenter",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -42,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 19.299999237060548,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 13.199999809265137,
+                    "y": 8.199999809265137,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -6.599999904632568,
+                    "y": 15.19999885559082,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 6.599999904632568,
+                    "y": 23.399999618530275,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Right Ceiling",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Right Ceiling",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 18.0,
+                "y": 14.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 18.0,
+                "y": 14.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 4.099999904632568,
+                "y": 4.099999904632568,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CeilingRight",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -42,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 18.0,
+                    "y": 19.842498779296876,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 16.727998733520509,
+                    "y": 11.684999465942383,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 9.636000633239746,
+                    "y": 13.999999046325684,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 26.363998413085939,
+                    "y": 25.68499755859375,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Stalactite Crown",
+            "hierarchyPath": "05_HeartChamber/Environment/Background/Heart Chamber Stalactite Crown",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 15.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 15.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 3.799999952316284,
+                "y": 3.799999952316284,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Background",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_StalactiteCrown",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -41,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 20.02199935913086,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 30.893999099731447,
+                    "y": 9.044000625610352,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -15.446999549865723,
+                    "y": 15.499999046325684,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 15.446999549865723,
+                    "y": 24.54399871826172,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Terrain",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Terrain",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Main Arena",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain/Heart Chamber Main Arena",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": -5.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": -5.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 4.5,
+                "y": 4.5,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 8,
+            "layerName": "Ground",
+            "category": "WalkablePlatform",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CentralArena",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 3,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": -0.3875002861022949,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 36.0,
+                    "y": 9.22499942779541,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -18.0,
+                    "y": -5.0,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 18.0,
+                    "y": 4.22499942779541,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": 0.0,
+                            "y": -0.3875000476837158,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 33.75,
+                            "y": 0.9900002479553223,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -16.875,
+                            "y": -0.882500171661377,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": 16.875,
+                            "y": 0.10750007629394531,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Heart Chamber Entry Approach",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain/Heart Chamber Entry Approach",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.0,
+                "y": -5.099999904632568,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -21.0,
+                "y": -5.099999904632568,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 2.200000047683716,
+                "y": 2.200000047683716,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 8,
+            "layerName": "Ground",
+            "category": "WalkablePlatform",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_FloorFragments",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 3,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -21.0,
+                    "y": -2.0419998168945314,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 31.855998992919923,
+                    "y": 6.116000175476074,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -36.928001403808597,
+                    "y": -5.099999904632568,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -5.072000503540039,
+                    "y": 1.0160002708435059,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": -21.0,
+                            "y": -2.0419998168945314,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 7.260002136230469,
+                            "y": 0.48400020599365237,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -24.630001068115236,
+                            "y": -2.2839999198913576,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -17.369998931884767,
+                            "y": -1.799999713897705,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Heart Chamber Left Ledge",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain/Heart Chamber Left Ledge",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -17.5,
+                "y": 1.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -17.5,
+                "y": 1.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 2.5,
+                "y": 2.5,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 8,
+            "layerName": "Ground",
+            "category": "WalkablePlatform",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_LeftLedge",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 4,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -17.5,
+                    "y": 3.875,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 9.125,
+                    "y": 4.75,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -22.0625,
+                    "y": 1.5,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -12.9375,
+                    "y": 6.25,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": -17.5,
+                            "y": 3.874999761581421,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 7.0,
+                            "y": 0.5499997138977051,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -21.0,
+                            "y": 3.5999999046325685,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -14.0,
+                            "y": 4.149999618530273,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Heart Chamber Right Ledge",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain/Heart Chamber Right Ledge",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 17.5,
+                "y": 1.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 17.5,
+                "y": 1.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 2.5,
+                "y": 2.5,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 8,
+            "layerName": "Ground",
+            "category": "WalkablePlatform",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_RightLedge",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 4,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 17.5,
+                    "y": 3.9375,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 9.5,
+                    "y": 4.875,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 12.75,
+                    "y": 1.5,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 22.25,
+                    "y": 6.375,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": 17.5,
+                            "y": 3.9375,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 7.0,
+                            "y": 0.5500001907348633,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": 14.0,
+                            "y": 3.6624999046325685,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": 21.0,
+                            "y": 4.212500095367432,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Heart Chamber Left Arena Boundary",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain/Heart Chamber Left Arena Boundary",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -26.5,
+                "y": -3.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -26.5,
+                "y": -3.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 8,
+            "layerName": "Ground",
+            "category": "WalkablePlatform",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": -26.5,
+                            "y": -3.5,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 0.5999984741210938,
+                            "y": 11.0,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -26.799999237060548,
+                            "y": -9.0,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -26.200000762939454,
+                            "y": 2.0,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Heart Chamber Right Arena Boundary",
+            "hierarchyPath": "05_HeartChamber/Environment/Terrain/Heart Chamber Right Arena Boundary",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 26.5,
+                "y": -3.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 26.5,
+                "y": -3.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 8,
+            "layerName": "Ground",
+            "category": "WalkablePlatform",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": 26.5,
+                            "y": -3.5,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 0.5999984741210938,
+                            "y": 11.0,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": 26.200000762939454,
+                            "y": -9.0,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": 26.799999237060548,
+                            "y": 2.0,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Foreground",
+            "hierarchyPath": "05_HeartChamber/Environment/Foreground",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Foreground",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Foreground Left Frame",
+            "hierarchyPath": "05_HeartChamber/Environment/Foreground/Heart Chamber Foreground Left Frame",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -25.0,
+                "y": -8.399999618530274,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -25.0,
+                "y": -8.399999618530274,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 0.800000011920929,
+                "y": 0.800000011920929,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Foreground",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CrystalRubble",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 18,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -25.0,
+                    "y": -7.359999656677246,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 3.799999952316284,
+                    "y": 2.0799999237060549,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -26.899999618530275,
+                    "y": -8.399999618530274,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -23.100000381469728,
+                    "y": -6.319999694824219,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Foreground Right Frame",
+            "hierarchyPath": "05_HeartChamber/Environment/Foreground/Heart Chamber Foreground Right Frame",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 25.0,
+                "y": -8.399999618530274,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 25.0,
+                "y": -8.399999618530274,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": -0.800000011920929,
+                "y": 0.800000011920929,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Foreground",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CrystalRubble",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 18,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 25.0,
+                    "y": -7.359999656677246,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 3.799999952316284,
+                    "y": 2.0799999237060549,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 23.100000381469728,
+                    "y": -8.399999618530274,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 26.899999618530275,
+                    "y": -6.319999694824219,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Props",
+            "hierarchyPath": "05_HeartChamber/Environment/Props",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Entry Door",
+            "hierarchyPath": "05_HeartChamber/Environment/Props/Heart Chamber Entry Door",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -23.0,
+                "y": -1.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -23.0,
+                "y": -1.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 2.700000047683716,
+                "y": 2.700000047683716,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_EntryDoor",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberStructuralSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 6,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -23.0,
+                    "y": 1.4025001525878907,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 8.100000381469727,
+                    "y": 5.805000305175781,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -27.049999237060548,
+                    "y": -1.5,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -18.950000762939454,
+                    "y": 4.305000305175781,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Left Crystal Edge",
+            "hierarchyPath": "05_HeartChamber/Environment/Props/Heart Chamber Left Crystal Edge",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -17.700000762939454,
+                "y": -3.299999952316284,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -17.700000762939454,
+                "y": -3.299999952316284,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.149999976158142,
+                "y": 1.149999976158142,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CrystalField",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 7,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -17.700000762939454,
+                    "y": -1.93149995803833,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 7.474999904632568,
+                    "y": 2.736999988555908,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -21.4375,
+                    "y": -3.299999952316284,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -13.96250057220459,
+                    "y": -0.562999963760376,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Right Crystal Edge",
+            "hierarchyPath": "05_HeartChamber/Environment/Props/Heart Chamber Right Crystal Edge",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 17.700000762939454,
+                "y": -3.299999952316284,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 17.700000762939454,
+                "y": -3.299999952316284,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": -1.149999976158142,
+                "y": 1.149999976158142,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CrystalField",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 7,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 17.700000762939454,
+                    "y": -1.93149995803833,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 7.474999904632568,
+                    "y": 2.736999988555908,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 13.96250057220459,
+                    "y": -3.299999952316284,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 21.4375,
+                    "y": -0.562999963760376,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Poolside Spines",
+            "hierarchyPath": "05_HeartChamber/Environment/Props/Heart Chamber Poolside Spines",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": -0.4000000059604645,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": -0.4000000059604645,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 2.799999952316284,
+                "y": 2.799999952316284,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_RockSpines",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 1,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 2.4699997901916506,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 10.920000076293946,
+                    "y": 5.739999771118164,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -5.460000038146973,
+                    "y": -0.40000009536743166,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 5.460000038146973,
+                    "y": 5.339999675750732,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Lower Left Crystal Dressing",
+            "hierarchyPath": "05_HeartChamber/Environment/Props/Heart Chamber Lower Left Crystal Dressing",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -22.5,
+                "y": -7.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -22.5,
+                "y": -7.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 0.8199999928474426,
+                "y": 0.8199999928474426,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CrystalRubble",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 6,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -22.5,
+                    "y": -5.934000015258789,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 3.8949999809265138,
+                    "y": 2.131999969482422,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -24.447500228881837,
+                    "y": -7.0,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -20.552499771118165,
+                    "y": -4.868000030517578,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Heart Chamber Lower Right Crystal Dressing",
+            "hierarchyPath": "05_HeartChamber/Environment/Props/Heart Chamber Lower Right Crystal Dressing",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 22.5,
+                "y": -7.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 22.5,
+                "y": -7.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": -0.8199999928474426,
+                "y": 0.8199999928474426,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Prop",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CrystalRubble",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 6,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 22.5,
+                    "y": -5.934000015258789,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 3.8949999809265138,
+                    "y": 2.131999969482422,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 20.552499771118165,
+                    "y": -7.0,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 24.447500228881837,
+                    "y": -4.868000030517578,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Gameplay",
+            "hierarchyPath": "05_HeartChamber/Gameplay",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "PlayerSpawn",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Player Spawn",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Heart Chamber Player Spawn",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.5,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -21.5,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "PlayerSpawn",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": true,
+            "marker": {
+                "kind": "PlayerSpawn",
+                "identifier": "FromDeepVeins",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            },
+            "importantComponents": [
+                "Cave.World.RoomSceneMarker",
+                "Cave.World.LevelSpawnPoint"
+            ]
+        },
+        {
+            "name": "Player",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.5,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -21.5,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 0.800000011920929,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Miner",
+            "spriteAssetPath": "Assets/Brackeys/2D Mega Pack/Characters/Miner.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 1,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -21.5,
+                    "y": -4.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 1.0,
+                    "y": 1.4399999380111695,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -22.0,
+                    "y": -4.71999979019165,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -21.0,
+                    "y": -3.2799999713897707,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": false,
+                    "bounds": {
+                        "center": {
+                            "x": -21.497289657592775,
+                            "y": -3.905125617980957,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 0.5584526062011719,
+                            "y": 1.2502515316009522,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -21.77651596069336,
+                            "y": -4.530251502990723,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -21.218063354492189,
+                            "y": -3.2799997329711916,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": true,
+            "rigidbody2DBodyType": "Dynamic",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D",
+                "UnityEngine.Rigidbody2D",
+                "Cave.Player.PlayerController",
+                "Cave.World.PlayerRespawn",
+                "Cave.Combat.SpinSwordAttack",
+                "Cave.Player.PlayerHealth",
+                "Cave.Combat.SidewaysParryAttack",
+                "Cave.Player.PlayerAimDirection",
+                "Cave.Player.PlayerGuardBreak",
+                "Cave.Enemies.EnemyStaggerVisuals",
+                "Cave.Player.PlayerCurseController",
+                "Cave.Combat.ChargedAttack",
+                "Cave.Combat.PlayerCombatFlow",
+                "Cave.Player.PlayerSpecialMode",
+                "Cave.Player.PlayerCurrency",
+                "Cave.Player.PlayerMana",
+                "Cave.Player.PlayerFlightBash",
+                "Cave.Player.PlayerSpecialModeUpgradeState",
+                "Cave.Player.MinerPlayerVisualAnimator"
+            ]
+        },
+        {
+            "name": "Sword Pivot",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player/Sword Pivot",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.510000228881837,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -0.009999999776482582,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "Default",
+            "sortingOrder": 0,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -21.510000228881837,
+                    "y": -4.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": -21.510000228881837,
+                    "y": -4.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": -21.510000228881837,
+                    "y": -4.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Sword",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player/Sword Pivot/Sword",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.173999786376954,
+                "y": -4.199999809265137,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.335999995470047,
+                "y": -0.25,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 214.99998474121095
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 214.99998474121095
+            },
+            "localScale": {
+                "x": 1.5,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Sword",
+            "spriteAssetPath": "Assets/Brackeys/2D Mega Pack/Weapons & Tools/Sword.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 2,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -20.80518913269043,
+                    "y": -3.989948272705078,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 1.3721224069595338,
+                    "y": 0.8521221280097961,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -21.49125099182129,
+                    "y": -4.416009426116943,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -20.11912727355957,
+                    "y": -3.563887119293213,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": true,
+                    "bounds": {
+                        "center": {
+                            "x": -20.66208267211914,
+                            "y": -3.915945529937744,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 0.9604778289794922,
+                            "y": 0.5704240798950195,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -21.142322540283204,
+                            "y": -4.201157569885254,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -20.181842803955079,
+                            "y": -3.6307334899902345,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D"
+            ]
+        },
+        {
+            "name": "Charge Indicator",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player/Charge Indicator",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.5,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "SoulFragment",
+            "spriteAssetPath": "Assets/Brackeys/2D Mega Pack/Items & Icons/Gothic/SoulFragment.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 0,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -21.5,
+                    "y": -4.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 1.399999976158142,
+                    "y": 1.1200000047683716,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -22.200000762939454,
+                    "y": -4.559999942779541,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -20.799999237060548,
+                    "y": -3.440000057220459,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Directional Light",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player/Charge Indicator/Directional Light",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.83395004272461,
+                "y": -4.0960001945495609,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -0.3339498043060303,
+                "y": -0.12000009417533875,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 150.00001525878907,
+                "z": 180.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 150.00001525878907,
+                "z": 180.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Charged Attack Hitbox",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player/Charged Attack Hitbox",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.5,
+                "y": -4.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "localScale": {
+                "x": 0.800000011920929,
+                "y": 1.0,
+                "z": 0.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Sword",
+            "spriteAssetPath": "Assets/Brackeys/2D Mega Pack/Weapons & Tools/Sword.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 2,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -20.775659561157228,
+                    "y": -3.979614496231079,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 2.4000000953674318,
+                    "y": 1.4399999380111695,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": -21.97566032409668,
+                    "y": -4.699614524841309,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": -19.575658798217775,
+                    "y": -3.2596144676208498,
+                    "z": 0.0
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": true,
+                    "bounds": {
+                        "center": {
+                            "x": -20.51333999633789,
+                            "y": -3.971538543701172,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 1.8434219360351563,
+                            "y": 0.6430816650390625,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -21.43505096435547,
+                            "y": -4.293079376220703,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -19.591629028320314,
+                            "y": -3.6499977111816408,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D",
+                "Cave.Combat.ChargedAttackHitbox"
+            ]
+        },
+        {
+            "name": "Sideways Parry Hitbox",
+            "hierarchyPath": "05_HeartChamber/Gameplay/PlayerSpawn/Player/Sideways Parry Hitbox",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -21.04199981689453,
+                "y": -3.9607999324798586,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.4580000042915344,
+                "y": 0.04899999871850014,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 5.000001907348633,
+                "y": 5.000001430511475,
+                "z": 180.0
+            },
+            "localEulerRotation": {
+                "x": 5.000001907348633,
+                "y": 5.000001430511475,
+                "z": 180.0
+            },
+            "localScale": {
+                "x": 0.5,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Sword",
+            "spriteAssetPath": "Assets/Brackeys/2D Mega Pack/Weapons & Tools/Sword.png",
+            "sortingLayer": "Default",
+            "sortingOrder": 3,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -20.80143928527832,
+                    "y": -3.9574153423309328,
+                    "z": -0.02067474089562893
+                },
+                "size": {
+                    "x": 0.816599428653717,
+                    "y": 0.2530316710472107,
+                    "z": 0.2942526340484619
+                },
+                "min": {
+                    "x": -21.209739685058595,
+                    "y": -4.083930969238281,
+                    "z": -0.16780105233192445
+                },
+                "max": {
+                    "x": -20.393138885498048,
+                    "y": -3.830899477005005,
+                    "z": 0.12645158171653748
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": true,
+                    "bounds": {
+                        "center": {
+                            "x": -20.70566749572754,
+                            "y": -3.9390645027160646,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 0.6400184631347656,
+                            "y": 0.5983617305755615,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -21.025676727294923,
+                            "y": -4.238245487213135,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": -20.385658264160158,
+                            "y": -3.639883518218994,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer",
+                "UnityEngine.BoxCollider2D",
+                "Cave.Combat.ParryHitbox"
+            ]
+        },
+        {
+            "name": "EnemySpawns",
+            "hierarchyPath": "05_HeartChamber/Gameplay/EnemySpawns",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Interactables",
+            "hierarchyPath": "05_HeartChamber/Gameplay/Interactables",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Landmark Marker",
+            "hierarchyPath": "05_HeartChamber/Gameplay/Interactables/Heart Chamber Landmark Marker",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 2.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 2.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Interactable",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": true,
+            "marker": {
+                "kind": "Interactable",
+                "identifier": "HeartChamberLandmark",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            },
+            "importantComponents": [
+                "Cave.World.RoomSceneMarker"
+            ]
+        },
+        {
+            "name": "Transitions",
+            "hierarchyPath": "05_HeartChamber/Gameplay/Transitions",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Deep Veins Entrance",
+            "hierarchyPath": "05_HeartChamber/Gameplay/Transitions/Heart Chamber Deep Veins Entrance",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -24.5,
+                "y": -4.099999904632568,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -24.5,
+                "y": -4.099999904632568,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Transition",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": true,
+            "marker": {
+                "kind": "Transition",
+                "identifier": "ToDeepVeins",
+                "destinationScene": "04_DeepVeins",
+                "boundsSize": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            },
+            "importantComponents": [
+                "Cave.World.RoomSceneMarker"
+            ]
+        },
+        {
+            "name": "Hazards",
+            "hierarchyPath": "05_HeartChamber/Gameplay/Hazards",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Fall Kill Zone",
+            "hierarchyPath": "05_HeartChamber/Gameplay/Hazards/Heart Chamber Fall Kill Zone",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": -13.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": -13.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "KillZone",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [
+                {
+                    "type": "BoxCollider2D",
+                    "isTrigger": true,
+                    "bounds": {
+                        "center": {
+                            "x": 0.0,
+                            "y": -13.0,
+                            "z": 0.0
+                        },
+                        "size": {
+                            "x": 60.0,
+                            "y": 2.0,
+                            "z": 0.0
+                        },
+                        "min": {
+                            "x": -30.0,
+                            "y": -14.0,
+                            "z": 0.0
+                        },
+                        "max": {
+                            "x": 30.0,
+                            "y": -12.0,
+                            "z": 0.0
+                        }
+                    }
+                }
+            ],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.BoxCollider2D",
+                "Cave.World.DeathBoundary"
+            ]
+        },
+        {
+            "name": "BossSpawn",
+            "hierarchyPath": "05_HeartChamber/Gameplay/BossSpawn",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": -3.799999952316284,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": -3.799999952316284,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "EnemySpawn",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": true,
+            "marker": {
+                "kind": "EnemySpawn",
+                "identifier": "BanditAvatarOfCave_BossSpawn",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            },
+            "importantComponents": [
+                "Cave.World.RoomSceneMarker"
+            ]
+        },
+        {
+            "name": "Camera",
+            "hierarchyPath": "05_HeartChamber/Camera",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Camera Bounds",
+            "hierarchyPath": "05_HeartChamber/Camera/Heart Chamber Camera Bounds",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 3.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 3.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "CameraBounds",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": true,
+            "marker": {
+                "kind": "CameraBounds",
+                "identifier": "HeartChamberCameraBounds",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 56.0,
+                    "y": 31.0
+                }
+            },
+            "importantComponents": [
+                "Cave.World.RoomSceneMarker"
+            ]
+        },
+        {
+            "name": "Main Camera",
+            "hierarchyPath": "05_HeartChamber/Camera/Main Camera",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 1.5,
+                "z": -10.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 1.5,
+                "z": -10.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "MainCamera",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "GameplayCamera",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.Camera",
+                "Cave.CameraSystem.CameraFollow",
+                "MissingScript",
+                "MissingScript"
+            ]
+        },
+        {
+            "name": "LightingVFX",
+            "hierarchyPath": "05_HeartChamber/LightingVFX",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "LivingVeins",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/LivingVeins",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "Cave.EnvironmentFx.LivingVeinPulse"
+            ]
+        },
+        {
+            "name": "Living Veins Left",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/LivingVeins/Living Veins Left",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -19.0,
+                "y": 6.199999809265137,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -19.0,
+                "y": 6.199999809265137,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 3.700000047683716,
+                "y": 3.700000047683716,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_CyanVeins",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -30,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -19.0,
+                    "y": 10.824999809265137,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 8.140000343322754,
+                    "y": 9.25,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -23.06999969482422,
+                    "y": 6.199999809265137,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -14.930000305175782,
+                    "y": 15.449999809265137,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Living Veins Center",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/LivingVeins/Living Veins Center",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -5.5,
+                "y": 8.600000381469727,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -5.5,
+                "y": 8.600000381469727,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 3.200000047683716,
+                "y": 3.200000047683716,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_PurpleVeins",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -30,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -5.5,
+                    "y": 12.520000457763672,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 10.720000267028809,
+                    "y": 7.840000152587891,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -10.860000610351563,
+                    "y": 8.600000381469727,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -0.1399998664855957,
+                    "y": 16.440000534057618,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Living Veins Right",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/LivingVeins/Living Veins Right",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 18.5,
+                "y": 6.5,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 18.5,
+                "y": 6.5,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 3.3499999046325685,
+                "y": 3.3499999046325685,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_RightVeins",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -30,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 18.5,
+                    "y": 10.771249771118164,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 12.729999542236329,
+                    "y": 8.542499542236329,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 12.135000228881836,
+                    "y": 6.5,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 24.864999771118165,
+                    "y": 15.042499542236329,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "ReverseStream",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/ReverseStream",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "Cave.EnvironmentFx.ReverseStreamAnimator"
+            ]
+        },
+        {
+            "name": "Reverse Stream Lower Flow",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/ReverseStream/Reverse Stream Lower Flow",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -0.44999998807907107,
+                "y": 3.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -0.44999998807907107,
+                "y": 3.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 2.299999952316284,
+                "y": 2.299999952316284,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_ReverseWaterColumn",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -22,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -0.44999998807907107,
+                    "y": 6.105000019073486,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 4.714999675750732,
+                    "y": 6.210000038146973,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -2.807499885559082,
+                    "y": 3.0,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 1.9074997901916505,
+                    "y": 9.210000038146973,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Reverse Stream Bright Core",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/ReverseStream/Reverse Stream Bright Core",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.550000011920929,
+                "y": 4.199999809265137,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.550000011920929,
+                "y": 4.199999809265137,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": -1.4500000476837159,
+                "y": 1.649999976158142,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_ReverseWaterColumn",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -21,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.550000011920929,
+                    "y": 6.427499771118164,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 2.9725000858306886,
+                    "y": 4.454999923706055,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -0.9362500309944153,
+                    "y": 4.199999809265137,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 2.036250114440918,
+                    "y": 8.654999732971192,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Reverse Stream Upper Flow",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/ReverseStream/Reverse Stream Upper Flow",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.10000000149011612,
+                "y": 7.199999809265137,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.10000000149011612,
+                "y": 7.199999809265137,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.75,
+                "y": 1.75,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_MistColumn",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -23,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.10000000149011612,
+                    "y": 9.649999618530274,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 3.115000009536743,
+                    "y": 4.900000095367432,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -1.4574999809265137,
+                    "y": 7.199999809265137,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 1.6575000286102296,
+                    "y": 12.09999942779541,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Reverse Stream Bubbles Left",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/ReverseStream/Reverse Stream Bubbles Left",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": -1.2999999523162842,
+                "y": 2.5999999046325685,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": -1.2999999523162842,
+                "y": 2.5999999046325685,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 0.7200000286102295,
+                "y": 0.7200000286102295,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_BubbleRiser",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -20,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": -1.2999999523162842,
+                    "y": 3.096799850463867,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 2.376000165939331,
+                    "y": 0.9936000108718872,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": -2.48799991607666,
+                    "y": 2.5999999046325685,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": -0.11199986934661865,
+                    "y": 3.593599796295166,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "Reverse Stream Bubbles Right",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/ReverseStream/Reverse Stream Bubbles Right",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 1.2999999523162842,
+                "y": 3.700000047683716,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 1.2999999523162842,
+                "y": 3.700000047683716,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": -0.6399999856948853,
+                "y": 0.6399999856948853,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "Heart_BubbleRiser",
+            "spriteAssetPath": "Assets/Cave/Art/Rooms/HeartChamber/HeartChamberCrystalWaterSheet_Source.png",
+            "sortingLayer": "Default",
+            "sortingOrder": -20,
+            "hasRendererBounds": true,
+            "rendererBounds": {
+                "center": {
+                    "x": 1.2999999523162842,
+                    "y": 4.141600131988525,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 2.111999988555908,
+                    "y": 0.8831999897956848,
+                    "z": 0.20000000298023225
+                },
+                "min": {
+                    "x": 0.24399995803833009,
+                    "y": 3.700000047683716,
+                    "z": -0.10000000149011612
+                },
+                "max": {
+                    "x": 2.3559999465942385,
+                    "y": 4.583199977874756,
+                    "z": 0.10000000149011612
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": [
+                "UnityEngine.SpriteRenderer"
+            ]
+        },
+        {
+            "name": "AmbientEffects",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/AmbientEffects",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localEulerRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        },
+        {
+            "name": "Heart Chamber Ambient Light",
+            "hierarchyPath": "05_HeartChamber/LightingVFX/AmbientEffects/Heart Chamber Ambient Light",
+            "activeSelf": true,
+            "activeInHierarchy": true,
+            "worldPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "localPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "worldEulerRotation": {
+                "x": 42.0,
+                "y": 332.0,
+                "z": 0.0000011488657492009225
+            },
+            "localEulerRotation": {
+                "x": 42.0,
+                "y": 332.0,
+                "z": 0.0000011488657492009225
+            },
+            "localScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "tag": "Untagged",
+            "layer": 0,
+            "layerName": "Default",
+            "category": "Structure",
+            "prefabAssetPath": "",
+            "spriteName": "",
+            "spriteAssetPath": "",
+            "sortingLayer": "",
+            "sortingOrder": 0,
+            "hasRendererBounds": false,
+            "rendererBounds": {
+                "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "size": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "min": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "max": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "colliders": [],
+            "hasRigidbody2D": false,
+            "rigidbody2DBodyType": "",
+            "hasRoomMarker": false,
+            "marker": {
+                "kind": "",
+                "identifier": "",
+                "destinationScene": "",
+                "boundsSize": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            },
+            "importantComponents": []
+        }
+    ]
+}

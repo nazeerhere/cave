@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using Cave.Combat;
 using Cave.Player;
 using Cave.World;
@@ -14,11 +15,12 @@ namespace Cave.Enemies
         [Header("Horde Detection")]
         [SerializeField, Min(3)] private int hostileThreshold = 3;
         [SerializeField, Min(1f)] private float encounterRadius = 14f;
-        [SerializeField, Min(0.1f)] private float refreshInterval = 0.5f;
+        [SerializeField, Min(0.5f)] private float hordeStateProbeInterval = 1f;
 
         [Header("Detective Participation")]
         [SerializeField] private GameObject detectivePrefab;
         [SerializeField, Min(1)] private int maximumRealDetectives = 5;
+        [SerializeField, Range(1, 3)] private int maximumSpawnAttemptsPerHorde = 2;
         [SerializeField, Min(1f)] private float spawnDistance = 6f;
 
         [Header("Safe Spawn Placement")]
@@ -28,7 +30,6 @@ namespace Cave.Enemies
         [SerializeField, Min(0.1f)] private float groundProbeDistance = 10f;
         [SerializeField, Min(0.1f)] private float playerClearance = 1.25f;
         [SerializeField, Min(0.1f)] private float mobClearance = 0.8f;
-        [SerializeField, Min(0.1f)] private float retryDelayAfterFailure = 1f;
         [SerializeField] private LayerMask groundLayers = ~0;
 
         [Header("Current Encounter (Read Only)")]
@@ -37,14 +38,22 @@ namespace Cave.Enemies
         [SerializeField, Min(0)] private int requiredDetectives;
         [SerializeField] private bool hordeActive;
         [SerializeField] private bool participationApplied;
-        [SerializeField] private bool spawnPending;
+        [SerializeField] private bool spawnOpportunityHandled;
+        [SerializeField, Min(0)] private int spawnAttemptsThisHorde;
         [SerializeField] private float lastSpawnAttempt;
         [SerializeField, TextArea] private string lastSpawnFailureReason;
 
         private readonly List<Damageable> hostiles = new List<Damageable>();
+        private readonly RaycastHit2D[] groundHits = new RaycastHit2D[16];
+        private readonly Collider2D[] overlapResults = new Collider2D[32];
         private PlayerCurseController curses;
-        private float nextRefreshTime;
-        private float nextRetryTime;
+        private DetectiveEncounterCoordinator coordinator;
+        private WorldDifficultyManager difficultyManager;
+        private Coroutine hordeStateMonitor;
+        private WaitForSeconds hordeStateProbeWait;
+        private bool prefabResolutionAttempted;
+        private bool prefabResolutionDisabled;
+        private bool missingPrefabWarningIssued;
 
         public int QualifyingHostileCount => qualifyingHostileCount;
         public bool IsQualifyingHorde => hordeActive;
@@ -54,106 +63,192 @@ namespace Cave.Enemies
             curses = GetComponent<PlayerCurseController>();
         }
 
-        private void Update()
+        private void OnEnable()
         {
-            if (Time.time < nextRefreshTime)
+            if (curses == null)
             {
+                curses = GetComponent<PlayerCurseController>();
+            }
+
+            if (curses != null)
+            {
+                curses.CurseStateChanged -= HandleCurseStateChanged;
+                curses.CurseStateChanged += HandleCurseStateChanged;
+            }
+
+            StartHordeStateMonitor();
+        }
+
+        private void OnDisable()
+        {
+            if (curses != null)
+            {
+                curses.CurseStateChanged -= HandleCurseStateChanged;
+            }
+
+            if (hordeStateMonitor != null)
+            {
+                StopCoroutine(hordeStateMonitor);
+                hordeStateMonitor = null;
+            }
+        }
+
+        private void StartHordeStateMonitor()
+        {
+            if (hordeStateMonitor == null)
+            {
+                hordeStateMonitor = StartCoroutine(MonitorHordeState());
+            }
+        }
+
+        private IEnumerator MonitorHordeState()
+        {
+            RefreshHordeState();
+            while (true)
+            {
+                if (hordeStateProbeWait == null)
+                {
+                    hordeStateProbeWait = new WaitForSeconds(hordeStateProbeInterval);
+                }
+
+                yield return hordeStateProbeWait;
+                RefreshHordeState();
+            }
+        }
+
+        private void HandleCurseStateChanged()
+        {
+            // A curse selection is a genuine state transition, so this is the one
+            // immediate probe allowed outside the coarse horde monitor.
+            RefreshHordeState();
+        }
+
+        private void RefreshHordeState()
+        {
+            if (curses == null || !curses.DetectivesCurseActive)
+            {
+                EndHorde();
                 return;
             }
 
-            nextRefreshTime = Time.time + refreshInterval;
             qualifyingHostileCount = HostileMobQuery.CountRealHostiles(
                 transform.position,
                 encounterRadius,
                 hostiles);
-            bool qualifies = qualifyingHostileCount >= hostileThreshold;
-            if (!qualifies)
+            if (qualifyingHostileCount < hostileThreshold)
             {
-                hordeActive = false;
-                participationApplied = false;
-                spawnPending = false;
-                realDetectivesPresent = 0;
-                requiredDetectives = 0;
+                EndHorde();
                 return;
             }
 
+            if (!hordeActive)
+            {
+                BeginHorde();
+            }
+        }
+
+        private void BeginHorde()
+        {
             hordeActive = true;
-            if (curses == null || !curses.DetectivesCurseActive)
-            {
-                participationApplied = false;
-                spawnPending = false;
-                return;
-            }
+            participationApplied = false;
+            spawnOpportunityHandled = false;
+            spawnAttemptsThisHorde = 0;
+            requiredDetectives = 0;
+            realDetectivesPresent = 0;
+            lastSpawnFailureReason = string.Empty;
+            EvaluateDetectiveSpawnOpportunity();
+        }
 
-            EvaluateDetectiveGuarantee();
+        private void EndHorde()
+        {
+            hordeActive = false;
+            participationApplied = false;
+            spawnOpportunityHandled = false;
+            spawnAttemptsThisHorde = 0;
+            qualifyingHostileCount = 0;
+            realDetectivesPresent = 0;
+            requiredDetectives = 0;
+            lastSpawnFailureReason = string.Empty;
         }
 
         public void UseDetectivePrefabIfMissing(GameObject prefab)
         {
-            if (detectivePrefab == null)
+            if (!HasValidDetectivePrefab(detectivePrefab)
+                && HasValidDetectivePrefab(prefab))
             {
                 detectivePrefab = prefab;
+                prefabResolutionDisabled = false;
+                missingPrefabWarningIssued = false;
             }
         }
 
-        private void EvaluateDetectiveGuarantee()
+        private void EvaluateDetectiveSpawnOpportunity()
         {
-            ResolveDetectivePrefab();
-            if (detectivePrefab == null)
+            if (spawnOpportunityHandled)
             {
-                MarkSpawnFailure("Detective prefab is not configured.");
                 return;
             }
 
-            DetectiveEncounterCoordinator coordinator = DetectiveEncounterCoordinator.GetOrCreate();
+            // An opportunity is consumed even when it cannot produce a Detective.
+            // This deliberately prevents a failed placement from becoming an
+            // expensive horde-long retry loop.
+            spawnOpportunityHandled = true;
+            if (!TryResolveDetectivePrefab())
+            {
+                CompleteSpawnOpportunity("Detective prefab is not configured.");
+                return;
+            }
+
+            coordinator = ResolveCoordinator();
+            if (coordinator == null)
+            {
+                CompleteSpawnOpportunity("Detective encounter coordinator is unavailable.");
+                return;
+            }
+
             requiredDetectives = Mathf.Min(
                 maximumRealDetectives,
                 curses.GuaranteedRealDetectives);
-            realDetectivesPresent = CountRealDetectivesInEncounter();
-            spawnPending = realDetectivesPresent < requiredDetectives;
-            participationApplied = !spawnPending;
-            if (!spawnPending || Time.time < nextRetryTime)
+            realDetectivesPresent = coordinator.RealDetectiveCount;
+            int missing = Mathf.Max(0, requiredDetectives - realDetectivesPresent);
+            if (missing == 0)
             {
+                CompleteSpawnOpportunity(string.Empty);
                 return;
             }
 
-            if (detectivePrefab.GetComponent<Damageable>() == null)
+            if (!HasValidDetectivePrefab(detectivePrefab))
             {
-                MarkSpawnFailure("Detective prefab has no Damageable component.");
+                CompleteSpawnOpportunity("Detective prefab has no Damageable component.");
                 return;
             }
 
-            int missing = requiredDetectives - realDetectivesPresent;
             int remainingCap = Mathf.Max(0, maximumRealDetectives - coordinator.RealDetectiveCount);
             missing = Mathf.Min(missing, remainingCap);
             if (missing <= 0)
             {
-                MarkSpawnFailure("Existing real Detective cap prevents a new spawn.");
+                CompleteSpawnOpportunity("Existing real Detective cap prevents a new spawn.");
                 return;
             }
 
             int successfulSpawns = 0;
-            for (int index = 0; index < missing; index++)
+            int attemptsAllowed = Mathf.Min(maximumSpawnAttemptsPerHorde, missing);
+            for (int index = 0; index < attemptsAllowed; index++)
             {
+                spawnAttemptsThisHorde++;
                 if (TrySpawnDetective(coordinator, index))
                 {
                     successfulSpawns++;
                 }
             }
 
-            realDetectivesPresent = CountRealDetectivesInEncounter();
-            spawnPending = realDetectivesPresent < requiredDetectives;
-            participationApplied = !spawnPending;
-            if (spawnPending)
-            {
-                MarkSpawnFailure(successfulSpawns > 0
+            realDetectivesPresent = coordinator.RealDetectiveCount;
+            bool completed = realDetectivesPresent >= requiredDetectives;
+            CompleteSpawnOpportunity(completed
+                ? string.Empty
+                : successfulSpawns > 0
                     ? "Not enough safe positions to complete the Detective guarantee."
                     : lastSpawnFailureReason);
-            }
-            else
-            {
-                lastSpawnFailureReason = string.Empty;
-            }
         }
 
         private bool TrySpawnDetective(DetectiveEncounterCoordinator coordinator, int index)
@@ -173,34 +268,27 @@ namespace Cave.Enemies
             }
 
             identity.ConfigureReal(gameObject, coordinator);
-            WorldDifficultyManager difficulty = FindObjectOfType<WorldDifficultyManager>();
-            if (difficulty != null)
+            if (difficultyManager == null)
             {
-                spawned.GetComponent<EnemyDifficultyScaler>()?.Configure(difficulty);
+                difficultyManager = FindObjectOfType<WorldDifficultyManager>();
+            }
+
+            if (difficultyManager != null)
+            {
+                spawned.GetComponent<EnemyDifficultyScaler>()?.Configure(difficultyManager);
             }
 
             return true;
         }
 
-        private int CountRealDetectivesInEncounter()
+        private DetectiveEncounterCoordinator ResolveCoordinator()
         {
-            int count = 0;
-            float radiusSquared = encounterRadius * encounterRadius;
-            foreach (DetectiveIdentity identity in FindObjectsOfType<DetectiveIdentity>())
+            if (coordinator == null)
             {
-                if (identity == null
-                    || !identity.IsRealDetective
-                    || !identity.CanAct
-                    || ((Vector2)identity.transform.position - (Vector2)transform.position).sqrMagnitude
-                        > radiusSquared)
-                {
-                    continue;
-                }
-
-                count++;
+                coordinator = DetectiveEncounterCoordinator.GetOrCreate();
             }
 
-            return count;
+            return coordinator;
         }
 
         private bool TryFindSafeSpawnPosition(int spawnIndex, out Vector2 position)
@@ -214,13 +302,15 @@ namespace Cave.Enemies
                 Vector2 probeOrigin = encounterCenter
                     + Vector2.right * side * Mathf.Max(1f, horizontal)
                     + Vector2.up * groundProbeHeight;
-                RaycastHit2D[] hits = Physics2D.RaycastAll(
+                int hitCount = Physics2D.RaycastNonAlloc(
                     probeOrigin,
                     Vector2.down,
+                    groundHits,
                     groundProbeHeight + groundProbeDistance,
                     groundLayers);
-                foreach (RaycastHit2D hit in hits)
+                for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
                 {
+                    RaycastHit2D hit = groundHits[hitIndex];
                     Collider2D ground = hit.collider;
                     if (!IsSupportedGround(ground))
                     {
@@ -272,10 +362,20 @@ namespace Cave.Enemies
 
         private bool IsSafeSpawnPosition(Vector2 candidate, Collider2D supportingGround)
         {
-            foreach (Collider2D overlap in Physics2D.OverlapCircleAll(
+            int overlapCount = Physics2D.OverlapCircleNonAlloc(
                 candidate,
-                Mathf.Max(playerClearance, mobClearance)))
+                Mathf.Max(playerClearance, mobClearance),
+                overlapResults);
+            if (overlapCount >= overlapResults.Length)
             {
+                // A full non-alloc buffer means the position is too crowded to
+                // prove safe. Rejecting it is safer than allocating a larger query.
+                return false;
+            }
+
+            for (int overlapIndex = 0; overlapIndex < overlapCount; overlapIndex++)
+            {
+                Collider2D overlap = overlapResults[overlapIndex];
                 if (overlap == null || overlap.isTrigger || overlap == supportingGround)
                 {
                     continue;
@@ -307,53 +407,110 @@ namespace Cave.Enemies
             return true;
         }
 
-        private void MarkSpawnFailure(string reason)
+        private void CompleteSpawnOpportunity(string failureReason)
         {
-            participationApplied = false;
-            spawnPending = true;
-            lastSpawnFailureReason = string.IsNullOrEmpty(reason)
-                ? "Detective guarantee spawn did not complete."
-                : reason;
-            nextRetryTime = Time.time + retryDelayAfterFailure;
+            participationApplied = string.IsNullOrEmpty(failureReason);
+            lastSpawnFailureReason = failureReason ?? string.Empty;
         }
 
-        private void ResolveDetectivePrefab()
+        private bool TryResolveDetectivePrefab()
         {
-            if (detectivePrefab != null)
+            if (HasValidDetectivePrefab(detectivePrefab))
             {
-                return;
+                return true;
             }
 
-            DetectiveCursePrefabLibrary library = Resources.Load<DetectiveCursePrefabLibrary>(
-                PrefabLibraryResourceName);
-            if (library != null && library.DetectivePrefab != null)
+            detectivePrefab = null;
+            if (prefabResolutionDisabled)
             {
-                detectivePrefab = library.DetectivePrefab;
-                return;
+                return false;
             }
 
-            foreach (NecromancerDetectiveSummoner summoner in
-                FindObjectsOfType<NecromancerDetectiveSummoner>(true))
+            if (!prefabResolutionAttempted)
             {
-                if (summoner.DetectivePrefab != null)
+                prefabResolutionAttempted = true;
+                DetectiveCursePrefabLibrary library =
+                    Resources.Load<DetectiveCursePrefabLibrary>(PrefabLibraryResourceName);
+                if (library != null
+                    && library.TryGetDetectivePrefab(out GameObject libraryPrefab)
+                    && HasValidDetectivePrefab(libraryPrefab))
                 {
-                    detectivePrefab = summoner.DetectivePrefab;
-                    return;
+                    detectivePrefab = libraryPrefab;
+                    return true;
                 }
+
+                foreach (NecromancerDetectiveSummoner summoner in
+                    FindObjectsOfType<NecromancerDetectiveSummoner>(true))
+                {
+                    if (summoner != null && HasValidDetectivePrefab(summoner.DetectivePrefab))
+                    {
+                        detectivePrefab = summoner.DetectivePrefab;
+                        return true;
+                    }
+                }
+            }
+
+            prefabResolutionDisabled = true;
+            if (!missingPrefabWarningIssued)
+            {
+                missingPrefabWarningIssued = true;
+                Debug.LogWarning(
+                    "Detective's Curse cannot guarantee Detective spawns because its optional "
+                    + "prefab reference is missing or stale. Spawn retries are disabled until "
+                    + "a valid prefab is supplied.",
+                    this);
+            }
+
+            return false;
+        }
+
+        private static bool IsUsablePrefab(GameObject candidate)
+        {
+            if (ReferenceEquals(candidate, null))
+            {
+                return false;
+            }
+
+            try
+            {
+                return candidate != null && candidate.GetInstanceID() != 0;
+            }
+            catch (MissingReferenceException)
+            {
+                return false;
+            }
+        }
+
+        private static bool HasValidDetectivePrefab(GameObject candidate)
+        {
+            if (!IsUsablePrefab(candidate))
+            {
+                return false;
+            }
+
+            try
+            {
+                return candidate.GetComponent<Damageable>() != null;
+            }
+            catch (MissingReferenceException)
+            {
+                return false;
             }
         }
 
         private void OnValidate()
         {
             hostileThreshold = Mathf.Max(3, hostileThreshold);
+            hordeStateProbeInterval = Mathf.Max(0.5f, hordeStateProbeInterval);
             maximumRealDetectives = Mathf.Max(1, maximumRealDetectives);
+            maximumSpawnAttemptsPerHorde = Mathf.Clamp(maximumSpawnAttemptsPerHorde, 1, 3);
             placementAttempts = Mathf.Max(1, placementAttempts);
             placementSearchRadius = Mathf.Max(0.1f, placementSearchRadius);
             groundProbeHeight = Mathf.Max(0.1f, groundProbeHeight);
             groundProbeDistance = Mathf.Max(0.1f, groundProbeDistance);
             playerClearance = Mathf.Max(0.1f, playerClearance);
             mobClearance = Mathf.Max(0.1f, mobClearance);
-            retryDelayAfterFailure = Mathf.Max(0.1f, retryDelayAfterFailure);
+            hordeStateProbeWait = null;
         }
     }
 }

@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e5f9fe2bb9d43b5ac416b9384f5cc32, type: 3}
   m_Name: DetectiveCursePrefabLibrary
   m_EditorClassIdentifier: 
-  detectivePrefab: {fileID: 100100000, guid: ff9c5b5dee29b437db5b8a922a8f72ef, type: 3}
+  detectivePrefab: {fileID: 6241104450036796577, guid: 1c38d9357b0d84cbda99483ae60d96df, type: 3}

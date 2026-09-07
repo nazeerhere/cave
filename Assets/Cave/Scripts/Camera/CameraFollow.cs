@@ -13,6 +13,7 @@ namespace Cave.CameraSystem
         private Vector3 velocity;
         private Camera gameplayCamera;
         private float authoredOrthographicSize;
+        private RoomSceneMarker roomCameraBounds;
 
         public void SetTarget(Transform newTarget)
         {
@@ -77,6 +78,18 @@ namespace Cave.CameraSystem
                 target.position.x + offset.x,
                 target.position.y + offset.y,
                 transform.position.z);
+
+            RoomSceneMarker activeBounds = RoomSceneMarker.ActiveCameraBounds;
+            if (activeBounds != roomCameraBounds)
+            {
+                roomCameraBounds = activeBounds;
+            }
+
+            if (roomCameraBounds != null)
+            {
+                desiredPosition = roomCameraBounds.ClampCameraPosition(desiredPosition, gameplayCamera);
+                desiredPosition.z = transform.position.z;
+            }
 
             transform.position = Vector3.SmoothDamp(
                 transform.position,

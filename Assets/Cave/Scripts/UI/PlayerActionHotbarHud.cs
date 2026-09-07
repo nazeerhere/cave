@@ -45,8 +45,6 @@ namespace Cave.UI
 
         private void Update()
         {
-            RefreshBindings();
-
             int nextSelection = -1;
             if (GameInput.UseHealthPotionPressed)
             {

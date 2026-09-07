@@ -8,12 +8,19 @@ namespace Cave.UI
 {
     public sealed class PlayerShieldHud : MonoBehaviour
     {
+        private const float VisualRefreshInterval = 0.1f;
+
         [SerializeField] private Text statusText;
         [SerializeField] private Image progressFill;
 
         private PlayerStrengthShield shield;
         private PlayerSpecialModeUpgradeState upgradeState;
         private Coroutine flashRoutine;
+        private string displayedStatus;
+        private Color displayedColor = new Color(-1f, -1f, -1f, -1f);
+        private float displayedProgress = -1f;
+        private float nextVisualRefreshTime;
+        private StrengthShieldState displayedState = (StrengthShieldState)(-1);
 
         public void Configure(Text shieldStatusText, Image rechargeProgressFill)
         {
@@ -79,38 +86,66 @@ namespace Cave.UI
 
         private void UpdateShield(StrengthShieldState state, float progress)
         {
+            bool stateChanged = displayedState != state;
+            if (!stateChanged
+                && Time.unscaledTime < nextVisualRefreshTime
+                && displayedProgress >= 0f)
+            {
+                return;
+            }
+
+            nextVisualRefreshTime = Time.unscaledTime + VisualRefreshInterval;
+            displayedState = state;
             if (statusText != null)
             {
                 string prefix = "SHIELD  •  " + GetTierLabel() + "  •  ";
+                string nextStatus;
+                Color nextColor;
                 switch (state)
                 {
                     case StrengthShieldState.Ready:
-                        statusText.text = prefix + "READY";
-                        statusText.color = new Color(0.35f, 0.9f, 1f, 1f);
+                        nextStatus = prefix + "READY";
+                        nextColor = new Color(0.35f, 0.9f, 1f, 1f);
                         break;
                     case StrengthShieldState.Broken:
-                        statusText.text = prefix + "BROKEN";
-                        statusText.color = new Color(1f, 0.35f, 0.25f, 1f);
+                        nextStatus = prefix + "BROKEN";
+                        nextColor = new Color(1f, 0.35f, 0.25f, 1f);
                         break;
                     case StrengthShieldState.Recharging:
-                        statusText.text = prefix + "RECHARGING " + Mathf.RoundToInt(progress * 100f) + "%";
-                        statusText.color = new Color(0.55f, 0.75f, 1f, 1f);
+                        nextStatus = prefix + "RECHARGING " + Mathf.RoundToInt(progress * 100f) + "%";
+                        nextColor = new Color(0.55f, 0.75f, 1f, 1f);
                         break;
                     case StrengthShieldState.Inactive:
-                        statusText.text = prefix + "INACTIVE";
-                        statusText.color = new Color(0.55f, 0.55f, 0.6f, 1f);
+                        nextStatus = prefix + "INACTIVE";
+                        nextColor = new Color(0.55f, 0.55f, 0.6f, 1f);
                         break;
                     default:
-                        statusText.text = prefix + "LOCKED";
-                        statusText.color = new Color(0.45f, 0.45f, 0.5f, 1f);
+                        nextStatus = prefix + "LOCKED";
+                        nextColor = new Color(0.45f, 0.45f, 0.5f, 1f);
                         break;
+                }
+
+                if (displayedStatus != nextStatus)
+                {
+                    displayedStatus = nextStatus;
+                    statusText.text = nextStatus;
+                }
+
+                if (displayedColor != nextColor)
+                {
+                    displayedColor = nextColor;
+                    statusText.color = nextColor;
                 }
             }
 
             if (progressFill != null)
             {
                 float fill = state == StrengthShieldState.Ready ? 1f : Mathf.Clamp01(progress);
-                progressFill.rectTransform.localScale = new Vector3(fill, 1f, 1f);
+                if (!Mathf.Approximately(displayedProgress, fill))
+                {
+                    displayedProgress = fill;
+                    progressFill.rectTransform.localScale = new Vector3(fill, 1f, 1f);
+                }
             }
         }
 
@@ -118,6 +153,7 @@ namespace Cave.UI
         {
             if (mode == SpecialMode.DamageBoost && shield != null)
             {
+                displayedState = (StrengthShieldState)(-1);
                 UpdateShield(shield.CurrentState, shield.RechargeProgress);
             }
         }
@@ -151,6 +187,7 @@ namespace Cave.UI
         private IEnumerator BrokenFlash()
         {
             statusText.color = Color.white;
+            displayedColor = Color.white;
             yield return new WaitForSeconds(0.12f);
             flashRoutine = null;
             if (shield != null)

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Cave.Audio;
 using Cave.Enemies;
+using Cave.Player;
 using UnityEngine;
 
 namespace Cave.Combat
@@ -91,6 +92,7 @@ namespace Cave.Combat
             {
                 GetComponent<EnemyCorruptionLifecycle>()?.PrepareForDeath();
                 damageContext.ReportKillingBlow();
+                PlayerSwordCosmetics.NotifyPlayerDefeatedEnemy(this, damageContext);
                 Died?.Invoke();
                 gameObject.SetActive(false);
                 return appliedDamage;

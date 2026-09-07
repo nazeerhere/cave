@@ -207,8 +207,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd3090b4700374a06afac3ac6ecfc839, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   attack: {fileID: 0}
 --- !u!1 &848056323
 GameObject:
@@ -1273,6 +1273,31 @@ MonoBehaviour:
   fallbackShockwaveColor: {r: 0.35, g: 0.85, b: 1, a: 0.9}
   isPreparingAerialHeavy: 0
   committedDiveDirection: {x: 0, y: -1}
+--- !u!114 &1375708915310517890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6905561519894568502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ff868ecaaf954b21b85dd664687367a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  localOffset: {x: 0.288, y: -1.053, z: 0}
+  localScale: {x: 3.5, y: 2.5, z: 1}
+  sourceFacesRight: 1
+  idleFramesPerSecond: 4
+  runFramesPerSecond: 10
+  spinFramesPerSecond: 12
+  dashFramesPerSecond: 12
+  hitDuration: 0.2
+  castDuration: 0.35
+  interactDuration: 0.35
+  landingDuration: 0.15
+  knockbackSpeedThreshold: 8
+  runSpeedThreshold: 0.1
 --- !u!114 &1375708915310517888
 MonoBehaviour:
   m_ObjectHideFlags: 0

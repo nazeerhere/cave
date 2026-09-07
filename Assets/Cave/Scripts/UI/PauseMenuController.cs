@@ -14,6 +14,7 @@ namespace Cave.UI
         private GameObject movesListPanel;
         private GameObject ledgerPanel;
         private Text ledgerBodyText;
+        private EnemyLedgerPagesHud ledgerPages;
         private Text movesLeftText;
         private Text movesRightText;
         private Text movesChainLeftText;
@@ -53,6 +54,7 @@ namespace Cave.UI
             movesListPanel = movesPanelObject;
             ledgerPanel = ledgerPanelObject;
             ledgerBodyText = configuredLedgerBodyText;
+            ledgerPages = ledgerPanel != null ? ledgerPanel.GetComponent<EnemyLedgerPagesHud>() : null;
             movesLeftText = configuredMovesLeftText;
             movesRightText = configuredMovesRightText;
             movesChainLeftText = configuredMovesChainLeftText;
@@ -208,7 +210,11 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             ledgerPanel.SetActive(true);
-            if (ledgerBodyText != null)
+            if (ledgerPages != null)
+            {
+                ledgerPages.ShowRoster();
+            }
+            else if (ledgerBodyText != null)
             {
                 ledgerBodyText.text = EnemyLedger.BuildSummary();
             }

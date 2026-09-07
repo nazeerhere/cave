@@ -1,0 +1,903 @@
+fileFormatVersion: 2
+guid: 14fefb9fd207e4522b0e0cbe740976ae
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 12
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMasterTextureLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Breach_EntryTunnel
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 820
+        width: 430
+        height: 258
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3c7388232f93d540800000000000000
+      internalID: 5031540182055353404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_EntryTunnelChest
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 620
+        width: 432
+        height: 200
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30330cd012f5b60d0800000000000000
+      internalID: -3428542095743241469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RockPlatformSmallA
+      rect:
+        serializedVersion: 2
+        x: 470
+        y: 808
+        width: 174
+        height: 136
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b67821b5e0066fb20800000000000000
+      internalID: 3167825002675472235
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RockPlatformSmallB
+      rect:
+        serializedVersion: 2
+        x: 671
+        y: 802
+        width: 208
+        height: 142
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6c152bef9a103040800000000000000
+      internalID: 4625226091456699499
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RockRamp
+      rect:
+        serializedVersion: 2
+        x: 895
+        y: 825
+        width: 272
+        height: 198
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c17a5cc1faadf2c10800000000000000
+      internalID: 2031082402604230428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RockPlatformLarge
+      rect:
+        serializedVersion: 2
+        x: 1175
+        y: 796
+        width: 273
+        height: 263
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c90dc4df7c68d100800000000000000
+      internalID: 132975485294283201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_Bridge
+      rect:
+        serializedVersion: 2
+        x: 178
+        y: 610
+        width: 336
+        height: 172
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01ee252ff8371f100800000000000000
+      internalID: 140020125508234768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_ScaffoldTall
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 405
+        width: 180
+        height: 385
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b998a8d8f255e5d60800000000000000
+      internalID: 7880830060671437211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RockPlatformCenter
+      rect:
+        serializedVersion: 2
+        x: 646
+        y: 591
+        width: 202
+        height: 209
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 695007e598d511ba0800000000000000
+      internalID: -6120007574043490922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RockPlatformSmallC
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 583
+        width: 174
+        height: 179
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7dfcb1bdaa4e9ca0800000000000000
+      internalID: -6008282742993912454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_StalagmiteTall
+      rect:
+        serializedVersion: 2
+        x: 997
+        y: 597
+        width: 173
+        height: 238
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b17e926e9e80e5810800000000000000
+      internalID: 1755850705402980123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_CityGate
+      rect:
+        serializedVersion: 2
+        x: 1171
+        y: 592
+        width: 277
+        height: 244
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8a2fd2ba1046edb0800000000000000
+      internalID: -4763049072483423602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_CampTent
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 401
+        width: 432
+        height: 220
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 658a4adfa534ce870800000000000000
+      internalID: 8713413437136611414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_ScaffoldLower
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 405
+        width: 205
+        height: 225
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15bfcbfa7bc5a7a70800000000000000
+      internalID: 8825468363783076689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_OreCart
+      rect:
+        serializedVersion: 2
+        x: 583
+        y: 405
+        width: 106
+        height: 116
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99189a64a3e12a180800000000000000
+      internalID: -9105682260947271271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_Crate
+      rect:
+        serializedVersion: 2
+        x: 682
+        y: 405
+        width: 65
+        height: 98
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fc25e6255f4b74c0800000000000000
+      internalID: -4288746992996897548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_Barrel
+      rect:
+        serializedVersion: 2
+        x: 738
+        y: 405
+        width: 76
+        height: 109
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a99a3f1196872d20800000000000000
+      internalID: 3253717213650786725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_LanternPost
+      rect:
+        serializedVersion: 2
+        x: 797
+        y: 404
+        width: 93
+        height: 222
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a4c1e01c9e6429f0800000000000000
+      internalID: -494148442526727000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_MiningCrane
+      rect:
+        serializedVersion: 2
+        x: 883
+        y: 404
+        width: 147
+        height: 206
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3edc8ae6a0a56a990800000000000000
+      internalID: -7375108338919879197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_Banner
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 410
+        width: 66
+        height: 183
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f634b4778f79ded0800000000000000
+      internalID: -2388737907588057360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_MiningWorkbench
+      rect:
+        serializedVersion: 2
+        x: 1134
+        y: 409
+        width: 112
+        height: 173
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa1a99fee8a619c00800000000000000
+      internalID: 905622162215903663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_MineCartPile
+      rect:
+        serializedVersion: 2
+        x: 1223
+        y: 403
+        width: 225
+        height: 140
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6badf01b2df99fcd0800000000000000
+      internalID: -2523810388901897546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RedCrystalLarge
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 283
+        width: 145
+        height: 137
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ac1f5b279d9776a0800000000000000
+      internalID: -6451514668591670106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_BlueCrystalLarge
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 281
+        width: 127
+        height: 137
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f73845fb7d3107570800000000000000
+      internalID: 8462285517178045311
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RedCrystalSmall
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 285
+        width: 97
+        height: 127
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f694d5a79e9f7f150800000000000000
+      internalID: 5906464217495325039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_BlueCrystalSmall
+      rect:
+        serializedVersion: 2
+        x: 337
+        y: 287
+        width: 95
+        height: 123
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcf8e214466f716c0800000000000000
+      internalID: -4172595619284742193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_EmberOre
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 295
+        width: 101
+        height: 105
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e93651834b2e08660800000000000000
+      internalID: 7386152652550529950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_BlueOre
+      rect:
+        serializedVersion: 2
+        x: 510
+        y: 296
+        width: 98
+        height: 101
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b0e1dbbb34ebfd50800000000000000
+      internalID: 6772257409886970040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_CaveDepthWarm
+      rect:
+        serializedVersion: 2
+        x: 757
+        y: 141
+        width: 282
+        height: 162
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4933a92f4ddd46b10800000000000000
+      internalID: 1973946443368117140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_CaveDepthBlue
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 141
+        width: 219
+        height: 162
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 525cf1b1e38ee48c0800000000000000
+      internalID: -4013014864499849947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_CaveDepthFar
+      rect:
+        serializedVersion: 2
+        x: 1227
+        y: 141
+        width: 221
+        height: 162
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1658ec2bde15be090800000000000000
+      internalID: -8004213831371946655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_Brazier
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 56
+        width: 117
+        height: 145
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd6c2d3a660bd8750800000000000000
+      internalID: 6308892607897585371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_RopeFence
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 40
+        width: 221
+        height: 118
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 222af164591da4770800000000000000
+      internalID: 8595913277846823458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_StoneBlock
+      rect:
+        serializedVersion: 2
+        x: 333
+        y: 45
+        width: 97
+        height: 98
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 578d28826abf707f0800000000000000
+      internalID: -646271330441570187
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_Supplies
+      rect:
+        serializedVersion: 2
+        x: 425
+        y: 42
+        width: 365
+        height: 100
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a9a9fc31b73d19a0800000000000000
+      internalID: -6260786672603387485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Breach_ForegroundStalagmites
+      rect:
+        serializedVersion: 2
+        x: 790
+        y: 0
+        width: 658
+        height: 146
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 215dcc87010dd1d10800000000000000
+      internalID: 2098061770589263122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Breach_Banner: -2388737907588057360
+      Breach_Barrel: 3253717213650786725
+      Breach_BlueCrystalLarge: 8462285517178045311
+      Breach_BlueCrystalSmall: -4172595619284742193
+      Breach_BlueOre: 6772257409886970040
+      Breach_Brazier: 6308892607897585371
+      Breach_Bridge: 140020125508234768
+      Breach_CampTent: 8713413437136611414
+      Breach_CaveDepthBlue: -4013014864499849947
+      Breach_CaveDepthFar: -8004213831371946655
+      Breach_CaveDepthWarm: 1973946443368117140
+      Breach_CityGate: -4763049072483423602
+      Breach_Crate: -4288746992996897548
+      Breach_EmberOre: 7386152652550529950
+      Breach_EntryTunnel: 5031540182055353404
+      Breach_EntryTunnelChest: -3428542095743241469
+      Breach_ForegroundStalagmites: 2098061770589263122
+      Breach_LanternPost: -494148442526727000
+      Breach_MineCartPile: -2523810388901897546
+      Breach_MiningCrane: -7375108338919879197
+      Breach_MiningWorkbench: 905622162215903663
+      Breach_OreCart: -9105682260947271271
+      Breach_RedCrystalLarge: -6451514668591670106
+      Breach_RedCrystalSmall: 5906464217495325039
+      Breach_RockPlatformCenter: -6120007574043490922
+      Breach_RockPlatformLarge: 132975485294283201
+      Breach_RockPlatformSmallA: 3167825002675472235
+      Breach_RockPlatformSmallB: 4625226091456699499
+      Breach_RockPlatformSmallC: -6008282742993912454
+      Breach_RockRamp: 2031082402604230428
+      Breach_RopeFence: 8595913277846823458
+      Breach_ScaffoldLower: 8825468363783076689
+      Breach_ScaffoldTall: 7880830060671437211
+      Breach_StalagmiteTall: 1755850705402980123
+      Breach_StoneBlock: -646271330441570187
+      Breach_Supplies: -6260786672603387485
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -60,6 +60,12 @@ namespace Cave.UI
             PlayerHealthHud existingHud = Object.FindObjectOfType<PlayerHealthHud>(true);
             if (existingHud != null)
             {
+                Transform existingGameplayHud = existingHud.transform.parent;
+                Transform uiRoot = existingGameplayHud != null ? existingGameplayHud.parent : null;
+                Canvas rootCanvas = existingHud.GetComponentInParent<Canvas>();
+                EnsureMenuCanvas(
+                    uiRoot != null ? uiRoot.Find("Menus") : null,
+                    rootCanvas != null ? rootCanvas.sortingOrder + 1 : 101);
                 EnsureHealthRatioHud(existingHud, font);
                 existingHud.Bind(playerHealth);
                 EnsureStaminaHud(existingHud.transform.parent, font, spinSwordAttack);
@@ -84,6 +90,7 @@ namespace Cave.UI
                 EnsureCurseAltarHud(existingHud.transform.parent, font);
                 EnsureFrenzyBreakHud(existingHud.transform.parent, font, playerHealth.gameObject);
                 ApplyFreeUiPackageSkin(existingHud.transform.parent);
+                CaveUiArt.ApplyOnce(existingHud.transform.parent, uiRoot != null ? uiRoot.Find("Menus") : null);
                 EnsureEventSystem();
                 return;
             }
@@ -189,6 +196,7 @@ namespace Cave.UI
             ApplyFreeUiPackageSkin(gameplayHud);
 
             RectTransform menus = CreateStretchRect("Menus", root.transform);
+            EnsureMenuCanvas(menus, canvas.sortingOrder + 1);
             GameObject pauseMenu = CreateMenuPanel("Pause Menu", menus, new Vector2(420f, 380f));
             Text pauseCrest = CreateCenteredText(
                 "Pause Crest",
@@ -516,6 +524,8 @@ namespace Cave.UI
             ledgerBody.verticalOverflow = VerticalWrapMode.Overflow;
             Button ledgerBackButton = CreateButton(
                 "Back", ledgerPanel.transform, font, new Vector2(0f, -284f), new Vector2(220f, 44f));
+            EnemyLedgerPagesHud ledgerPages = ledgerPanel.AddComponent<EnemyLedgerPagesHud>();
+            ledgerPages.Configure(ledgerBody);
 
             PauseMenuController pauseController = menus.gameObject.AddComponent<PauseMenuController>();
             pauseController.Configure(
@@ -539,6 +549,8 @@ namespace Cave.UI
                 movesChainRightText,
                 movesPageText,
                 movesPageButton);
+
+            CaveUiArt.ApplyOnce(gameplayHud, menus);
 
             EnsureEventSystem();
         }
@@ -919,7 +931,7 @@ namespace Cave.UI
                 new Vector2(1f, 1f),
                 new Vector2(1f, 1f),
                 new Vector2(-24f, -166f),
-                new Vector2(460f, 500f));
+                new Vector2(460f, 610f));
             Image selectionBackground = selectionPanel.gameObject.AddComponent<Image>();
             selectionBackground.color = CaveUiTheme.Surface;
             AddPanelFrame(selectionPanel, CaveUiTheme.BronzeLight, 4f);
@@ -983,7 +995,7 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0f, -25f),
-                new Vector2(424f, 368f));
+                new Vector2(424f, 480f));
 
             Button[] modeButtons = new Button[4];
             Text[] modeLabels = new Text[4];
@@ -1029,7 +1041,7 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0f, -24f),
-                new Vector2(424f, 370f));
+                new Vector2(424f, 480f));
 
             CreateCardSurface("Health Potion Card", shopContent, new Vector2(0f, 139f), new Vector2(416f, 62f));
             CreateCardSurface("Mana Potion Card", shopContent, new Vector2(0f, 71f), new Vector2(416f, 62f));
@@ -1115,7 +1127,7 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(-130f, -229f),
+                new Vector2(-130f, -282f),
                 new Vector2(160f, 32f));
 
             Text feedbackText = CreateCenteredText(
@@ -1124,7 +1136,7 @@ namespace Cave.UI
                 font,
                 "Mode switches, upgrades, and potions spend Currency.",
                 14,
-                new Vector2(86f, -229f),
+                new Vector2(86f, -282f),
                 new Vector2(244f, 34f));
             feedbackText.color = CaveUiTheme.Gold;
 
@@ -1153,6 +1165,9 @@ namespace Cave.UI
                 progressionMount,
                 shardSummaryMount);
             modeHud.Bind(specialMode, playerCurrency);
+            PlayerSwordCosmetics.EnsureInstalled(specialMode.gameObject);
+            PlayerSwordCosmeticHud swordHud = modesContent.gameObject.AddComponent<PlayerSwordCosmeticHud>();
+            swordHud.Configure(specialMode.GetComponent<PlayerSwordCosmetics>(), font);
         }
 
         private static void EnsureShieldHud(Transform gameplayHud, Font font)
@@ -2671,6 +2686,27 @@ namespace Cave.UI
             }
 
             return gameObject;
+        }
+
+        private static void EnsureMenuCanvas(Transform menus, int sortingOrder)
+        {
+            if (menus == null)
+            {
+                return;
+            }
+
+            Canvas menuCanvas = menus.GetComponent<Canvas>();
+            if (menuCanvas == null)
+            {
+                menuCanvas = menus.gameObject.AddComponent<Canvas>();
+            }
+
+            menuCanvas.overrideSorting = true;
+            menuCanvas.sortingOrder = sortingOrder;
+            if (menus.GetComponent<GraphicRaycaster>() == null)
+            {
+                menus.gameObject.AddComponent<GraphicRaycaster>();
+            }
         }
 
         private static void EnsureEventSystem()
