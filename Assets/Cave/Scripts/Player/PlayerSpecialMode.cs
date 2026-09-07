@@ -1,4 +1,7 @@
 using System;
+using Cave.Axioms;
+using Cave.Axioms.Control;
+using Cave.Axioms.Mastery;
 using Cave.Combat;
 using UnityEngine;
 
@@ -25,6 +28,33 @@ namespace Cave.Player
         {
             playerCurrency = GetComponent<PlayerCurrency>();
             CurrentMode = startingMode;
+            // One-time player installation point; avoids prefab YAML edits and
+            // never attaches telemetry to enemies or PlayerHealth.
+            if (GetComponent<PlayerMovementTelemetry>() == null)
+            {
+                gameObject.AddComponent<PlayerMovementTelemetry>();
+            }
+
+            if (GetComponent<AxiomRuntimeState>() == null)
+            {
+                gameObject.AddComponent<AxiomRuntimeState>();
+            }
+
+            if (GetComponent<AxiomPlayerMovementControl>() == null)
+            {
+                gameObject.AddComponent<AxiomPlayerMovementControl>();
+            }
+            AxiomMasteryState.EnsureOn(gameObject);
+            AxiomControlState control = AxiomControlState.EnsureOn(gameObject);
+            control.InterventionSucceeded -= HandleAxiomCorrection;
+            control.InterventionSucceeded += HandleAxiomCorrection;
+        }
+
+        private void HandleAxiomCorrection(AxiomKind kind, AxiomErrorState error, float quality, float timestamp)
+        {
+            MasteryDomain domain;
+            if (AxiomMasteryState.TryDomain(kind, out domain))
+                AxiomMasteryState.EnsureOn(gameObject).Record(new MasteryEvidence(domain, MasteryEvidenceKind.Correction, quality, Mathf.Max(.1f,error.Magnitude), timestamp));
         }
 
         public bool TrySwitchMode(SpecialMode newMode)

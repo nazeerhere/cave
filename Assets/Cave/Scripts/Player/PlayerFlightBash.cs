@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cave.Axioms.Elemental;
 using Cave.Audio;
 using Cave.Combat;
 using Cave.Enemies;
@@ -50,6 +51,7 @@ namespace Cave.Player
         [SerializeField] private Vector2 committedDiveDirection = Vector2.down;
 
         private readonly HashSet<Damageable> hitTargets = new HashSet<Damageable>();
+        private readonly ElementalAxiomApplicationReceipt axiomApplicationReceipt = new ElementalAxiomApplicationReceipt();
         private Rigidbody2D body;
         private Collider2D bodyCollider;
         private PlayerController playerController;
@@ -220,6 +222,7 @@ namespace Cave.Player
                     DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy)
                 : new DamageContext(gameObject, DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy);
             hitTargets.Clear();
+            axiomApplicationReceipt.Clear();
             impactTriggered = false;
             committedDiveDirection = requestedDirection.sqrMagnitude > 0.001f
                 ? requestedDirection.normalized
@@ -341,6 +344,14 @@ namespace Cave.Player
                 int appliedDamage = damageable.TakeDamageResolved(
                     impactDamage,
                     impactContext);
+                ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
+                    gameObject,
+                    damageable,
+                    appliedDamage,
+                    isFrenzyCritical,
+                    impactContext,
+                    Time.time,
+                    axiomApplicationReceipt);
                 if (isFrenzyCritical)
                 {
                     Vector2 criticalDirection = (Vector2)damageable.transform.position - impactPoint;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cave.Axioms.Elemental;
 using Cave.Audio;
 using Cave.Combat;
 using Cave.Enemies;
@@ -36,6 +37,7 @@ namespace Cave.Projectiles
         private bool hasImpacted;
         private int remainingEnemyHits = 1;
         private readonly HashSet<Damageable> hitTargets = new HashSet<Damageable>();
+        private readonly ElementalAxiomApplicationReceipt axiomApplicationReceipt = new ElementalAxiomApplicationReceipt();
         private SpecialModeTier2Settings tier3Settings;
         private int firedTier = 1;
         private SpriteRenderer[] visualRenderers;
@@ -113,6 +115,7 @@ namespace Cave.Projectiles
             firedTier = Mathf.Clamp(skillTier, 1, 3);
             tier3Settings = specialModeSettings;
             hitTargets.Clear();
+            axiomApplicationReceipt.Clear();
             reflectedByEnemy = false;
             enemyParryOwner = null;
             hasLaunched = true;
@@ -173,6 +176,14 @@ namespace Cave.Projectiles
                     int appliedDamage = damageable.TakeDamageResolved(
                         impactDamage,
                         impactContext);
+                    ElementalAxiomCombatBridge.TryApplyProjectileHit(
+                        damageable,
+                        firedMode,
+                        appliedDamage,
+                        isFrenzyCritical,
+                        damageContext,
+                        Time.time,
+                        axiomApplicationReceipt);
                     if (isFrenzyCritical)
                     {
                         frenzyActivation.ApplyImpact(
@@ -180,7 +191,7 @@ namespace Cave.Projectiles
                             body.velocity,
                             appliedDamage);
                     }
-                    ApplyStatusEffect(damageable);
+                    ApplyStatusEffect(damageable, appliedDamage > 0);
                     remainingEnemyHits--;
                     if (remainingEnemyHits <= 0)
                     {
@@ -229,7 +240,7 @@ namespace Cave.Projectiles
             return true;
         }
 
-        private void ApplyStatusEffect(Damageable damageable)
+        private void ApplyStatusEffect(Damageable damageable, bool wasSuccessfulDirectHit)
         {
             if (!damageable.gameObject.activeInHierarchy)
             {
@@ -264,18 +275,43 @@ namespace Cave.Projectiles
             {
                 if (firedTier >= 3 && tier3Settings != null)
                 {
-                    statusEffects.ApplyBurn(
-                        burnDamage,
-                        burnTickInterval,
-                        burnDuration,
-                        damageContext,
-                        tier3Settings.BurnSpreadRadius,
-                        tier3Settings.MaximumBurnSpreadTargets,
-                        damageableLayers);
+                    if (wasSuccessfulDirectHit)
+                    {
+                        statusEffects.ApplyBurnWithHeatPersistence(
+                            burnDamage,
+                            burnTickInterval,
+                            burnDuration,
+                            damageContext,
+                            tier3Settings.BurnSpreadRadius,
+                            tier3Settings.MaximumBurnSpreadTargets,
+                            damageableLayers);
+                    }
+                    else
+                    {
+                        statusEffects.ApplyBurn(
+                            burnDamage,
+                            burnTickInterval,
+                            burnDuration,
+                            damageContext,
+                            tier3Settings.BurnSpreadRadius,
+                            tier3Settings.MaximumBurnSpreadTargets,
+                            damageableLayers);
+                    }
                 }
                 else
                 {
-                    statusEffects.ApplyBurn(burnDamage, burnTickInterval, burnDuration, damageContext);
+                    if (wasSuccessfulDirectHit)
+                    {
+                        statusEffects.ApplyBurnWithHeatPersistence(
+                            burnDamage,
+                            burnTickInterval,
+                            burnDuration,
+                            damageContext);
+                    }
+                    else
+                    {
+                        statusEffects.ApplyBurn(burnDamage, burnTickInterval, burnDuration, damageContext);
+                    }
                 }
             }
         }

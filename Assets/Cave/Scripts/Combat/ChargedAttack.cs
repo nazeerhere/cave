@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cave.Axioms.Elemental;
 using Cave.Audio;
+using Cave.Axioms.Phase;
 using Cave.Enemies;
 using Cave.InputSystem;
 using Cave.Player;
@@ -41,6 +43,7 @@ namespace Cave.Combat
         [SerializeField] private Collider2D attackCollider;
 
         private readonly HashSet<Damageable> hitTargets = new HashSet<Damageable>();
+        private readonly ElementalAxiomApplicationReceipt axiomApplicationReceipt = new ElementalAxiomApplicationReceipt();
         private float chargeStartedAt;
         private float chargeStartingDuration;
         private float currentKnockback;
@@ -237,7 +240,25 @@ namespace Cave.Combat
                 damageContext = damageContext.WithTraits(DamageTrait.FrenzyCritical);
             }
 
+            PhaseCombatState phaseBeforeHit = damageable.GetComponent<PhaseCombatState>();
+            bool hadLatentPhaseBeforeHit = phaseBeforeHit != null && phaseBeforeHit.LatentStacks > 0;
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
+                gameObject,
+                damageable,
+                appliedDamage,
+                isFrenzyCritical,
+                damageContext,
+                Time.time,
+                axiomApplicationReceipt);
+            if (appliedDamage > 0 && hadLatentPhaseBeforeHit)
+            {
+                PhaseCombatState.TryCollapseFromChargedHit(
+                    damageable.gameObject,
+                    currentChargeTier,
+                    gameObject,
+                    Time.time);
+            }
             HeavyTargetHit?.Invoke(damageable);
             if (isFrenzyCritical)
             {
@@ -363,6 +384,7 @@ namespace Cave.Combat
             isAttacking = true;
             nextAttackTime = Time.time + resolvedActiveDuration + resolvedCooldown;
             hitTargets.Clear();
+            axiomApplicationReceipt.Clear();
             OrientAttack(currentAttackDirection);
             SetAttackActive(true);
 

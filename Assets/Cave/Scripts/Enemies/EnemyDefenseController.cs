@@ -1,4 +1,6 @@
 using System;
+using Cave.Axioms.Frequency;
+using Cave.Axioms.Phase;
 using Cave.Combat;
 using UnityEngine;
 
@@ -100,6 +102,7 @@ namespace Cave.Enemies
         private Quaternion restingWeaponRotation;
         private bool defensePoseApplied;
         private EnemyMeleeCombat meleePresentation;
+        private GuardResonanceState guardResonance;
 
         public event Action<EnemyDefenseState, bool> DefenseResolved;
         public event Action GuardBroken;
@@ -125,6 +128,7 @@ namespace Cave.Enemies
                 RefreshState();
                 return currentState == EnemyDefenseState.Ready
                     && Time.time >= nextDecisionTime
+                    && (guardResonance == null || guardResonance.CanSustainGuard)
                     && (stagger == null || stagger.CanAct);
             }
         }
@@ -133,6 +137,12 @@ namespace Cave.Enemies
         {
             facingDirection = startsFacingRight ? 1f : -1f;
             stagger = GetComponent<EnemyStagger>();
+            guardResonance = GuardResonanceState.EnsureOn(gameObject);
+            if (guardResonance != null)
+            {
+                guardResonance.ResonanceBroken += HandleResonanceBroken;
+                guardResonance.DestabilizedStarted += EndBlockingForDestabilization;
+            }
             CachePresentation();
         }
 
@@ -158,6 +168,11 @@ namespace Cave.Enemies
 
         public bool TryBlockDamage(DamageContext context)
         {
+            if (guardResonance != null && !guardResonance.CanSustainGuard)
+            {
+                return false;
+            }
+
             float chance = ResolveBlockChance();
             if (chance <= 0f
                 || context.Source == null
@@ -173,6 +188,9 @@ namespace Cave.Enemies
 
             if (currentState == EnemyDefenseState.Blocking && Time.time < activeUntil)
             {
+                // A visible sustained Guard is a cadence contact even when the
+                // existing block RNG lets the damage through.
+                guardResonance?.RegisterGuardContact(context.Source, Time.time);
                 bool postureBlockedHit = UnityEngine.Random.value < chance;
                 if (postureBlockedHit)
                 {
@@ -192,6 +210,9 @@ namespace Cave.Enemies
             ResolveAttempt(EnemyDefenseState.Blocking, succeeded, blockColor);
             if (succeeded)
             {
+                // The hit that successfully raises a new Block is the first
+                // cadence reference for this attacker/defender pair.
+                guardResonance?.RegisterGuardContact(context.Source, Time.time);
                 ApplyAttackerRecoil(context);
             }
 
@@ -235,6 +256,7 @@ namespace Cave.Enemies
             RefreshState();
             return Time.time >= nextDecisionTime
                 && currentState == EnemyDefenseState.Ready
+                && (guardResonance == null || guardResonance.CanSustainGuard)
                 && (stagger == null || stagger.CanAct);
         }
 
@@ -433,6 +455,26 @@ namespace Cave.Enemies
             ShowDefenseFeedback(EnemyDefenseState.Blocking, blockColor);
             DefenseResolved?.Invoke(EnemyDefenseState.Blocking, true);
             return true;
+        }
+
+        /// <summary>Ends Blocking without invoking Guard Break behavior.</summary>
+        public void EndBlockingForDestabilization()
+        {
+            RefreshState();
+            if (currentState != EnemyDefenseState.Blocking)
+            {
+                return;
+            }
+
+            currentState = EnemyDefenseState.Cooldown;
+            activeUntil = Time.time;
+            recoveryUntil = Time.time;
+            RestoreDefensePose();
+        }
+
+        private void HandleResonanceBroken(GameObject attacker)
+        {
+            PhaseCombatState.GrantOpening(attacker, gameObject, PhaseOpeningSource.ResonanceBreak);
         }
 
         public bool TryReceiveGuardBreak(GameObject source)
@@ -669,6 +711,15 @@ namespace Cave.Enemies
             nextDecisionTime = 0f;
             runtimeBlockChanceBonus = 0f;
             RestoreDefensePose();
+        }
+
+        private void OnDestroy()
+        {
+            if (guardResonance != null)
+            {
+                guardResonance.ResonanceBroken -= HandleResonanceBroken;
+                guardResonance.DestabilizedStarted -= EndBlockingForDestabilization;
+            }
         }
     }
 }

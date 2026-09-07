@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cave.Axioms.Elemental;
 using Cave.Audio;
 using Cave.InputSystem;
 using Cave.Player;
@@ -30,6 +31,7 @@ namespace Cave.Combat
         [SerializeField] private GameObject hitVfxPrefab;
 
         private readonly Dictionary<Damageable, int> activeTargetContacts = new Dictionary<Damageable, int>();
+        private readonly ElementalAxiomApplicationReceipt axiomApplicationReceipt = new ElementalAxiomApplicationReceipt();
         private readonly Dictionary<object, float> staminaCostModifiers = new Dictionary<object, float>();
         private readonly List<Damageable> inactiveTargetBuffer = new List<Damageable>();
         private Quaternion restingRotation;
@@ -143,6 +145,7 @@ namespace Cave.Combat
             isAttacking = true;
             GetComponent<PlayerCurseController>()?.NotifyOffensiveCommitment();
             activeTargetContacts.Clear();
+            axiomApplicationReceipt.Clear();
             frenzyActivation = null;
             if (combatFlow == null)
             {
@@ -499,6 +502,14 @@ namespace Cave.Combat
             }
 
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
+                gameObject,
+                damageable,
+                appliedDamage,
+                isFrenzyCritical,
+                damageContext,
+                Time.time,
+                axiomApplicationReceipt);
             Vector2 hitDirection = damageable.transform.position - transform.position;
             if (isFrenzyCritical)
             {

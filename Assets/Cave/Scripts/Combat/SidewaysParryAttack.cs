@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using Cave.Audio;
+using Cave.Axioms.Frequency;
+using Cave.Axioms.Phase;
 using Cave.Enemies;
 using Cave.InputSystem;
 using Cave.Player;
@@ -115,6 +117,7 @@ namespace Cave.Combat
         private PlayerMana playerMana;
         private SpinSwordAttack stamina;
         private PlayerGuardBreak guardBreak;
+        private GuardResonanceState guardResonance;
 
         public event System.Action<PlayerDefenseQuality> DefenseSucceeded;
 
@@ -138,6 +141,12 @@ namespace Cave.Combat
             playerMana = GetComponent<PlayerMana>();
             stamina = GetComponent<SpinSwordAttack>();
             guardBreak = GetComponent<PlayerGuardBreak>();
+            guardResonance = GuardResonanceState.EnsureOn(gameObject);
+            if (guardResonance != null)
+            {
+                guardResonance.ResonanceBroken += HandleResonanceBroken;
+                guardResonance.DestabilizedStarted += EndSustainedGuardForDestabilization;
+            }
 
             if (parryTransform != null)
             {
@@ -218,6 +227,14 @@ namespace Cave.Combat
             }
 
             UpdateHeldPhase(Time.time - stanceStartedAt);
+
+            if (currentPhase == ParryPhase.Guard
+                && guardResonance != null
+                && !guardResonance.CanSustainGuard)
+            {
+                EndSustainedGuardForDestabilization();
+                return;
+            }
 
             PlayerBrace brace = GetComponent<PlayerBrace>();
             if (currentPhase == ParryPhase.Guard
@@ -363,7 +380,7 @@ namespace Cave.Combat
                         StaggerStrength.Heavy,
                         perfectMeleeKnockback,
                         perfectEnemyStaggerDuration);
-                    CompleteSuccessfulParry(ParryPhase.Perfect);
+                    CompleteSuccessfulParry(ParryPhase.Perfect, damageContext.Source);
                     return true;
                 case ParryPhase.Normal:
                     ApplyMeleeStagger(
@@ -371,7 +388,7 @@ namespace Cave.Combat
                         StaggerStrength.Normal,
                         normalMeleeKnockback,
                         normalEnemyStaggerDuration);
-                    CompleteSuccessfulParry(ParryPhase.Normal);
+                    CompleteSuccessfulParry(ParryPhase.Normal, damageContext.Source);
                     return true;
                 case ParryPhase.Late:
                     incomingDamage = Mathf.Max(
@@ -397,6 +414,7 @@ namespace Cave.Combat
 
                     incomingDamage = 0;
                     CompleteSuccessfulDefense(PlayerDefenseQuality.Block);
+                    guardResonance?.RegisterGuardContact(damageContext.Source, Time.time);
                     return true;
                 default:
                     return false;
@@ -417,6 +435,15 @@ namespace Cave.Combat
                 brokenFeedbackDuration);
             CaveSfx.Play(CaveSfxCue.Hit, 0.8f);
             EndStance(true);
+        }
+
+        /// <summary>Ends only the sustained Guard posture; timed parry phases remain intact.</summary>
+        public void EndSustainedGuardForDestabilization()
+        {
+            if (currentPhase == ParryPhase.Guard)
+            {
+                EndStance(false);
+            }
         }
 
         private void BeginStance()
@@ -483,7 +510,7 @@ namespace Cave.Combat
             }
         }
 
-        private void CompleteSuccessfulParry(ParryPhase phase)
+        private void CompleteSuccessfulParry(ParryPhase phase, GameObject opponent = null)
         {
             bool isPerfect = phase == ParryPhase.Perfect;
             RestoreParryResources(isPerfect);
@@ -516,6 +543,20 @@ namespace Cave.Combat
                 maximumChainExtension,
                 currentChainExtension + extension);
             PlaySuccessfulParryFeedback(phase);
+            if (isPerfect && opponent != null)
+            {
+                PhaseCombatState.GrantOpening(gameObject, opponent, PhaseOpeningSource.PerfectParry);
+                PlayerCombatFlow frenzy = GetComponent<PlayerCombatFlow>();
+                if (frenzy != null && (frenzy.IsFrenzyArmed || frenzy.IsFrenzyBound))
+                {
+                    GuardResonanceState resonance = GuardResonanceState.EnsureOn(gameObject);
+                    if (resonance.ClearCadenceSequence(opponent))
+                    {
+                        CombatShapeEffect.Create(transform.position, CombatShape.Diamond, .7f,
+                            new Color(.8f, .45f, 1f, .85f), .16f);
+                    }
+                }
+            }
             CompleteSuccessfulDefense(isPerfect
                 ? PlayerDefenseQuality.PerfectParry
                 : PlayerDefenseQuality.NormalParry);
@@ -553,7 +594,28 @@ namespace Cave.Combat
 
             if (currentPhase == ParryPhase.Late && elapsed > lateEnd)
             {
-                SetPhase(ParryPhase.Guard);
+                if (guardResonance == null || guardResonance.CanSustainGuard)
+                {
+                    SetPhase(ParryPhase.Guard);
+                }
+                else
+                {
+                    EndStance(false);
+                }
+            }
+        }
+
+        private void HandleResonanceBroken(GameObject attacker)
+        {
+            PhaseCombatState.GrantOpening(attacker, gameObject, PhaseOpeningSource.ResonanceBreak);
+        }
+
+        private void OnDestroy()
+        {
+            if (guardResonance != null)
+            {
+                guardResonance.ResonanceBroken -= HandleResonanceBroken;
+                guardResonance.DestabilizedStarted -= EndSustainedGuardForDestabilization;
             }
         }
 

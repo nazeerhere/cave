@@ -1676,8 +1676,15 @@ namespace Cave.UI
 
         private static void EnsureStatusEffectHud(Transform gameplayHud, Font font, GameObject player)
         {
-            if (gameplayHud == null || Object.FindObjectOfType<PlayerStatusEffectHud>(true) != null)
+            if (gameplayHud == null)
             {
+                return;
+            }
+
+            PlayerStatusEffectHud existingHud = Object.FindObjectOfType<PlayerStatusEffectHud>(true);
+            if (existingHud != null)
+            {
+                ConfigureExistingStatusEffectHud(existingHud, font, player);
                 return;
             }
 
@@ -1693,44 +1700,38 @@ namespace Cave.UI
                 new Vector2(0f, 1f),
                 new Vector2(24f, -108f),
                 new Vector2(350f, 28f));
+            ConfigureCompactStatusStrip(row);
 
-            const int slotCount = 6;
+            const int slotCount = 7;
             GameObject[] slots = new GameObject[slotCount];
             Text[] labels = new Text[slotCount];
-            Color[] colors =
-            {
-                new Color(0.48f, 1f, 0.25f, 1f),
-                CaveUiTheme.Stamina,
-                CaveUiTheme.Gold,
-                CaveUiTheme.Mana,
-                CaveUiTheme.BorderBright,
-                new Color(0.75f, 0.35f, 1f, 1f)
-            };
+            Image[] icons = new Image[slotCount];
             for (int index = 0; index < slotCount; index++)
             {
                 RectTransform slot = CreateRect(
                     "Status Slot " + (index + 1),
                     row,
-                    Vector2.zero,
-                    Vector2.zero,
                     new Vector2(0f, 0.5f),
-                    new Vector2(24f + index * 58f, 14f),
-                    new Vector2(50f, 24f));
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(32f, 32f));
                 Image image = slot.gameObject.AddComponent<Image>();
-                image.color = CaveUiTheme.SurfaceInset;
+                image.color = new Color(0.02f, 0.04f, 0.06f, 0.45f);
                 image.raycastTarget = true;
-                AddPanelFrame(slot, colors[index], 1f);
                 labels[index] = CreateCenteredText(
                     "Status Icon",
                     slot,
                     font,
                     string.Empty,
-                    14,
+                    18,
                     Vector2.zero,
-                    new Vector2(44f, 20f));
+                    new Vector2(24f, 24f));
                 labels[index].fontStyle = FontStyle.Bold;
-                labels[index].color = colors[index];
+                labels[index].color = CaveUiTheme.PrimaryText;
                 labels[index].raycastTarget = false;
+                icons[index] = EnsureStatusSlotSprite(slot);
+                ConfigureCompactStatusSlot(slot, index, labels[index], icons[index]);
                 slots[index] = slot.gameObject;
             }
 
@@ -1772,7 +1773,168 @@ namespace Cave.UI
             tooltipPanel.Configure(tooltipGroup, tooltipTitle, tooltipBody);
 
             PlayerStatusEffectHud hud = row.gameObject.AddComponent<PlayerStatusEffectHud>();
-            hud.Configure(slots, labels, player, tooltipPanel);
+            hud.Configure(slots, labels, icons, player, tooltipPanel);
+        }
+
+        private static void ConfigureExistingStatusEffectHud(
+            PlayerStatusEffectHud hud,
+            Font font,
+            GameObject player)
+        {
+            const int slotCount = 7;
+            RectTransform row = hud.transform as RectTransform;
+            ConfigureCompactStatusStrip(row);
+            GameObject[] slots = new GameObject[slotCount];
+            Text[] labels = new Text[slotCount];
+            Image[] icons = new Image[slotCount];
+            for (int index = 0; index < slotCount; index++)
+            {
+                Transform slotTransform = hud.transform.Find("Status Slot " + (index + 1));
+                RectTransform slot = slotTransform as RectTransform;
+                if (slot == null)
+                {
+                    slot = CreateRect(
+                        "Status Slot " + (index + 1),
+                        hud.transform,
+                        new Vector2(0f, 0.5f),
+                        new Vector2(0f, 0.5f),
+                        new Vector2(0f, 0.5f),
+                        Vector2.zero,
+                        new Vector2(32f, 32f));
+                    slot.gameObject.AddComponent<Image>();
+                }
+
+                Text label = slot.Find("Status Icon")?.GetComponent<Text>();
+                if (label == null)
+                {
+                    label = CreateCenteredText(
+                        "Status Icon",
+                        slot,
+                        font,
+                        string.Empty,
+                        18,
+                        Vector2.zero,
+                        new Vector2(24f, 24f));
+                    label.fontStyle = FontStyle.Bold;
+                    label.raycastTarget = false;
+                }
+
+                slots[index] = slot.gameObject;
+                labels[index] = label;
+                icons[index] = EnsureStatusSlotSprite(slot);
+                ConfigureCompactStatusSlot(slot, index, label, icons[index]);
+            }
+
+            StatusTooltipPanel tooltipPanel = hud.transform.Find("Status Tooltip")
+                ?.GetComponent<StatusTooltipPanel>();
+            hud.Configure(slots, labels, icons, player, tooltipPanel);
+        }
+
+        private static void ConfigureCompactStatusStrip(RectTransform row)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            row.anchorMin = new Vector2(0f, 1f);
+            row.anchorMax = new Vector2(0f, 1f);
+            row.pivot = new Vector2(0f, 1f);
+            row.anchoredPosition = new Vector2(24f, -108f);
+            row.sizeDelta = new Vector2(248f, 32f);
+        }
+
+        private static void ConfigureCompactStatusSlot(
+            RectTransform slot,
+            int index,
+            Text label,
+            Image icon)
+        {
+            const float SlotSize = 32f;
+            const float Spacing = 4f;
+            slot.anchorMin = new Vector2(0f, 0.5f);
+            slot.anchorMax = new Vector2(0f, 0.5f);
+            slot.pivot = new Vector2(0f, 0.5f);
+            slot.anchoredPosition = new Vector2(index * (SlotSize + Spacing), 16f);
+            slot.sizeDelta = new Vector2(SlotSize, SlotSize);
+
+            Image backing = slot.GetComponent<Image>();
+            if (backing != null)
+            {
+                backing.color = new Color(0.02f, 0.04f, 0.06f, 0.45f);
+                backing.raycastTarget = true;
+            }
+
+            Outline outline = slot.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
+
+            DisableDecorativeFrameChildren(slot);
+
+            if (label != null)
+            {
+                label.fontSize = 18;
+                label.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                label.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                label.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                label.rectTransform.anchoredPosition = Vector2.zero;
+                label.rectTransform.sizeDelta = new Vector2(24f, 24f);
+            }
+
+            if (icon != null)
+            {
+                icon.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                icon.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                icon.rectTransform.anchoredPosition = Vector2.zero;
+                icon.rectTransform.sizeDelta = new Vector2(24f, 24f);
+                icon.preserveAspect = true;
+            }
+        }
+
+        private static void DisableDecorativeFrameChildren(RectTransform root)
+        {
+            foreach (Transform child in root)
+            {
+                string childName = child.name;
+                if (childName.StartsWith("Iron ")
+                    || childName.StartsWith("Bronze ")
+                    || childName.StartsWith("Accent "))
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private static Image EnsureStatusSlotSprite(RectTransform slot)
+        {
+            Transform existingSprite = slot.Find("Status Sprite");
+            Image image = existingSprite != null ? existingSprite.GetComponent<Image>() : null;
+            if (image == null)
+            {
+                RectTransform icon = CreateRect(
+                    "Status Sprite",
+                    slot,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(24f, 24f));
+                image = icon.gameObject.AddComponent<Image>();
+            }
+
+            image.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            image.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            image.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            image.rectTransform.anchoredPosition = Vector2.zero;
+            image.rectTransform.sizeDelta = new Vector2(24f, 24f);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = Color.white;
+            image.enabled = false;
+            return image;
         }
 
         private static void EnsureWizardWarpWarningHud(
@@ -1825,33 +1987,30 @@ namespace Cave.UI
 
         private static void EnsureCurseHud(Transform gameplayHud, Font font, GameObject player)
         {
-            if (gameplayHud == null || Object.FindObjectOfType<PlayerCurseHud>(true) != null)
+            if (gameplayHud == null)
             {
                 return;
             }
 
-            RectTransform panel = CreateRect(
-                "Active Curse HUD",
-                gameplayHud,
-                Vector2.zero,
-                Vector2.zero,
-                Vector2.zero,
-                new Vector2(414f, 22f),
-                new Vector2(230f, 82f));
-            Text title = CreateCenteredText(
-                "Curse Header",
-                panel,
-                font,
-                "ACTIVE CURSES",
-                10,
-                new Vector2(0f, 66f),
-                new Vector2(224f, 16f));
-            title.color = CaveUiTheme.BronzeLight;
+            PlayerCurseHud existingHud = Object.FindObjectOfType<PlayerCurseHud>(true);
+            if (existingHud != null)
+            {
+                ConfigureCompactCurseHud(existingHud, font, player);
+                return;
+            }
 
-            GameObject distraction = CreateCurseIcon(panel, font, "DISTRACTION", "◇", -76f);
-            GameObject detective = CreateCurseIcon(panel, font, "DETECTIVE", "◉", 0f);
-            GameObject avarice = CreateCurseIcon(panel, font, "AVARICE", "◆", 76f);
-            Text avariceLabel = avarice.transform.Find("Curse Name")?.GetComponent<Text>();
+            RectTransform panel = CreateRect(
+                "Player Curse Strip",
+                gameplayHud,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(24f, -380f),
+                new Vector2(86f, 26f));
+            GameObject distraction = CreateCurseIcon(panel, font, "DISTRACTION", "◇", 0);
+            GameObject detective = CreateCurseIcon(panel, font, "DETECTIVE", "◉", 1);
+            GameObject avarice = CreateCurseIcon(panel, font, "AVARICE", "◆", 2);
+            Text avariceLabel = avarice.transform.Find("Curse Tier")?.GetComponent<Text>();
             Text deathClaimNotice = CreateCenteredText(
                 "Avarice Death Claim Notice",
                 gameplayHud,
@@ -1872,44 +2031,197 @@ namespace Cave.UI
                 player != null ? player.GetComponent<PlayerCurseController>() : null);
         }
 
+        private static void ConfigureCompactCurseHud(
+            PlayerCurseHud hud,
+            Font font,
+            GameObject player)
+        {
+            RectTransform panel = hud.transform as RectTransform;
+            if (panel == null)
+            {
+                return;
+            }
+
+            panel.name = "Player Curse Strip";
+            panel.anchorMin = new Vector2(0f, 1f);
+            panel.anchorMax = new Vector2(0f, 1f);
+            panel.pivot = new Vector2(0f, 1f);
+            panel.anchoredPosition = new Vector2(24f, -380f);
+            panel.sizeDelta = new Vector2(86f, 26f);
+
+            Transform header = panel.Find("Curse Header");
+            if (header != null)
+            {
+                header.gameObject.SetActive(false);
+            }
+
+            GameObject distraction = EnsureCompactCurseIcon(panel, font, "DISTRACTION", "◇", 0);
+            GameObject detective = EnsureCompactCurseIcon(panel, font, "DETECTIVE", "◉", 1);
+            GameObject avarice = EnsureCompactCurseIcon(panel, font, "AVARICE", "◆", 2);
+            Text avariceLabel = avarice.transform.Find("Curse Tier")?.GetComponent<Text>();
+            Text deathClaimNotice = hud.transform.parent != null
+                ? hud.transform.parent.Find("Avarice Death Claim Notice")?.GetComponent<Text>()
+                : null;
+            hud.Configure(
+                distraction,
+                detective,
+                avarice,
+                avariceLabel,
+                deathClaimNotice,
+                player != null ? player.GetComponent<PlayerCurseController>() : null);
+        }
+
         private static GameObject CreateCurseIcon(
             Transform parent,
             Font font,
             string label,
             string symbol,
-            float x)
+            int index)
         {
             RectTransform slot = CreateRect(
                 label + " Curse",
                 parent,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
                 Vector2.zero,
-                Vector2.zero,
-                new Vector2(0.5f, 0.5f),
-                new Vector2(x + 77f, 32f),
-                new Vector2(68f, 54f));
+                new Vector2(26f, 26f));
             Image image = slot.gameObject.AddComponent<Image>();
-            image.color = CaveUiTheme.SurfaceInset;
-            image.raycastTarget = false;
-            AddPanelFrame(slot, new Color(0.62f, 0.3f, 1f, 1f), 1f);
+            image.color = new Color(0.05f, 0.02f, 0.08f, 0.45f);
+            image.raycastTarget = true;
             Text icon = CreateCenteredText(
-                "Curse Symbol",
+                "Curse Glyph",
                 slot,
                 font,
                 symbol,
-                19,
-                new Vector2(0f, 8f),
-                new Vector2(60f, 26f));
+                18,
+                Vector2.zero,
+                new Vector2(22f, 22f));
             icon.color = new Color(0.72f, 0.45f, 1f, 1f);
-            Text name = CreateCenteredText(
-                "Curse Name",
+            Text tier = CreateCenteredText(
+                "Curse Tier",
                 slot,
                 font,
-                label,
+                string.Empty,
                 8,
-                new Vector2(0f, -17f),
-                new Vector2(64f, 14f));
-            name.color = CaveUiTheme.PrimaryText;
+                new Vector2(8f, 8f),
+                new Vector2(12f, 12f));
+            tier.color = CaveUiTheme.Gold;
+            tier.fontStyle = FontStyle.Bold;
+            ConfigureCompactCurseIcon(slot, index, icon, tier);
             return slot.gameObject;
+        }
+
+        private static GameObject EnsureCompactCurseIcon(
+            RectTransform panel,
+            Font font,
+            string label,
+            string symbol,
+            int index)
+        {
+            RectTransform slot = panel.Find(label + " Curse") as RectTransform;
+            if (slot == null)
+            {
+                return CreateCurseIcon(panel, font, label, symbol, index);
+            }
+
+            Image backing = slot.GetComponent<Image>();
+            if (backing == null)
+            {
+                backing = slot.gameObject.AddComponent<Image>();
+            }
+
+            Text glyph = slot.Find("Curse Glyph")?.GetComponent<Text>()
+                ?? slot.Find("Curse Symbol")?.GetComponent<Text>();
+            if (glyph == null)
+            {
+                glyph = CreateCenteredText(
+                    "Curse Glyph",
+                    slot,
+                    font,
+                    symbol,
+                    18,
+                    Vector2.zero,
+                    new Vector2(22f, 22f));
+            }
+            else
+            {
+                glyph.text = symbol;
+            }
+
+            Text oldName = slot.Find("Curse Name")?.GetComponent<Text>();
+            if (oldName != null)
+            {
+                oldName.gameObject.SetActive(false);
+            }
+
+            Text tier = slot.Find("Curse Tier")?.GetComponent<Text>();
+            if (tier == null)
+            {
+                tier = CreateCenteredText(
+                    "Curse Tier",
+                    slot,
+                    font,
+                    string.Empty,
+                    8,
+                    new Vector2(8f, 8f),
+                    new Vector2(12f, 12f));
+            }
+
+            ConfigureCompactCurseIcon(slot, index, glyph, tier);
+            return slot.gameObject;
+        }
+
+        private static void ConfigureCompactCurseIcon(
+            RectTransform slot,
+            int index,
+            Text glyph,
+            Text tier)
+        {
+            const float SlotSize = 26f;
+            const float Spacing = 4f;
+            slot.anchorMin = new Vector2(0f, 0.5f);
+            slot.anchorMax = new Vector2(0f, 0.5f);
+            slot.pivot = new Vector2(0f, 0.5f);
+            slot.anchoredPosition = new Vector2(index * (SlotSize + Spacing), 13f);
+            slot.sizeDelta = new Vector2(SlotSize, SlotSize);
+
+            Image backing = slot.GetComponent<Image>();
+            if (backing != null)
+            {
+                backing.color = new Color(0.05f, 0.02f, 0.08f, 0.45f);
+                backing.raycastTarget = true;
+            }
+
+            Outline outline = slot.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
+
+            DisableDecorativeFrameChildren(slot);
+
+            if (glyph != null)
+            {
+                glyph.fontSize = 18;
+                glyph.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                glyph.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                glyph.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                glyph.rectTransform.anchoredPosition = Vector2.zero;
+                glyph.rectTransform.sizeDelta = new Vector2(22f, 22f);
+                glyph.color = new Color(0.72f, 0.45f, 1f, 1f);
+            }
+
+            if (tier != null)
+            {
+                tier.fontSize = 8;
+                tier.rectTransform.anchorMin = new Vector2(1f, 1f);
+                tier.rectTransform.anchorMax = new Vector2(1f, 1f);
+                tier.rectTransform.pivot = new Vector2(1f, 1f);
+                tier.rectTransform.anchoredPosition = new Vector2(-1f, -1f);
+                tier.rectTransform.sizeDelta = new Vector2(12f, 12f);
+                tier.color = CaveUiTheme.Gold;
+            }
         }
 
         private static void EnsureCurseAltarHud(Transform gameplayHud, Font font)

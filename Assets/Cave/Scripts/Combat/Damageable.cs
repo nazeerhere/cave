@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Cave.Audio;
+using Cave.Axioms.Phase;
 using Cave.Enemies;
 using Cave.Player;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace Cave.Combat
         private Coroutine flashRoutine;
         private int runtimeMaximumHealth;
         private Color persistentTint = Color.white;
+        private PhaseCombatState phaseCombatState;
 
         public event Action Died;
         public event Action<DamageContext, bool, int> DamageResolved;
@@ -79,9 +81,25 @@ namespace Cave.Combat
                 }
             }
 
+            if (phaseCombatState == null)
+            {
+                phaseCombatState = GetComponent<PhaseCombatState>();
+            }
+
+            if (phaseCombatState != null)
+            {
+                amount = phaseCombatState.ResolveIncomingDamage(amount);
+            }
+
             int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
             int appliedDamage = healthBeforeDamage - CurrentHealth;
+            PhaseCombatState.TryConsumeOpeningOnSuccessfulHit(
+                damageContext.Source,
+                gameObject,
+                appliedDamage,
+                damageContext,
+                Time.time);
             DamageResolved?.Invoke(
                 damageContext,
                 false,

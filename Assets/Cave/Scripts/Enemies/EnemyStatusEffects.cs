@@ -1,4 +1,5 @@
 using System.Collections;
+using Cave.Axioms.Elemental;
 using Cave.Combat;
 using Cave.Progression;
 using Cave.Projectiles;
@@ -155,6 +156,34 @@ namespace Cave.Enemies
 
             statusVisuals?.SetBurnActive(true);
             burnRoutine = StartCoroutine(BurnForDuration(activeBurn));
+        }
+
+        /// <summary>
+        /// Applies the normal Burn implementation with the current Heat response
+        /// only when a caller has already confirmed a successful direct Fire hit.
+        /// Generic Burn, DOT, and spread paths remain mechanically unchanged.
+        /// </summary>
+        public void ApplyBurnWithHeatPersistence(
+            int damagePerTick,
+            float tickInterval,
+            float duration,
+            DamageContext damageContext,
+            float deathSpreadRadius = 0f,
+            int maximumSpreadTargets = 0,
+            LayerMask damageableLayers = default)
+        {
+            AxiomDynamicsState dynamics = GetComponent<AxiomDynamicsState>();
+            float persistence = dynamics != null
+                ? dynamics.GetHeatBurnPersistenceMultiplier(Time.time)
+                : 1f;
+            ApplyBurn(
+                damagePerTick,
+                tickInterval,
+                duration * persistence,
+                damageContext,
+                deathSpreadRadius,
+                maximumSpreadTargets,
+                damageableLayers);
         }
 
         private IEnumerator SlowUntilExpired()

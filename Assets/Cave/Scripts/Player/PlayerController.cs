@@ -1,4 +1,5 @@
 using Cave.Audio;
+using Cave.Axioms.Control;
 using Cave.Combat;
 using Cave.Enemies;
 using Cave.InputSystem;
@@ -154,7 +155,11 @@ namespace Cave.Player
             externalMovementLockUntil = Mathf.Max(
                 externalMovementLockUntil,
                 Time.time + Mathf.Max(0f, controlLockDuration));
-            body.velocity = velocity;
+            AxiomPlayerMovementControl axiomMovement = GetComponent<AxiomPlayerMovementControl>();
+            float multiplier = axiomMovement != null
+                ? axiomMovement.GetIncomingKnockbackMultiplier()
+                : 1f;
+            body.velocity = velocity * multiplier;
         }
 
         public void ApplyExternalControlLock(float duration)

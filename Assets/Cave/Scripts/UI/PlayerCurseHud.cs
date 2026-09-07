@@ -91,13 +91,15 @@ namespace Cave.UI
                 avariceIcon.SetActive(avariceActive);
             }
 
-            if (avariceLabel != null && avariceActive)
+            if (avariceLabel != null)
             {
-                string tier = curses.CurrentAvariceTier > 0
-                    ? " " + ToRoman(curses.CurrentAvariceTier)
+                string tier = avariceActive && curses.CurrentAvariceTier > 0
+                    ? ToRoman(curses.CurrentAvariceTier)
                     : string.Empty;
-                avariceLabel.text = "AVARICE" + tier
-                    + "\nCLAIM " + Mathf.RoundToInt(curses.CurrentAvariceDeathClaim * 100f) + "%";
+                // The live strip reserves this compact badge for the tier only.
+                // Detailed claim information remains contextual rather than turning
+                // every active curse into a card-sized HUD element.
+                avariceLabel.text = tier;
             }
         }
 

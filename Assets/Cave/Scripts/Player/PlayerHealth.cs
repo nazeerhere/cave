@@ -1,4 +1,5 @@
 using System;
+using Cave.Axioms.Phase;
 using Cave.Combat;
 using Cave.Enemies;
 using Cave.World;
@@ -16,6 +17,7 @@ namespace Cave.Player
         private PlayerStrengthShield strengthShield;
         private PlayerStrengthDeflection strengthDeflection;
         private SidewaysParryAttack guard;
+        private PhaseCombatState phaseCombatState;
         private float invulnerableUntil;
 
         public event Action<int, int> HealthChanged;
@@ -87,7 +89,25 @@ namespace Cave.Player
                 amount = curses.ResolveIncomingDamage(amount);
             }
 
+            if (phaseCombatState == null)
+            {
+                phaseCombatState = GetComponent<PhaseCombatState>();
+            }
+
+            if (phaseCombatState != null)
+            {
+                amount = phaseCombatState.ResolveIncomingDamage(amount);
+            }
+
+            int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+            int appliedDamage = healthBeforeDamage - CurrentHealth;
+            PhaseCombatState.TryConsumeOpeningOnSuccessfulHit(
+                damageContext.Source,
+                gameObject,
+                appliedDamage,
+                damageContext,
+                Time.time);
             invulnerableUntil = Time.time + postHitInvulnerability;
             HealthChanged?.Invoke(CurrentHealth, maxHealth);
             DamageTaken?.Invoke();
