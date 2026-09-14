@@ -8,6 +8,7 @@ namespace Cave.World
     [DisallowMultipleComponent]
     public sealed class WorldDifficultyManager : MonoBehaviour
     {
+        private static WorldDifficultyManager activeInstance;
         [SerializeField] private ProgressionDifficultySettings settings;
         [SerializeField] private PlayerResourceMastery playerMastery;
 
@@ -27,6 +28,13 @@ namespace Cave.World
         public float RawCombinedGrowthPercent => rawCombinedGrowthPercent;
         public int DifficultyTier => currentDifficultyTier;
         public float DifficultyMultiplier => currentDifficultyMultiplier;
+        /// <summary>Read-only bridge for local mechanics that already key from World Difficulty.</summary>
+        public static int CurrentDifficultyTier => activeInstance != null ? activeInstance.DifficultyTier : 0;
+
+        private void Awake()
+        {
+            activeInstance = this;
+        }
 
         internal void Configure(
             PlayerResourceMastery mastery,
@@ -131,6 +139,10 @@ namespace Cave.World
 
         private void OnDestroy()
         {
+            if (activeInstance == this)
+            {
+                activeInstance = null;
+            }
             if (playerMastery != null)
             {
                 playerMastery.MasteryChanged -= RecalculateDifficulty;

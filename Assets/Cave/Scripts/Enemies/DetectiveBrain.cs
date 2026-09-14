@@ -77,6 +77,13 @@ namespace Cave.Enemies
         private float EffectiveResearcherMoveSpeed => researcherMoveSpeed
             * researcherSpeedMultiplier;
 
+        /// <summary>
+        /// Presentation-only researcher observation state. This deliberately
+        /// mirrors the existing Study/prediction band without controlling it.
+        /// </summary>
+        public bool IsStudying => currentIntent == DetectiveIntent.Researcher
+            && researcherHoldingObservationBand;
+
         protected override void ConfigureCapabilities()
         {
             poisonShooter = GetComponentInChildren<EnemyPoisonShooter>(true);

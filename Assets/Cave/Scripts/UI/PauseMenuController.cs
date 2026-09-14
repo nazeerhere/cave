@@ -21,6 +21,7 @@ namespace Cave.UI
         private Text movesChainRightText;
         private Text movesPageText;
         private Button movesPageButton;
+        private MovesListPresentation movesPresentation;
         private SettingsMenuController settingsController;
         private bool isPaused;
         private float previousTimeScale = 1f;
@@ -46,7 +47,8 @@ namespace Cave.UI
             Text configuredMovesChainLeftText,
             Text configuredMovesChainRightText,
             Text configuredMovesPageText,
-            Button configuredMovesPageButton)
+            Button configuredMovesPageButton,
+            MovesListPresentation configuredMovesPresentation)
         {
             pauseMenu = pauseMenuObject;
             settingsPanel = settingsPanelObject;
@@ -61,6 +63,7 @@ namespace Cave.UI
             movesChainRightText = configuredMovesChainRightText;
             movesPageText = configuredMovesPageText;
             movesPageButton = configuredMovesPageButton;
+            movesPresentation = configuredMovesPresentation;
 
             resumeButton.onClick.AddListener(Resume);
             resetLevelButton.onClick.AddListener(ResetCurrentLevel);
@@ -166,6 +169,11 @@ namespace Cave.UI
                 movesListPanel.SetActive(false);
             }
 
+            if (ledgerPanel != null)
+            {
+                ledgerPanel.SetActive(false);
+            }
+
             Time.timeScale = 1f;
             GameInput.EnableGameplayAfterInputRelease();
             Scene activeScene = SceneManager.GetActiveScene();
@@ -181,6 +189,7 @@ namespace Cave.UI
 
             pauseMenu.SetActive(false);
             movesListPanel.SetActive(false);
+            if (ledgerPanel != null) ledgerPanel.SetActive(false);
             settingsPanel.SetActive(true);
             settingsController?.PrepareToShow();
         }
@@ -194,6 +203,7 @@ namespace Cave.UI
 
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
+            if (ledgerPanel != null) ledgerPanel.SetActive(false);
             movesListPanel.SetActive(true);
             movesPageIndex = 0;
             RefreshMovesList();
@@ -239,34 +249,30 @@ namespace Cave.UI
             if (movesLeftText != null)
             {
                 movesLeftText.text =
-                    "BASIC COMBAT\n"
-                    + Key(GameAction.BasicAttack) + "  Hold — Sustained Spin\n"
-                    + Key(GameAction.ChargedAttack) + "  Hold / Release — Charged Attack\n"
-                    + Key(GameAction.GuardBreak) + "  Guard Break / Counter\n\n"
-                    + "DEFENSE\n"
-                    + Key(GameAction.Parry) + "  Hold — Guard / Parry\n"
-                    + "Normal Parry → Charged starts Tier 1\n"
-                    + "Perfect Parry → Charged starts Tier 2\n"
-                    + "Successful Guard Break → Charged starts Tier 1\n"
-                    + "After Parry timing: Guard + GB → Brace\n\n"
-                    + "MOVEMENT\n"
+                    "1. BASIC MOVES\n\n"
                     + Key(GameAction.MoveLeft) + " / " + Key(GameAction.MoveRight) + "  Move\n"
                     + Key(GameAction.Jump) + "  Jump\n"
-                    + Key(GameAction.Dash) + "  Dash";
+                    + Key(GameAction.Dash) + "  Dash\n\n"
+                    + "2. COMBAT\n\n"
+                    + Key(GameAction.BasicAttack) + "  Hold — Sustained Spin\n"
+                    + Key(GameAction.ChargedAttack) + "  Hold / Release — Heavy\n"
+                    + "Heavy has charge tiers; a committed release attacks.\n"
+                    + Key(GameAction.Parry) + "  Hold — Guard / Parry\n"
+                    + Key(GameAction.GuardBreak) + "  Guard Break / Counter\n\n"
+                    + "3. AIR HEAVY\n\n"
+                    + Key(GameAction.ChargedAttack) + " in air — Ground Smash\n"
+                    + "Uses Stamina. Tap falls vertical; hold aims a diagonal dive.";
             }
 
             if (movesRightText != null)
             {
                 movesRightText.text =
-                    "FRENZY BREAK\n"
-                    + Key(GameAction.Interact) + "  Tap — Physical Critical\n"
-                    + Key(GameAction.Interact) + "  Hold — Mana Infusion I / II / III\n"
-                    + "Next NEW attack activation claims Frenzy\n"
-                    + "Physical 275% • Mana 355 / 395 / 435%\n"
-                    + "Strength 500 / 510 / 525%\n"
-                    + "Slow Shot → Ice  •  Burn Shot → Fire\n"
-                    + "Flight → Wind  •  Strength → Strength\n\n"
-                    + "MAGIC & ITEMS\n"
+                    "DEFENSE FOLLOW-UPS\n\n"
+                    + "Normal Parry → Heavy begins at Tier 1.\n"
+                    + "Perfect Parry → Heavy begins at Tier 2.\n"
+                    + "Successful Guard Break → Heavy begins at Tier 1.\n"
+                    + "After Parry timing: Guard + GB enters Brace.\n\n"
+                    + "PROJECTILES & ITEMS\n\n"
                     + Key(GameAction.FireProjectile) + "  Fire Current Mode Projectile\n"
                     + Key(GameAction.UseHealthPotion) + "  Health Potion\n"
                     + Key(GameAction.UseManaPotion) + "  Mana Potion\n"
@@ -277,78 +283,61 @@ namespace Cave.UI
                     + Key(GameAction.SummonCurseAltar) + "  Summon Curse Altar";
             }
 
-            if (movesChainLeftText != null)
-            {
-                movesChainLeftText.text =
-                    "BASIC & CHAINED ATTACKS\n\n"
-                    + "BASIC: the standard action from ordinary combat context.\n"
-                    + "CHAINED: an action changed by the move/state before it.\n\n"
-                    + Key(GameAction.BasicAttack) + "  SPIN\n"
-                    + Key(GameAction.GuardBreak) + "  GUARD BREAK — from neutral\n"
-                    + Key(GameAction.ChargedAttack) + "  HEAVY — grounded Charged Attack\n\n"
-                    + "Normal Parry → Charged I\n"
-                    + "Perfect Parry → Charged II\n"
-                    + "Successful GB → Charged I\n"
-                    + "Spin → GB input becomes Bash\n"
-                    + "Guard after Parry + GB → Brace\n"
-                    + "Brace + Spin / Heavy → discounted exit\n"
-                    + "Air Tap Heavy → Vertical Slam\n"
-                    + "Air Hold Heavy → 40° Diagonal Slam";
-            }
-
-            if (movesChainRightText != null)
-            {
-                movesChainRightText.text =
-                    "FRENZY BREAK — OPENER OR FINISHER\n\n"
-                    + "Pay the configured large resource cost. Frenzy stays armed "
-                    + "during its targeting window.\n\n"
-                    + "The next NEW qualifying attack activation claims it. One activation "
-                    + "Crits; later attacks are normal. Multi-target attacks may Crit each "
-                    + "unique target once.\n\n"
-                    + "PHYSICAL  275%\n"
-                    + "MANA I / II / III  355% / 395% / 435%\n"
-                    + "STRENGTH I / II / III  500% / 510% / 525%\n\n"
-                    + "Critical Resistance reduces only the Critical bonus.\n"
-                    + "A committed whiff still spends Frenzy.";
-            }
-
             RefreshMovesPage();
         }
 
         private void ToggleMovesPage()
         {
-            movesPageIndex = movesPageIndex == 0 ? 1 : 0;
+            movesPageIndex = (movesPageIndex + 1) % MovesListPresentation.PageCount;
             RefreshMovesPage();
         }
 
         private void RefreshMovesPage()
         {
-            bool showChains = movesPageIndex == 1;
+            if (movesPresentation == null && movesListPanel != null)
+            {
+                movesPresentation = movesListPanel.GetComponent<MovesListPresentation>();
+            }
+
+            bool showBasic = movesPageIndex == 0;
             if (movesLeftText != null)
             {
-                movesLeftText.gameObject.SetActive(!showChains);
+                movesLeftText.gameObject.SetActive(showBasic);
             }
 
             if (movesRightText != null)
             {
-                movesRightText.gameObject.SetActive(!showChains);
+                movesRightText.gameObject.SetActive(showBasic);
             }
 
             if (movesChainLeftText != null)
             {
-                movesChainLeftText.gameObject.SetActive(showChains);
+                movesChainLeftText.gameObject.SetActive(!showBasic);
             }
 
             if (movesChainRightText != null)
             {
-                movesChainRightText.gameObject.SetActive(showChains);
+                movesChainRightText.gameObject.SetActive(!showBasic);
+            }
+
+            if (movesPageIndex == 1)
+            {
+                PopulateFollowUpsPage();
+            }
+            else if (movesPageIndex == 2)
+            {
+                PopulateSkillsPage();
             }
 
             if (movesPageText != null)
             {
-                movesPageText.text = showChains
-                    ? "PAGE 2 / 2  •  BASIC & CHAINED ATTACKS"
-                    : "PAGE 1 / 2  •  CONTROLS";
+                movesPageText.text = movesPageIndex == 0
+                    ? "PAGE 1 / 4  •  BASIC MOVES"
+                    : movesPageIndex == 1
+                        ? "PAGE 2 / 4  •  FOLLOW-UPS / BRACE"
+                        : movesPageIndex == 2
+                            ? "PAGE 3 / 4  •  SKILLS / RESOURCES"
+                            : "PAGE 4 / 4  •  AXIOMS";
             }
 
             if (movesPageButton != null)
@@ -356,8 +345,74 @@ namespace Cave.UI
                 Text label = movesPageButton.GetComponentInChildren<Text>();
                 if (label != null)
                 {
-                    label.text = showChains ? "PREVIOUS" : "NEXT";
+                    label.text = "NEXT PAGE";
                 }
+            }
+
+            if (movesPresentation != null)
+            {
+                movesPresentation.ShowPage(movesPageIndex);
+                if (movesLeftText != null) movesLeftText.gameObject.SetActive(false);
+                if (movesRightText != null) movesRightText.gameObject.SetActive(false);
+                if (movesChainLeftText != null) movesChainLeftText.gameObject.SetActive(false);
+                if (movesChainRightText != null) movesChainRightText.gameObject.SetActive(false);
+            }
+        }
+
+        private void PopulateFollowUpsPage()
+        {
+            if (movesChainLeftText != null)
+            {
+                movesChainLeftText.text =
+                    "2. FOLLOW-UPS / CHAINS\n\n"
+                    + "Spin → GB = Bash.\n"
+                    + "Parry → Heavy starts at Tier 1.\n"
+                    + "Perfect Parry → Heavy starts at Tier 2.\n"
+                    + "Successful GB → Heavy starts at Tier 1.\n"
+                    + "Heavy or GB → Dash = Cross Step.\n"
+                    + "Successful defense → Dash = Slip.\n"
+                    + "Successful defense → GB = Counter Push.\n\n"
+                    + "Brace exits through Spin or Heavy. Quick Brace makes that exit cheaper.";
+            }
+
+            if (movesChainRightText != null)
+            {
+                movesChainRightText.text =
+                    "BRACE STAGES\n\n"
+                    + "QUICK BRACE\n"
+                    + "Guard + GB after the Parry timing window. Brief and mobile; its next Spin or Heavy costs less.\n\n"
+                    + "FULL BRACE\n"
+                    + "Reached automatically from Quick Brace. Main defensive stance; restores Stamina and can Deflect.\n\n"
+                    + "DEEP BRACE\n"
+                    + "Press GB again from Full. Immobile and no Guard; restores Mana slowly while held.";
+            }
+        }
+
+        private void PopulateSkillsPage()
+        {
+            if (movesChainLeftText != null)
+            {
+                movesChainLeftText.text =
+                    "3. SKILLS / RESOURCES\n\n"
+                    + "ELEMENTAL MODES\n"
+                    + "Slow Shot — Frost response.\n"
+                    + "Burn Shot — Fire response.\n"
+                    + "Flight — Wind movement and Ground Smash.\n"
+                    + "Strength — shield and physical pressure.\n\n"
+                    + "Each mode and tier is shown in the Modes / Shop panel. Use the selected mode's projectile with "
+                    + Key(GameAction.FireProjectile) + ".";
+            }
+
+            if (movesChainRightText != null)
+            {
+                movesChainRightText.text =
+                    "SPECIALS / RULES\n\n"
+                    + "FRENZY BREAK\n"
+                    + Key(GameAction.Interact) + " tap prepares Physical; hold infuses Mana. The next new qualifying attack claims it.\n\n"
+                    + "RESOURCES\n"
+                    + "Mana powers projectiles and skills. Stamina powers Spin, Heavy actions, movement, and Ground Smash.\n\n"
+                    + "UNBLOCKABLE ≠ UNPARRYABLE\n"
+                    + "Some attacks bypass Guard but can still be perfectly parried.";
             }
         }
 

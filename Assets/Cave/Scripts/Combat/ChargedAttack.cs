@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cave.Axioms.Elemental;
+using Cave.Axioms.Convergence;
 using Cave.Audio;
 using Cave.Axioms.Phase;
+using Cave.Axioms.Vfx;
 using Cave.Enemies;
 using Cave.InputSystem;
 using Cave.Player;
@@ -37,6 +39,19 @@ namespace Cave.Combat
         [SerializeField, Min(0f)] private float directionalReach = 1.1f;
         [SerializeField] private LayerMask damageableLayers;
 
+        [Header("Tier-1 Heavy Chain")]
+        [SerializeField, Min(0.05f)] private float continuationWindow = 0.38f;
+        [SerializeField, Min(0f)] private float breakerStrikeDelay = 0.05f;
+        [SerializeField, Min(0f)] private float reversalStrikeDelay = 0.04f;
+        [SerializeField, Min(0f)] private float reaperStrikeDelay = 0.07f;
+        [SerializeField, Min(0f)] private float driveStrikeDelay = 0.06f;
+        [SerializeField, Min(0f)] private float judgmentStrikeDelay = 0.1f;
+        [SerializeField, Min(0f)] private float breakerRecovery = 0.14f;
+        [SerializeField, Min(0f)] private float reversalRecovery = 0.12f;
+        [SerializeField, Min(0f)] private float reaperRecovery = 0.19f;
+        [SerializeField, Min(0f)] private float driveRecovery = 0.2f;
+        [SerializeField, Min(0f)] private float judgmentRecovery = 0.28f;
+
         [Header("References")]
         [SerializeField] private GameObject chargeIndicator;
         [SerializeField] private GameObject attackVisual;
@@ -53,6 +68,12 @@ namespace Cave.Combat
         private int currentAttackSequence;
         private bool isCharging;
         private bool isAttacking;
+        // Explicit Tier-1 state: 0..4 maps to H1 Breaker through H5 Judgment.
+        private int heavyChainIndex;
+        private int activeHeavyIndex;
+        private bool chainWindowOpen;
+        private float chainWindowEndsAt;
+        private int heavyVisualRevision;
         private PlayerDamageBoost damageBoost;
         private PlayerResourceMastery resourceMastery;
         private PlayerAimDirection aimDirection;
@@ -68,13 +89,21 @@ namespace Cave.Combat
         private Vector3 restingAttackPosition;
         private Quaternion restingAttackRotation;
         private Quaternion restingSwordRotation;
+        private PhaseCombatState ownPhaseCombatState;
+        private AxiomVfxPresenter axiomVfxPresenter;
+        private PlayerHealth playerHealth;
 
         public bool IsCharging => isCharging;
         public bool IsAttacking => isAttacking;
         public int CurrentAttackSequence => currentAttackSequence;
+        public int HeavyChainIndex => heavyChainIndex;
+        public int ActiveHeavyIndex => activeHeavyIndex;
+        public int HeavyVisualRevision => heavyVisualRevision;
+        public int HeavyVisualFrameStart => isCharging ? 0 : 2;
 
         private void Awake()
         {
+            ResolveAuthoredHitboxReferences();
             damageBoost = GetComponent<PlayerDamageBoost>();
             resourceMastery = GetComponent<PlayerResourceMastery>();
             aimDirection = GetComponent<PlayerAimDirection>();
@@ -83,6 +112,9 @@ namespace Cave.Combat
             combatFlow = GetComponent<PlayerCombatFlow>();
             groundSlam = GetComponent<PlayerFlightBash>();
             curseController = GetComponent<PlayerCurseController>();
+            ownPhaseCombatState = GetComponent<PhaseCombatState>();
+            axiomVfxPresenter = GetComponent<AxiomVfxPresenter>();
+            playerHealth = GetComponent<PlayerHealth>();
             swordPivot = spinSwordAttack != null ? spinSwordAttack.SwordPivot : null;
             attackTransform = attackCollider != null
                 ? attackCollider.transform
@@ -104,6 +136,61 @@ namespace Cave.Combat
             currentChargeTier = 1;
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
+            activeHeavyIndex = 0;
+        }
+
+        private void OnEnable()
+        {
+            if (playerHealth == null) playerHealth = GetComponent<PlayerHealth>();
+            if (playerHealth == null) return;
+            playerHealth.Died -= ResetHeavyState;
+            playerHealth.Died += ResetHeavyState;
+            playerHealth.Respawned -= ResetHeavyState;
+            playerHealth.Respawned += ResetHeavyState;
+        }
+
+        /// <summary>
+        /// Repairs only the known Player prefab omission at runtime when an older
+        /// serialized prefab has lost the three charged-hitbox references. This
+        /// is intentionally a one-time, direct child lookup; it is not a scene
+        /// scan and never broadens the damage mask beyond the project's dedicated
+        /// Damageable layer.
+        /// </summary>
+        private void ResolveAuthoredHitboxReferences()
+        {
+            Transform hitboxTransform = transform.Find("Charged Attack Hitbox");
+            Transform indicatorTransform = transform.Find("Charge Indicator");
+            if (hitboxTransform == null)
+            {
+                return;
+            }
+
+            // Historical prefab data pointed at an unrelated prefab asset rather
+            // than the Player's authored indicator child. Use only that child.
+            if (indicatorTransform != null
+                && (chargeIndicator == null || !chargeIndicator.transform.IsChildOf(transform)))
+            {
+                chargeIndicator = indicatorTransform.gameObject;
+            }
+
+            if (attackCollider == null)
+            {
+                attackCollider = hitboxTransform.GetComponent<Collider2D>();
+            }
+
+            if (attackVisual == null && hitboxTransform.GetComponent<SpriteRenderer>() != null)
+            {
+                attackVisual = hitboxTransform.gameObject;
+            }
+
+            if (damageableLayers.value == 0)
+            {
+                int damageableLayer = LayerMask.NameToLayer("Damageable");
+                if (damageableLayer >= 0)
+                {
+                    damageableLayers = 1 << damageableLayer;
+                }
+            }
         }
 
         private void Update()
@@ -136,7 +223,23 @@ namespace Cave.Combat
                 return;
             }
 
+            if (chainWindowOpen && Time.time > chainWindowEndsAt)
+            {
+                ResetChain();
+            }
+
             PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                groundSlam?.CancelAerialHeavyPreparation();
+                if (isCharging)
+                {
+                    CancelCharge();
+                }
+
+                return;
+            }
+
             if (!isCharging && !isAttacking && brace != null && brace.IsBraced && GameInput.ChargePressed)
             {
                 brace.LeaveForHeavy();
@@ -216,8 +319,8 @@ namespace Cave.Combat
             if (isFrenzyCritical)
             {
                 resolvedDamage = frenzyDamage;
-                manaWasConsumed |= frenzyActivation.ManaInfused;
             }
+            manaWasConsumed |= frenzyActivation != null && frenzyActivation.ManaInfused;
             if (resourceMastery == null)
             {
                 resourceMastery = GetComponent<PlayerResourceMastery>();
@@ -242,6 +345,9 @@ namespace Cave.Combat
 
             PhaseCombatState phaseBeforeHit = damageable.GetComponent<PhaseCombatState>();
             bool hadLatentPhaseBeforeHit = phaseBeforeHit != null && phaseBeforeHit.LatentStacks > 0;
+            bool hadActivePhaseExposureBeforeHit = phaseBeforeHit != null && phaseBeforeHit.HasActiveExposure;
+            bool imaginaryWasActive = HasActiveImaginaryState();
+            Vector3 hitPosition = other.ClosestPoint(transform.position);
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
             ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
                 gameObject,
@@ -259,13 +365,30 @@ namespace Cave.Combat
                     gameObject,
                     Time.time);
             }
+            if (imaginaryWasActive && appliedDamage > 0)
+            {
+                PlayImaginaryImpact(hitPosition);
+            }
+            if (appliedDamage > 0)
+            {
+                AxiomConvergenceState.TryRecognize(
+                    gameObject,
+                    damageable.gameObject,
+                    currentChargeTier,
+                    isFrenzyCritical,
+                    hadActivePhaseExposureBeforeHit,
+                    currentAttackSequence,
+                    Time.time);
+            }
             HeavyTargetHit?.Invoke(damageable);
-            if (isFrenzyCritical)
+            if (frenzyActivation != null
+                && (frenzyActivation.ManaInfused || isFrenzyCritical))
             {
                 frenzyActivation.ApplyImpact(
                     damageable,
                     currentAttackDirection,
-                    appliedDamage);
+                    appliedDamage,
+                    isFrenzyCritical);
             }
 
             if (!damageable.gameObject.activeInHierarchy)
@@ -285,7 +408,14 @@ namespace Cave.Combat
 
         private void BeginCharge()
         {
+            // Heavy owns the shared sword immediately; Spin cannot keep draining
+            // Stamina or leave its collider/rotation active beneath the windup.
+            spinSwordAttack?.StopForCommittedFollowUp();
+            chainWindowOpen = false;
+            chainWindowEndsAt = 0f;
             isCharging = true;
+            activeHeavyIndex = Mathf.Clamp(heavyChainIndex, 0, 4);
+            heavyVisualRevision++;
             if (combatFlow == null)
             {
                 combatFlow = GetComponent<PlayerCombatFlow>();
@@ -300,7 +430,28 @@ namespace Cave.Combat
             chargeStartingDuration = startingDuration;
             chargeStartedAt = Time.time;
             SetChargeIndicatorActive(true);
+            PrepareHeavyPresentation();
             UpdateChargeIndicator();
+        }
+
+        private bool HasActiveImaginaryState()
+        {
+            if (ownPhaseCombatState == null)
+            {
+                ownPhaseCombatState = GetComponent<PhaseCombatState>();
+            }
+
+            return ownPhaseCombatState != null && ownPhaseCombatState.HasOpening;
+        }
+
+        private void PlayImaginaryImpact(Vector3 hitPosition)
+        {
+            if (axiomVfxPresenter == null)
+            {
+                axiomVfxPresenter = GetComponent<AxiomVfxPresenter>();
+            }
+
+            axiomVfxPresenter?.PlayImaginaryImpact(hitPosition);
         }
 
         public bool TryBeginBraceExitCharge()
@@ -320,12 +471,6 @@ namespace Cave.Combat
             isCharging = false;
             SetChargeIndicatorActive(false);
 
-            if (heldDuration < minimumChargeTime)
-            {
-                combatFlow?.NotifyChargedCancelled();
-                return;
-            }
-
             float chargeAmount = Mathf.InverseLerp(minimumChargeTime, maximumChargeTime, heldDuration);
             currentKnockback = Mathf.Lerp(baseKnockback, maximumKnockback, chargeAmount);
             currentChargeTier = CalculateChargeTier(heldDuration);
@@ -338,6 +483,8 @@ namespace Cave.Combat
             currentAttackDirection = aimDirection != null
                 ? aimDirection.ReadDirection()
                 : Vector2.right;
+            currentAttackDirection = ResolveHeavyDirection(currentAttackDirection, activeHeavyIndex);
+            heavyVisualRevision++;
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.9f);
             StartCoroutine(PerformAttack());
             combatFlow?.NotifyChargedCommitted();
@@ -372,6 +519,9 @@ namespace Cave.Combat
         {
             isCharging = false;
             SetChargeIndicatorActive(false);
+            SetAttackActive(false);
+            ResetChain();
+            RestoreAttackOrientation();
             combatFlow?.NotifyChargedCancelled();
         }
 
@@ -380,21 +530,32 @@ namespace Cave.Combat
             currentAttackSequence++;
             float attackSpeed = ResolveAttackSpeedMultiplier();
             float resolvedActiveDuration = activeDuration / attackSpeed;
-            float resolvedCooldown = cooldown / attackSpeed;
+            float resolvedStrikeDelay = StrikeDelayFor(activeHeavyIndex) / attackSpeed;
+            float resolvedRecovery = RecoveryFor(activeHeavyIndex) / attackSpeed;
             isAttacking = true;
-            nextAttackTime = Time.time + resolvedActiveDuration + resolvedCooldown;
+            nextAttackTime = Time.time + resolvedStrikeDelay + resolvedActiveDuration + resolvedRecovery;
             hitTargets.Clear();
             axiomApplicationReceipt.Clear();
             OrientAttack(currentAttackDirection);
+
+            if (resolvedStrikeDelay > 0f)
+            {
+                yield return new WaitForSeconds(resolvedStrikeDelay);
+            }
             SetAttackActive(true);
 
             yield return new WaitForSeconds(resolvedActiveDuration);
 
             SetAttackActive(false);
+            if (resolvedRecovery > 0f)
+            {
+                yield return new WaitForSeconds(resolvedRecovery);
+            }
             RestoreAttackOrientation();
             isAttacking = false;
             frenzyActivation?.Complete();
             frenzyActivation = null;
+            ResolveChainAfterAttack();
         }
 
         private void OrientAttack(Vector2 direction)
@@ -409,11 +570,18 @@ namespace Cave.Combat
 
             if (swordPivot != null)
             {
-                float swordAngle = spinSwordAttack != null
-                    ? spinSwordAttack.PrepareSwordForDirection(direction)
-                    : angle;
-                swordPivot.localRotation = restingSwordRotation
-                    * Quaternion.Euler(0f, 0f, swordAngle);
+                if (spinSwordAttack != null)
+                {
+                    spinSwordAttack.ApplyHeavyPresentationPose(
+                        direction,
+                        SwordAngleFor(activeHeavyIndex),
+                        SwordOffsetFor(activeHeavyIndex));
+                }
+                else
+                {
+                    swordPivot.localRotation = restingSwordRotation
+                        * Quaternion.Euler(0f, 0f, angle + SwordAngleFor(activeHeavyIndex));
+                }
             }
         }
 
@@ -427,7 +595,123 @@ namespace Cave.Combat
 
             if (swordPivot != null)
             {
-                swordPivot.localRotation = restingSwordRotation;
+                if (spinSwordAttack != null) spinSwordAttack.RestoreSwordPresentation();
+                else swordPivot.localRotation = restingSwordRotation;
+            }
+        }
+
+        private void PrepareHeavyPresentation()
+        {
+            Vector2 direction = aimDirection != null ? aimDirection.ReadDirection() : Vector2.right;
+            if (spinSwordAttack != null)
+            {
+                spinSwordAttack.ApplyHeavyPresentationPose(
+                    direction,
+                    SwordAngleFor(activeHeavyIndex),
+                    SwordOffsetFor(activeHeavyIndex));
+            }
+        }
+
+        private void ResolveChainAfterAttack()
+        {
+            // Tier 2/3 are commitment finishers; H5 is the Tier-1 finisher.
+            if (currentChargeTier >= 2 || activeHeavyIndex >= 4)
+            {
+                ResetChain();
+                return;
+            }
+
+            heavyChainIndex = activeHeavyIndex + 1;
+            chainWindowOpen = true;
+            // The old serialized cooldown remains a pacing ceiling for legacy
+            // prefabs; the authored continuation window stays authoritative.
+            chainWindowEndsAt = Time.time + Mathf.Min(continuationWindow, Mathf.Max(0.05f, cooldown));
+        }
+
+        private void ResetChain()
+        {
+            heavyChainIndex = 0;
+            activeHeavyIndex = 0;
+            chainWindowOpen = false;
+            chainWindowEndsAt = 0f;
+        }
+
+        private void ResetHeavyState()
+        {
+            StopAllCoroutines();
+            isCharging = false;
+            isAttacking = false;
+            SetChargeIndicatorActive(false);
+            SetAttackActive(false);
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
+            nextAttackTime = 0f;
+            ResetChain();
+            RestoreAttackOrientation();
+        }
+
+        private float StrikeDelayFor(int index)
+        {
+            switch (index)
+            {
+                case 1: return reversalStrikeDelay;
+                case 2: return reaperStrikeDelay;
+                case 3: return driveStrikeDelay;
+                case 4: return judgmentStrikeDelay;
+                default: return breakerStrikeDelay;
+            }
+        }
+
+        private float RecoveryFor(int index)
+        {
+            switch (index)
+            {
+                case 1: return reversalRecovery;
+                case 2: return reaperRecovery;
+                case 3: return driveRecovery;
+                case 4: return judgmentRecovery;
+                default: return breakerRecovery;
+            }
+        }
+
+        private static Vector2 ResolveHeavyDirection(Vector2 direction, int index)
+        {
+            Vector2 fallback = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.right;
+            switch (index)
+            {
+                case 0: return (fallback + Vector2.down * 0.22f).normalized; // Breaker
+                case 1: // Reversal: take the rising cut back across the opening line.
+                    return new Vector2(-Mathf.Sign(fallback.x == 0f ? 1f : fallback.x) * 0.45f, 0.9f).normalized;
+                case 2: return new Vector2(Mathf.Sign(fallback.x == 0f ? 1f : fallback.x), 0f); // Reaper
+                case 3: return new Vector2(Mathf.Sign(fallback.x == 0f ? 1f : fallback.x), 0f); // Drive
+                case 4: return (fallback + Vector2.down * 0.38f).normalized; // Judgment
+                default: return fallback;
+            }
+        }
+
+        private static float SwordAngleFor(int index)
+        {
+            switch (index)
+            {
+                case 0: return -34f;
+                case 1: return 52f;
+                case 2: return 0f;
+                case 3: return -18f;
+                case 4: return -68f;
+                default: return 0f;
+            }
+        }
+
+        private static Vector2 SwordOffsetFor(int index)
+        {
+            switch (index)
+            {
+                case 0: return new Vector2(0.03f, -0.02f);
+                case 1: return new Vector2(-0.02f, 0.05f);
+                case 2: return new Vector2(0.04f, 0f);
+                case 3: return new Vector2(0.08f, -0.01f);
+                case 4: return new Vector2(0f, 0.07f);
+                default: return Vector2.zero;
             }
         }
 
@@ -475,15 +759,13 @@ namespace Cave.Combat
 
         private void OnDisable()
         {
-            StopAllCoroutines();
-            isCharging = false;
-            isAttacking = false;
-            frenzyActivation?.Complete();
-            frenzyActivation = null;
+            if (playerHealth != null)
+            {
+                playerHealth.Died -= ResetHeavyState;
+                playerHealth.Respawned -= ResetHeavyState;
+            }
+            ResetHeavyState();
             combatFlow?.NotifyChargedCancelled();
-            SetChargeIndicatorActive(false);
-            SetAttackActive(false);
-            RestoreAttackOrientation();
         }
 
         private float CurrentChargeDuration => Mathf.Min(

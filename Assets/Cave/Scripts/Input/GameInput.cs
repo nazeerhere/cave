@@ -71,6 +71,8 @@ namespace Cave.InputSystem
         public static bool UseManaPotionPressed => GameplayInputEnabled
             && WasPressed(GameAction.UseManaPotion);
         public static bool PlaceLandminePressed => GameplayInputEnabled && WasPressed(GameAction.PlaceLandmine);
+        public static bool PlaceLandmineHeld => GameplayInputEnabled && IsHeld(GameAction.PlaceLandmine);
+        public static bool PlaceLandmineReleased => GameplayInputEnabled && WasReleased(GameAction.PlaceLandmine);
         public static bool UseDistractionPressed => GameplayInputEnabled
             && WasPressed(GameAction.UseDistraction);
         public static bool InteractPressed => GameplayInputEnabled && WasPressed(GameAction.Interact);

@@ -32,11 +32,17 @@ namespace Cave.Axioms.Elemental
             return state != null ? state : actor.AddComponent<AxiomDynamicsState>();
         }
 
-        public void ApplySuccessfulInput(AxiomKind kind, float stack, float amount, float timestamp)
+        public void ApplySuccessfulInput(
+            AxiomKind kind,
+            float stack,
+            float amount,
+            float timestamp,
+            float counterFactor = 1f)
         {
             AxiomDynamicsChannel channel = GetChannel(kind);
             if (channel != null)
             {
+                channel.SetCounterFactor(counterFactor);
                 channel.ApplyInput(stack, amount, timestamp);
             }
         }

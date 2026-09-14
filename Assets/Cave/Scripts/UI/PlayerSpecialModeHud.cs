@@ -306,13 +306,15 @@ namespace Cave.UI
             if (resourceShop.TryBuyLandmine())
             {
                 SetFeedback(
-                    "Landmine purchased. Place with "
+                    "Oblivion Disk capacity " + resourceShop.DiskCapacity + " unlocked. Place with "
                     + GameInput.Bindings.GetBinding(GameAction.PlaceLandmine).Primary + ".");
                 CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
             }
             else
             {
-                SetFeedback("Cannot afford Landmine. No currency spent.");
+                SetFeedback(resourceShop.IsDiskAtMaximumCapacity
+                    ? "Oblivion Disk capacity is already MAX."
+                    : "Cannot afford Oblivion Disk upgrade. No currency spent.");
             }
 
             RefreshShop();
@@ -345,6 +347,8 @@ namespace Cave.UI
 
             SetTabVisual(modesTabButton, showModes);
             SetTabVisual(shopTabButton, !showModes);
+            CaveUiArt.ApplySkillTab(modesTabButton, showModes, false);
+            CaveUiArt.ApplySkillTab(shopTabButton, !showModes, true);
         }
 
         private static void SetTabVisual(Button button, bool selected)
@@ -472,9 +476,13 @@ namespace Cave.UI
 
             if (landmineText != null)
             {
-                landmineText.text = "LANDMINE\nCrowd control  |  Cost: "
-                    + resourceShop.LandmineCost
-                    + "\nOwned: " + resourceShop.OwnedLandmines + "  |  Place: "
+                string cost = resourceShop.IsDiskAtMaximumCapacity
+                    ? "MAX"
+                    : resourceShop.LandmineCost.ToString();
+                landmineText.text = resourceShop.NextDiskCapacityLabel
+                    + "\nCharges: " + FormatDiskPips(resourceShop.StoredDiskCharges, resourceShop.DiskCapacity)
+                    + "  |  Cost: " + cost
+                    + "\nRecharge: " + resourceShop.DiskRechargeSeconds.ToString("0") + "s  |  Place: "
                     + GameInput.Bindings.GetBinding(GameAction.PlaceLandmine).Primary;
             }
         }
@@ -504,12 +512,12 @@ namespace Cave.UI
         {
             if (currentModeText != null)
             {
-                currentModeText.text = "MODE\n" + FormatMode(mode).ToUpperInvariant();
+                currentModeText.text = "SKILL PATH\n" + FormatMode(mode).ToUpperInvariant();
             }
 
             if (selectionCurrentModeText != null)
             {
-                selectionCurrentModeText.text = "ACTIVE MODE  •  " + FormatMode(mode).ToUpperInvariant();
+                selectionCurrentModeText.text = "ACTIVE PATH  •  " + FormatMode(mode).ToUpperInvariant();
             }
         }
 
@@ -625,6 +633,18 @@ namespace Cave.UI
         private void HandleConsumableQuantityChanged(PlayerConsumableType type, int owned)
         {
             RefreshShop();
+        }
+
+        private static string FormatDiskPips(int stored, int capacity)
+        {
+            if (capacity <= 0) return "LOCKED";
+            string pips = string.Empty;
+            for (int index = 0; index < capacity; index++)
+            {
+                if (index > 0) pips += " ";
+                pips += index < stored ? "◆" : "◇";
+            }
+            return pips;
         }
 
         private void SetFeedback(string message)

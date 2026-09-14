@@ -141,6 +141,12 @@ namespace Cave.Enemies
         [SerializeField] private EnemyMeleeDecision currentSequenceDecision;
         [SerializeField] private bool currentlyInterruptible = true;
 
+        /// <summary>
+        /// Presentation-facing read-only view of the active authored attack
+        /// decision. Animation consumers must never infer or alter this value.
+        /// </summary>
+        public EnemyMeleeDecision CurrentSequenceDecision => currentSequenceDecision;
+
         [Header("Charged Attack Evolution")]
         [SerializeField, Min(1f)] private float evolutionOneChargedDamageMultiplier = 1.15f;
         [SerializeField, Min(1f)] private float evolutionTwoChargedDamageMultiplier = 1.25f;
@@ -980,9 +986,9 @@ namespace Cave.Enemies
             switch (decision)
             {
                 case EnemyMeleeDecision.Charged:
-                    DamageTrait chargedTraits = chargedAttackIsPiercing
+                    DamageTrait chargedTraits = DamageTrait.Heavy | (chargedAttackIsPiercing
                         ? DamageTrait.Piercing
-                        : DamageTrait.Direct;
+                        : DamageTrait.Direct);
                     yield return PerformAttack(
                         runtimeChargedDamage,
                         chargedRange,
@@ -1043,7 +1049,7 @@ namespace Cave.Enemies
                                 ResolveAttackProfile(EnemyMeleeDecision.GuardBreak));
                             float attackSpeed = Mathf.Max(
                                 0.01f,
-                                runtimeInheritanceAttackSpeedScale);
+                                runtimeInheritanceAttackSpeedScale * runtimeTeamAuraAttackSpeedScale);
                             nextActionTime = Mathf.Max(
                                 nextActionTime,
                                 Time.time + guardBreakCooldown / attackSpeed);
@@ -1114,9 +1120,9 @@ namespace Cave.Enemies
                 && contextualChargedChance > 0f
                 && Random.value < contextualChargedChance)
             {
-                DamageTrait chargedTraits = chargedAttackIsPiercing
+                DamageTrait chargedTraits = DamageTrait.Heavy | (chargedAttackIsPiercing
                     ? DamageTrait.Piercing
-                    : DamageTrait.Direct;
+                    : DamageTrait.Direct);
                 yield return PerformAttack(
                     runtimeChargedDamage,
                     chargedRange,
@@ -1157,7 +1163,9 @@ namespace Cave.Enemies
             float telegraphScale,
             bool isChargedAttack = false)
         {
-            float attackSpeed = Mathf.Max(0.01f, runtimeInheritanceAttackSpeedScale);
+            float attackSpeed = Mathf.Max(
+                0.01f,
+                runtimeInheritanceAttackSpeedScale * runtimeTeamAuraAttackSpeedScale);
             windup /= attackSpeed;
             activeDuration /= attackSpeed;
             recovery /= attackSpeed;
@@ -1332,9 +1340,9 @@ namespace Cave.Enemies
         {
             if (decision == EnemyMeleeDecision.Charged)
             {
-                DamageTrait traits = chargedAttackIsPiercing
+                DamageTrait traits = DamageTrait.Heavy | (chargedAttackIsPiercing
                     ? DamageTrait.Piercing
-                    : DamageTrait.Direct;
+                    : DamageTrait.Direct);
                 return new AttackProfile
                 {
                     Damage = runtimeTrollChargedDamage,
@@ -1412,7 +1420,9 @@ namespace Cave.Enemies
 
         private float ScaleInheritedAttackTime(float duration)
         {
-            return duration / Mathf.Max(0.01f, runtimeInheritanceAttackSpeedScale);
+            return duration / Mathf.Max(
+                0.01f,
+                runtimeInheritanceAttackSpeedScale * runtimeTeamAuraAttackSpeedScale);
         }
 
         private float ResolveGuardBreakChance()
@@ -1515,6 +1525,13 @@ namespace Cave.Enemies
                     ? evolutionOneWindupMultiplier
                     : 1f;
             return Mathf.Max(minimumEvolvedChargedWindup, configuredWindup * multiplier);
+        }
+
+        private float runtimeTeamAuraAttackSpeedScale = 1f;
+
+        public void SetRuntimeTeamAuraAttackSpeedMultiplier(float multiplier)
+        {
+            runtimeTeamAuraAttackSpeedScale = Mathf.Max(0.01f, multiplier);
         }
 
         private EnemyEvolutionStage ChargedEvolutionStage => probabilityPreset == EnemyMeleePreset.Skeleton

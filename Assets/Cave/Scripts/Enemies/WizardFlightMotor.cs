@@ -19,6 +19,7 @@ namespace Cave.Enemies
         private float movementSpeedMultiplier = 1f;
         private float corruptionSpeedMultiplier = 1f;
         private float difficultySpeedMultiplier = 1f;
+        private float teamAuraSpeedMultiplier = 1f;
 
         public float BaseMoveSpeed => moveSpeed;
         public bool HasMovementIntent => hasMovementIntent;
@@ -50,6 +51,7 @@ namespace Cave.Enemies
                     desiredVelocity = offset.normalized * moveSpeed
                         * movementSpeedMultiplier
                         * corruptionSpeedMultiplier
+                        * teamAuraSpeedMultiplier
                         * difficultySpeedMultiplier;
                 }
             }
@@ -91,6 +93,11 @@ namespace Cave.Enemies
             difficultySpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        public void SetTeamAuraSpeedMultiplier(float multiplier)
+        {
+            teamAuraSpeedMultiplier = Mathf.Max(0.05f, multiplier);
+        }
+
         public void SuspendMovement(float duration)
         {
             HoldPosition();
@@ -108,6 +115,7 @@ namespace Cave.Enemies
         {
             movementSpeedMultiplier = 1f;
             corruptionSpeedMultiplier = 1f;
+            teamAuraSpeedMultiplier = 1f;
             hasMovementIntent = false;
             if (body != null)
             {

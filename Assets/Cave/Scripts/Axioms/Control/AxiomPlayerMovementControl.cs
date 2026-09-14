@@ -116,7 +116,7 @@ namespace Cave.Axioms.Control
 
             float deltaV = telemetry.DeltaVelocity.magnitude;
             CurrentMassImpactMeasure = Mathf.Clamp01(deltaV / 20f) * response.ResponseStrength;
-            float effectiveCounter = response.Counter * mastery.GetCounterFactor(AxiomKind.Mass);
+            float effectiveCounter = response.EffectiveCounter;
             float resistance = maximumKnockbackResistance * Mathf.Clamp01(response.Desirable - effectiveCounter * .25f);
             // Inertia lowers retained efficiency during abrupt, uncontrolled turns.
             if (telemetry.IsReversing && (dash == null || !dash.IsDashing))

@@ -9,6 +9,7 @@ namespace Cave.Axioms.Frequency
         Advanced,
         Reduced,
         StaleReference,
+        Filtered,
         Broken
     }
 
@@ -63,7 +64,21 @@ namespace Cave.Axioms.Frequency
         public bool HasReference => hasReference;
         public float PreviousContactTime => previousContactTime;
 
+        private int eligibleMatchesSinceFilter;
+
         public GuardResonanceContactResult RegisterContact(float timestamp, GuardResonanceSettings settings)
+        {
+            return RegisterContact(timestamp, settings, false);
+        }
+
+        /// <summary>
+        /// A correct cadence remains a correct cadence when filtering is enabled;
+        /// only its expected progression gain is withheld for this attacker.
+        /// </summary>
+        public GuardResonanceContactResult RegisterContact(
+            float timestamp,
+            GuardResonanceSettings settings,
+            bool frequencyFilteringEligible)
         {
             if (!hasReference)
             {
@@ -89,7 +104,20 @@ namespace Cave.Axioms.Frequency
             float error = Abs(interval - settings.NaturalPeriodSeconds);
             if (error <= settings.ToleranceSeconds)
             {
+                if (frequencyFilteringEligible && eligibleMatchesSinceFilter >= 2)
+                {
+                    eligibleMatchesSinceFilter = 0;
+                    return new GuardResonanceContactResult(
+                        GuardResonanceContactOutcome.Filtered,
+                        progress,
+                        interval);
+                }
+
                 progress++;
+                if (frequencyFilteringEligible)
+                {
+                    eligibleMatchesSinceFilter++;
+                }
                 if (progress >= settings.BreakProgress)
                 {
                     return new GuardResonanceContactResult(
@@ -104,6 +132,7 @@ namespace Cave.Axioms.Frequency
                     interval);
             }
 
+            eligibleMatchesSinceFilter = 0;
             progress = Math.Max(0, progress - 1);
             return new GuardResonanceContactResult(
                 GuardResonanceContactOutcome.Reduced,
@@ -116,6 +145,7 @@ namespace Cave.Axioms.Frequency
             hasReference = false;
             previousContactTime = 0f;
             progress = 0;
+            eligibleMatchesSinceFilter = 0;
         }
 
         private static float Abs(float value) => value < 0f ? -value : value;

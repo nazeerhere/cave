@@ -5,6 +5,12 @@ using UnityEngine;
 
 namespace Cave.Editor
 {
+    /// <summary>
+    /// Legacy prototype-only builder retained for asset preservation. The active
+    /// Detective is Prefabs/Mobs/Range/Detective.prefab and its approved visuals are
+    /// built by DetectiveApprovedVisualProcessor; this builder is never a visual
+    /// reattachment path for the active enemy.
+    /// </summary>
     public static class DetectivePrefabBuilder
     {
         private const string PrefabPath = "Assets/Cave/Prefabs/Detective.prefab";
@@ -13,33 +19,12 @@ namespace Cave.Editor
         private const string AnimatorPath =
             "Assets/Brackeys/2D Mega Pack/Characters/Animation/Detective/Detective.controller";
 
-        [InitializeOnLoadMethod]
-        private static void ScheduleBuildIfMissing()
-        {
-            EditorApplication.delayCall += BuildIfMissing;
-        }
-
-        [MenuItem("Tools/Cave/Build Detective Prototype Prefab")]
+        [MenuItem("Tools/Cave/Legacy/Build Detective Prototype Prefab")]
         public static void BuildFromMenu()
         {
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
             {
                 Debug.Log($"Detective prefab already exists at {PrefabPath}; no changes made.");
-                return;
-            }
-
-            BuildPrefab();
-        }
-
-        private static void BuildIfMissing()
-        {
-            if (Application.isPlaying)
-            {
-                return;
-            }
-
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
-            {
                 return;
             }
 

@@ -112,6 +112,33 @@ namespace Cave.Enemies
             return true;
         }
 
+        /// <summary>
+        /// Fires the configured projectile immediately without changing the
+        /// shared shooter's normal cooldown. This is intentionally narrow: it
+        /// lets an enemy-local finite volley reuse FireballProjectile (including
+        /// parry/reflection/evolution behaviour) without teaching the generic
+        /// shooter about a specific enemy kit.
+        /// </summary>
+        public bool TryFireImmediate(Transform requestedTarget, float speedMultiplier = 1f, float damageMultiplier = 1f)
+        {
+            if (requestedTarget == null || projectilePrefab == null)
+            {
+                return false;
+            }
+
+            Vector2 direction = requestedTarget.position - transform.position;
+            if (direction.sqrMagnitude > firingRange * firingRange)
+            {
+                return false;
+            }
+
+            SpawnProjectile(
+                requestedTarget,
+                Mathf.Max(0.01f, runtimeProjectileSpeed * speedMultiplier),
+                Mathf.Max(1, Mathf.RoundToInt(runtimeProjectileDamage * damageMultiplier)));
+            return true;
+        }
+
         private void Fire()
         {
             isWindingUp = false;
@@ -121,8 +148,18 @@ namespace Cave.Enemies
                 return;
             }
 
+            SpawnProjectile(target, runtimeProjectileSpeed, runtimeProjectileDamage);
+        }
+
+        private void SpawnProjectile(Transform requestedTarget, float requestedSpeed, int requestedDamage)
+        {
+            if (requestedTarget == null || !requestedTarget.gameObject.activeInHierarchy || projectilePrefab == null)
+            {
+                return;
+            }
+
             Vector3 spawnPosition = firePoint != null ? firePoint.position : transform.position;
-            Vector2 direction = target.position - spawnPosition;
+            Vector2 direction = requestedTarget.position - spawnPosition;
             if (direction.sqrMagnitude < 0.001f)
             {
                 direction = Vector2.left;
@@ -141,10 +178,10 @@ namespace Cave.Enemies
             GameObject owner = ownerDamageable != null ? ownerDamageable.gameObject : gameObject;
             projectile.Initialize(
                 owner,
-                target,
+                requestedTarget,
                 direction.normalized,
-                runtimeProjectileSpeed,
-                damage,
+                requestedSpeed,
+                Mathf.Max(1, Mathf.RoundToInt(damage * (requestedDamage / (float)Mathf.Max(1, runtimeProjectileDamage)))),
                 projectileLifetime,
                 difficultyManager);
             if (wizardEchoEnabled)

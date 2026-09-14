@@ -33,6 +33,7 @@ namespace Cave.Player
         private PlayerDash playerDash;
         private PlayerFlight playerFlight;
         private PlayerFlightBash flightBash;
+        private PlayerBrace brace;
         private bool wasGrounded;
         private bool jumpConsumedForAirborneCycle;
         private float jumpRequestExpiresAt = float.NegativeInfinity;
@@ -55,9 +56,18 @@ namespace Cave.Player
         {
             body = GetComponent<Rigidbody2D>();
             bodyCollider = GetComponent<Collider2D>();
+            // Enemy bodies already opt into continuous contacts. The player can
+            // reach the same speeds through Dash, knockback, and committed moves.
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            body.constraints |= RigidbodyConstraints2D.FreezeRotation;
+            if (GetComponent<PlayerBodyDepenetration>() == null)
+            {
+                gameObject.AddComponent<PlayerBodyDepenetration>();
+            }
             playerDash = GetComponent<PlayerDash>();
             playerFlight = GetComponent<PlayerFlight>();
             flightBash = GetComponent<PlayerFlightBash>();
+            brace = GetComponent<PlayerBrace>();
             ConfigureCollisionMaterial();
             IsGrounded = CheckGrounded();
             UpdateCharacterBodyFriction();
@@ -66,7 +76,7 @@ namespace Cave.Player
 
         private void Update()
         {
-            if (IsExternallyMovementLocked)
+            if (IsExternallyMovementLocked || (brace != null && brace.IsActionLocked))
             {
                 horizontalInput = 0f;
                 jumpRequestExpiresAt = float.NegativeInfinity;
@@ -110,6 +120,12 @@ namespace Cave.Player
 
             bool horizontalOverrideActive = (playerDash != null && playerDash.IsDashing)
                 || (flightBash != null && flightBash.IsBashing);
+            if (brace == null)
+            {
+                brace = GetComponent<PlayerBrace>();
+            }
+
+            bool braceLocked = brace != null && brace.IsActionLocked;
             if (!horizontalOverrideActive && Time.time >= externalMovementLockUntil)
             {
                 if (temporarySpeedEndsAt > 0f && Time.time >= temporarySpeedEndsAt)
@@ -132,6 +148,7 @@ namespace Cave.Player
             bool characterEscapeSupport = !IsGrounded && IsStandingOnCharacterBody();
             bool shouldJump = (GameInput.JumpHeld || bufferedJumpActive)
                 && !IsExternallyMovementLocked
+                && !braceLocked
                 && (IsGrounded || characterEscapeSupport)
                 && !jumpConsumedForAirborneCycle;
             if (shouldJump)
@@ -185,7 +202,9 @@ namespace Cave.Player
 
         public void SetBraceMovementMultiplier(float multiplier)
         {
-            braceMovementMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
+            // Deep Brace intentionally has no movement; Quick and Full remain
+            // bounded by their own serialized stage tuning.
+            braceMovementMultiplier = Mathf.Clamp01(multiplier);
         }
 
         public void ApplyTemporarySpeedMultiplier(float multiplier, float duration)

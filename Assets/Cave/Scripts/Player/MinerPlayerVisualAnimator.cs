@@ -14,6 +14,7 @@ namespace Cave.Player
     public sealed class MinerPlayerVisualAnimator : MonoBehaviour
     {
         private const string ResourcePath = "Player/MinerFullActionSheet";
+        private const string HeavyResourceRoot = "Player/MinerHeavy/Heavy_";
         private const string VisualName = "Miner Body Visual";
 
         [Header("Presentation")]
@@ -36,6 +37,7 @@ namespace Cave.Player
         private static readonly Dictionary<string, Sprite[]> FrameCache =
             new Dictionary<string, Sprite[]>(StringComparer.Ordinal);
         private static bool cacheAttempted;
+        private static readonly Dictionary<int, Sprite[]> HeavyFrameCache = new Dictionary<int, Sprite[]>();
 
         private SpriteRenderer visualRenderer;
         private SpriteRenderer replacedBodyRenderer;
@@ -64,6 +66,7 @@ namespace Cave.Player
         private bool wasGrounded;
         private bool isDead;
         private Sprite displayedSprite;
+        private int appliedHeavyVisualRevision = -1;
 
         private enum VisualState
         {
@@ -188,6 +191,14 @@ namespace Cave.Player
             {
                 currentState = nextState;
                 currentFrames = FramesForState(currentState);
+                stateStartedAt = Time.time;
+            }
+            else if (currentState == VisualState.Heavy
+                && chargedAttack != null
+                && appliedHeavyVisualRevision != chargedAttack.HeavyVisualRevision)
+            {
+                appliedHeavyVisualRevision = chargedAttack.HeavyVisualRevision;
+                currentFrames = FramesForHeavy(chargedAttack.ActiveHeavyIndex);
                 stateStartedAt = Time.time;
             }
 
@@ -316,7 +327,9 @@ namespace Cave.Player
                 case VisualState.Run: return Frames("Miner_Run_");
                 case VisualState.Jump: return Frames("Miner_Jump_");
                 case VisualState.Landing: return Frames("Miner_Landing_");
-                case VisualState.Heavy: return Frames("Miner_Heavy_");
+                case VisualState.Heavy:
+                    appliedHeavyVisualRevision = chargedAttack != null ? chargedAttack.HeavyVisualRevision : -1;
+                    return FramesForHeavy(chargedAttack != null ? chargedAttack.ActiveHeavyIndex : 0);
                 case VisualState.Spin: return Frames("Miner_Spin_");
                 case VisualState.Guard: return Frames("Miner_Guard_");
                 case VisualState.Parry: return Frames("Miner_Parry_");
@@ -342,7 +355,18 @@ namespace Cave.Player
                 case VisualState.Run: framesPerSecond = runFramesPerSecond; loop = true; break;
                 case VisualState.Jump: framesPerSecond = 8f; loop = true; break;
                 case VisualState.Landing: framesPerSecond = currentFrames.Length / landingDuration; loop = false; break;
-                case VisualState.Heavy: framesPerSecond = 10f; loop = false; break;
+                case VisualState.Heavy:
+                    framesPerSecond = 10f;
+                    loop = false;
+                    int heavyStart = chargedAttack != null ? chargedAttack.HeavyVisualFrameStart : 0;
+                    if (chargedAttack != null && chargedAttack.IsCharging)
+                    {
+                        return currentFrames[Mathf.Min(1, Mathf.Max(0,
+                            Mathf.FloorToInt((Time.time - stateStartedAt) * framesPerSecond)))];
+                    }
+                    int strikeFrame = Mathf.Min(currentFrames.Length - 1,
+                        heavyStart + Mathf.FloorToInt((Time.time - stateStartedAt) * framesPerSecond));
+                    return currentFrames[Mathf.Max(0, strikeFrame)];
                 case VisualState.Spin: framesPerSecond = spinFramesPerSecond; loop = true; break;
                 case VisualState.Guard: framesPerSecond = 3f; loop = true; break;
                 case VisualState.Parry: framesPerSecond = 12f; loop = false; break;
@@ -365,6 +389,24 @@ namespace Cave.Player
         {
             Sprite[] frames;
             return FrameCache.TryGetValue(prefix, out frames) ? frames : Array.Empty<Sprite>();
+        }
+
+        private static Sprite[] FramesForHeavy(int index)
+        {
+            index = Mathf.Clamp(index, 0, 4);
+            Sprite[] frames;
+            if (!HeavyFrameCache.TryGetValue(index, out frames))
+            {
+                Sprite[] loaded = Resources.LoadAll<Sprite>(HeavyResourceRoot + (index + 1));
+                Array.Sort(loaded, (left, right) => string.CompareOrdinal(left.name, right.name));
+                HeavyFrameCache[index] = loaded;
+                frames = loaded;
+            }
+
+            // Heavy presentation is canonical only when it comes from the
+            // approved five-frame individual sequence; never fall back to the
+            // retired single Heavy strip.
+            return frames;
         }
 
         private static void CacheFrames()

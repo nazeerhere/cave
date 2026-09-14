@@ -1,3 +1,4 @@
+using System;
 using Cave.Combat;
 using UnityEngine;
 
@@ -30,12 +31,27 @@ namespace Cave.Axioms.Phase
 
         private AxiomRuntimeState axiomRuntime;
 
+        /// <summary>Actual applied Phase stack; openings intentionally do not raise this event.</summary>
+        public event Action<GameObject, int> LatentStackApplied;
+        /// <summary>Resolved Phase collapse, including restrained even recoherence.</summary>
+        public event Action<GameObject, int, PhaseExposureDefinition> Collapsed;
+        /// <summary>Player-facing Imaginary state became active; no gameplay rule is changed.</summary>
+        public event Action<float> OpeningArmed;
+        /// <summary>Player-facing Imaginary state ended by consumption or expiry.</summary>
+        public event Action OpeningEnded;
+
         public int LatentStacks => latentStacks;
         public bool HasOpening => ResolveOpeningTarget(Time.time) != null;
         public GameObject OpeningTarget => ResolveOpeningTarget(Time.time);
+        public float RemainingOpeningSeconds => HasOpening
+            ? Mathf.Max(0f, openingExpiresAt - Time.time)
+            : 0f;
         public bool HasActiveExposure => ResolveActiveExposure(Time.time);
         public PhaseEffectClass ActiveEffectClass => HasActiveExposure ? activeEffectClass : PhaseEffectClass.None;
         public float ActiveDamageMultiplier => HasActiveExposure ? activeDamageMultiplier : 1f;
+        public float RemainingExposureSeconds => HasActiveExposure
+            ? Mathf.Max(0f, activeExposureExpiresAt - Time.time)
+            : 0f;
 
         public static PhaseCombatState EnsureOn(GameObject owner)
         {
@@ -45,7 +61,14 @@ namespace Cave.Axioms.Phase
             }
 
             PhaseCombatState state = owner.GetComponent<PhaseCombatState>();
-            return state != null ? state : owner.AddComponent<PhaseCombatState>();
+            if (state != null)
+            {
+                return state;
+            }
+
+            state = owner.AddComponent<PhaseCombatState>();
+            owner.GetComponent<Cave.Axioms.Vfx.AxiomVfxPresenter>()?.RefreshBindings();
+            return state;
         }
 
         public static void GrantOpening(GameObject attacker, GameObject target, PhaseOpeningSource source)
@@ -102,12 +125,7 @@ namespace Cave.Axioms.Phase
 
             openingTarget = target;
             openingExpiresAt = timestamp + Mathf.Max(0.01f, openingDuration);
-            CombatShapeEffect.Create(
-                transform.position,
-                CombatShape.Diamond,
-                0.52f,
-                new Color(0.54f, 0.38f, 1f, 0.85f),
-                0.14f);
+            OpeningArmed?.Invoke(Mathf.Max(0.01f, openingDuration));
         }
 
         public bool TryConsumeOpening(GameObject target, GameObject source, float timestamp)
@@ -119,6 +137,7 @@ namespace Cave.Axioms.Phase
 
             openingTarget = null;
             openingExpiresAt = 0f;
+            OpeningEnded?.Invoke();
             PhaseCombatState receiver = EnsureOn(target);
             receiver.AddLatentStack(source, timestamp);
             return true;
@@ -129,12 +148,7 @@ namespace Cave.Axioms.Phase
             latentStacks++;
             AxiomRuntimeState runtime = ResolveAxiomRuntime();
             runtime.ApplyDelta(AxiomKind.Phase, 1f, source, gameObject, timestamp);
-            CombatShapeEffect.Create(
-                transform.position,
-                CombatShape.Diamond,
-                0.46f,
-                new Color(0.42f, 0.7f, 1f, 0.82f),
-                0.14f);
+            LatentStackApplied?.Invoke(source, latentStacks);
         }
 
         public bool TryCollapse(GameObject source, float timestamp)
@@ -164,21 +178,9 @@ namespace Cave.Axioms.Phase
                     source,
                     gameObject,
                     timestamp));
-                CombatShapeEffect.Create(
-                    transform.position,
-                    CombatShape.Hexagon,
-                    0.85f,
-                    new Color(0.7f, 0.28f, 1f, 0.9f),
-                    0.22f);
             }
-            else
-            {
-                AreaPulseEffect.Create(
-                    transform.position,
-                    0.56f,
-                    new Color(0.38f, 0.78f, 1f, 0.65f),
-                    0.12f);
-            }
+
+            Collapsed?.Invoke(source, stackCount, exposure);
 
             return true;
         }
@@ -223,10 +225,16 @@ namespace Cave.Axioms.Phase
 
         private GameObject ResolveOpeningTarget(float timestamp)
         {
-            if (openingTarget == null || timestamp >= openingExpiresAt)
+            if (openingTarget == null)
+            {
+                return null;
+            }
+
+            if (timestamp >= openingExpiresAt)
             {
                 openingTarget = null;
                 openingExpiresAt = 0f;
+                OpeningEnded?.Invoke();
                 return null;
             }
 

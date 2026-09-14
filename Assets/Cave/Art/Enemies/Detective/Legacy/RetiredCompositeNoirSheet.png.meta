@@ -1,0 +1,1321 @@
+fileFormatVersion: 2
+guid: b17757e3b888343638054b9a42ddf904
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 12
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMasterTextureLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 128
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Detective_Idle_01
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 1153
+        width: 140
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f84d8a3051238250800000000000000
+      internalID: 5945632561522624759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Idle_02
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 1153
+        width: 140
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a23aa0fed68c8a2b0800000000000000
+      internalID: -5572984164383546582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Idle_03
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 1153
+        width: 140
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: deb7f4d7a9923c390800000000000000
+      internalID: -7799344386171503635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Idle_04
+      rect:
+        serializedVersion: 2
+        x: 630
+        y: 1153
+        width: 140
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9db9b7d5ede6919e0800000000000000
+      internalID: -1650165887124399143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Idle_05
+      rect:
+        serializedVersion: 2
+        x: 784
+        y: 1153
+        width: 140
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb182136b75538570800000000000000
+      internalID: 8467705712818160062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_01
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac83d54e968a9d7d0800000000000000
+      internalID: -2893096112852485942
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_02
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 809602807ee27cab0800000000000000
+      internalID: -4987966492480870136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_03
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b691457585da07240800000000000000
+      internalID: 4787516998828693867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_04
+      rect:
+        serializedVersion: 2
+        x: 415
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41bfbeaed27e08a00800000000000000
+      internalID: 756858921799121684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_05
+      rect:
+        serializedVersion: 2
+        x: 545
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 568e30da895aef1d0800000000000000
+      internalID: -3315030200541779867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_06
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62ded59b712277cc0800000000000000
+      internalID: -3713461882454151898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_07
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a973cac6e69506500800000000000000
+      internalID: 387407898758363034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_08
+      rect:
+        serializedVersion: 2
+        x: 935
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ccb98d2bfa2876f0800000000000000
+      internalID: -686751684884841272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Walk_09
+      rect:
+        serializedVersion: 2
+        x: 1065
+        y: 1003
+        width: 122
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 782bdd8a5bbaa05d0800000000000000
+      internalID: -3095472997153262969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneThrust_01
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 853
+        width: 150
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77c54a71586ba0ed0800000000000000
+      internalID: -2446942764778890121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneThrust_02
+      rect:
+        serializedVersion: 2
+        x: 237
+        y: 853
+        width: 150
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2a0d1741c647c7e0800000000000000
+      internalID: -1745348534647059926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneThrust_03
+      rect:
+        serializedVersion: 2
+        x: 427
+        y: 853
+        width: 150
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28f04e90475c77680800000000000000
+      internalID: -8757313848225820798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneThrust_04
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 853
+        width: 150
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62edd27a08e7666e0800000000000000
+      internalID: -1844647906335924698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneThrust_05
+      rect:
+        serializedVersion: 2
+        x: 807
+        y: 853
+        width: 150
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb1b6b910b6053af0800000000000000
+      internalID: -417420037046488641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneThrust_06
+      rect:
+        serializedVersion: 2
+        x: 997
+        y: 853
+        width: 150
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4829775d9f50b47e0800000000000000
+      internalID: -1780322657108520316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneSweep_01
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 713
+        width: 190
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 104fc8b31900e8650800000000000000
+      internalID: 6236923157724066817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneSweep_02
+      rect:
+        serializedVersion: 2
+        x: 267
+        y: 713
+        width: 190
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3e67228580e9e170800000000000000
+      internalID: 8208338659878334012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneSweep_03
+      rect:
+        serializedVersion: 2
+        x: 503
+        y: 713
+        width: 190
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a69248ee1e8b68360800000000000000
+      internalID: 7171622737142884714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneSweep_04
+      rect:
+        serializedVersion: 2
+        x: 739
+        y: 713
+        width: 190
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5b5a0e0f12118b40800000000000000
+      internalID: 5440649749429115738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_CaneSweep_05
+      rect:
+        serializedVersion: 2
+        x: 975
+        y: 713
+        width: 190
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edd3f02bf2a510000800000000000000
+      internalID: 380635874016734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_01
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4b1f9a1593027980800000000000000
+      internalID: -8542761604236764340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_02
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc05b4bec5a864800800000000000000
+      internalID: 596316132362375373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_03
+      rect:
+        serializedVersion: 2
+        x: 367
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51505f47a74a617f0800000000000000
+      internalID: -642145050998536939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_04
+      rect:
+        serializedVersion: 2
+        x: 541
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8847c091f83c2ebb0800000000000000
+      internalID: -4908145624512433016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_05
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f77caa6ac3a850e0800000000000000
+      internalID: -2280893121494747152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_06
+      rect:
+        serializedVersion: 2
+        x: 889
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc109dbdaa675b360800000000000000
+      internalID: 7184779256744444367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Utility_07
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 563
+        width: 150
+        height: 150
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 609dd2f2947eafc10800000000000000
+      internalID: 2088235678749808902
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_01
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ec5f736a6387b3f0800000000000000
+      internalID: -885094308795949848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_02
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4042821128a723490800000000000000
+      internalID: -7768011708208503804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_03
+      rect:
+        serializedVersion: 2
+        x: 373
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd4e0a0e0c2107ba0800000000000000
+      internalID: -6093349676220619555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_04
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49aefb74df32ed500800000000000000
+      internalID: 422814985756863124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_05
+      rect:
+        serializedVersion: 2
+        x: 703
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c809ab89b02b40a0800000000000000
+      internalID: -6896382423103633212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_06
+      rect:
+        serializedVersion: 2
+        x: 868
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b24003e697990ad00800000000000000
+      internalID: 981953465585501227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Study_07
+      rect:
+        serializedVersion: 2
+        x: 1033
+        y: 416
+        width: 155
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 283c274afe2a444b0800000000000000
+      internalID: -5457057698326330494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Gesture_01
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 270
+        width: 185
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e5fc57fa2a2a0a00800000000000000
+      internalID: 723437054173443553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Gesture_02
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 270
+        width: 185
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bda2dd89521d70f90800000000000000
+      internalID: -6987386337433408805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Gesture_03
+      rect:
+        serializedVersion: 2
+        x: 520
+        y: 270
+        width: 185
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2ad3921b1cd790b0800000000000000
+      internalID: -5721862792717018580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Gesture_04
+      rect:
+        serializedVersion: 2
+        x: 760
+        y: 270
+        width: 185
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41e5b0e8a5345d7c0800000000000000
+      internalID: -4047254633913295340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Gesture_05
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 270
+        width: 185
+        height: 145
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbb4a7f1ab3ca4d00800000000000000
+      internalID: 957793074929093567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Hurt_01
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 141
+        width: 150
+        height: 130
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1595f45d254ab370800000000000000
+      internalID: 8339053721031120156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Hurt_02
+      rect:
+        serializedVersion: 2
+        x: 275
+        y: 141
+        width: 150
+        height: 130
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c512e8c980e54a740800000000000000
+      internalID: 5162354463952740700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Hurt_03
+      rect:
+        serializedVersion: 2
+        x: 497
+        y: 141
+        width: 150
+        height: 130
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d13d2000cc5e99f0800000000000000
+      internalID: -459828132238773808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Hurt_04
+      rect:
+        serializedVersion: 2
+        x: 719
+        y: 141
+        width: 150
+        height: 130
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f580134112a47d8b0800000000000000
+      internalID: -5127548144804886433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Hurt_05
+      rect:
+        serializedVersion: 2
+        x: 941
+        y: 141
+        width: 150
+        height: 130
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10e6615c1014f0550800000000000000
+      internalID: 6129189093731888641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Death_01
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 6
+        width: 185
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91af6df6281fb0720800000000000000
+      internalID: 2813607934747408921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Death_02
+      rect:
+        serializedVersion: 2
+        x: 220
+        y: 6
+        width: 185
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fd09791c4e85a490800000000000000
+      internalID: -7735620327442936332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Death_03
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 6
+        width: 185
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c51c6e98f993940800000000000000
+      internalID: 5276423853072014376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Death_04
+      rect:
+        serializedVersion: 2
+        x: 636
+        y: 6
+        width: 185
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e36f4a1b6b6c24f0800000000000000
+      internalID: -852188121732783132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Death_05
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 6
+        width: 185
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80eb3b93f2446ab00800000000000000
+      internalID: 839433350173408776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Detective_Death_06
+      rect:
+        serializedVersion: 2
+        x: 1013
+        y: 6
+        width: 185
+        height: 135
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b995e55b4dc57d8e0800000000000000
+      internalID: -1668763068271797861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Detective_CaneSweep_01: 6236923157724066817
+      Detective_CaneSweep_02: 8208338659878334012
+      Detective_CaneSweep_03: 7171622737142884714
+      Detective_CaneSweep_04: 5440649749429115738
+      Detective_CaneSweep_05: 380635874016734
+      Detective_CaneThrust_01: -2446942764778890121
+      Detective_CaneThrust_02: -1745348534647059926
+      Detective_CaneThrust_03: -8757313848225820798
+      Detective_CaneThrust_04: -1844647906335924698
+      Detective_CaneThrust_05: -417420037046488641
+      Detective_CaneThrust_06: -1780322657108520316
+      Detective_Death_01: 2813607934747408921
+      Detective_Death_02: -7735620327442936332
+      Detective_Death_03: 5276423853072014376
+      Detective_Death_04: -852188121732783132
+      Detective_Death_05: 839433350173408776
+      Detective_Death_06: -1668763068271797861
+      Detective_Gesture_01: 723437054173443553
+      Detective_Gesture_02: -6987386337433408805
+      Detective_Gesture_03: -5721862792717018580
+      Detective_Gesture_04: -4047254633913295340
+      Detective_Gesture_05: 957793074929093567
+      Detective_Hurt_01: 8339053721031120156
+      Detective_Hurt_02: 5162354463952740700
+      Detective_Hurt_03: -459828132238773808
+      Detective_Hurt_04: -5127548144804886433
+      Detective_Hurt_05: 6129189093731888641
+      Detective_Idle_01: 5945632561522624759
+      Detective_Idle_02: -5572984164383546582
+      Detective_Idle_03: -7799344386171503635
+      Detective_Idle_04: -1650165887124399143
+      Detective_Idle_05: 8467705712818160062
+      Detective_Study_01: -885094308795949848
+      Detective_Study_02: -7768011708208503804
+      Detective_Study_03: -6093349676220619555
+      Detective_Study_04: 422814985756863124
+      Detective_Study_05: -6896382423103633212
+      Detective_Study_06: 981953465585501227
+      Detective_Study_07: -5457057698326330494
+      Detective_Utility_01: -8542761604236764340
+      Detective_Utility_02: 596316132362375373
+      Detective_Utility_03: -642145050998536939
+      Detective_Utility_04: -4908145624512433016
+      Detective_Utility_05: -2280893121494747152
+      Detective_Utility_06: 7184779256744444367
+      Detective_Utility_07: 2088235678749808902
+      Detective_Walk_01: -2893096112852485942
+      Detective_Walk_02: -4987966492480870136
+      Detective_Walk_03: 4787516998828693867
+      Detective_Walk_04: 756858921799121684
+      Detective_Walk_05: -3315030200541779867
+      Detective_Walk_06: -3713461882454151898
+      Detective_Walk_07: 387407898758363034
+      Detective_Walk_08: -686751684884841272
+      Detective_Walk_09: -3095472997153262969
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -19,7 +19,9 @@ namespace Cave.Enemies
         GazeLock,
         Possessed,
         ElementallyBuffed,
-        Frenzied
+        Frenzied,
+        Imaginary,
+        Stoneglass
     }
 
     [Serializable]

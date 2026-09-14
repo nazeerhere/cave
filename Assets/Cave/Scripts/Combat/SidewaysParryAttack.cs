@@ -47,6 +47,7 @@ namespace Cave.Combat
         [Header("Melee Guard")]
         [SerializeField, Min(0f)] private float sustainedGuardStaminaDrainPerSecond = 20f;
         [SerializeField, Min(0f)] private float blockedHitStaminaCost = 6f;
+        [SerializeField, Range(0.01f, 1f)] private float heavyGuardHealthDamageMultiplier = 0.35f;
         [SerializeField, Min(0.05f)] private float counterWindowDuration = 0.7f;
         [SerializeField, Range(0f, 1f)] private float lateMeleeDamageReduction = 0.5f;
         [SerializeField, Min(0f)] private float normalMeleeKnockback = 6f;
@@ -117,6 +118,7 @@ namespace Cave.Combat
         private PlayerMana playerMana;
         private SpinSwordAttack stamina;
         private PlayerGuardBreak guardBreak;
+        private PlayerBrace brace;
         private GuardResonanceState guardResonance;
 
         public event System.Action<PlayerDefenseQuality> DefenseSucceeded;
@@ -141,6 +143,7 @@ namespace Cave.Combat
             playerMana = GetComponent<PlayerMana>();
             stamina = GetComponent<SpinSwordAttack>();
             guardBreak = GetComponent<PlayerGuardBreak>();
+            brace = GetComponent<PlayerBrace>();
             guardResonance = GuardResonanceState.EnsureOn(gameObject);
             if (guardResonance != null)
             {
@@ -194,6 +197,22 @@ namespace Cave.Combat
                 return;
             }
 
+            if (brace == null)
+            {
+                brace = GetComponent<PlayerBrace>();
+            }
+
+            PlayerBrace activeBrace = brace;
+            if (activeBrace != null && activeBrace.IsActionLocked)
+            {
+                if (IsActive)
+                {
+                    EndStance(false);
+                }
+
+                return;
+            }
+
             float horizontalInput = GameInput.Horizontal;
             if (!Mathf.Approximately(horizontalInput, 0f))
             {
@@ -236,9 +255,9 @@ namespace Cave.Combat
                 return;
             }
 
-            PlayerBrace brace = GetComponent<PlayerBrace>();
+            PlayerBrace currentBrace = activeBrace;
             if (currentPhase == ParryPhase.Guard
-                && (brace == null || !brace.IsBraced)
+                && (currentBrace == null || !currentBrace.IsFullBrace)
                 && (stamina == null
                     || !stamina.TrySpendStamina(
                         sustainedGuardStaminaDrainPerSecond
@@ -334,11 +353,20 @@ namespace Cave.Combat
 
         public bool TryGuardMelee(ref int incomingDamage, DamageContext damageContext)
         {
-            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace == null)
+            {
+                brace = GetComponent<PlayerBrace>();
+            }
+
             if (brace != null && brace.TryDeflectIncoming(damageContext))
             {
                 incomingDamage = 0;
                 return true;
+            }
+
+            if (brace != null && (brace.IsQuickBrace || brace.IsDeepBrace))
+            {
+                return false;
             }
 
             if (!damageContext.HasTrait(DamageTrait.Melee))
@@ -412,12 +440,29 @@ namespace Cave.Combat
                         return false;
                     }
 
-                    incomingDamage = 0;
                     CompleteSuccessfulDefense(PlayerDefenseQuality.Block);
                     guardResonance?.RegisterGuardContact(damageContext.Source, Time.time);
+                    if (damageContext.HasTrait(DamageTrait.Heavy))
+                    {
+                        incomingDamage = Mathf.Max(
+                            1,
+                            Mathf.CeilToInt(incomingDamage * heavyGuardHealthDamageMultiplier));
+                        return false;
+                    }
+
+                    incomingDamage = 0;
                     return true;
                 default:
                     return false;
+            }
+        }
+
+        /// <summary>Deep Brace deliberately releases Guard rather than retaining passive blocking.</summary>
+        public void CancelForDeepBrace()
+        {
+            if (IsActive)
+            {
+                EndStance(false);
             }
         }
 
@@ -550,11 +595,7 @@ namespace Cave.Combat
                 if (frenzy != null && (frenzy.IsFrenzyArmed || frenzy.IsFrenzyBound))
                 {
                     GuardResonanceState resonance = GuardResonanceState.EnsureOn(gameObject);
-                    if (resonance.ClearCadenceSequence(opponent))
-                    {
-                        CombatShapeEffect.Create(transform.position, CombatShape.Diamond, .7f,
-                            new Color(.8f, .45f, 1f, .85f), .16f);
-                    }
+                    resonance.TryCounterphase(opponent);
                 }
             }
             CompleteSuccessfulDefense(isPerfect

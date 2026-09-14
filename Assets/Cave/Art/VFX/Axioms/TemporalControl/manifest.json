@@ -1,0 +1,212 @@
+{
+  "source": "neon_arcane_vfx_sprite_sheet.png",
+  "source_size": [
+    1448,
+    1086
+  ],
+  "format": "RGBA PNG",
+  "notes": [
+    "Frames are split from the approved generated temporal Axiom VFX sheet.",
+    "Each animation family uses a uniform canvas to avoid Unity animation jitter.",
+    "Transparent background is preserved.",
+    "Frame order is left-to-right from the original sheet."
+  ],
+  "groups": [
+    {
+      "folder": "01_pulse_ring",
+      "label": "Pulse Ring",
+      "frame_count": 11,
+      "canvas_size": [
+        144,
+        152
+      ],
+      "alignment": "center",
+      "frames": [
+        "01_pulse_ring_frame_01.png",
+        "01_pulse_ring_frame_02.png",
+        "01_pulse_ring_frame_03.png",
+        "01_pulse_ring_frame_04.png",
+        "01_pulse_ring_frame_05.png",
+        "01_pulse_ring_frame_06.png",
+        "01_pulse_ring_frame_07.png",
+        "01_pulse_ring_frame_08.png",
+        "01_pulse_ring_frame_09.png",
+        "01_pulse_ring_frame_10.png",
+        "01_pulse_ring_frame_11.png"
+      ]
+    },
+    {
+      "folder": "02_lock_star",
+      "label": "Lock Star",
+      "frame_count": 10,
+      "canvas_size": [
+        184,
+        168
+      ],
+      "alignment": "center",
+      "frames": [
+        "02_lock_star_frame_01.png",
+        "02_lock_star_frame_02.png",
+        "02_lock_star_frame_03.png",
+        "02_lock_star_frame_04.png",
+        "02_lock_star_frame_05.png",
+        "02_lock_star_frame_06.png",
+        "02_lock_star_frame_07.png",
+        "02_lock_star_frame_08.png",
+        "02_lock_star_frame_09.png",
+        "02_lock_star_frame_10.png"
+      ]
+    },
+    {
+      "folder": "03_orbital_lock",
+      "label": "Orbital Lock",
+      "frame_count": 8,
+      "canvas_size": [
+        224,
+        184
+      ],
+      "alignment": "center",
+      "frames": [
+        "03_orbital_lock_frame_01.png",
+        "03_orbital_lock_frame_02.png",
+        "03_orbital_lock_frame_03.png",
+        "03_orbital_lock_frame_04.png",
+        "03_orbital_lock_frame_05.png",
+        "03_orbital_lock_frame_06.png",
+        "03_orbital_lock_frame_07.png",
+        "03_orbital_lock_frame_08.png"
+      ]
+    },
+    {
+      "folder": "04_resonance_burst",
+      "label": "Resonance Burst",
+      "frame_count": 9,
+      "canvas_size": [
+        232,
+        224
+      ],
+      "alignment": "center",
+      "frames": [
+        "04_resonance_burst_frame_01.png",
+        "04_resonance_burst_frame_02.png",
+        "04_resonance_burst_frame_03.png",
+        "04_resonance_burst_frame_04.png",
+        "04_resonance_burst_frame_05.png",
+        "04_resonance_burst_frame_06.png",
+        "04_resonance_burst_frame_07.png",
+        "04_resonance_burst_frame_08.png",
+        "04_resonance_burst_frame_09.png"
+      ]
+    },
+    {
+      "folder": "05_error_glitch",
+      "label": "Error Glitch",
+      "frame_count": 10,
+      "canvas_size": [
+        168,
+        144
+      ],
+      "alignment": "center",
+      "frames": [
+        "05_error_glitch_frame_01.png",
+        "05_error_glitch_frame_02.png",
+        "05_error_glitch_frame_03.png",
+        "05_error_glitch_frame_04.png",
+        "05_error_glitch_frame_05.png",
+        "05_error_glitch_frame_06.png",
+        "05_error_glitch_frame_07.png",
+        "05_error_glitch_frame_08.png",
+        "05_error_glitch_frame_09.png",
+        "05_error_glitch_frame_10.png"
+      ]
+    },
+    {
+      "folder": "06_lock_flash",
+      "label": "Lock Flash",
+      "frame_count": 6,
+      "canvas_size": [
+        112,
+        168
+      ],
+      "alignment": "center",
+      "frames": [
+        "06_lock_flash_frame_01.png",
+        "06_lock_flash_frame_02.png",
+        "06_lock_flash_frame_03.png",
+        "06_lock_flash_frame_04.png",
+        "06_lock_flash_frame_05.png",
+        "06_lock_flash_frame_06.png"
+      ]
+    },
+    {
+      "folder": "07_fracture_collapse",
+      "label": "Fracture Collapse",
+      "frame_count": 5,
+      "canvas_size": [
+        120,
+        152
+      ],
+      "alignment": "center",
+      "frames": [
+        "07_fracture_collapse_frame_01.png",
+        "07_fracture_collapse_frame_02.png",
+        "07_fracture_collapse_frame_03.png",
+        "07_fracture_collapse_frame_04.png",
+        "07_fracture_collapse_frame_05.png"
+      ]
+    },
+    {
+      "folder": "08_coherence_ring",
+      "label": "Coherence Ring",
+      "frame_count": 5,
+      "canvas_size": [
+        112,
+        128
+      ],
+      "alignment": "center",
+      "frames": [
+        "08_coherence_ring_frame_01.png",
+        "08_coherence_ring_frame_02.png",
+        "08_coherence_ring_frame_03.png",
+        "08_coherence_ring_frame_04.png",
+        "08_coherence_ring_frame_05.png"
+      ]
+    },
+    {
+      "folder": "09_ground_pulse",
+      "label": "Ground Pulse",
+      "frame_count": 6,
+      "canvas_size": [
+        128,
+        104
+      ],
+      "alignment": "bottom",
+      "frames": [
+        "09_ground_pulse_frame_01.png",
+        "09_ground_pulse_frame_02.png",
+        "09_ground_pulse_frame_03.png",
+        "09_ground_pulse_frame_04.png",
+        "09_ground_pulse_frame_05.png",
+        "09_ground_pulse_frame_06.png"
+      ]
+    },
+    {
+      "folder": "10_unstable_break",
+      "label": "Unstable Break",
+      "frame_count": 6,
+      "canvas_size": [
+        144,
+        128
+      ],
+      "alignment": "center",
+      "frames": [
+        "10_unstable_break_frame_01.png",
+        "10_unstable_break_frame_02.png",
+        "10_unstable_break_frame_03.png",
+        "10_unstable_break_frame_04.png",
+        "10_unstable_break_frame_05.png",
+        "10_unstable_break_frame_06.png"
+      ]
+    }
+  ]
+}

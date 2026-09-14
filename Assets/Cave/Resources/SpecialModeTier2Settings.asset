@@ -36,7 +36,7 @@ MonoBehaviour:
   burnShotTier3PierceCount: 5
   frostTier2PinDuration: 1
   frostTier3FreezeDuration: 2
-  bashManaCost: 20
+  groundSmashStaminaCost: 90
   bashDamage: 2
   bashSpeed: 20
   bashDuration: 0.18
@@ -81,7 +81,7 @@ MonoBehaviour:
   strengthShieldRechargingAuraColor: {r: 0.38, g: 0.5, b: 0.95, a: 0.7}
   strengthTier3SwordGlowColor: {r: 1, g: 0.9, b: 0.3, a: 0.62}
   strengthAuraRadius: 0.85
-  tier3BashAdditionalManaCost: 0
+  tier3GroundSmashAdditionalStaminaCost: 0
   bashShockwaveRadius: 2.5
   bashShockwaveDamage: 2
   bashShockwaveKnockback: 14

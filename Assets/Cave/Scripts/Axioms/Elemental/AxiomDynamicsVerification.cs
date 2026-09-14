@@ -12,6 +12,7 @@ namespace Cave.Axioms.Elemental
         public bool D8IrregularTimestamps;
         public bool D9LargeGap;
         public bool D10FiniteBounds;
+        public bool D11EffectiveCounter;
         public bool ProfilesUseSharedEngine;
         public AxiomDynamicResponse Rapid;
         public AxiomDynamicResponse Spaced;
@@ -19,7 +20,7 @@ namespace Cave.Axioms.Elemental
         public bool Passed => D1ZeroState && D2SingleInput && D3Relaxation
             && D4CounterResponse && D5RapidVsSpaced && D6StopAndRestart
             && D7FrenzyInput && D8IrregularTimestamps && D9LargeGap
-            && D10FiniteBounds && ProfilesUseSharedEngine;
+            && D10FiniteBounds && D11EffectiveCounter && ProfilesUseSharedEngine;
     }
 
     /// <summary>Deterministic, Unity-free verification for the bounded shared solver.</summary>
@@ -38,6 +39,7 @@ namespace Cave.Axioms.Elemental
             result.D8IrregularTimestamps = VerifyIrregularTimestamps();
             result.D9LargeGap = VerifyLargeGap();
             result.D10FiniteBounds = VerifyFiniteBounds();
+            result.D11EffectiveCounter = VerifyEffectiveCounter();
             result.ProfilesUseSharedEngine = VerifyProfiles();
             return result;
         }
@@ -165,6 +167,21 @@ namespace Cave.Axioms.Elemental
             }
 
             return true;
+        }
+
+        private static bool VerifyEffectiveCounter()
+        {
+            AxiomDynamicsChannel channel = NewChannel(AxiomKind.Heat);
+            for (int index = 0; index < 5; index++)
+            {
+                channel.ApplyInput(index + 1, 1f, index * .12f);
+            }
+
+            channel.SetCounterFactor(.5f);
+            AxiomDynamicResponse response = channel.AdvanceTo(1f);
+            return response.Counter > 0f
+                && response.EffectiveCounter > 0f
+                && response.EffectiveCounter < response.Counter;
         }
 
         private static bool VerifyProfiles()

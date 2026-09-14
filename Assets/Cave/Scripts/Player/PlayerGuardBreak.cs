@@ -149,6 +149,11 @@ namespace Cave.Player
             }
 
             PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                return;
+            }
+
             if (brace != null && brace.TryEnterFromGuardBreak())
             {
                 return;

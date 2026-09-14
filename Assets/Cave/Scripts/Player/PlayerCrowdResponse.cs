@@ -33,21 +33,16 @@ namespace Cave.Player
         [SerializeField] private LayerMask enemyLayers = ~0;
 
         private readonly HashSet<Damageable> affectedEnemies = new HashSet<Damageable>();
-        private readonly List<ColliderPair> ignoredColliderPairs = new List<ColliderPair>();
         private SidewaysParryAttack defense;
         private SpinSwordAttack stamina;
         private PlayerDash dash;
         private PlayerResourceMastery mastery;
         private PlayerPermanentProgression progression;
+        private Collider2D bodyCollider;
+        private CommittedAttackCollisionPhasing collisionPhasing;
         private float slipCollisionRestoreTime;
 
         public bool IsSlipping => slipCollisionRestoreTime > Time.time;
-
-        private struct ColliderPair
-        {
-            public Collider2D Player;
-            public Collider2D Enemy;
-        }
 
         private void Awake()
         {
@@ -56,9 +51,15 @@ namespace Cave.Player
             dash = GetComponent<PlayerDash>();
             mastery = GetComponent<PlayerResourceMastery>();
             progression = GetComponent<PlayerPermanentProgression>();
+            bodyCollider = GetComponent<Collider2D>();
+            collisionPhasing = GetComponent<CommittedAttackCollisionPhasing>();
+            if (collisionPhasing == null)
+            {
+                collisionPhasing = gameObject.AddComponent<CommittedAttackCollisionPhasing>();
+            }
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (slipCollisionRestoreTime > 0f && Time.time >= slipCollisionRestoreTime)
             {
@@ -96,7 +97,19 @@ namespace Cave.Player
                 return false;
             }
 
-            IgnoreEnemyBodyCollisions();
+            // Slip is an earned, temporary character-body exception.  The shared
+            // phasing component records only the ignored pairs and depenetrates
+            // before solid collision is restored.
+            float exitDirection = Mathf.Approximately(horizontalInput, 0f)
+                ? Mathf.Sign(Mathf.Approximately(facingDirection, 0f) ? 1f : facingDirection)
+                : Mathf.Sign(horizontalInput);
+            float slipDistance = dash.DashSpeed
+                * ResolveSlipSpeedMultiplier(quality)
+                * slipDuration;
+            collisionPhasing?.BeginAlongPath(
+                bodyCollider,
+                Vector2.right * exitDirection,
+                slipDistance);
             slipCollisionRestoreTime = Time.time + slipDuration;
             progression?.NotifyDefensiveCounterUsed(quality);
             CombatShapeEffect.Create(
@@ -189,56 +202,9 @@ namespace Cave.Player
                 && damageable.GetComponent<EnemyArchetypeProfile>() != null;
         }
 
-        private void IgnoreEnemyBodyCollisions()
-        {
-            RestoreEnemyCollisions();
-            Collider2D[] playerColliders = GetComponentsInChildren<Collider2D>(true);
-            foreach (EnemyArchetypeProfile enemy in FindObjectsOfType<EnemyArchetypeProfile>())
-            {
-                if (enemy == null || !enemy.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-
-                Collider2D[] enemyColliders = enemy.GetComponentsInChildren<Collider2D>(true);
-                foreach (Collider2D playerCollider in playerColliders)
-                {
-                    if (playerCollider == null || playerCollider.isTrigger)
-                    {
-                        continue;
-                    }
-
-                    foreach (Collider2D enemyCollider in enemyColliders)
-                    {
-                        if (enemyCollider == null
-                            || enemyCollider.isTrigger
-                            || Physics2D.GetIgnoreCollision(playerCollider, enemyCollider))
-                        {
-                            continue;
-                        }
-
-                        Physics2D.IgnoreCollision(playerCollider, enemyCollider, true);
-                        ignoredColliderPairs.Add(new ColliderPair
-                        {
-                            Player = playerCollider,
-                            Enemy = enemyCollider
-                        });
-                    }
-                }
-            }
-        }
-
         private void RestoreEnemyCollisions()
         {
-            foreach (ColliderPair pair in ignoredColliderPairs)
-            {
-                if (pair.Player != null && pair.Enemy != null)
-                {
-                    Physics2D.IgnoreCollision(pair.Player, pair.Enemy, false);
-                }
-            }
-
-            ignoredColliderPairs.Clear();
+            collisionPhasing?.End();
             slipCollisionRestoreTime = 0f;
         }
 

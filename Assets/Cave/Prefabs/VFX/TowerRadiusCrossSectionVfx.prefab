@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2352489396028100647
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5611089259429208725}
+  - component: {fileID: 5954956350697439963}
+  m_Layer: 0
+  m_Name: VisualRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5611089259429208725
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2352489396028100647}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2659618217932967306}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &5954956350697439963
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2352489396028100647}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 2
+  m_Sprite: {fileID: 21300000, guid: 02263d866a3db4e22a6b374c07249cef, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 2, y: 1.6015625}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!1 &2482689809613727372
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2659618217932967306}
+  - component: {fileID: 1022590793997228516}
+  m_Layer: 0
+  m_Name: TowerRadiusCrossSectionVfx
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2659618217932967306
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2482689809613727372}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5611089259429208725}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1022590793997228516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2482689809613727372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0158a682f879540c88677d0faa5ab137, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  visualRenderer: {fileID: 5954956350697439963}
+  growthFrames:
+  - {fileID: 21300000, guid: 02263d866a3db4e22a6b374c07249cef, type: 3}
+  - {fileID: 21300000, guid: d57021b5a56b940679122370f89a1359, type: 3}
+  - {fileID: 21300000, guid: 3bd9b46b38a31455f823519e3b7ce4ef, type: 3}
+  - {fileID: 21300000, guid: 0ded249e0cddb42669de1f72bb6076e5, type: 3}
+  - {fileID: 21300000, guid: acfc877a1a2374454aba32eb746a3c6e, type: 3}
+  - {fileID: 21300000, guid: db050532f8b7a4694936130e5c116c71, type: 3}
+  - {fileID: 21300000, guid: c9aa34510312b4aad8972f8ee2109d95, type: 3}
+  - {fileID: 21300000, guid: 4f7cc84065bf54ea7b433dcdd658c8e5, type: 3}
+  - {fileID: 21300000, guid: 9fafafd6f600b43adaca487ee1008b14, type: 3}
+  - {fileID: 21300000, guid: 89ae010240cb343d3868640e22856c3f, type: 3}
+  - {fileID: 21300000, guid: 60dbfe8b377df4cdb812ee9c5d58ab92, type: 3}
+  - {fileID: 21300000, guid: b60c1d3e450274af6a4b6ee9c2182731, type: 3}
+  - {fileID: 21300000, guid: 4a2708ba023304095bdcfb1bdba13948, type: 3}
+  - {fileID: 21300000, guid: f24d6800fefe9483fad6f80800b8d240, type: 3}
+  - {fileID: 21300000, guid: 27fb89a5d23dd463a8e198dff69531a6, type: 3}
+  - {fileID: 21300000, guid: 864e86acd00e84e36ad7a0ec1efb7a58, type: 3}
+  - {fileID: 21300000, guid: 48d40e4048c7e402cae0460cfb8a7e77, type: 3}
+  - {fileID: 21300000, guid: 1269b42ececa94c3bad7ae9ae47d4b10, type: 3}
+  - {fileID: 21300000, guid: a4403722884234c7da64da045bacfc2a, type: 3}
+  - {fileID: 21300000, guid: d55ebda2bb2de46098ad481ad68f43be, type: 3}
+  - {fileID: 21300000, guid: f77033673359d43e6b2704f312f37c83, type: 3}
+  - {fileID: 21300000, guid: 7efdfd11c4dc9446f925d04279a05a52, type: 3}
+  - {fileID: 21300000, guid: 6ded1c0a753b64ff580e3559669b8b38, type: 3}
+  - {fileID: 21300000, guid: ef59e7dcfbde84c119d5dcbe1c262d51, type: 3}
+  - {fileID: 21300000, guid: 0b6ddb632b45f451e91e5c85c033b772, type: 3}
+  - {fileID: 21300000, guid: 78b7d795cef14425e90f0831f4251399, type: 3}
+  - {fileID: 21300000, guid: 1937b228b17a94673b7513286b8603bf, type: 3}
+  - {fileID: 21300000, guid: 98f85f157e5734ece815a1d9bcaebbce, type: 3}
+  - {fileID: 21300000, guid: abf7579098ecd439db1c117e1f574710, type: 3}
+  - {fileID: 21300000, guid: 42e025035c87b45de98bb2bfb5650a11, type: 3}
+  animationFramesPerSecond: 18
+  visualRadiusScale: 1
+  visualOffset: {x: 0, y: 0, z: 0}
+  fullFrameDiameterWorldUnits: 2

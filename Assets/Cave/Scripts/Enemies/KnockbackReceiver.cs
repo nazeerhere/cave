@@ -12,6 +12,7 @@ namespace Cave.Enemies
         private EnemyController enemyController;
         private FlyingSwarmController flyingController;
         private float knockbackResistance;
+        private float teamAuraKnockbackResistance;
 
         private void Awake()
         {
@@ -29,7 +30,9 @@ namespace Cave.Enemies
                 return;
             }
 
-            float appliedMultiplier = 1f - Mathf.Clamp01(knockbackResistance);
+            float appliedMultiplier = 1f - Mathf.Clamp01(Mathf.Max(
+                knockbackResistance,
+                teamAuraKnockbackResistance));
             if (enemyController == null)
             {
                 enemyController = GetComponent<EnemyController>();
@@ -50,6 +53,11 @@ namespace Cave.Enemies
         public void SetKnockbackResistance(float resistance)
         {
             knockbackResistance = Mathf.Clamp(resistance, 0f, 0.95f);
+        }
+
+        public void SetTeamAuraKnockbackResistance(float resistance)
+        {
+            teamAuraKnockbackResistance = Mathf.Clamp(resistance, 0f, 0.95f);
         }
     }
 }

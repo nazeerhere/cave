@@ -54,6 +54,9 @@ namespace Cave.Axioms
         ControlOpportunityExpired,
         ControlInterventionSucceeded,
         ControlInterventionFailed,
+        FrequencyFiltered,
+        Counterphase,
+        ConvergenceRecognized,
         // Labels only: Pass 2 does not implement either system.
         PhaseDebuffActive,
         ResonanceBreak

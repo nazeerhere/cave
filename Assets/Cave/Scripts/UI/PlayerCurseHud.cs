@@ -12,23 +12,37 @@ namespace Cave.UI
         private GameObject distractionIcon;
         private GameObject detectiveIcon;
         private GameObject avariceIcon;
+        private GameObject stoneglassIcon;
+        private GameObject cavesGlareIcon;
+        private Text insanityLabel;
         private Text avariceLabel;
+        private Text stoneglassLabel;
         private Text deathClaimNotice;
         private PlayerCurseController curses;
         private float hideClaimNoticeAt;
+        private int displayedInsanityStacks = int.MinValue;
+        private int displayedStoneglassStacks = int.MinValue;
 
         public void Configure(
             GameObject distraction,
             GameObject detective,
             GameObject avarice,
+            GameObject stoneglass,
+            GameObject cavesGlare,
+            Text configuredInsanityLabel,
             Text configuredAvariceLabel,
+            Text configuredStoneglassLabel,
             Text configuredDeathClaimNotice,
             PlayerCurseController source)
         {
             distractionIcon = distraction;
             detectiveIcon = detective;
             avariceIcon = avarice;
+            stoneglassIcon = stoneglass;
+            cavesGlareIcon = cavesGlare;
+            insanityLabel = configuredInsanityLabel;
             avariceLabel = configuredAvariceLabel;
+            stoneglassLabel = configuredStoneglassLabel;
             deathClaimNotice = configuredDeathClaimNotice;
             if (deathClaimNotice != null)
             {
@@ -71,6 +85,8 @@ namespace Cave.UI
             {
                 deathClaimNotice.gameObject.SetActive(false);
             }
+
+            RefreshStackBadges();
         }
 
         private void Refresh()
@@ -100,6 +116,40 @@ namespace Cave.UI
                 // Detailed claim information remains contextual rather than turning
                 // every active curse into a card-sized HUD element.
                 avariceLabel.text = tier;
+            }
+
+            bool stoneglassActive = curses != null && curses.CurseOfStoneglassActive;
+            if (stoneglassIcon != null)
+            {
+                stoneglassIcon.SetActive(stoneglassActive);
+            }
+
+            if (cavesGlareIcon != null)
+            {
+                cavesGlareIcon.SetActive(curses != null && curses.CavesGlareActive);
+            }
+
+            RefreshStackBadges();
+        }
+
+        private void RefreshStackBadges()
+        {
+            int insanityStacks = curses != null && curses.CurseOfInsanityActive
+                ? curses.CurrentInsanityStacks
+                : 0;
+            if (insanityLabel != null && displayedInsanityStacks != insanityStacks)
+            {
+                displayedInsanityStacks = insanityStacks;
+                insanityLabel.text = insanityStacks > 0 ? insanityStacks.ToString() : string.Empty;
+            }
+
+            int stoneglassStacks = curses != null && curses.CurseOfStoneglassActive
+                ? curses.StoneglassFractureStacks
+                : 0;
+            if (stoneglassLabel != null && displayedStoneglassStacks != stoneglassStacks)
+            {
+                displayedStoneglassStacks = stoneglassStacks;
+                stoneglassLabel.text = stoneglassStacks > 0 ? stoneglassStacks.ToString() : string.Empty;
             }
         }
 

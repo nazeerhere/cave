@@ -36,7 +36,7 @@ namespace Cave.Enemies
         [SerializeField, Min(0f)] private float towerRebuildDelay = 8f;
 
         [Header("Tower Influence")]
-        [SerializeField, Min(1)] private int towerMaximumHealth = 8;
+        [SerializeField, Min(1)] private int towerMaximumHealth = 24;
         [SerializeField, Min(0.5f)] private float towerInitialRadius = 4.5f;
         [SerializeField, Min(0.5f)] private float towerMaximumRadius = 7.5f;
         [SerializeField, Min(0f)] private float towerRadiusGrowthPerSecond = 0.08f;

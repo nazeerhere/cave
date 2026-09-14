@@ -33,6 +33,7 @@ namespace Cave.Enemies
         private LineRenderer boundary;
         private LineRenderer core;
         private DetectiveTowerVisualState visualState;
+        private TowerRadiusCrossSectionVfx radiusPresentation;
         private Material boundaryMaterial;
         private Material coreMaterial;
         private float currentRadius;
@@ -282,11 +283,25 @@ namespace Cave.Enemies
 
             visualState.Configure(damageable, core, researchStage);
 
+            radiusPresentation = TowerRadiusCrossSectionVfx.CreateFor(transform);
+            if (radiusPresentation != null)
+            {
+                radiusPresentation.Activate(currentRadius);
+                boundary.enabled = false;
+            }
+
             UpdateBoundary();
         }
 
         private void UpdateBoundary()
         {
+            if (radiusPresentation != null)
+            {
+                radiusPresentation.SetRadius(currentRadius);
+                if (boundary != null) boundary.enabled = false;
+                return;
+            }
+
             if (boundary == null)
             {
                 return;

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Cave.Axioms.Elemental;
+using Cave.Axioms.Phase;
+using Cave.Axioms.Vfx;
 using Cave.Audio;
 using Cave.InputSystem;
 using Cave.Player;
@@ -50,6 +52,8 @@ namespace Cave.Combat
         private PlayerRecoveryModifiers recoveryModifiers;
         private PlayerCombatFlow combatFlow;
         private FrenzyBreakActivation frenzyActivation;
+        private PhaseCombatState phaseCombatState;
+        private AxiomVfxPresenter axiomVfxPresenter;
 
         public event Action<float, float> StaminaChanged;
 
@@ -74,6 +78,8 @@ namespace Cave.Combat
             chargedAttack = GetComponent<ChargedAttack>();
             recoveryModifiers = GetComponent<PlayerRecoveryModifiers>();
             combatFlow = GetComponent<PlayerCombatFlow>();
+            phaseCombatState = GetComponent<PhaseCombatState>();
+            axiomVfxPresenter = GetComponent<AxiomVfxPresenter>();
             if (swordPivot != null)
             {
                 restingRotation = swordPivot.localRotation;
@@ -99,6 +105,16 @@ namespace Cave.Combat
             RefreshSwordFacing();
 
             PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                if (isAttacking)
+                {
+                    StopAttack();
+                }
+
+                return;
+            }
+
             if (!isAttacking && brace != null && brace.IsBraced && GameInput.BasicAttackPressed)
             {
                 brace.LeaveForSpin();
@@ -246,7 +262,8 @@ namespace Cave.Combat
 
         private void RefreshSwordFacing()
         {
-            if (swordPivot == null || (chargedAttack != null && chargedAttack.IsAttacking))
+            if (swordPivot == null || (chargedAttack != null
+                && (chargedAttack.IsCharging || chargedAttack.IsAttacking)))
             {
                 return;
             }
@@ -282,6 +299,31 @@ namespace Cave.Combat
                 authoredPivotScale.x * mirror,
                 authoredPivotScale.y,
                 authoredPivotScale.z);
+        }
+
+        /// <summary>
+        /// Presentation-only attachment used by the swordless Miner Heavy body
+        /// frames. The selected Sword visual and its gameplay collider remain
+        /// on the existing Sword Pivot.
+        /// </summary>
+        public void ApplyHeavyPresentationPose(Vector2 direction, float angleOffset, Vector2 handOffset)
+        {
+            if (swordPivot == null) return;
+            float directionalAngle = PrepareSwordForDirection(direction);
+            float mirror = currentSwordFacing == authoredSwordFacing ? 1f : -1f;
+            swordPivot.localPosition = new Vector3(
+                authoredPivotPosition.x * mirror + handOffset.x * mirror,
+                authoredPivotPosition.y + handOffset.y,
+                authoredPivotPosition.z);
+            swordPivot.localRotation = restingRotation
+                * Quaternion.Euler(0f, 0f, directionalAngle + angleOffset * currentSwordFacing);
+        }
+
+        public void RestoreSwordPresentation()
+        {
+            if (swordPivot == null) return;
+            ApplySwordFacing(currentSwordFacing);
+            swordPivot.localRotation = restingRotation;
         }
 
         private float ResolveAuthoredSwordFacing()
@@ -486,8 +528,8 @@ namespace Cave.Combat
             if (isFrenzyCritical)
             {
                 resolvedDamage = frenzyDamage;
-                manaWasConsumed |= frenzyActivation.ManaInfused;
             }
+            manaWasConsumed |= frenzyActivation != null && frenzyActivation.ManaInfused;
             if (resourceMastery == null)
             {
                 resourceMastery = GetComponent<PlayerResourceMastery>();
@@ -501,6 +543,8 @@ namespace Cave.Combat
                 damageContext = damageContext.WithTraits(DamageTrait.FrenzyCritical);
             }
 
+            bool imaginaryWasActive = HasActiveImaginaryState();
+            Vector3 hitPosition = other.ClosestPoint(transform.position);
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
             ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
                 gameObject,
@@ -511,14 +555,21 @@ namespace Cave.Combat
                 Time.time,
                 axiomApplicationReceipt);
             Vector2 hitDirection = damageable.transform.position - transform.position;
-            if (isFrenzyCritical)
+            if (frenzyActivation != null
+                && (frenzyActivation.ManaInfused || isFrenzyCritical))
             {
-                frenzyActivation.ApplyImpact(damageable, hitDirection, appliedDamage);
+                frenzyActivation.ApplyImpact(
+                    damageable,
+                    hitDirection,
+                    appliedDamage,
+                    isFrenzyCritical);
             }
-            if (hitVfxPrefab != null)
+            if (imaginaryWasActive && appliedDamage > 0)
             {
-                Vector3 hitPosition = other.ClosestPoint(transform.position);
-
+                PlayImaginaryImpact(hitPosition);
+            }
+            else if (hitVfxPrefab != null)
+            {
                 GameObject vfx = Instantiate(
                     hitVfxPrefab,
                     hitPosition,
@@ -550,6 +601,26 @@ namespace Cave.Combat
             {
                 activeTargetContacts.Remove(damageable);
             }
+        }
+
+        private bool HasActiveImaginaryState()
+        {
+            if (phaseCombatState == null)
+            {
+                phaseCombatState = GetComponent<PhaseCombatState>();
+            }
+
+            return phaseCombatState != null && phaseCombatState.HasOpening;
+        }
+
+        private void PlayImaginaryImpact(Vector3 hitPosition)
+        {
+            if (axiomVfxPresenter == null)
+            {
+                axiomVfxPresenter = GetComponent<AxiomVfxPresenter>();
+            }
+
+            axiomVfxPresenter?.PlayImaginaryImpact(hitPosition);
         }
 
         private void RemoveInactiveTargetContacts()

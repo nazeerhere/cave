@@ -27,6 +27,14 @@ namespace Cave.Player
         public int OwnedLandmines => ResolveConsumables() != null
             ? consumables.OwnedLandmines
             : 0;
+        public int DiskCapacity => ResolveConsumables() != null ? consumables.DiskCapacity : 0;
+        public int StoredDiskCharges => ResolveConsumables() != null ? consumables.StoredDiskCharges : 0;
+        public float DiskRechargeProgress => ResolveConsumables() != null ? consumables.DiskRechargeProgress : 0f;
+        public float DiskRechargeSeconds => ResolveConsumables() != null ? consumables.RechargeSecondsPerCharge : 0f;
+        public string NextDiskCapacityLabel => ResolveConsumables() != null
+            ? consumables.NextDiskCapacityLabel
+            : "OBLIVION DISK I";
+        public bool IsDiskAtMaximumCapacity => ResolveConsumables() != null && consumables.DiskCapacity >= 3;
 
         private void Awake()
         {

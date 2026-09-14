@@ -131,6 +131,11 @@ namespace Cave.Enemies
             crystalRenderer.sortingLayerID = proceduralCore != null ? proceduralCore.sortingLayerID : 0;
             crystalRenderer.sortingOrder = proceduralCore != null ? proceduralCore.sortingOrder + 1 : 6;
             crystalRenderer.color = Color.white;
+            // The approved sprites use a near-bottom pivot, so this roots the
+            // crystal body at the Tower origin instead of centering it on actors.
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+            visual.transform.localScale = Vector3.one * 1.25f;
         }
 
         private Sprite ResolveSprite(int stage, int damageBand)

@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &744516138952187468
 Transform:
   m_ObjectHideFlags: 0
@@ -95,14 +95,12 @@ GameObject:
   - component: {fileID: 7965402178953598571}
   - component: {fileID: 7965402178953598568}
   - component: {fileID: 4641500956770723554}
-  - component: {fileID: 4626447089928771967}
   - component: {fileID: 4781717742486089278}
   - component: {fileID: 8821869837322549290}
   - component: {fileID: 1140455666119384835}
   - component: {fileID: 9117885759193461070}
   - component: {fileID: 2514253935551041675}
   - component: {fileID: 4509848618058423204}
-  - component: {fileID: 5934769182059287084}
   - component: {fileID: 3579958940850782835}
   - component: {fileID: 3046932180935078403}
   - component: {fileID: 935412846416825855}
@@ -120,6 +118,8 @@ GameObject:
   - component: {fileID: 8452142170613315693}
   - component: {fileID: 8601981916802820611}
   - component: {fileID: 8960328804860153528}
+  - component: {fileID: 3061391093929176105}
+  - component: {fileID: 2296953434621697911}
   m_Layer: 9
   m_Name: Corrupted Eye
   m_TagString: Untagged
@@ -184,8 +184,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 506df4cd13ec04503abe4240308c5421, type: 3}
-  m_Color: {r: 0.8584906, g: 0.1822268, b: 0.55878264, a: 1}
+  m_Sprite: {fileID: 21300000, guid: 6793841c107e3450f93d513b1d8fc53e, type: 3}
+  m_Color: {r: 0.9716981, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -210,65 +210,6 @@ MonoBehaviour:
   maxHealth: 3
   damageFlashDuration: 0.15
   damageFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
---- !u!68 &4626447089928771967
-EdgeCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7965402178953598570}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_EdgeRadius: 0
-  m_Points:
-  - {x: -0.069676645, y: 0.009682881}
-  - {x: -0.06005093, y: 0.0096630845}
-  - {x: -0.06043749, y: -0.00034085166}
-  - {x: -0.039953496, y: -0.00018580817}
-  - {x: -0.04012482, y: -0.019784808}
-  - {x: -0.030451033, y: -0.020379208}
-  - {x: -0.030106664, y: -0.03999685}
-  - {x: -0.010191741, y: -0.039807953}
-  - {x: -0.010068629, y: -0.05017144}
-  - {x: 0.020301368, y: -0.0499917}
-  - {x: 0.020194612, y: -0.039917443}
-  - {x: 0.040204667, y: -0.03982835}
-  - {x: 0.039905492, y: -0.019783664}
-  - {x: 0.05012511, y: -0.019832518}
-  - {x: 0.050000705, y: 0.00022050831}
-  - {x: 0.06007568, y: -0.00002874594}
-  - {x: 0.05986691, y: 0.0100024445}
-  - {x: 0.07019715, y: 0.009969672}
-  - {x: 0.06986095, y: 0.030216303}
-  - {x: 0.0601127, y: 0.029866982}
-  - {x: 0.060019724, y: 0.03983438}
-  - {x: 0.050140172, y: 0.040110078}
-  - {x: 0.049845736, y: 0.020285781}
-  - {x: 0.040129766, y: 0.020329725}
-  - {x: 0.03994337, y: 0.030190798}
-  - {x: 0.019772759, y: 0.03003838}
-  - {x: 0.019737892, y: 0.03980107}
-  - {x: -0.010110814, y: 0.040198233}
-  - {x: -0.010101775, y: 0.02985204}
-  - {x: -0.03011269, y: 0.029896256}
-  - {x: -0.030033914, y: 0.010041203}
-  - {x: -0.039780017, y: 0.010067787}
-  - {x: -0.039873857, y: 0.020157386}
-  - {x: -0.04986705, y: 0.0201265}
-  - {x: -0.05007066, y: 0.0401123}
-  - {x: -0.059940733, y: 0.040018223}
-  - {x: -0.06000875, y: 0.029908098}
-  - {x: -0.06990077, y: 0.030080302}
-  - {x: -0.069893084, y: 0.009663302}
-  m_AdjacentStartPoint: {x: 0, y: 0}
-  m_AdjacentEndPoint: {x: 0, y: 0}
-  m_UseAdjacentStartPoint: 0
-  m_UseAdjacentEndPoint: 0
 --- !u!114 &4781717742486089278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -360,18 +301,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementLockDuration: 0.25
   maximumKnockbackSpeed: 25
---- !u!114 &5934769182059287084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7965402178953598570}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c93c14d1111cf4bc4b77073f1af56c4a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!50 &3579958940850782835
 Rigidbody2D:
   serializedVersion: 4
@@ -400,7 +329,7 @@ EdgeCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7965402178953598570}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 0
@@ -664,8 +593,14 @@ MonoBehaviour:
   lineOfSightMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  pairedMinimumSeparation: 2.25
+  broadcastRetreatSpeedThreshold: 1.2
   gazeRange: 6
   gazeSetupDuration: 0.6
+  gazeLockDuration: 2.5
+  gazeReentryDelay: 0.9
+  gazeCancelDangerRadius: 2.25
+  gazeReacquireRadius: 3
   turnedAwayDotThreshold: -0.2
   frenzyDuration: 4
   frenzyMoveMultiplier: 1.3
@@ -676,7 +611,15 @@ MonoBehaviour:
   diveDuration: 0.45
   diveRecovery: 0.35
   diveDamage: 1
+  minimumNormalHoverHeight: 1.6
+  preferredNormalHoverHeight: 2.1
+  hoverGroundProbeHeight: 4
+  hoverGroundProbeDistance: 12
+  hoverGroundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   rescueRadius: 4
+  playerThreatRange: 2.2
   endangeredHealthFraction: 0.25
   sacrificeWindup: 0.35
   sacrificeSpeed: 10
@@ -695,6 +638,7 @@ MonoBehaviour:
   state: 0
   hasLineOfSight: 0
   isFrenzied: 0
+  currentRole: 0
 --- !u!114 &8601981916802820611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -725,3 +669,104 @@ MonoBehaviour:
   maximumHealth: 1
   contactDamage: 1
   moveSpeed: 4
+--- !u!114 &3061391093929176105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7965402178953598570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1b41745d132845dd8b51c1643281202, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  visualRenderer: {fileID: 7965402178953598568}
+  corruptVariant: 1
+  idleFrames:
+  - {fileID: 21300000, guid: 6793841c107e3450f93d513b1d8fc53e, type: 3}
+  - {fileID: 21300000, guid: 4fef43a4ea9d74f89b91c3dcae93fe25, type: 3}
+  - {fileID: 21300000, guid: dc397d525fbe14a1c967d80436b166c2, type: 3}
+  - {fileID: 21300000, guid: b2c30fa880184437db10d090362b7e39, type: 3}
+  - {fileID: 21300000, guid: 71a4b8f63d00b43bfb75792d55727b51, type: 3}
+  - {fileID: 21300000, guid: 30ee9c34af85541138be89b4de380486, type: 3}
+  hoverFrames:
+  - {fileID: 21300000, guid: 7501d93bd71c04253a2e50815cbed9a0, type: 3}
+  - {fileID: 21300000, guid: 194af039398354a63ad3d3e825c218cd, type: 3}
+  - {fileID: 21300000, guid: 1bc3803efbde4454390ac7951c517bc2, type: 3}
+  - {fileID: 21300000, guid: 485a7dc2ea8d04a059b536df8907c8f8, type: 3}
+  - {fileID: 21300000, guid: f285d507b83bd4ca0a51835d475aa894, type: 3}
+  - {fileID: 21300000, guid: cc64aa7346b4544dea45e1d60d47a5e7, type: 3}
+  driftFrames:
+  - {fileID: 21300000, guid: 286435d42ff774cfca17b055765a307b, type: 3}
+  - {fileID: 21300000, guid: 7e9d4fe8d9bf044308352aaf7be3dd2f, type: 3}
+  - {fileID: 21300000, guid: 3295623b214b348c2a59f18311cde3c0, type: 3}
+  - {fileID: 21300000, guid: 13dc34a200acd4f709628a149050f36b, type: 3}
+  - {fileID: 21300000, guid: a0a9c9b9018e8404589cffdeb313af2e, type: 3}
+  - {fileID: 21300000, guid: 00427451fecdf4e2bb4f85bf166b3652, type: 3}
+  castFrames:
+  - {fileID: 21300000, guid: 3f714d6aa361540e6b15e3b3edc11f19, type: 3}
+  - {fileID: 21300000, guid: 5a241e38c40e14d4d8a220499ce2fcde, type: 3}
+  - {fileID: 21300000, guid: f3406ca6eeed54a77b0747c418c686f2, type: 3}
+  - {fileID: 21300000, guid: 019ed55742a8b45fe872b74d97821d56, type: 3}
+  - {fileID: 21300000, guid: cc8f61267e7c540b7917a01f49ddec2b, type: 3}
+  - {fileID: 21300000, guid: 3cd79b827a4104a839c29f6fdf124187, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: 6153be524782146deb35cc95308d9d86, type: 3}
+  - {fileID: 21300000, guid: c8a11822c0b794ca99d8ef1f0e76ee09, type: 3}
+  - {fileID: 21300000, guid: 8f9d93a6f483941adb3f3cd6c856768f, type: 3}
+  - {fileID: 21300000, guid: 9bf366baebeb64aa1b450cac7ce33e40, type: 3}
+  - {fileID: 21300000, guid: 96c5d57e59f1241029c18aa9f745bff3, type: 3}
+  - {fileID: 21300000, guid: a014cfdd3905f48e48bda8913c8b741b, type: 3}
+  specialFrames:
+  - {fileID: 21300000, guid: 13145acf668624ac299e4b5fcd66573b, type: 3}
+  - {fileID: 21300000, guid: 5619b75c855c0420a947669638b02dec, type: 3}
+  - {fileID: 21300000, guid: 82f1261cc91794621b1f1c2638a53f75, type: 3}
+  - {fileID: 21300000, guid: ffca346b8506c4b58a0056597e8406ab, type: 3}
+  - {fileID: 21300000, guid: e6f406a828a954389ba58b25cc9c9067, type: 3}
+  - {fileID: 21300000, guid: 5022760d5a7c44c9287969035606a799, type: 3}
+  hurtFrames:
+  - {fileID: 21300000, guid: 54ac0deef1a9348e79130ab7f18433cf, type: 3}
+  - {fileID: 21300000, guid: 0d5963a8acaa14afc96301a9f9ee6daa, type: 3}
+  - {fileID: 21300000, guid: 019a301b8e9214ba4a22226ccd964dd3, type: 3}
+  - {fileID: 21300000, guid: 49487ca0fcce5467d8608983d2008b6b, type: 3}
+  - {fileID: 21300000, guid: 83e162f59d83d482da970dd20d1d35be, type: 3}
+  - {fileID: 21300000, guid: 2996685594b4a4decb1668af52a6e734, type: 3}
+  deathFrames:
+  - {fileID: 21300000, guid: 5f0e433b1a9454ffe971bf3140ca577b, type: 3}
+  - {fileID: 21300000, guid: 3f137d48ad5804eb3995d6bcc1cf17c4, type: 3}
+  - {fileID: 21300000, guid: b3201983d44594fa0be668d6e9ec8e37, type: 3}
+  - {fileID: 21300000, guid: 2dd5520cb9bc246a2beddc3dd2cca225, type: 3}
+  - {fileID: 21300000, guid: de19fb3862ab1442e826de919ffb697d, type: 3}
+  - {fileID: 21300000, guid: 0727fc4f874d24003905e2dd19442d0f, type: 3}
+  idleFramesPerSecond: 5
+  movingFramesPerSecond: 9
+  actionFramesPerSecond: 10
+  hurtDuration: 0.2
+  movingThreshold: 0.08
+--- !u!61 &2296953434621697911
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7965402178953598570}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0.00773816}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.20605469, y: 0.18066406}
+    newSize: {x: 0.16, y: 0.16}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 0.20605469, y: 0.089277565}
+  m_EdgeRadius: 0

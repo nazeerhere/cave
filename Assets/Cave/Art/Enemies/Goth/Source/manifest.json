@@ -1,0 +1,11 @@
+{
+  "pack": "Cave Goth 4-Page Sprite Pack",
+  "page_count": 4,
+  "files": [
+    "Original_Goth/Page_1.png",
+    "Original_Goth/Page_2.png",
+    "Corrupted_Goth/Page_1.png",
+    "Corrupted_Goth/Page_2.png"
+  ],
+  "missing": []
+}

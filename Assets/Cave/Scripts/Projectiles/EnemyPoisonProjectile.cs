@@ -26,7 +26,8 @@ namespace Cave.Projectiles
         private Vector2 movementDirection;
         private float speed;
         private int directDamage;
-        private float poisonDamagePercentPerTick;
+        private float poisonDamagePercentPerSecond;
+        private float poisonZoneDamagePercentPerSecond;
         private int minimumPoisonTickDamage;
         private int maximumPoisonTickDamage;
         private float poisonInterval;
@@ -77,7 +78,8 @@ namespace Cave.Projectiles
             Vector2 direction,
             float projectileSpeed,
             int resolvedDirectDamage,
-            float resolvedPoisonDamagePercentPerTick,
+            float resolvedPoisonDamagePercentPerSecond,
+            float resolvedPoisonZoneDamagePercentPerSecond,
             int resolvedMinimumPoisonTickDamage,
             int resolvedMaximumPoisonTickDamage,
             float tickInterval,
@@ -93,7 +95,8 @@ namespace Cave.Projectiles
             movementDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.left;
             speed = Mathf.Max(0.01f, projectileSpeed);
             directDamage = Mathf.Max(1, resolvedDirectDamage);
-            poisonDamagePercentPerTick = Mathf.Max(0f, resolvedPoisonDamagePercentPerTick);
+            poisonDamagePercentPerSecond = Mathf.Max(0f, resolvedPoisonDamagePercentPerSecond);
+            poisonZoneDamagePercentPerSecond = Mathf.Max(0f, resolvedPoisonZoneDamagePercentPerSecond);
             minimumPoisonTickDamage = Mathf.Max(1, resolvedMinimumPoisonTickDamage);
             maximumPoisonTickDamage = Mathf.Max(
                 minimumPoisonTickDamage,
@@ -237,7 +240,7 @@ namespace Cave.Projectiles
                     }
 
                     poison.ApplyPoison(
-                        poisonDamagePercentPerTick,
+                        poisonDamagePercentPerSecond,
                         minimumPoisonTickDamage,
                         maximumPoisonTickDamage,
                         poisonInterval,
@@ -295,7 +298,7 @@ namespace Cave.Projectiles
                     currentOwner,
                     poisonZoneRadius,
                     poisonZoneDuration,
-                    poisonDamagePercentPerTick,
+                    poisonZoneDamagePercentPerSecond,
                     minimumPoisonTickDamage,
                     maximumPoisonTickDamage,
                     poisonInterval,

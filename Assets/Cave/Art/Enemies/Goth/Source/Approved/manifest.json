@@ -1,0 +1,111 @@
+{
+  "Original_Goth": {
+    "Idle": {
+      "frames": 8,
+      "frame_width": 181,
+      "frame_height": 226,
+      "sheet_width": 1448,
+      "sheet_height": 226
+    },
+    "Walk": {
+      "frames": 8,
+      "frame_width": 181,
+      "frame_height": 224,
+      "sheet_width": 1448,
+      "sheet_height": 224
+    },
+    "Fireball_Cast": {
+      "frames": 8,
+      "frame_width": 181,
+      "frame_height": 207,
+      "sheet_width": 1448,
+      "sheet_height": 207
+    },
+    "Laser_Charge": {
+      "frames": 8,
+      "frame_width": 181,
+      "frame_height": 227,
+      "sheet_width": 1448,
+      "sheet_height": 227
+    },
+    "Laser_Release": {
+      "frames": 7,
+      "frame_width": 207,
+      "frame_height": 259,
+      "sheet_width": 1449,
+      "sheet_height": 259
+    },
+    "Hurt": {
+      "frames": 6,
+      "frame_width": 242,
+      "frame_height": 250,
+      "sheet_width": 1452,
+      "sheet_height": 250
+    },
+    "Death": {
+      "frames": 5,
+      "frame_width": 290,
+      "frame_height": 200,
+      "sheet_width": 1450,
+      "sheet_height": 200
+    }
+  },
+  "Corrupted_Goth": {
+    "Idle": {
+      "frames": 4,
+      "frame_width": 281,
+      "frame_height": 234,
+      "sheet_width": 1124,
+      "sheet_height": 234
+    },
+    "Move": {
+      "frames": 4,
+      "frame_width": 281,
+      "frame_height": 264,
+      "sheet_width": 1124,
+      "sheet_height": 264
+    },
+    "Fireball_Cast_Volley": {
+      "frames": 5,
+      "frame_width": 225,
+      "frame_height": 234,
+      "sheet_width": 1125,
+      "sheet_height": 234
+    },
+    "Antimatter_Burst": {
+      "frames": 5,
+      "frame_width": 225,
+      "frame_height": 285,
+      "sheet_width": 1125,
+      "sheet_height": 285
+    },
+    "Focus_Orb_Cast": {
+      "frames": 5,
+      "frame_width": 225,
+      "frame_height": 262,
+      "sheet_width": 1125,
+      "sheet_height": 262
+    },
+    "Antimatter_Beam": {
+      "frames": 5,
+      "frame_width": 225,
+      "frame_height": 245,
+      "sheet_width": 1125,
+      "sheet_height": 245
+    },
+    "Meteor_Ritual": {
+      "frames": 5,
+      "frame_width": 225,
+      "frame_height": 261,
+      "sheet_width": 1125,
+      "sheet_height": 261
+    },
+    "Death_Corruption": {
+      "frames": 5,
+      "frame_width": 225,
+      "frame_height": 243,
+      "sheet_width": 1125,
+      "sheet_height": 243
+    }
+  }
+}

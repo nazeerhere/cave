@@ -13,6 +13,7 @@ namespace Cave.Axioms.Frequency
                 && VerifyFastSlowAndEdges(settings, out failure)
                 && VerifyStaleReference(settings, out failure)
                 && VerifyIndependentTrackers(settings, out failure)
+                && VerifyFrequencyFiltering(settings, out failure)
                 && VerifyResetAfterBreak(settings, out failure);
         }
 
@@ -103,6 +104,26 @@ namespace Cave.Axioms.Frequency
                 && resumed.Outcome == GuardResonanceContactOutcome.Advanced
                 && resumed.Progress == 1,
                 "Stale cadence did not reset to a fresh reference for immediate recovery.", out failure);
+        }
+
+        private static bool VerifyFrequencyFiltering(GuardResonanceSettings settings, out string failure)
+        {
+            GuardResonanceTracker first = new GuardResonanceTracker();
+            GuardResonanceTracker second = new GuardResonanceTracker();
+            first.RegisterContact(0f, settings, true);
+            first.RegisterContact(.8f, settings, true);
+            first.RegisterContact(1.6f, settings, true);
+            GuardResonanceContactResult filtered = first.RegisterContact(2.4f, settings, true);
+            GuardResonanceContactResult resumed = first.RegisterContact(3.2f, settings, true);
+            second.RegisterContact(0f, settings, true);
+            GuardResonanceContactResult independent = second.RegisterContact(.8f, settings, true);
+            return Expect(filtered.Outcome == GuardResonanceContactOutcome.Filtered
+                && filtered.Progress == 2
+                && resumed.Outcome == GuardResonanceContactOutcome.Advanced
+                && resumed.Progress == 3
+                && independent.Progress == 1
+                && settings.NaturalPeriodSeconds == .8f,
+                "Frequency filtering did not remain attacker-local or preserve cadence.", out failure);
         }
 
         private static bool VerifyResetAfterBreak(GuardResonanceSettings settings, out string failure)

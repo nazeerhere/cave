@@ -26,15 +26,16 @@ GameObject:
   - component: {fileID: 625378611067726507}
   - component: {fileID: 6491435887602235420}
   - component: {fileID: 1504084928770138500}
-  - component: {fileID: 8652873979291248652}
   - component: {fileID: 7313275505096619193}
+  - component: {fileID: 2243976604115776182}
+  - component: {fileID: 6353955065001535808}
   m_Layer: 9
   m_Name: Eye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4954924131797871691
 Transform:
   m_ObjectHideFlags: 0
@@ -91,7 +92,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 506df4cd13ec04503abe4240308c5421, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ca93478a69fb84764ade6c7f9f986f13, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -160,7 +161,7 @@ EdgeCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4954924131797871690}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 0
@@ -404,18 +405,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementLockDuration: 0.25
   maximumKnockbackSpeed: 25
---- !u!114 &8652873979291248652
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4954924131797871690}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c93c14d1111cf4bc4b77073f1af56c4a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &7313275505096619193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -436,8 +425,14 @@ MonoBehaviour:
   lineOfSightMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  pairedMinimumSeparation: 2.25
+  broadcastRetreatSpeedThreshold: 1.2
   gazeRange: 6
   gazeSetupDuration: 0.6
+  gazeLockDuration: 2.5
+  gazeReentryDelay: 0.9
+  gazeCancelDangerRadius: 2.25
+  gazeReacquireRadius: 3
   turnedAwayDotThreshold: -0.2
   frenzyDuration: 4
   frenzyMoveMultiplier: 1.3
@@ -448,7 +443,15 @@ MonoBehaviour:
   diveDuration: 0.45
   diveRecovery: 0.35
   diveDamage: 1
+  minimumNormalHoverHeight: 1.6
+  preferredNormalHoverHeight: 2.1
+  hoverGroundProbeHeight: 4
+  hoverGroundProbeDistance: 12
+  hoverGroundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   rescueRadius: 4
+  playerThreatRange: 2.2
   endangeredHealthFraction: 0.25
   sacrificeWindup: 0.35
   sacrificeSpeed: 10
@@ -467,3 +470,97 @@ MonoBehaviour:
   state: 0
   hasLineOfSight: 0
   isFrenzied: 0
+  currentRole: 0
+--- !u!114 &2243976604115776182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4954924131797871690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1b41745d132845dd8b51c1643281202, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  visualRenderer: {fileID: 4954924131797871688}
+  corruptVariant: 0
+  idleFrames:
+  - {fileID: 21300000, guid: ca93478a69fb84764ade6c7f9f986f13, type: 3}
+  - {fileID: 21300000, guid: 74b9d55df23c649f4bd9a0c2ebf9d718, type: 3}
+  - {fileID: 21300000, guid: 53b1daa6abb7748e19457f079795845e, type: 3}
+  - {fileID: 21300000, guid: a56eeb844f7e34582821f72108d8efb4, type: 3}
+  - {fileID: 21300000, guid: 0ce216ecb47ab473f9d6e4708ea6c057, type: 3}
+  hoverFrames:
+  - {fileID: 21300000, guid: f8df7410bc3f94621a1819b86967cdfb, type: 3}
+  - {fileID: 21300000, guid: 4214a0a85f71b4ee8b8eade3fef28b24, type: 3}
+  - {fileID: 21300000, guid: ada3c3a49030a42dab18a2674ee38788, type: 3}
+  - {fileID: 21300000, guid: 2c6d2057d2f0a42bbb9c84b76146c19a, type: 3}
+  - {fileID: 21300000, guid: 74056aa0d9d3b406ebc72a051186514b, type: 3}
+  driftFrames:
+  - {fileID: 21300000, guid: f0bfa56e339554d95b9a0826c5288ea9, type: 3}
+  - {fileID: 21300000, guid: e8326a24e01f7490a8d3b96bb1c052bf, type: 3}
+  - {fileID: 21300000, guid: b290bc07e04d1470aab1f10534e27cf9, type: 3}
+  - {fileID: 21300000, guid: 6385544d104fa43c2a28104e14d32f0b, type: 3}
+  - {fileID: 21300000, guid: 09025cabf51b94942bb43e1fbf7fae86, type: 3}
+  castFrames:
+  - {fileID: 21300000, guid: 4d4efafb6cd814abe9d740092a532d66, type: 3}
+  - {fileID: 21300000, guid: 9a6ea179c677241388956b79ddedc3c9, type: 3}
+  - {fileID: 21300000, guid: bae280f22a9e24e30a347c05496fd4ba, type: 3}
+  - {fileID: 21300000, guid: a171bef35b39d47f49410a1e9fbfd9ec, type: 3}
+  - {fileID: 21300000, guid: 2c27f5825755748b2a23e1d05e9f0a6e, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: c541a15064e424ef39db56472dc22e3f, type: 3}
+  - {fileID: 21300000, guid: b9775440234d1452ebc4a295f4103ebf, type: 3}
+  - {fileID: 21300000, guid: 782c321fb3c7942759b14bce5222d65d, type: 3}
+  - {fileID: 21300000, guid: 5ef03c0aa538a4a5ba01983d60cbfc7c, type: 3}
+  - {fileID: 21300000, guid: 556c37b2f591d445697afc7d3d56d50c, type: 3}
+  specialFrames:
+  - {fileID: 21300000, guid: d9e877524f002464d80a27972557bf74, type: 3}
+  - {fileID: 21300000, guid: ed676807a4f3f4a0f9f741040d06ef42, type: 3}
+  - {fileID: 21300000, guid: b2b3eb09d0be84f6f98f4721b7b2690d, type: 3}
+  - {fileID: 21300000, guid: b720777af9ca1465c842abe9337431c2, type: 3}
+  - {fileID: 21300000, guid: 186206bbeac3c497ea57b86087147489, type: 3}
+  hurtFrames:
+  - {fileID: 21300000, guid: f3b89c35536184d1e8dfe1ca2d933d82, type: 3}
+  - {fileID: 21300000, guid: 4c79c7b6c6607462597687234f042152, type: 3}
+  - {fileID: 21300000, guid: 9e5c9b54b4179423f8d638748b765d6b, type: 3}
+  - {fileID: 21300000, guid: eaca45ae829a14c06be48a4216824b77, type: 3}
+  - {fileID: 21300000, guid: 5d215b1c88bad46f4aa2575a79c34c1d, type: 3}
+  deathFrames:
+  - {fileID: 21300000, guid: 96cf7c98497054a29bc55415081a3b24, type: 3}
+  - {fileID: 21300000, guid: 15bc50526564843f2b0bc74b0c297efe, type: 3}
+  - {fileID: 21300000, guid: 713307df53fdc4ca0957a1f8878121fd, type: 3}
+  - {fileID: 21300000, guid: 3a9c0338804284798a57d95a1d1484ba, type: 3}
+  - {fileID: 21300000, guid: 3eddc88d552544a588a2caf87c4c2e98, type: 3}
+  idleFramesPerSecond: 5
+  movingFramesPerSecond: 9
+  actionFramesPerSecond: 10
+  hurtDuration: 0.2
+  movingThreshold: 0.08
+--- !u!61 &6353955065001535808
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4954924131797871690}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0.009227816}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.21777344, y: 0.17578125}
+    newSize: {x: 0.16, y: 0.16}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 0.21777344, y: 0.106217764}
+  m_EdgeRadius: 0

@@ -40,6 +40,10 @@ namespace Cave.Player
         [SerializeField, Min(0.01f)] private float sword1Scale = 0.72f;
         [SerializeField, Min(0.01f)] private float sword2Scale = 0.72f;
         [SerializeField, Min(0.01f)] private float sword3Scale = 0.72f;
+        [Header("Editable Visual Prefabs")]
+        [SerializeField] private GameObject sword1VisualPrefab;
+        [SerializeField] private GameObject sword2VisualPrefab;
+        [SerializeField] private GameObject sword3VisualPrefab;
 
         private SpinSwordAttack spinAttack;
         private SpriteRenderer swordRenderer;
@@ -53,6 +57,7 @@ namespace Cave.Player
         private EnemyArchetype defeatedThisRun;
         private WorldDifficultyManager difficulty;
         private bool visualApplied;
+        private GameObject activeVisualInstance;
 
         public SwordCosmeticSelection SelectedAppearance => selectedAppearance;
         public bool Sword1Unlocked => PlayerPrefs.GetInt(Unlock1Key, 0) != 0;
@@ -188,7 +193,8 @@ namespace Cave.Player
             Sprite sprite = index >= 0 && index < cosmeticSprites.Length
                 ? cosmeticSprites[index]
                 : null;
-            if (selection != SwordCosmeticSelection.Default && sprite == null)
+            if (selection != SwordCosmeticSelection.Default && sprite == null
+                && VisualPrefabFor(selection) == null)
             {
                 Debug.LogWarning("Requested sword cosmetic sprite is unavailable: " + selection + ".", this);
                 return false;
@@ -205,6 +211,32 @@ namespace Cave.Player
             }
 
             selectedAppearance = selection;
+            if (activeVisualInstance != null)
+            {
+                activeVisualInstance.SetActive(false);
+                Destroy(activeVisualInstance);
+                activeVisualInstance = null;
+            }
+            GameObject visualPrefab = VisualPrefabFor(selection);
+            if (selection != SwordCosmeticSelection.Default && visualPrefab != null)
+            {
+                Transform anchor = swordRenderer.transform.parent != null
+                    ? swordRenderer.transform.parent
+                    : swordRenderer.transform;
+                activeVisualInstance = Instantiate(visualPrefab, anchor);
+                activeVisualInstance.name = visualPrefab.name;
+                activeVisualInstance.transform.localPosition += authoredPosition + OffsetFor(selection);
+                activeVisualInstance.transform.localRotation = authoredRotation
+                    * activeVisualInstance.transform.localRotation
+                    * Quaternion.Euler(0f, 0f, RotationFor(selection));
+                activeVisualInstance.transform.localScale = Vector3.Scale(authoredScale,
+                    activeVisualInstance.transform.localScale) * ScaleFor(selection);
+                swordRenderer.enabled = false;
+                visualApplied = true;
+                if (save) SaveSelection(selection);
+                return true;
+            }
+            swordRenderer.enabled = true;
             Sprite desiredSprite = selection == SwordCosmeticSelection.Default ? defaultSprite : sprite;
             if (swordRenderer.sprite != desiredSprite)
             {
@@ -292,6 +324,13 @@ namespace Cave.Player
             if (selection == SwordCosmeticSelection.Sword1) return sword1Scale;
             if (selection == SwordCosmeticSelection.Sword2) return sword2Scale;
             return selection == SwordCosmeticSelection.Sword3 ? sword3Scale : 1f;
+        }
+
+        private GameObject VisualPrefabFor(SwordCosmeticSelection selection)
+        {
+            if (selection == SwordCosmeticSelection.Sword1) return sword1VisualPrefab;
+            if (selection == SwordCosmeticSelection.Sword2) return sword2VisualPrefab;
+            return selection == SwordCosmeticSelection.Sword3 ? sword3VisualPrefab : null;
         }
 
         private void OnDisable()

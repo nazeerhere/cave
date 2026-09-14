@@ -37,6 +37,12 @@ namespace Cave.Axioms
         {
             BuildChannels();
             playerMovementTelemetry = GetComponent<PlayerMovementTelemetry>();
+            // Local presentation observer only; it subscribes to this actor's events
+            // and performs no scene scan or gameplay mutation.
+            if (GetComponent<Vfx.AxiomVfxPresenter>() == null)
+            {
+                gameObject.AddComponent<Vfx.AxiomVfxPresenter>();
+            }
         }
 
         public void ApplyInput(AxiomInput input)

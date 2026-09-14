@@ -1,0 +1,25 @@
+Eye animation sprite export — corrected crop pass
+Transparent PNGs; one action per folder; max 6 frames per action.
+Corrupt Page 2 source rows had 8 frames and were reduced to source frames 1,2,4,5,7,8.
+
+Regular_Eye/Idle: 5 frames; sizes=[(223, 180), (215, 180), (224, 180), (213, 180), (218, 180)]
+Regular_Eye/Hover: 5 frames; sizes=[(229, 175), (220, 175), (222, 173), (216, 175), (225, 174)]
+Regular_Eye/Turn: 5 frames; sizes=[(191, 170), (195, 170), (208, 170), (195, 170), (200, 170)]
+Regular_Eye/Drift_Fly: 5 frames; sizes=[(232, 170), (226, 169), (230, 170), (225, 170), (232, 170)]
+Regular_Eye/Hurt: 5 frames; sizes=[(227, 175), (230, 177), (217, 175), (219, 175), (210, 175)]
+Regular_Eye/Cast: 5 frames; sizes=[(203, 155), (201, 155), (198, 155), (200, 155), (199, 155)]
+Regular_Eye/Attack: 5 frames; sizes=[(193, 150), (190, 150), (189, 150), (316, 133), (193, 150)]
+Regular_Eye/Special_Charge: 5 frames; sizes=[(195, 163), (193, 165), (196, 165), (204, 165), (224, 165)]
+Regular_Eye/Recoil_Hit: 5 frames; sizes=[(226, 150), (190, 150), (193, 150), (205, 150), (199, 150)]
+Regular_Eye/Death: 5 frames; sizes=[(223, 140), (237, 133), (199, 140), (243, 100), (239, 102)]
+Regular_Eye/Extra_Misc: 5 frames; sizes=[(195, 140), (196, 140), (194, 140), (211, 140), (184, 140)]
+Corrupt_Eye/Idle: 6 frames; sizes=[(211, 185), (200, 185), (194, 185), (196, 185), (199, 185), (205, 185)]
+Corrupt_Eye/Hover: 6 frames; sizes=[(224, 195), (195, 195), (197, 195), (195, 195), (204, 195), (200, 195)]
+Corrupt_Eye/Turn: 6 frames; sizes=[(212, 200), (193, 200), (201, 200), (201, 200), (196, 200), (211, 200)]
+Corrupt_Eye/Drift_Fly: 6 frames; sizes=[(252, 176), (207, 187), (212, 194), (211, 189), (178, 182), (175, 180)]
+Corrupt_Eye/Hurt: 6 frames; sizes=[(214, 218), (200, 217), (186, 217), (194, 217), (204, 220), (201, 218)]
+Corrupt_Eye/Cast: 6 frames; sizes=[(161, 180), (158, 186), (159, 195), (157, 199), (153, 197), (153, 194)]
+Corrupt_Eye/Attack: 6 frames; sizes=[(164, 170), (160, 167), (154, 170), (160, 170), (159, 93), (157, 168)]
+Corrupt_Eye/Special_Charge: 6 frames; sizes=[(155, 180), (151, 180), (165, 180), (155, 180), (166, 180), (145, 180)]
+Corrupt_Eye/Recoil: 6 frames; sizes=[(166, 130), (148, 130), (149, 130), (146, 130), (156, 130), (159, 130)]
+Corrupt_Eye/Death: 6 frames; sizes=[(172, 125), (166, 125), (151, 125), (168, 124), (156, 95), (122, 76)]

@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace Cave.Enemies
 {
+    public enum EyePresentationState { Hover, Gaze, Dive, Recover, Special }
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(Damageable))]
     public sealed class EyeBrain : MonoBehaviour, IEnemySkillEvolutionReceiver
@@ -106,6 +108,27 @@ namespace Cave.Enemies
             && state != EyeState.Recover;
         public bool IsGazeActive => state == EyeState.GazeSetup || state == EyeState.GazeLocked;
         public bool IsFrenzied => isFrenzied;
+        public EyePresentationState PresentationState
+        {
+            get
+            {
+                switch (state)
+                {
+                    case EyeState.GazeSetup:
+                    case EyeState.GazeLocked:
+                        return EyePresentationState.Gaze;
+                    case EyeState.Dive:
+                        return EyePresentationState.Dive;
+                    case EyeState.Recover:
+                        return EyePresentationState.Recover;
+                    case EyeState.Sacrifice:
+                    case EyeState.Possess:
+                        return EyePresentationState.Special;
+                    default:
+                        return EyePresentationState.Hover;
+                }
+            }
+        }
 
         private void Awake()
         {

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ba012a9b44254c4cb1ae027581af787, type: 3}
+  m_Name: AxiomImaginaryVfxCatalog
+  m_EditorClassIdentifier: 
+  shadowPrefab: {fileID: 1470548177813557091, guid: 68136a1eaad5949f49e407df52558809, type: 3}
+  impactPrefab: {fileID: 761596096283152390, guid: a72608aa2c1404864a1f7925245790b4, type: 3}
+  shadowSmear:
+    frames:
+    - {fileID: 21300000, guid: eaa52fb9f89cf41529bd8449c82f2f8b, type: 3}
+    - {fileID: 21300000, guid: 0647cdcabd6ef4badb90adb9e7eca5a0, type: 3}
+    - {fileID: 21300000, guid: 023ae293d49c24d879492cd3b7865507, type: 3}
+    - {fileID: 21300000, guid: 46fd2998f54404eddba7210f9528fdc9, type: 3}
+    - {fileID: 21300000, guid: 8f07042aa96cc430d856da49e58e751e, type: 3}
+    - {fileID: 21300000, guid: a6ae64ccb829f4f8fa6acfe9531f608d, type: 3}
+    framesPerSecond: 10
+    scale: 0.55
+  impactRupture:
+    frames:
+    - {fileID: 21300000, guid: 4dc2d09d63b854687926d0e4bce046aa, type: 3}
+    - {fileID: 21300000, guid: bb4485848524d41a5a1ebb9fbe78edc2, type: 3}
+    - {fileID: 21300000, guid: e6d94bbf2a3824d0bad77de2dcade3f8, type: 3}
+    - {fileID: 21300000, guid: 348a9787827b248f693bc5bd012d25b0, type: 3}
+    - {fileID: 21300000, guid: f49a55468429a42da9e32386ea9203ad, type: 3}
+    - {fileID: 21300000, guid: bedf8047c692a49ef8efbc490e6a7f33, type: 3}
+    - {fileID: 21300000, guid: c8bef9f75f1dc433e973ad925af07de9, type: 3}
+    framesPerSecond: 16
+    scale: 0.64

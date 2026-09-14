@@ -1,4 +1,5 @@
 using Cave.Enemies;
+using Cave.Axioms.Phase;
 using Cave.Player;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,6 +22,7 @@ namespace Cave.UI
             public string TooltipLabel;
             public string Description;
             public int DurationTenths;
+            public int StackCount;
         }
 
         [SerializeField, Min(0.02f)] private float refreshInterval = 0.1f;
@@ -40,6 +42,8 @@ namespace Cave.UI
         private DetectiveEncounterCoordinator research;
         private PlayerWarpStatus warp;
         private PlayerBrace brace;
+        private PhaseCombatState phase;
+        private PlayerCurseController curses;
         private GameObject playerObject;
         private float nextRefreshTime;
         private float nextDependencyResolveTime;
@@ -47,6 +51,8 @@ namespace Cave.UI
         private Sprite slowIcon;
         private Sprite towerSuppressionIcon;
         private Sprite watcherMarkIcon;
+        private Sprite imaginaryIcon;
+        private Sprite stoneglassIcon;
 
         public void Configure(
             GameObject[] statusSlots,
@@ -122,6 +128,12 @@ namespace Cave.UI
                 "A Detective is recording and predicting your combat actions.");
             AddStatus(ref index, warp != null && warp.IsMarked, null, "↯", "WARP MARK",
                 "A Wizard has marked you for a position swap.");
+            AddStatus(ref index, phase != null && phase.LatentStacks > 0, imaginaryIcon, "◈", "IMAGINARY",
+                "Accumulated Phase potential held on the target. Certain committed attacks can collapse these stacks into a Phase result.",
+                stackCount: phase != null ? phase.LatentStacks : 0);
+            AddStatus(ref index, curses != null && curses.StoneglassFractureStacks > 0, stoneglassIcon, "◇", "STONEGLASS",
+                "Crystalline Axiom state associated with fracture, precision, and reconstruction.",
+                stackCount: curses != null ? curses.StoneglassFractureStacks : 0);
 
             while (slots != null && index < slots.Length)
             {
@@ -136,7 +148,8 @@ namespace Cave.UI
             string fallbackGlyph,
             string tooltipLabel,
             string description,
-            float remainingDuration = 0f)
+            float remainingDuration = 0f,
+            int stackCount = 0)
         {
             if (!active || slots == null || index >= slots.Length)
             {
@@ -153,7 +166,8 @@ namespace Cave.UI
                 Description = description,
                 DurationTenths = remainingDuration > 0f
                     ? Mathf.CeilToInt(remainingDuration * 10f - 0.0001f)
-                    : 0
+                    : 0,
+                StackCount = Mathf.Max(0, stackCount)
             };
             ApplyPresentation(index, presentation);
 
@@ -173,6 +187,7 @@ namespace Cave.UI
                 || !previous.Active
                 || previous.Icon != presentation.Icon
                 || previous.FallbackGlyph != presentation.FallbackGlyph
+                || previous.StackCount != presentation.StackCount
                 || slots[index].activeSelf != presentation.Active;
             if (presentationChanged)
             {
@@ -198,14 +213,40 @@ namespace Cave.UI
                 if (labels != null && index < labels.Length && labels[index] != null)
                 {
                     Text label = labels[index];
-                    if (label.enabled != !useSprite)
+                    bool showStackBadge = useSprite && presentation.StackCount > 0;
+                    if (label.enabled != (!useSprite || showStackBadge))
                     {
-                        label.enabled = !useSprite;
+                        label.enabled = !useSprite || showStackBadge;
                     }
 
-                    if (!useSprite && label.text != presentation.FallbackGlyph)
+                    string labelText = showStackBadge
+                        ? presentation.StackCount.ToString()
+                        : presentation.FallbackGlyph;
+                    if (label.text != labelText)
                     {
-                        label.text = presentation.FallbackGlyph;
+                        label.text = labelText;
+                    }
+
+                    RectTransform labelRect = label.rectTransform;
+                    if (showStackBadge)
+                    {
+                        label.fontSize = 10;
+                        label.alignment = TextAnchor.MiddleCenter;
+                        labelRect.anchorMin = new Vector2(1f, 0f);
+                        labelRect.anchorMax = new Vector2(1f, 0f);
+                        labelRect.pivot = new Vector2(0.5f, 0.5f);
+                        labelRect.anchoredPosition = new Vector2(-3f, 4f);
+                        labelRect.sizeDelta = new Vector2(14f, 14f);
+                    }
+                    else
+                    {
+                        label.fontSize = 18;
+                        label.alignment = TextAnchor.MiddleCenter;
+                        labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+                        labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                        labelRect.pivot = new Vector2(0.5f, 0.5f);
+                        labelRect.anchoredPosition = Vector2.zero;
+                        labelRect.sizeDelta = new Vector2(24f, 24f);
                     }
                 }
             }
@@ -272,6 +313,8 @@ namespace Cave.UI
             mana = mana != null ? mana : playerObject.GetComponent<PlayerMana>();
             warp = warp != null ? warp : playerObject.GetComponent<PlayerWarpStatus>();
             brace = brace != null ? brace : playerObject.GetComponent<PlayerBrace>();
+            phase = phase != null ? phase : playerObject.GetComponent<PhaseCombatState>();
+            curses = curses != null ? curses : playerObject.GetComponent<PlayerCurseController>();
         }
 
         private void ResolveSharedIcons()
@@ -286,6 +329,8 @@ namespace Cave.UI
             slowIcon = iconRegistry.GetIcon(MobStatusIconKind.Slow);
             towerSuppressionIcon = iconRegistry.GetIcon(MobStatusIconKind.TowerSuppression);
             watcherMarkIcon = iconRegistry.GetIcon(MobStatusIconKind.WatcherMark);
+            imaginaryIcon = iconRegistry.GetIcon(MobStatusIconKind.Imaginary);
+            stoneglassIcon = iconRegistry.GetIcon(MobStatusIconKind.Stoneglass);
         }
     }
 

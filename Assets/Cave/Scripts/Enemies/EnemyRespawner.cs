@@ -28,6 +28,13 @@ namespace Cave.Enemies
         private Renderer[] renderers;
         private bool[] rendererEnabledStates;
         private Animator[] animators;
+        private Behaviour[] behaviours;
+        private bool[] behaviourEnabledStates;
+        private bool bodySimulatedState;
+        private RigidbodyConstraints2D bodyConstraintState;
+        private RigidbodyType2D bodyTypeState;
+        private float bodyGravityScaleState;
+        private bool runtimeBaselineCaptured;
         private bool respawnPending;
         private float runtimeRespawnDelay;
         private EnemyDifficultyScaler difficultyScaler;
@@ -66,6 +73,11 @@ namespace Cave.Enemies
             }
 
             animators = GetComponentsInChildren<Animator>(true);
+        }
+
+        private void Start()
+        {
+            CaptureRuntimeBaseline();
         }
 
         private void OnEnable()
@@ -132,6 +144,13 @@ namespace Cave.Enemies
 
             if (body != null)
             {
+                if (runtimeBaselineCaptured)
+                {
+                    body.bodyType = bodyTypeState;
+                    body.constraints = bodyConstraintState;
+                    body.gravityScale = bodyGravityScaleState;
+                    body.simulated = bodySimulatedState;
+                }
                 body.position = originalPosition;
                 body.rotation = originalRotation.eulerAngles.z;
                 body.velocity = Vector2.zero;
@@ -139,6 +158,7 @@ namespace Cave.Enemies
             }
 
             RestoreEnabledStates();
+            RestoreBehaviourStates();
             if (difficultyScaler == null)
             {
                 difficultyScaler = GetComponent<EnemyDifficultyScaler>();
@@ -149,6 +169,9 @@ namespace Cave.Enemies
             enemyController?.ResetForRespawn();
             flyingController?.ResetForRespawn();
             wizardFlightMotor?.ResetForRespawn();
+            GetComponent<ApprovedEnemySheetAnimator>()?.ResetForSpawn();
+            GetComponent<GothVisualAnimator>()?.ResetForSpawn();
+            GetComponent<EyeVisualAnimator>()?.ResetForSpawn();
 
             respawnPending = false;
             gameObject.SetActive(true);
@@ -188,6 +211,42 @@ namespace Cave.Enemies
                 if (renderers[index] != null)
                 {
                     renderers[index].enabled = rendererEnabledStates[index];
+                }
+            }
+        }
+
+        private void CaptureRuntimeBaseline()
+        {
+            behaviours = GetComponentsInChildren<Behaviour>(true);
+            behaviourEnabledStates = new bool[behaviours.Length];
+            for (int index = 0; index < behaviours.Length; index++)
+            {
+                behaviourEnabledStates[index] = behaviours[index] != null && behaviours[index].enabled;
+            }
+
+            if (body != null)
+            {
+                bodySimulatedState = body.simulated;
+                bodyConstraintState = body.constraints;
+                bodyTypeState = body.bodyType;
+                bodyGravityScaleState = body.gravityScale;
+            }
+
+            runtimeBaselineCaptured = true;
+        }
+
+        private void RestoreBehaviourStates()
+        {
+            if (!runtimeBaselineCaptured || behaviours == null || behaviourEnabledStates == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < behaviours.Length; index++)
+            {
+                if (behaviours[index] != null)
+                {
+                    behaviours[index].enabled = behaviourEnabledStates[index];
                 }
             }
         }

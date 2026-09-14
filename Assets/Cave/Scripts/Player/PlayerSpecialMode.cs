@@ -48,13 +48,51 @@ namespace Cave.Player
             AxiomControlState control = AxiomControlState.EnsureOn(gameObject);
             control.InterventionSucceeded -= HandleAxiomCorrection;
             control.InterventionSucceeded += HandleAxiomCorrection;
+            control.TemporalStageChanged -= HandleTemporalStageChanged;
+            control.TemporalStageChanged += HandleTemporalStageChanged;
+        }
+
+        private void OnDestroy()
+        {
+            AxiomControlState control = GetComponent<AxiomControlState>();
+            if (control == null) return;
+            control.InterventionSucceeded -= HandleAxiomCorrection;
+            control.TemporalStageChanged -= HandleTemporalStageChanged;
         }
 
         private void HandleAxiomCorrection(AxiomKind kind, AxiomErrorState error, float quality, float timestamp)
         {
             MasteryDomain domain;
             if (AxiomMasteryState.TryDomain(kind, out domain))
-                AxiomMasteryState.EnsureOn(gameObject).Record(new MasteryEvidence(domain, MasteryEvidenceKind.Correction, quality, Mathf.Max(.1f,error.Magnitude), timestamp));
+            {
+                AxiomMasteryState mastery = AxiomMasteryState.EnsureOn(gameObject);
+                int context = ((int)kind * 10) + (int)error.ErrorKind;
+                mastery.Record(new MasteryEvidence(domain, MasteryEvidenceKind.Correction, quality, Mathf.Max(.1f,error.Magnitude), timestamp, context));
+                if (quality >= .8f)
+                {
+                    mastery.Record(new MasteryEvidence(domain, MasteryEvidenceKind.Quality, quality, Mathf.Max(.1f,error.Magnitude), timestamp, context));
+                }
+            }
+        }
+
+        private void HandleTemporalStageChanged(AxiomKind kind, AxiomTemporalLockStage current, AxiomTemporalLockStage previous)
+        {
+            if (current <= previous || current == AxiomTemporalLockStage.Uncontrolled)
+            {
+                return;
+            }
+
+            MasteryDomain domain;
+            if (!AxiomMasteryState.TryDomain(kind, out domain)) return;
+            float quality = current == AxiomTemporalLockStage.Acceleration ? 1f
+                : current == AxiomTemporalLockStage.Rate ? .9f : .8f;
+            AxiomMasteryState.EnsureOn(gameObject).Record(new MasteryEvidence(
+                domain,
+                MasteryEvidenceKind.Regulation,
+                quality,
+                (float)current,
+                Time.time,
+                ((int)kind * 10) + (int)current));
         }
 
         public bool TrySwitchMode(SpecialMode newMode)

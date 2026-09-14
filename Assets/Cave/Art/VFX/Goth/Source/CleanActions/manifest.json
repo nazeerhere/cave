@@ -1,0 +1,55 @@
+{
+  "pack": "Cave Anti-Pyre Attack VFX Pack",
+  "effect_count": 8,
+  "effects": {
+    "Fireball.png": {
+      "source_file": "purple_fireball_sprite_animation.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    "Fireball_Sequence.png": {
+      "source_file": "purple_comet_projectile_sprite_sheet.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    "Meteor_Fireball.png": {
+      "source_file": "pixel_meteor_projectile_sprite_strip.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    "Antimatter_Burst.png": {
+      "source_file": "seven_frame_purple_singularity_explosion_sprite_sh.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    "Antimatter_Beam.png": {
+      "source_file": "neon_antimatter_beam_sprite_atlas.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA"
+    },
+    "Focus_Orb_Ground_Travel.png": {
+      "source_file": "neon_void_orb_attack_sprite_sheet.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    "Focus_Orb_Impact_Charge.png": {
+      "source_file": "eight_frame_purple_energy_impact_sprite_sheet.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    "Meteor_Storm_Magic_Circle.png": {
+      "source_file": "purple_summoning_circle_sprite_sheet.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    }
+  },
+  "missing": []
+}

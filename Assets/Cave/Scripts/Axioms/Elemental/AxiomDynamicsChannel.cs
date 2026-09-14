@@ -9,6 +9,7 @@ namespace Cave.Axioms.Elemental
             float stack,
             float desirable,
             float counter,
+            float effectiveCounter,
             float input,
             float latestInputAmount,
             float lastEvaluationTime)
@@ -17,6 +18,7 @@ namespace Cave.Axioms.Elemental
             Stack = stack;
             Desirable = desirable;
             Counter = counter;
+            EffectiveCounter = effectiveCounter;
             Input = input;
             LatestInputAmount = latestInputAmount;
             LastEvaluationTime = lastEvaluationTime;
@@ -26,10 +28,12 @@ namespace Cave.Axioms.Elemental
         public float Stack { get; }
         public float Desirable { get; }
         public float Counter { get; }
+        /// <summary>Mastery-scaled counter burden consumed by B dynamics; raw Counter remains inspectable.</summary>
+        public float EffectiveCounter { get; }
         public float Input { get; }
         public float LatestInputAmount { get; }
         public float LastEvaluationTime { get; }
-        public float ResponseStrength => Clamp01(Desirable - (Counter * .25f));
+        public float ResponseStrength => Clamp01(Desirable - (EffectiveCounter * .25f));
 
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
     }
@@ -48,6 +52,7 @@ namespace Cave.Axioms.Elemental
         private float inputRate;
         private float inputEndsAt;
         private float latestInputAmount;
+        private float counterFactor = 1f;
         private float lastEvaluationTime;
         private bool hasEvaluationTime;
 
@@ -58,6 +63,15 @@ namespace Cave.Axioms.Elemental
         }
 
         public AxiomKind Kind => kind;
+
+        /// <summary>
+        /// Sets the strictly-positive mastery efficiency factor used only when C
+        /// resists B. It does not mutate raw C or the application/stack history.
+        /// </summary>
+        public void SetCounterFactor(float factor)
+        {
+            counterFactor = ClampCounterFactor(factor);
+        }
 
         public void ApplyInput(float currentStack, float amount, float timestamp)
         {
@@ -141,6 +155,7 @@ namespace Cave.Axioms.Elemental
                 stack,
                 desirable,
                 counter,
+                counter * counterFactor,
                 timestamp < inputEndsAt ? inputRate : 0f,
                 latestInputAmount,
                 hasEvaluationTime ? lastEvaluationTime : timestamp);
@@ -175,9 +190,10 @@ namespace Cave.Axioms.Elemental
 
             // dB/dt = a*u + b*S - c*C*B
             // dC/dt = d*B - e*C
+            float effectiveCounter = counter * counterFactor;
             float desirableDerivative = (parameters.InputGain * input)
                 + (parameters.StackGain * stack)
-                - (parameters.CounterCoupling * counter * desirable);
+                - (parameters.CounterCoupling * effectiveCounter * desirable);
             float counterDerivative = (parameters.CounterGain * desirable)
                 - (parameters.CounterDecay * counter);
             desirable = ClampFinite(desirable + desirableDerivative * deltaTime, parameters.MaximumResponse);
@@ -202,6 +218,13 @@ namespace Cave.Axioms.Elemental
         private static bool IsFinite(float value)
         {
             return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+
+        private static float ClampCounterFactor(float value)
+        {
+            if (!IsFinite(value)) return 1f;
+            // Keep a positive inefficiency floor even if a future mastery source is malformed.
+            return value < .05f ? .05f : value > 1f ? 1f : value;
         }
     }
 }

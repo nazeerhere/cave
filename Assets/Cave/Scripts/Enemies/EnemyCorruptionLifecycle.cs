@@ -184,6 +184,11 @@ namespace Cave.Enemies
             authoredScale = transform.localScale;
             damageable.DamageResolved += HandleDamageResolved;
             EnemyWorldStatusIndicators.EnsureOn(gameObject);
+            EnemyTeamBuffState.EnsureOn(gameObject);
+            if (corrupted)
+            {
+                InstallCorruptedIdentity();
+            }
         }
 
         private void Update()
@@ -381,13 +386,7 @@ namespace Cave.Enemies
             // This is a presentation-only hook for the imported Light Bandit
             // recover clip. It does not change replacement or curse behavior.
             GetComponent<LightBanditAnimator>()?.PlayRecover();
-            bool isBrute = GetComponentInChildren<EnemyMeleeCombat>(true) != null
-                && GetComponentInChildren<EnemyMeleeCombat>(true).IsBrutePreset;
-            if ((grantBruteShard || isBrute)
-                && GetComponent<CorruptedBruteGeneralShardReward>() == null)
-            {
-                gameObject.AddComponent<CorruptedBruteGeneralShardReward>();
-            }
+            InstallCorruptedIdentity();
         }
 
         private void ReceiveWizardCorruptionTransformationState(
@@ -420,6 +419,18 @@ namespace Cave.Enemies
             GetComponent<WizardHealingCorruption>()?.ReceiveTransferredState(
                 wizardCorruptionStage,
                 wizardPermanentSlow);
+            InstallCorruptedIdentity();
+        }
+
+        private void InstallCorruptedIdentity()
+        {
+            if (GetComponent<BossPhaseController>() != null) return;
+            EnemyTeamBuffState.EnsureOn(gameObject);
+            CorruptTeamAura.EnsureConfigured(gameObject);
+            if (GetComponent<CorruptedEnemyGeneralShardReward>() == null)
+            {
+                gameObject.AddComponent<CorruptedEnemyGeneralShardReward>();
+            }
         }
 
         private void SelectMutation(bool boss, PlayerCurseController curses)

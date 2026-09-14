@@ -2,6 +2,7 @@ using Cave.Combat;
 using Cave.Player;
 using Cave.Projectiles;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Cave.Enemies
 {
@@ -17,10 +18,12 @@ namespace Cave.Enemies
 
         [Header("Poison Projectile")]
         [SerializeField, Min(1)] private int directDamage = 1;
-        [SerializeField, Range(0f, 0.25f)] private float poisonDamagePercentPerTick = 0.015f;
+        [FormerlySerializedAs("poisonDamagePercentPerTick")]
+        [SerializeField, Range(0f, 0.25f)] private float poisonDamagePercentPerSecond = 0.01f;
+        [SerializeField, Range(0f, 0.25f)] private float poisonZoneDamagePercentPerSecond = 0.03f;
         [SerializeField, Min(1)] private int minimumPoisonTickDamage = 1;
         [SerializeField, Min(1)] private int maximumPoisonTickDamage = 99;
-        [SerializeField, Min(0.05f)] private float poisonInterval = 1.5f;
+        [SerializeField, Min(0.05f)] private float poisonInterval = 1f;
         [SerializeField, Min(0.1f)] private float poisonDuration = 6f;
         [SerializeField, Min(0.01f)] private float projectileSpeed = 6f;
         [SerializeField, Min(0.1f)] private float projectileLifetime = 7f;
@@ -40,6 +43,7 @@ namespace Cave.Enemies
         private EnemyDamageModifiers damageModifiers;
         private float nextFireTime;
         private float fireCompletesAt;
+        private float nextTargetResolveTime;
         private bool isWindingUp;
         private int runtimeDirectDamage;
         private float runtimeProjectileSpeed;
@@ -48,7 +52,8 @@ namespace Cave.Enemies
         private bool brainControlled;
 
         public int BaseDirectDamage => directDamage;
-        public float PoisonDamagePercentPerTick => poisonDamagePercentPerTick;
+        public float PoisonDamagePercentPerSecond => poisonDamagePercentPerSecond;
+        public float PoisonZoneDamagePercentPerSecond => poisonZoneDamagePercentPerSecond;
         public float BaseProjectileSpeed => projectileSpeed;
         public float BaseFireCooldown => fireCooldown;
         public bool IsBusy => isWindingUp;
@@ -160,7 +165,8 @@ namespace Cave.Enemies
                 direction.normalized,
                 evolvedProjectileSpeed,
                 resolvedDirectDamage,
-                poisonDamagePercentPerTick,
+                poisonDamagePercentPerSecond,
+                poisonZoneDamagePercentPerSecond,
                 minimumPoisonTickDamage,
                 maximumPoisonTickDamage,
                 poisonInterval,
@@ -206,8 +212,14 @@ namespace Cave.Enemies
                 return;
             }
 
+            if (Time.time < nextTargetResolveTime)
+            {
+                return;
+            }
+
             PlayerHealth player = FindObjectOfType<PlayerHealth>();
             target = player != null ? player.transform : null;
+            nextTargetResolveTime = Time.time + 1f;
         }
 
         private void OnDisable()

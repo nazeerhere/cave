@@ -55,6 +55,7 @@ namespace Cave.Enemies
         private EnemyStaggerVisuals visuals;
         private float staggeredUntil;
         private float nextAllowedStaggerTime;
+        private float teamAuraDurationMultiplier = 1f;
 
         public event Action<StaggerStrength, float> Staggered;
         public bool IsStaggered => Time.time < staggeredUntil;
@@ -121,7 +122,7 @@ namespace Cave.Enemies
 
             float duration = Mathf.Max(
                 minimumAppliedDuration,
-                baseDuration * Mathf.Clamp(staggerDurationMultiplier, 0.1f, 1f));
+                baseDuration * Mathf.Clamp(staggerDurationMultiplier * teamAuraDurationMultiplier, 0.1f, 1f));
             if (duration <= 0.01f)
             {
                 return false;
@@ -169,6 +170,11 @@ namespace Cave.Enemies
         public void SetDurationMultiplier(float multiplier)
         {
             staggerDurationMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
+        }
+
+        public void SetTeamAuraDurationMultiplier(float multiplier)
+        {
+            teamAuraDurationMultiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
         }
 
         private bool ResolveEligibility()
@@ -228,6 +234,7 @@ namespace Cave.Enemies
             nextAllowedStaggerTime = 0f;
             currentStaggerRemaining = 0f;
             wasResisted = false;
+            teamAuraDurationMultiplier = 1f;
         }
     }
 }

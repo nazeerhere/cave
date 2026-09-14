@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Cave.Combat;
 using Cave.Enemies;
+using Cave.Axioms.Mastery;
+using Cave.World;
 using UnityEngine;
 
 namespace Cave.Axioms.Frequency
@@ -23,6 +25,7 @@ namespace Cave.Axioms.Frequency
         [SerializeField, Min(1f)] private float staleIntervalMultiplier = 2.5f;
         [SerializeField, Min(1)] private int resonanceBreakProgress = 4;
         [SerializeField, Min(0.01f)] private float destabilizedDuration = 2.5f;
+        [SerializeField, Min(0)] private int frequencyFilterMinimumWorldTier = 7;
 
         [Header("Read Only")]
         [SerializeField] private float naturalPeriodSeconds;
@@ -37,6 +40,10 @@ namespace Cave.Axioms.Frequency
         public event Action<GameObject> ResonanceBroken;
         public event Action DestabilizedStarted;
         public event Action DestabilizedEnded;
+        /// <summary>Raised only after a Frenzied Perfect Parry cancels a real cadence sequence.</summary>
+        public event Action<GameObject> Counterphased;
+        /// <summary>Correct timing was observed but this attacker adapted its next gain.</summary>
+        public event Action<GameObject> FrequencyFiltered;
 
         public float NaturalPeriodSeconds => naturalPeriodSeconds;
         public bool IsDestabilized
@@ -63,6 +70,12 @@ namespace Cave.Axioms.Frequency
         private void Awake()
         {
             ResolveNaturalPeriod();
+            Cave.Axioms.Vfx.AxiomVfxPresenter presenter = GetComponent<Cave.Axioms.Vfx.AxiomVfxPresenter>();
+            if (presenter == null)
+            {
+                presenter = gameObject.AddComponent<Cave.Axioms.Vfx.AxiomVfxPresenter>();
+            }
+            presenter.RefreshBindings();
         }
 
         public GuardResonanceContactResult RegisterGuardContact(GameObject attacker, float timestamp)
@@ -84,9 +97,25 @@ namespace Cave.Axioms.Frequency
                 PruneDestroyedTrackers();
             }
 
-            GuardResonanceContactResult result = tracker.RegisterContact(timestamp, Settings);
+            bool filteringEligible = WorldDifficultyManager.CurrentDifficultyTier >= frequencyFilterMinimumWorldTier;
+            GuardResonanceContactResult result = tracker.RegisterContact(timestamp, Settings, filteringEligible);
             ContactResolved?.Invoke(attacker, result);
-            PlayContactFeedback(result);
+            if (result.Outcome == GuardResonanceContactOutcome.Filtered)
+            {
+                FrequencyFiltered?.Invoke(attacker);
+                RaiseFeedback(AxiomFeedbackType.FrequencyFiltered, attacker, timestamp);
+                return result;
+            }
+
+            if (result.Outcome == GuardResonanceContactOutcome.Advanced || result.Broke)
+            {
+                RecordResonanceEvidence(
+                    result.Broke ? MasteryEvidenceKind.Quality : MasteryEvidenceKind.OrdinaryUse,
+                    result.Broke ? 1f : .8f,
+                    Mathf.Max(1, result.Progress),
+                    attacker,
+                    timestamp);
+            }
             if (result.Broke)
             {
                 trackers.Clear();
@@ -128,6 +157,63 @@ namespace Cave.Axioms.Frequency
         public bool ClearCadenceSequence(GameObject attacker)
         {
             return attacker != null && trackers.Remove(attacker);
+        }
+
+        /// <summary>Presentation-safe semantic hook for the existing Counterphase cancellation.</summary>
+        public bool TryCounterphase(GameObject attacker)
+        {
+            if (!ClearCadenceSequence(attacker))
+            {
+                return false;
+            }
+
+            Counterphased?.Invoke(attacker);
+            RaiseFeedback(AxiomFeedbackType.Counterphase, attacker, Time.time);
+            RecordResonanceEvidence(MasteryEvidenceKind.Counterphase, 1f, 1f, attacker, Time.time);
+            AxiomMasteryState.EnsureOn(gameObject).Record(new MasteryEvidence(
+                MasteryDomain.Phase,
+                MasteryEvidenceKind.Counterphase,
+                1f,
+                1f,
+                Time.time,
+                attacker.GetInstanceID()));
+            return true;
+        }
+
+        private void RaiseFeedback(AxiomFeedbackType type, GameObject attacker, float timestamp)
+        {
+            AxiomRuntimeState runtime = GetComponent<AxiomRuntimeState>();
+            if (runtime == null)
+            {
+                runtime = gameObject.AddComponent<AxiomRuntimeState>();
+            }
+
+            // AxiomKind has no synthetic Resonance member; Phase is used only as
+            // the existing cross-system feedback routing category, never as a stack.
+            runtime.RaiseFeedback(new AxiomFeedbackEvent(
+                AxiomKind.Phase,
+                type,
+                1f,
+                attacker,
+                gameObject,
+                timestamp));
+        }
+
+        private void RecordResonanceEvidence(
+            MasteryEvidenceKind kind,
+            float quality,
+            float magnitude,
+            GameObject attacker,
+            float timestamp)
+        {
+            int context = attacker != null ? attacker.GetInstanceID() : 0;
+            AxiomMasteryState.EnsureOn(gameObject).Record(new MasteryEvidence(
+                MasteryDomain.Resonance,
+                kind,
+                quality,
+                magnitude,
+                timestamp,
+                context));
         }
 
         private GuardResonanceSettings Settings => new GuardResonanceSettings(
@@ -193,26 +279,5 @@ namespace Cave.Axioms.Frequency
             }
         }
 
-        private void PlayContactFeedback(GuardResonanceContactResult result)
-        {
-            if (result.Outcome == GuardResonanceContactOutcome.Advanced)
-            {
-                float size = 0.42f + result.Progress * 0.1f;
-                CombatShapeEffect.Create(
-                    transform.position,
-                    CombatShape.Diamond,
-                    size,
-                    new Color(0.35f, 0.85f, 1f, 0.8f),
-                    0.12f);
-            }
-            else if (result.Outcome == GuardResonanceContactOutcome.Broken)
-            {
-                AreaPulseEffect.Create(
-                    transform.position,
-                    1f,
-                    new Color(0.72f, 0.4f, 1f, 0.9f),
-                    0.22f);
-            }
-        }
     }
 }

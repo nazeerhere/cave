@@ -12,7 +12,7 @@ namespace Cave.Player
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(PlayerController))]
-    [RequireComponent(typeof(PlayerMana), typeof(PlayerSpecialMode))]
+    [RequireComponent(typeof(SpinSwordAttack), typeof(PlayerSpecialMode))]
     [RequireComponent(typeof(PlayerSpecialModeUpgradeState))]
     public sealed class PlayerFlightBash : MonoBehaviour
     {
@@ -20,7 +20,8 @@ namespace Cave.Player
         [SerializeField, Min(0.05f)] private float aerialHeavyHoldThreshold = 0.25f;
         [SerializeField, Range(5f, 85f)] private float diagonalDiveAngle = 40f;
         [SerializeField, Min(0f)] private float minimumHorizontalDirection = 0.15f;
-        [SerializeField, Min(0f)] private float manaCost = 20f;
+        [FormerlySerializedAs("manaCost")]
+        [SerializeField, Min(0f)] private float groundSmashStaminaCost = 90f;
         [SerializeField, Min(1)] private int damage = 2;
         [FormerlySerializedAs("speed")]
         [SerializeField, Min(0.1f)] private float diveSpeed = 20f;
@@ -33,7 +34,8 @@ namespace Cave.Player
         [SerializeField, Range(0f, 1f)] private float minimumFloorNormalY = 0.45f;
 
         [Header("Flight Tier 3 Ground Smash")]
-        [SerializeField, Min(0f)] private float tier3AdditionalManaCost;
+        [FormerlySerializedAs("tier3AdditionalManaCost")]
+        [SerializeField, Min(0f)] private float tier3GroundSmashAdditionalStaminaCost;
         [SerializeField, Min(0.1f)] private float shockwaveRadius = 2.5f;
         [SerializeField, Min(1)] private int shockwaveDamage = 2;
         [SerializeField, Min(0f)] private float shockwaveKnockback = 14f;
@@ -58,7 +60,7 @@ namespace Cave.Player
         private PlayerFlight playerFlight;
         private PlayerHealth playerHealth;
         private PlayerGuardBreak actionGate;
-        private PlayerMana playerMana;
+        private SpinSwordAttack stamina;
         private PlayerSpecialMode specialMode;
         private PlayerSpecialModeUpgradeState upgrades;
         private PlayerResourceMastery resourceMastery;
@@ -72,7 +74,6 @@ namespace Cave.Player
         private DamageContext damageContext;
         private FrenzyBreakActivation frenzyActivation;
         private bool impactTriggered;
-        private CollisionDetectionMode2D originalCollisionDetectionMode;
 
         // Kept for compatibility with existing movement/action locks that referenced Bash.
         public bool IsBashing { get; private set; }
@@ -87,7 +88,7 @@ namespace Cave.Player
             playerFlight = GetComponent<PlayerFlight>();
             playerHealth = GetComponent<PlayerHealth>();
             actionGate = GetComponent<PlayerGuardBreak>();
-            playerMana = GetComponent<PlayerMana>();
+            stamina = GetComponent<SpinSwordAttack>();
             specialMode = GetComponent<PlayerSpecialMode>();
             upgrades = GetComponent<PlayerSpecialModeUpgradeState>();
             resourceMastery = GetComponent<PlayerResourceMastery>();
@@ -98,7 +99,6 @@ namespace Cave.Player
             {
                 collisionPhasing = gameObject.AddComponent<CommittedAttackCollisionPhasing>();
             }
-            originalCollisionDetectionMode = body.collisionDetectionMode;
         }
 
         private void OnEnable()
@@ -124,7 +124,7 @@ namespace Cave.Player
 
             // Existing Bash tuning assets remain authoritative and are reinterpreted as
             // Ground Smash descent/impact values so current progression data is preserved.
-            manaCost = settings.BashManaCost;
+            groundSmashStaminaCost = settings.GroundSmashStaminaCost;
             damage = settings.BashDamage;
             diveSpeed = settings.BashSpeed;
             maximumDescentDuration = settings.GroundSmashMaximumDescentDuration;
@@ -140,7 +140,7 @@ namespace Cave.Player
 
             impactVfxLifetime = settings.GroundSmashImpactVfxLifetime;
             impactVfxScale = settings.GroundSmashImpactVfxScale;
-            tier3AdditionalManaCost = settings.Tier3BashAdditionalManaCost;
+            tier3GroundSmashAdditionalStaminaCost = settings.Tier3GroundSmashAdditionalStaminaCost;
             shockwaveRadius = settings.BashShockwaveRadius;
             shockwaveDamage = settings.BashShockwaveDamage;
             shockwaveKnockback = settings.BashShockwaveKnockback;
@@ -206,8 +206,8 @@ namespace Cave.Player
                 || Time.time < nextSmashTime
                 || playerController == null
                 || (playerController.IsGrounded && body.velocity.y <= 0.1f)
-                || playerMana == null
-                || !playerMana.TrySpendMana(GetCurrentManaCost(), GetCurrentSkillTier()))
+                || stamina == null
+                || !stamina.TrySpendStamina(GetCurrentStaminaCost()))
             {
                 return false;
             }
@@ -218,7 +218,7 @@ namespace Cave.Player
             }
 
             damageContext = resourceMastery != null
-                ? resourceMastery.CreateManaDamageContext().WithTraits(
+                ? resourceMastery.CreatePlayerDamageContext().WithTraits(
                     DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy)
                 : new DamageContext(gameObject, DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy);
             hitTargets.Clear();
@@ -244,6 +244,13 @@ namespace Cave.Player
             combatFlow?.TryCommitFrenzyBreak(
                 FrenzyBreakAttackKind.GroundSlam,
                 out frenzyActivation);
+            if (frenzyActivation != null
+                && frenzyActivation.ManaInfused
+                && resourceMastery != null)
+            {
+                damageContext = resourceMastery.CreateManaDamageContext().WithTraits(
+                    DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy);
+            }
             combatFlow?.NotifyGroundSlamCommitted();
             body.velocity = committedDiveDirection * diveSpeed;
             return true;
@@ -352,13 +359,15 @@ namespace Cave.Player
                     impactContext,
                     Time.time,
                     axiomApplicationReceipt);
-                if (isFrenzyCritical)
+                if (frenzyActivation != null
+                    && (frenzyActivation.ManaInfused || isFrenzyCritical))
                 {
                     Vector2 criticalDirection = (Vector2)damageable.transform.position - impactPoint;
                     frenzyActivation.ApplyImpact(
                         damageable,
                         criticalDirection,
-                        appliedDamage);
+                        appliedDamage,
+                        isFrenzyCritical);
                 }
 
                 if (!damageable.gameObject.activeInHierarchy)
@@ -413,20 +422,11 @@ namespace Cave.Player
             return new Vector2(bounds.center.x, bounds.min.y);
         }
 
-        private float GetCurrentManaCost()
+        private float GetCurrentStaminaCost()
         {
             bool tier3Owned = upgrades != null && upgrades.IsTier3Owned(SpecialMode.Flight);
-            return manaCost + (tier3Owned ? tier3AdditionalManaCost : 0f);
-        }
-
-        private int GetCurrentSkillTier()
-        {
-            if (upgrades == null)
-            {
-                upgrades = GetComponent<PlayerSpecialModeUpgradeState>();
-            }
-
-            return upgrades != null ? upgrades.GetCurrentTier(SpecialMode.Flight) : 1;
+            return groundSmashStaminaCost
+                + (tier3Owned ? tier3GroundSmashAdditionalStaminaCost : 0f);
         }
 
         private void EndGroundSmash(bool impacted)
@@ -442,7 +442,10 @@ namespace Cave.Player
             if (body != null)
             {
                 body.velocity = new Vector2(0f, body.velocity.y);
-                body.collisionDetectionMode = originalCollisionDetectionMode;
+                // PlayerController establishes continuous body collision. Keep it
+                // after a Ground Smash instead of restoring an Awake-order-dependent
+                // discrete mode captured before PlayerController initialized.
+                body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             }
         }
 

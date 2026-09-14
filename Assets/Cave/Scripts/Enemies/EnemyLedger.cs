@@ -7,6 +7,35 @@ namespace Cave.Enemies
     /// <summary>Session-local discovery data; the menu owns presentation.</summary>
     public static class EnemyLedger
     {
+        public struct RosterEntry
+        {
+            public RosterEntry(string enemyId, string name, string archetype, string description, string counterplay)
+            {
+                EnemyId = enemyId;
+                Name = name;
+                Archetype = archetype;
+                Description = description;
+                Counterplay = counterplay;
+            }
+
+            public string EnemyId { get; private set; }
+            public string Name { get; private set; }
+            public string Archetype { get; private set; }
+            public string Description { get; private set; }
+            public string Counterplay { get; private set; }
+        }
+
+        private static readonly RosterEntry[] RosterEntries =
+        {
+            new RosterEntry("LightBanditBrain", "LIGHT BANDIT", "MELEE • SKIRMISHER", "Fast pressure that punishes retreating players.", "Hold ground, parry the committed slash, then punish recovery."),
+            new RosterEntry("EyeBrain", "EYE", "RANGED • CONTROL", "Gaze and watcher pressure punish prolonged exposure.", "Break line of sight and close distance between gaze windows."),
+            new RosterEntry("BruteBrain", "BRUTE", "MELEE • FRONTLINE", "Heavy armor, slow swings, and a dangerous grab.", "GB blocks the Brute's grab. Circle its recovery and punish heavy swings."),
+            new RosterEntry("WizardBrain", "WIZARD", "SUPPORT • MAGIC", "Heals, buffs, and repositions behind allies.", "Pressure the caster, interrupt support casts, and deny safe allies."),
+            new RosterEntry("DetectiveBrain", "DETECTIVE", "RANGED • CONTROL", "Poison and range control constrain recovery.", "Dash out of poison clouds and break line of sight before closing."),
+            new RosterEntry("GothArtilleryBrain", "ANTI-PYRE", "RANGED • PRESSURE / ARTILLERY", "Relentless fireballs and antimatter attacks punish passive spacing.", "Close distance after beam recovery; leave the Focus Zone and survive Meteor Storm warnings."),
+            new RosterEntry("NecromancerBrain", "NECROMANCER", "SUPPORT • SUMMONER", "Calls skeleton pressure to protect its casting line.", "Interrupt summons, clear minions, then save burst for the caster."),
+            new RosterEntry("TrollBrain", "TROLL", "TANK • HEAVY", "Deliberate defense and evolved stomp pressure.", "Bait the heavy commitment, dodge clear, and punish the landing.")
+        };
         private static readonly HashSet<string> Encountered = new HashSet<string>();
         private static readonly Dictionary<string, HashSet<string>> WitnessedAbilities =
             new Dictionary<string, HashSet<string>>();
@@ -50,6 +79,12 @@ namespace Cave.Enemies
                 && abilities.Contains(abilityId);
         }
 
+        /// <summary>Read-only presentation data; encounter and ability state remains unchanged.</summary>
+        public static RosterEntry[] GetRosterEntries()
+        {
+            return (RosterEntry[])RosterEntries.Clone();
+        }
+
         public static string BuildDetailedRosterPage()
         {
             string[] entries =
@@ -59,6 +94,7 @@ namespace Cave.Enemies
                 "BruteBrain|BRUTE|MELEE • FRONTLINE|Heavy armor, slow swings, and a dangerous grab.|GB blocks the Brute's grab. Circle its recovery and punish heavy swings.",
                 "WizardBrain|WIZARD|SUPPORT • MAGIC|Heals, buffs, and repositions behind allies.|Pressure the caster, interrupt support casts, and deny safe allies.",
                 "DetectiveBrain|DETECTIVE|RANGED • CONTROL|Poison and range control constrain recovery.|Dash out of poison clouds and break line of sight before closing.",
+                "GothArtilleryBrain|ANTI-PYRE|RANGED • PRESSURE / ARTILLERY|Relentless fireballs and antimatter attacks punish passive spacing.|Close distance after beam recovery; leave the Focus Zone and survive Meteor Storm warnings.",
                 "NecromancerBrain|NECROMANCER|SUPPORT • SUMMONER|Calls skeleton pressure to protect its casting line.|Interrupt summons, clear minions, then save burst for the caster.",
                 "TrollBrain|TROLL|TANK • HEAVY|Deliberate defense and evolved stomp pressure.|Bait the heavy commitment, dodge clear, and punish the landing."
             };
@@ -114,6 +150,7 @@ namespace Cave.Enemies
                 "BruteBrain|BRUTE|Frontline control. Guard Break and heavy pressure disrupt defense.",
                 "WizardBrain|WIZARD|Support caster. Heals, buffs, and repositions behind allies.",
                 "DetectiveBrain|DETECTIVE|Ranged zoning. Poison and range control constrain recovery.",
+                "GothArtilleryBrain|ANTI-PYRE|Ranged artillery. Antimatter beams, Focus Zones, and Meteor Storm reward movement.",
                 "NecromancerBrain|NECROMANCER|Support summoner. Skeleton pressure protects its casting line.",
                 "TrollBrain|TROLL|Tank. Deliberate heavy pressure, defense, and evolved stomp."
             };

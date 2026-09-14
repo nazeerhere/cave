@@ -22,6 +22,7 @@ namespace Cave.Enemies
         private float brainSpeedMultiplier = 1f;
         private float corruptionSpeedMultiplier = 1f;
         private float possessionSpeedMultiplier = 1f;
+        private float teamAuraSpeedMultiplier = 1f;
         private float combatMovementDirection;
         private float combatMovementUntil;
         private float committedMovementDirection;
@@ -127,6 +128,7 @@ namespace Cave.Enemies
                 * brainSpeedMultiplier
                 * corruptionSpeedMultiplier
                 * possessionSpeedMultiplier
+                * teamAuraSpeedMultiplier
                 * movementSpeedMultiplier;
         }
 
@@ -165,6 +167,11 @@ namespace Cave.Enemies
             possessionSpeedMultiplier = Mathf.Max(0.05f, multiplier);
         }
 
+        public void SetTeamAuraSpeedMultiplier(float multiplier)
+        {
+            teamAuraSpeedMultiplier = Mathf.Max(0.05f, multiplier);
+        }
+
         public void SetBrainMoveSpeed(float requestedSpeed)
         {
             brainSpeedMultiplier = moveSpeed > 0f
@@ -194,6 +201,7 @@ namespace Cave.Enemies
             brainSpeedMultiplier = 1f;
             corruptionSpeedMultiplier = 1f;
             possessionSpeedMultiplier = 1f;
+            teamAuraSpeedMultiplier = 1f;
             combatMovementDirection = 0f;
             combatMovementUntil = 0f;
             body.velocity = Vector2.zero;
@@ -208,6 +216,7 @@ namespace Cave.Enemies
             inheritanceSpeedMultiplier = 1f;
             brainSpeedMultiplier = 1f;
             corruptionSpeedMultiplier = 1f;
+            teamAuraSpeedMultiplier = 1f;
             if (body != null)
             {
                 body.velocity = Vector2.zero;

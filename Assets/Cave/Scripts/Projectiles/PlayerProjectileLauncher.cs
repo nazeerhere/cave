@@ -76,6 +76,12 @@ namespace Cave.Projectiles
 
         private bool TryFire(bool allowResourceFeedback)
         {
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                return false;
+            }
+
             PlayerGuardBreak guardBreak = GetComponent<PlayerGuardBreak>();
             if ((guardBreak != null && !guardBreak.CanUseCombatActions)
                 || projectilePrefab == null

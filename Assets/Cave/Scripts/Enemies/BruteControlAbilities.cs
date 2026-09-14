@@ -40,6 +40,15 @@ namespace Cave.Enemies
         [SerializeField, Min(0.05f)] private float chainProjectileRadius = 0.16f;
         [SerializeField] private Sprite chainPickaxeSprite;
 
+        [Header("Evolved Chain Hook Presentation")]
+        // The approved hook art is drawn on a diagonal from its chain ring to its tip.
+        // These fields affect only the endpoint renderer created below; chain collision,
+        // movement and pull resolution remain entirely independent of the art.
+        // Keep these serialized fields unconditional: Unity compares this runtime
+        // MonoBehaviour layout between Editor and Player assemblies during a build.
+        [SerializeField] private float chainHookSpriteAngleOffset = -45f;
+        [SerializeField, Min(0.01f)] private float chainHookSpriteScale = 0.55f;
+
         [Header("Optional VFX Hooks")]
         [SerializeField] private GameObject hookConnectionVfx;
         [SerializeField] private GameObject pinVfx;
@@ -84,6 +93,8 @@ namespace Cave.Enemies
         private bool pickaxePresentationCached;
 
         public bool IsBusy => actionRoutine != null;
+        /// <summary>Read-only presentation label for the current existing control action.</summary>
+        public string CurrentAction => currentAction;
         public bool ChainHookUnlocked => chainHookUnlocked;
         public float HookRange => hookRange;
         public float ChainHookRange => chainHookRange;
@@ -430,6 +441,7 @@ namespace Cave.Enemies
                     : new Color(0.8f, 0.65f, 0.3f, 1f);
                 headRenderer.sortingOrder = 4;
                 chainHead = headObject.transform;
+                chainHead.localScale = Vector3.one * chainHookSpriteScale;
 
                 // A simple fallback glyph makes an unassigned pickaxe slot still
                 // readable in Play Mode without touching vendor sprites.
@@ -467,6 +479,12 @@ namespace Cave.Enemies
             if (chainHead != null)
             {
                 chainHead.position = end;
+                Vector2 direction = end - (Vector2)transform.position;
+                if (direction.sqrMagnitude > 0.0001f)
+                {
+                    float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                    chainHead.rotation = Quaternion.Euler(0f, 0f, angle + chainHookSpriteAngleOffset);
+                }
             }
         }
 
@@ -625,7 +643,7 @@ namespace Cave.Enemies
 
             Collider2D targetCollider = target.GetComponent<Collider2D>();
             Vector3 contactPoint = targetCollider != null && pickaxeTransform != null
-                ? targetCollider.ClosestPoint(pickaxeTransform.position)
+                ? (Vector3)targetCollider.ClosestPoint(pickaxeTransform.position)
                 : target.transform.position;
             pinImpactInstance = Instantiate(pinImpactXPrefab, contactPoint, Quaternion.identity);
             pinImpactInstance.transform.SetParent(target.transform, true);

@@ -184,12 +184,14 @@ namespace Cave.Projectiles
                         damageContext,
                         Time.time,
                         axiomApplicationReceipt);
-                    if (isFrenzyCritical)
+                    if (frenzyActivation != null
+                        && (frenzyActivation.ManaInfused || isFrenzyCritical))
                     {
                         frenzyActivation.ApplyImpact(
                             damageable,
                             body.velocity,
-                            appliedDamage);
+                            appliedDamage,
+                            isFrenzyCritical);
                     }
                     ApplyStatusEffect(damageable, appliedDamage > 0);
                     remainingEnemyHits--;

@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8010912129bc3406aa7807e328c10bae, type: 3}
+  m_Name: AxiomVfxCatalog
+  m_EditorClassIdentifier: 
+  resonanceProgress:
+    prefab: {fileID: 4555715067579003282, guid: 3f70d83e43a064f778d88b2b4685bf04, type: 3}
+    lifetime: 0.22
+    scale: 0.42
+    localOffset: {x: 0, y: 0.45}
+    cooldown: 0.06
+  resonanceBreak:
+    prefab: {fileID: 5597648593190211838, guid: 6b3d9e01591f547d195c7b5b51294b4f, type: 3}
+    lifetime: 0.42
+    scale: 0.72
+    localOffset: {x: 0, y: 0.4}
+    cooldown: 0.12
+  destabilized:
+    prefab: {fileID: 1433591102177633588, guid: 0ea27ca6b47ec492da0df8b103ddbeba, type: 3}
+    lifetime: 0.5
+    scale: 0.62
+    localOffset: {x: 0, y: 0.35}
+    cooldown: 0.3
+  phaseApply:
+    prefab: {fileID: 7441977039188142580, guid: 6951699a59bad4236b76e2ede5e900a5, type: 3}
+    lifetime: 0.28
+    scale: 0.54
+    localOffset: {x: 0, y: 0.4}
+    cooldown: 0.08
+  phaseCollapseStrong:
+    prefab: {fileID: 5816580041433900288, guid: efcee2400b2cb4513a41c1fe2ed873d2, type: 3}
+    lifetime: 0.55
+    scale: 0.86
+    localOffset: {x: 0, y: 0.42}
+    cooldown: 0.15
+  phaseCollapseWeak:
+    prefab: {fileID: 9131581016634833377, guid: 49210ae938903471b8af418682528446, type: 3}
+    lifetime: 0.5
+    scale: 0.7
+    localOffset: {x: 0, y: 0.42}
+    cooldown: 0.15
+  phaseCollapseEven:
+    prefab: {fileID: 997165217557820535, guid: 9f64510f7c4ba47729c55d6bebe8a386, type: 3}
+    lifetime: 0.3
+    scale: 0.54
+    localOffset: {x: 0, y: 0.42}
+    cooldown: 0.12
+  phaseVulnerability:
+    prefab: {fileID: 3174501151480227018, guid: c903f3036bf29457d8bf688d13f0252e, type: 3}
+    lifetime: 3
+    scale: 0.48
+    localOffset: {x: 0, y: 0.45}
+    cooldown: 0
+  errorState:
+    prefab: {fileID: 378348453955911314, guid: fe2ef0b53bbb44000a89d86129376223, type: 3}
+    lifetime: 0.34
+    scale: 0.54
+    localOffset: {x: 0, y: 0.45}
+    cooldown: 0.22
+  errorRate:
+    prefab: {fileID: 7150617338871874371, guid: 3e1bd883f237b4f32b4f954a3413d47a, type: 3}
+    lifetime: 0.3
+    scale: 0.46
+    localOffset: {x: 0, y: 0.45}
+    cooldown: 0.22
+  errorAcceleration:
+    prefab: {fileID: 4761541464147769522, guid: 18d231a52514c4455877f370b89f9c91, type: 3}
+    lifetime: 0.36
+    scale: 0.58
+    localOffset: {x: 0, y: 0.45}
+    cooldown: 0.22
+  controlSuccess:
+    prefab: {fileID: 8157159699223948375, guid: 6944cbe8407b14689808bba686b3829c, type: 3}
+    lifetime: 0.3
+    scale: 0.52
+    localOffset: {x: 0, y: 0.46}
+    cooldown: 0.08
+  controlFailure:
+    prefab: {fileID: 8681069600549758216, guid: e0ce41f8711d148ff801a7eb3a6d17f8, type: 3}
+    lifetime: 0.22
+    scale: 0.4
+    localOffset: {x: 0, y: 0.46}
+    cooldown: 0.16
+  counterphase:
+    prefab: {fileID: 8676693474870503883, guid: ebe14ecaad836470e8a1925c550b8d12, type: 3}
+    lifetime: 0.32
+    scale: 0.58
+    localOffset: {x: 0, y: 0.45}
+    cooldown: 0.12
+  heat:
+    prefab: {fileID: 6230108140718273018, guid: 4a663ed6ff6fb44e1a62eca947471ff4, type: 3}
+    lifetime: 0.28
+    scale: 0.56
+    localOffset: {x: 0, y: 0.35}
+    cooldown: 0.08
+  order:
+    prefab: {fileID: 4782791346604300882, guid: a5096b215e63f43f6b1352a920246c32, type: 3}
+    lifetime: 0.3
+    scale: 0.52
+    localOffset: {x: 0, y: 0.42}
+    cooldown: 0.08
+  flow:
+    prefab: {fileID: 6772211585183678446, guid: 9d1af3ee0a54c4fdf91f44319946192a, type: 3}
+    lifetime: 0.3
+    scale: 0.5
+    localOffset: {x: 0, y: 0.25}
+    cooldown: 0.08
+  mass:
+    prefab: {fileID: 2047090363544913586, guid: 21f1125140d1c47b096b25de3826cdfb, type: 3}
+    lifetime: 0.32
+    scale: 0.48
+    localOffset: {x: 0, y: 0.1}
+    cooldown: 0.08

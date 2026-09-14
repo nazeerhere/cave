@@ -43,13 +43,9 @@ namespace Cave.UI
             {
                 stateText.text = "HOLD " + key + "  •  INFUSE FRENZY";
             }
-            else if (flow.IsFrenzyArmed)
+            else if (flow.IsFrenzyActive)
             {
-                stateText.text = BuildFrenzyState(false);
-            }
-            else if (flow.IsFrenzyBound)
-            {
-                stateText.text = BuildFrenzyState(true);
+                stateText.text = BuildFrenzyState();
             }
             else if (Time.time <= feedbackExpiresAt && !string.IsNullOrEmpty(transientFeedback))
             {
@@ -75,29 +71,21 @@ namespace Cave.UI
             }
         }
 
-        private string BuildFrenzyState(bool bound)
+        private string BuildFrenzyState()
         {
             string level = flow.ArmedInfusionLevel > 0
                 ? " " + ToRoman(flow.ArmedInfusionLevel)
                 : string.Empty;
-            string title = "FRENZY BREAK • "
+            string title = "FRENZY • "
                 + GetInfusionName(flow.ArmedInfusion)
                 + level;
             string value = Mathf.RoundToInt(flow.CurrentTheoreticalMultiplier * 100f) + "%";
-            if (bound)
-            {
-                return title
-                    + "\nBOUND • "
-                    + GetAttackName(flow.BoundAttackKind)
-                    + " • "
-                    + flow.ArmedRole.ToString().ToUpperInvariant()
-                    + "\n"
-                    + value;
-            }
-
             string infusion = flow.ArmedInfusionLevel > 0
                 ? "INFUSION " + ToRoman(flow.ArmedInfusionLevel) + " • "
                 : string.Empty;
+            string critical = flow.HasFrenzyCriticalOpportunity
+                ? "CRITICAL READY • "
+                : "CRITICAL SPENT • ";
             string elemental = flow.ArmedInfusion == FrenzyBreakInfusion.Ice
                 && flow.ArmedInfusionLevel >= 3
                     ? "\nPIN + FROST ZONE"
@@ -107,8 +95,10 @@ namespace Cave.UI
                 + flow.ArmedTimeRemaining.ToString("0.0")
                 + "s\n"
                 + infusion
+                + critical
                 + value
-                + elemental;
+                + elemental
+                + "\nMASTERY " + flow.FrenzyMasteryLevel;
         }
 
         private static string ToRoman(int level)

@@ -29,7 +29,9 @@ namespace Cave.Editor
             new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.GazeLock, "Status_GazeLock.png"),
             new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.Possessed, "Status_Possessed.png"),
             new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.ElementallyBuffed, "Status_ElementallyBuffed.png"),
-            new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.Frenzied, "Status_Frenzied.png")
+            new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.Frenzied, "Status_Frenzied.png"),
+            new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.Imaginary, "Status_Imaginary.png"),
+            new KeyValuePair<MobStatusIconKind, string>(MobStatusIconKind.Stoneglass, "Status_Stoneglass.png")
         };
 
         private void OnPreprocessTexture()
@@ -91,22 +93,32 @@ namespace Cave.Editor
                 string path = IconDirectory + icon.Value;
                 ConfigureImporter(path);
                 Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                for (int index = 0; index < entries.arraySize; index++)
-                {
-                    SerializedProperty entry = entries.GetArrayElementAtIndex(index);
-                    if ((MobStatusIconKind)entry.FindPropertyRelative("Kind").enumValueIndex != icon.Key)
-                    {
-                        continue;
-                    }
-
-                    entry.FindPropertyRelative("Icon").objectReferenceValue = sprite;
-                    break;
-                }
+                SerializedProperty entry = FindOrCreateEntry(entries, icon.Key);
+                entry.FindPropertyRelative("Icon").objectReferenceValue = sprite;
             }
 
             serializedRegistry.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(registry);
             AssetDatabase.SaveAssets();
+        }
+
+        private static SerializedProperty FindOrCreateEntry(SerializedProperty entries, MobStatusIconKind kind)
+        {
+            for (int index = 0; index < entries.arraySize; index++)
+            {
+                SerializedProperty entry = entries.GetArrayElementAtIndex(index);
+                if ((MobStatusIconKind)entry.FindPropertyRelative("Kind").enumValueIndex == kind)
+                {
+                    return entry;
+                }
+            }
+
+            int newIndex = entries.arraySize;
+            entries.arraySize++;
+            SerializedProperty createdEntry = entries.GetArrayElementAtIndex(newIndex);
+            createdEntry.FindPropertyRelative("Kind").enumValueIndex = (int)kind;
+            createdEntry.FindPropertyRelative("Icon").objectReferenceValue = null;
+            return createdEntry;
         }
 
         private static void ConfigureImporter(string path)

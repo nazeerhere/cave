@@ -43,7 +43,7 @@ namespace Cave.Combat
     public sealed class FrenzyBreakActivation
     {
         private readonly PlayerCombatFlow owner;
-        private readonly HashSet<Damageable> criticalTargets = new HashSet<Damageable>();
+        private readonly HashSet<Damageable> resolvedTargets = new HashSet<Damageable>();
         private bool windBurstApplied;
         private bool completed;
 
@@ -53,7 +53,8 @@ namespace Cave.Combat
             int infusionLevel,
             FrenzyBreakRole selectedRole,
             FrenzyBreakAttackKind attackKind,
-            int skillTier)
+            int skillTier,
+            bool manaInfused)
         {
             owner = flow;
             Infusion = selectedInfusion;
@@ -61,6 +62,7 @@ namespace Cave.Combat
             Role = selectedRole;
             AttackKind = attackKind;
             SkillTier = skillTier;
+            ManaInfused = manaInfused;
         }
 
         public FrenzyBreakInfusion Infusion { get; }
@@ -68,7 +70,7 @@ namespace Cave.Combat
         public FrenzyBreakRole Role { get; }
         public FrenzyBreakAttackKind AttackKind { get; }
         public int SkillTier { get; }
-        public bool ManaInfused => InfusionLevel > 0;
+        public bool ManaInfused { get; }
         public bool UseFrostTierThreePin => AttackKind == FrenzyBreakAttackKind.Projectile
             && Infusion == FrenzyBreakInfusion.Ice
             && SkillTier >= 3;
@@ -78,9 +80,9 @@ namespace Cave.Combat
             resolvedDamage = baseDamage;
             if (completed
                 || owner == null
-                || !owner.IsBoundActivation(this)
                 || target == null
-                || !criticalTargets.Add(target))
+                || AttackKind != FrenzyBreakAttackKind.Charged
+                || !owner.HasFrenzyCriticalOpportunity)
             {
                 return false;
             }
@@ -93,11 +95,34 @@ namespace Cave.Combat
             return true;
         }
 
-        public void ApplyImpact(Damageable target, Vector2 attackDirection, int appliedDamage)
+        /// <summary>
+        /// Completes an accepted hit. Criticals are deliberately consumed here,
+        /// after authoritative damage resolution, rather than on an overlap.
+        /// </summary>
+        public bool ApplyImpact(
+            Damageable target,
+            Vector2 attackDirection,
+            int appliedDamage,
+            bool wasCriticalCandidate)
         {
             if (completed || appliedDamage <= 0 || owner == null)
             {
-                return;
+                return false;
+            }
+
+            // Collision callbacks can repeat while a spinning or area attack
+            // overlaps the same body.  Each attack context bills and applies its
+            // Frenzy layer once per accepted target.
+            if (target == null || !resolvedTargets.Add(target))
+            {
+                return false;
+            }
+
+            bool criticalCommitted = wasCriticalCandidate
+                && owner.TryConsumeFrenzyCriticalAfterAcceptedDamage();
+            if (!ManaInfused && !criticalCommitted)
+            {
+                return false;
             }
 
             bool allowWindBurst = Infusion != FrenzyBreakInfusion.Wind || !windBurstApplied;
@@ -109,11 +134,15 @@ namespace Cave.Combat
                 AttackKind,
                 SkillTier,
                 allowWindBurst,
-                appliedDamage);
+                appliedDamage,
+                ManaInfused,
+                criticalCommitted);
             if (Infusion == FrenzyBreakInfusion.Wind)
             {
                 windBurstApplied = true;
             }
+
+            return criticalCommitted;
         }
 
         public void Complete()
@@ -124,14 +153,14 @@ namespace Cave.Combat
             }
 
             completed = true;
-            owner?.CompleteBoundFrenzy(this);
+            owner?.CompleteFrenzyAction(this);
         }
 
         public void KeepAlive()
         {
             if (!completed)
             {
-                owner?.RefreshBoundFrenzySafety(this);
+                owner?.RefreshFrenzyActionSafety(this);
             }
         }
 
@@ -156,15 +185,13 @@ namespace Cave.Combat
         [SerializeField, Min(0.05f)] private float manaInfusionHoldThreshold = 0.30f;
         [SerializeField, Min(0.05f)] private float levelTwoHoldThreshold = 0.65f;
         [SerializeField, Min(0.05f)] private float levelThreeHoldThreshold = 1f;
-        [SerializeField, Min(0.1f)] private float armedTimeout = 12f;
-        [SerializeField, Min(0.1f)] private float boundAttackSafetyTimeout = 5f;
+        [SerializeField, Min(0.1f)] private float baseFrenzyDuration = 5f;
+        [SerializeField, Range(0.05f, 0.95f)] private float frenzyMasteryWindowFraction = 0.25f;
+        [SerializeField, Min(0f)] private float frenzyMasteryDurationPerLevel = 0.25f;
+        [SerializeField, Min(0f)] private float maximumFrenzyMasteryDurationBonus = 2f;
+        [SerializeField, Min(0f)] private float baseInfusionCost = 1f;
+        [SerializeField, Min(0f)] private float manaPerAcceptedDamage = 0.25f;
         [SerializeField, Min(0.05f)] private float combatContextRadius = 7f;
-
-        [Header("Frenzy Break Costs — Current Maximum")]
-        [SerializeField, Range(0f, 1f)] private float staminaCostFraction = 0.35f;
-        [SerializeField, Range(0f, 1f)] private float levelOneManaCostFraction = 0.25f;
-        [SerializeField, Range(0f, 1f)] private float levelTwoManaCostFraction = 0.40f;
-        [SerializeField, Range(0f, 1f)] private float levelThreeManaCostFraction = 0.55f;
 
         [Header("Frenzy Damage")]
         [SerializeField, Min(0f)] private float baseCriticalBonus = 1.75f;
@@ -216,13 +243,12 @@ namespace Cave.Combat
         [SerializeField, Min(0f)] private float spinBashRemaining;
         [SerializeField] private bool isPreparingFrenzy;
         [SerializeField] private bool frenzyArmed;
-        [SerializeField] private bool frenzyBound;
+        [SerializeField] private bool frenzyCriticalArmed;
+        [SerializeField] private bool frenzyMasteryAwarded;
+        [SerializeField, Min(0f)] private float currentFrenzyDuration;
         [SerializeField] private FrenzyBreakInfusion armedInfusion;
         [SerializeField, Range(0, 3)] private int armedInfusionLevel;
         [SerializeField] private FrenzyBreakRole armedRole;
-        [SerializeField, Min(0f)] private float armedRemaining;
-        [SerializeField] private FrenzyBreakAttackKind boundAttackKind;
-        [SerializeField, Min(0f)] private float boundSafetyRemaining;
 
         private SpinSwordAttack stamina;
         private PlayerMana mana;
@@ -235,30 +261,36 @@ namespace Cave.Combat
         private SidewaysParryAttack parry;
         private PlayerCurseAltarController altar;
         private PlayerSpecialModeUpgradeState upgradeState;
+        private FrenzyMasteryState frenzyMastery;
         private float followUpExpiresAt;
         private float preparationStartedAt;
         private float frenzyExpiresAt;
-        private float boundSafetyExpiresAt;
         private float nextHostileRefreshTime;
         private bool hostileNearby;
         private float meaningfulSpinStartedAt = -1f;
         private float spinBashExpiresAt;
         private GameObject activeAura;
-        private FrenzyBreakActivation boundActivation;
 
         public event Action StateChanged;
         public event Action<string> FeedbackRequested;
 
         public bool IsPreparingFrenzy => isPreparingFrenzy;
-        public bool IsFrenzyArmed => frenzyArmed && Time.time <= frenzyExpiresAt;
-        public bool IsFrenzyBound => frenzyBound && boundActivation != null;
+        public bool IsFrenzyActive => frenzyArmed && Time.time <= frenzyExpiresAt;
+        // Retained as a compatibility surface for existing HUD and parry code.
+        public bool IsFrenzyArmed => IsFrenzyActive;
+        public bool IsFrenzyBound => false;
+        public bool HasFrenzyCriticalOpportunity => IsFrenzyActive && frenzyCriticalArmed;
         public FrenzyBreakInfusion ArmedInfusion => armedInfusion;
         public int ArmedInfusionLevel => armedInfusionLevel;
         public FrenzyBreakRole ArmedRole => armedRole;
-        public FrenzyBreakAttackKind BoundAttackKind => boundAttackKind;
-        public float ArmedTimeRemaining => IsFrenzyArmed
+        public FrenzyBreakAttackKind BoundAttackKind => FrenzyBreakAttackKind.Spin;
+        public float ArmedTimeRemaining => IsFrenzyActive
             ? Mathf.Max(0f, frenzyExpiresAt - Time.time)
             : 0f;
+        public float CurrentFrenzyDuration => currentFrenzyDuration;
+        public float BaseFrenzyDuration => baseFrenzyDuration;
+        public int FrenzyMasteryLevel => frenzyMastery != null ? frenzyMastery.CurrentLevel : 0;
+        public float FrenzyMasteryProgress => frenzyMastery != null ? frenzyMastery.CurrentProgress : 0f;
         public float CurrentTheoreticalMultiplier => 1f
             + baseCriticalBonus
             + ResolveInfusionBonus(armedInfusion, armedInfusionLevel);
@@ -283,6 +315,7 @@ namespace Cave.Combat
             parry = GetComponent<SidewaysParryAttack>();
             altar = GetComponent<PlayerCurseAltarController>();
             upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
+            EnsureFrenzyMastery();
             if (stamina == null)
             {
                 enabled = false;
@@ -312,8 +345,7 @@ namespace Cave.Combat
 
             bool altarAvailable = altar != null && altar.HasAvailableAltar();
             if (GameInput.InteractPressed
-                && !IsFrenzyArmed
-                && !IsFrenzyBound
+                && !IsFrenzyActive
                 && ShouldPrioritizeFrenzyBreak(altarAvailable))
             {
                 isPreparingFrenzy = true;
@@ -403,28 +435,8 @@ namespace Cave.Combat
             out FrenzyBreakActivation activation)
         {
             activation = null;
-            if (!IsFrenzyArmed || IsFrenzyBound)
+            if (!IsFrenzyActive)
             {
-                return false;
-            }
-
-            float staminaCost = stamina.MaximumStamina * staminaCostFraction;
-            float manaCost = ResolveManaCost(armedInfusionLevel);
-            if (!stamina.CanSpendStamina(staminaCost)
-                || (manaCost > 0f && !mana.CanSpendMana(manaCost)))
-            {
-                string missing = !stamina.CanSpendStamina(staminaCost) ? "STAMINA" : "MANA";
-                ClearFrenzy();
-                FeedbackRequested?.Invoke("FRENZY FAILED — " + missing);
-                return false;
-            }
-
-            bool staminaPaid = stamina.TrySpendStamina(staminaCost);
-            bool manaPaid = manaCost <= 0f || mana.TrySpendMana(manaCost);
-            if (!staminaPaid || !manaPaid)
-            {
-                ClearFrenzy();
-                FeedbackRequested?.Invoke("FRENZY FAILED");
                 return false;
             }
 
@@ -442,18 +454,8 @@ namespace Cave.Combat
                 armedInfusionLevel,
                 armedRole,
                 attackKind,
-                currentSkillTier);
-            boundActivation = activation;
-            frenzyArmed = false;
-            frenzyBound = true;
-            boundAttackKind = attackKind;
-            frenzyExpiresAt = 0f;
-            armedRemaining = 0f;
-            boundSafetyExpiresAt = Time.time + boundAttackSafetyTimeout;
-            boundSafetyRemaining = boundAttackSafetyTimeout;
-            string message = "FRENZY " + armedRole.ToString().ToUpperInvariant()
-                + " BOUND — " + attackKind.ToString().ToUpperInvariant();
-            FeedbackRequested?.Invoke(message);
+                currentSkillTier,
+                TryBeginManaInfusion());
             if (attackKind != FrenzyBreakAttackKind.Charged)
             {
                 formalChainInProgress = false;
@@ -463,30 +465,28 @@ namespace Cave.Combat
             return true;
         }
 
-        internal bool IsBoundActivation(FrenzyBreakActivation activation)
+        internal void CompleteFrenzyAction(FrenzyBreakActivation activation)
         {
-            return frenzyBound && activation != null && activation == boundActivation;
+            // Frenzy is a timed state, not a one-attack transaction.  Action
+            // completion intentionally leaves the current activation running.
         }
 
-        internal void CompleteBoundFrenzy(FrenzyBreakActivation activation)
+        internal void RefreshFrenzyActionSafety(FrenzyBreakActivation activation)
         {
-            if (!IsBoundActivation(activation))
-            {
-                return;
-            }
-
-            ClearFrenzy();
+            // Compatibility no-op for long-lived action components.  Expiry is
+            // owned solely by the Frenzy timer.
         }
 
-        internal void RefreshBoundFrenzySafety(FrenzyBreakActivation activation)
+        internal bool TryConsumeFrenzyCriticalAfterAcceptedDamage()
         {
-            if (!IsBoundActivation(activation))
+            if (!HasFrenzyCriticalOpportunity)
             {
-                return;
+                return false;
             }
 
-            boundSafetyExpiresAt = Time.time + boundAttackSafetyTimeout;
-            boundSafetyRemaining = boundAttackSafetyTimeout;
+            frenzyCriticalArmed = false;
+            StateChanged?.Invoke();
+            return true;
         }
 
         internal int ResolveCriticalDamage(
@@ -517,11 +517,19 @@ namespace Cave.Combat
             FrenzyBreakAttackKind attackKind,
             int skillTier,
             bool allowWindBurst,
-            int appliedDamage)
+            int appliedDamage,
+            bool manaInfused,
+            bool criticalCommitted)
         {
             if (target == null)
             {
                 return;
+            }
+
+            if (manaInfused)
+            {
+                ConsumeDamageBasedInfusionMana(appliedDamage);
+                TryAwardFrenzyMasteryForLateInfusedKill(target);
             }
 
             if (resourceMastery == null)
@@ -586,11 +594,14 @@ namespace Cave.Combat
                     strengthHeavyStaggerDuration);
             }
 
-            SpawnCriticalFeedback(target.transform.position, infusion, infusionLevel, attackKind);
-            FrenzyCriticalPopup.Create(
-                target,
-                appliedDamage,
-                ResolveCriticalFeedbackColor(infusion));
+            if (criticalCommitted)
+            {
+                SpawnCriticalFeedback(target.transform.position, infusion, infusionLevel, attackKind);
+                FrenzyCriticalPopup.Create(
+                    target,
+                    appliedDamage,
+                    ResolveCriticalFeedbackColor(infusion));
+            }
         }
 
         private void ArmFrenzyBreak(float heldDuration)
@@ -605,10 +616,15 @@ namespace Cave.Combat
                 ? FrenzyBreakRole.Finisher
                 : FrenzyBreakRole.Opener;
             frenzyArmed = true;
-            frenzyExpiresAt = Time.time + armedTimeout;
+            frenzyCriticalArmed = true;
+            frenzyMasteryAwarded = false;
+            EnsureFrenzyMastery();
+            currentFrenzyDuration = Mathf.Max(0.1f, baseFrenzyDuration)
+                + (frenzyMastery != null ? frenzyMastery.DurationBonus : 0f);
+            frenzyExpiresAt = Time.time + currentFrenzyDuration;
             SpawnFrenzyAura(armedInfusion);
             FeedbackRequested?.Invoke(
-                "FRENZY ARMED — " + armedInfusion.ToString().ToUpperInvariant());
+                "FRENZY ACTIVE — " + armedInfusion.ToString().ToUpperInvariant());
             StateChanged?.Invoke();
         }
 
@@ -654,20 +670,10 @@ namespace Cave.Combat
                 ClearFollowUpToken();
             }
 
-            armedRemaining = IsFrenzyArmed ? Mathf.Max(0f, frenzyExpiresAt - Time.time) : 0f;
-            if (frenzyArmed && !IsFrenzyArmed)
+            if (frenzyArmed && !IsFrenzyActive)
             {
                 ClearFrenzy();
                 FeedbackRequested?.Invoke("FRENZY EXPIRED");
-            }
-
-            boundSafetyRemaining = IsFrenzyBound
-                ? Mathf.Max(0f, boundSafetyExpiresAt - Time.time)
-                : 0f;
-            if (IsFrenzyBound && Time.time > boundSafetyExpiresAt)
-            {
-                ClearFrenzy();
-                FeedbackRequested?.Invoke("FRENZY BIND RESET");
             }
         }
 
@@ -723,16 +729,63 @@ namespace Cave.Combat
             return heldDuration >= levelTwoHoldThreshold ? 2 : 1;
         }
 
-        private float ResolveManaCost(int infusionLevel)
+        private bool TryBeginManaInfusion()
         {
-            float fraction = infusionLevel >= 3
-                ? levelThreeManaCostFraction
-                : infusionLevel == 2
-                    ? levelTwoManaCostFraction
-                    : infusionLevel == 1
-                        ? levelOneManaCostFraction
-                        : 0f;
-            return mana.MaximumMana * fraction;
+            if (armedInfusionLevel <= 0 || mana == null)
+            {
+                return false;
+            }
+
+            // The small commitment is paid once per compatible action.  The
+            // damage-dependent remainder is collected only after accepted hits.
+            return baseInfusionCost <= 0f || mana.TrySpendMana(baseInfusionCost);
+        }
+
+        private void ConsumeDamageBasedInfusionMana(int appliedDamage)
+        {
+            if (mana == null || appliedDamage <= 0 || manaPerAcceptedDamage <= 0f)
+            {
+                return;
+            }
+
+            // DrainMana clamps at zero.  This is intentional: damage is already
+            // authoritative and accepted, so an underfunded final bill cannot
+            // retroactively alter it.  A later action will not infuse until it
+            // can pay its base commitment again.
+            float requestedCost = mana.GetModifiedManaCost(appliedDamage * manaPerAcceptedDamage);
+            mana.DrainMana(requestedCost);
+        }
+
+        private void TryAwardFrenzyMasteryForLateInfusedKill(Damageable target)
+        {
+            if (frenzyMasteryAwarded
+                || !IsFrenzyActive
+                || target == null
+                || target.gameObject.activeInHierarchy
+                || currentFrenzyDuration <= 0f)
+            {
+                return;
+            }
+
+            float remaining = Mathf.Max(0f, frenzyExpiresAt - Time.time);
+            float masteryWindow = currentFrenzyDuration
+                * Mathf.Clamp01(frenzyMasteryWindowFraction);
+            if (remaining > masteryWindow)
+            {
+                return;
+            }
+
+            EnsureFrenzyMastery();
+
+            // One successful mana-infused enemy kill is the sole default
+            // qualification per activation, including for multi-target actions.
+            frenzyMasteryAwarded = true;
+            if (frenzyMastery != null && frenzyMastery.TryGainQualifiedLevel())
+            {
+                FeedbackRequested?.Invoke("FRENZY MASTERY +1");
+            }
+
+            StateChanged?.Invoke();
         }
 
         private float ResolveInfusionBonus(FrenzyBreakInfusion infusion, int infusionLevel)
@@ -901,20 +954,25 @@ namespace Cave.Combat
                 activeAura = null;
             }
             frenzyArmed = false;
-            frenzyBound = false;
-            if (boundActivation != null)
-            {
-                boundActivation.Invalidate();
-                boundActivation = null;
-            }
+            frenzyCriticalArmed = false;
+            frenzyMasteryAwarded = false;
             armedInfusionLevel = 0;
             armedInfusion = FrenzyBreakInfusion.Physical;
             frenzyExpiresAt = 0f;
-            armedRemaining = 0f;
-            boundAttackKind = FrenzyBreakAttackKind.Spin;
-            boundSafetyExpiresAt = 0f;
-            boundSafetyRemaining = 0f;
+            currentFrenzyDuration = 0f;
             StateChanged?.Invoke();
+        }
+
+        private void EnsureFrenzyMastery()
+        {
+            if (frenzyMastery == null)
+            {
+                frenzyMastery = FrenzyMasteryState.EnsureOn(gameObject);
+            }
+
+            frenzyMastery?.Configure(
+                frenzyMasteryDurationPerLevel,
+                maximumFrenzyMasteryDurationBonus);
         }
 
         private void SubscribeSignals()
@@ -981,6 +1039,12 @@ namespace Cave.Combat
         {
             levelTwoHoldThreshold = Mathf.Max(manaInfusionHoldThreshold, levelTwoHoldThreshold);
             levelThreeHoldThreshold = Mathf.Max(levelTwoHoldThreshold, levelThreeHoldThreshold);
+            baseFrenzyDuration = Mathf.Max(0.1f, baseFrenzyDuration);
+            frenzyMasteryWindowFraction = Mathf.Clamp(frenzyMasteryWindowFraction, 0.05f, 0.95f);
+            frenzyMasteryDurationPerLevel = Mathf.Max(0f, frenzyMasteryDurationPerLevel);
+            maximumFrenzyMasteryDurationBonus = Mathf.Max(0f, maximumFrenzyMasteryDurationBonus);
+            baseInfusionCost = Mathf.Max(0f, baseInfusionCost);
+            manaPerAcceptedDamage = Mathf.Max(0f, manaPerAcceptedDamage);
         }
     }
 }

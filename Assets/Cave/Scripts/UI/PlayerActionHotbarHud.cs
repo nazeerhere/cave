@@ -71,12 +71,14 @@ namespace Cave.UI
             if (inventory != null)
             {
                 inventory.ConsumableQuantityChanged -= HandleQuantityChanged;
+                inventory.DiskChargeStateChanged -= HandleDiskChargeStateChanged;
             }
 
             inventory = consumableInventory;
             if (inventory != null)
             {
                 inventory.ConsumableQuantityChanged += HandleQuantityChanged;
+                inventory.DiskChargeStateChanged += HandleDiskChargeStateChanged;
             }
         }
 
@@ -114,9 +116,7 @@ namespace Cave.UI
                     continue;
                 }
 
-                quantityLabels[index].text = index < ConsumableTypes.Length
-                    ? "x" + GetQuantity(index)
-                    : string.Empty;
+                quantityLabels[index].text = FormatQuantity(index);
             }
         }
 
@@ -163,7 +163,34 @@ namespace Cave.UI
                 : 0;
         }
 
+        private string FormatQuantity(int index)
+        {
+            if (index != 2)
+            {
+                return index < ConsumableTypes.Length ? "x" + GetQuantity(index) : string.Empty;
+            }
+
+            if (inventory == null || inventory.DiskCapacity <= 0)
+            {
+                return "LOCKED";
+            }
+
+            string pips = string.Empty;
+            for (int pip = 0; pip < inventory.DiskCapacity; pip++)
+            {
+                if (pip > 0) pips += " ";
+                pips += pip < inventory.StoredDiskCharges ? "◆" : "◇";
+            }
+            return pips;
+        }
+
         private void HandleQuantityChanged(PlayerConsumableType type, int owned)
+        {
+            RefreshQuantities();
+            RefreshSlotVisuals();
+        }
+
+        private void HandleDiskChargeStateChanged()
         {
             RefreshQuantities();
             RefreshSlotVisuals();
@@ -185,6 +212,7 @@ namespace Cave.UI
             if (inventory != null)
             {
                 inventory.ConsumableQuantityChanged -= HandleQuantityChanged;
+                inventory.DiskChargeStateChanged -= HandleDiskChargeStateChanged;
             }
         }
     }

@@ -18,7 +18,9 @@ namespace Cave.Combat
         StaggerHeavy = 1 << 7,
         FrenzyCritical = 1 << 8,
         /// <summary>Cannot be negated by ordinary Guard; parry remains a separate rule.</summary>
-        Unblockable = 1 << 9
+        Unblockable = 1 << 9,
+        /// <summary>Committed heavy impact; Guard mitigates it but cannot fully negate it.</summary>
+        Heavy = 1 << 10
     }
 
     public interface IDeflectableDamageSource

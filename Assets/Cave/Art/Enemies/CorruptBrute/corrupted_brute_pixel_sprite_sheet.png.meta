@@ -1,0 +1,837 @@
+fileFormatVersion: 2
+guid: 92ab6d14719c84bb8a3b75f9c77fe09a
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 12
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMasterTextureLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 128
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: CorruptBrute_Idle_01
+      rect:
+        serializedVersion: 2
+        x: 158
+        y: 914
+        width: 185
+        height: 172
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f6c1f981a4c1dbc0800000000000000
+      internalID: -3760008015794551051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Idle_02
+      rect:
+        serializedVersion: 2
+        x: 373
+        y: 914
+        width: 185
+        height: 172
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 375a8cfb6ef33de30800000000000000
+      internalID: 4527032310730106227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Idle_03
+      rect:
+        serializedVersion: 2
+        x: 588
+        y: 914
+        width: 185
+        height: 172
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aee112b5592e32960800000000000000
+      internalID: 7576148129274207978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Idle_04
+      rect:
+        serializedVersion: 2
+        x: 803
+        y: 914
+        width: 185
+        height: 172
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90f1ed1f07916bef0800000000000000
+      internalID: -92858769429618935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Walk_01
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 766
+        width: 190
+        height: 175
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 157d6359ffd5cd060800000000000000
+      internalID: 6979556874818869073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Walk_02
+      rect:
+        serializedVersion: 2
+        x: 381
+        y: 766
+        width: 190
+        height: 175
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a70383f79a40457e0800000000000000
+      internalID: -1777790826874130310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Walk_03
+      rect:
+        serializedVersion: 2
+        x: 599
+        y: 766
+        width: 190
+        height: 175
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bfd5badaebcae950800000000000000
+      internalID: 6479215223478017968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Walk_04
+      rect:
+        serializedVersion: 2
+        x: 817
+        y: 766
+        width: 190
+        height: 175
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a614c005292b32f0800000000000000
+      internalID: -992154054001682782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Walk_05
+      rect:
+        serializedVersion: 2
+        x: 1035
+        y: 766
+        width: 190
+        height: 175
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a64166135533e06b0800000000000000
+      internalID: -5328264868138707862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Walk_06
+      rect:
+        serializedVersion: 2
+        x: 1253
+        y: 766
+        width: 190
+        height: 175
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7cdbf5ba15cb0bf0800000000000000
+      internalID: -356975026932818817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Light_01
+      rect:
+        serializedVersion: 2
+        x: 142
+        y: 609
+        width: 220
+        height: 165
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11e41fc38d7373e40800000000000000
+      internalID: 5636034860552375825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Light_02
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 609
+        width: 220
+        height: 165
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbd0d427501b04d00800000000000000
+      internalID: 954957757953150397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Light_03
+      rect:
+        serializedVersion: 2
+        x: 638
+        y: 609
+        width: 220
+        height: 165
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 560946a5135878120800000000000000
+      internalID: 2416046172123992165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Light_04
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 609
+        width: 220
+        height: 165
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdb6af9a943a4cd90800000000000000
+      internalID: -7078353177539875873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Heavy_01
+      rect:
+        serializedVersion: 2
+        x: 92
+        y: 409
+        width: 200
+        height: 212
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 162fedd67bff8a810800000000000000
+      internalID: 1776951216285086305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Heavy_02
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 409
+        width: 200
+        height: 212
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed5f354e4f8ce76f0800000000000000
+      internalID: -684889139185453602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Heavy_03
+      rect:
+        serializedVersion: 2
+        x: 560
+        y: 409
+        width: 200
+        height: 212
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c550da673faced80800000000000000
+      internalID: -8220002567307897403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Heavy_04
+      rect:
+        serializedVersion: 2
+        x: 794
+        y: 409
+        width: 200
+        height: 212
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10456bc83b9595dc0800000000000000
+      internalID: -3649787395312299007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Heavy_05
+      rect:
+        serializedVersion: 2
+        x: 1028
+        y: 409
+        width: 200
+        height: 212
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a39f742727bd15690800000000000000
+      internalID: -7615064210316723910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Heavy_06
+      rect:
+        serializedVersion: 2
+        x: 1248
+        y: 409
+        width: 200
+        height: 212
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0a2856d75cee7cf0800000000000000
+      internalID: -252504667083757041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Grab_01
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 251
+        width: 220
+        height: 170
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f43ec6ed11fb4e380800000000000000
+      internalID: -8942812876583935153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Grab_02
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 251
+        width: 220
+        height: 170
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a9a4ab0275d57770800000000000000
+      internalID: 8608020948586899878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Grab_03
+      rect:
+        serializedVersion: 2
+        x: 624
+        y: 251
+        width: 220
+        height: 170
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fd141b24be525560800000000000000
+      internalID: 7301002073830858231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Grab_04
+      rect:
+        serializedVersion: 2
+        x: 884
+        y: 251
+        width: 220
+        height: 170
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 394dc8bee02d699b0800000000000000
+      internalID: -5073636968663034733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Grab_05
+      rect:
+        serializedVersion: 2
+        x: 1144
+        y: 251
+        width: 220
+        height: 170
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4477d331da39711d0800000000000000
+      internalID: -3380070623756847292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Hurt_01
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 128
+        width: 235
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a6ea4caf40240290800000000000000
+      internalID: -7925173917700135257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Hurt_02
+      rect:
+        serializedVersion: 2
+        x: 575
+        y: 128
+        width: 235
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 765241fa0dcca31d0800000000000000
+      internalID: -3370156174470797977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Hurt_03
+      rect:
+        serializedVersion: 2
+        x: 1017
+        y: 128
+        width: 235
+        height: 140
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7e5e6fff6fb106e0800000000000000
+      internalID: -1873005482261717378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Death_01
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 0
+        width: 245
+        height: 146
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e7e00984c32e4480800000000000000
+      internalID: -8913147285500532764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Death_02
+      rect:
+        serializedVersion: 2
+        x: 328
+        y: 0
+        width: 245
+        height: 146
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a5f03edb33cc4a60800000000000000
+      internalID: 7659711728148608420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Death_03
+      rect:
+        serializedVersion: 2
+        x: 618
+        y: 0
+        width: 245
+        height: 146
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c76c0de6d7cad860800000000000000
+      internalID: 7555571050781370308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Death_04
+      rect:
+        serializedVersion: 2
+        x: 908
+        y: 0
+        width: 245
+        height: 146
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95bb43c1845e13090800000000000000
+      internalID: -8056406160515482791
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CorruptBrute_Death_05
+      rect:
+        serializedVersion: 2
+        x: 1198
+        y: 0
+        width: 245
+        height: 146
+      alignment: 9
+      pivot: {x: 0.5, y: 0.04}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b1dd736a92795c60800000000000000
+      internalID: 7807397436443185588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      CorruptBrute_Death_01: -8913147285500532764
+      CorruptBrute_Death_02: 7659711728148608420
+      CorruptBrute_Death_03: 7555571050781370308
+      CorruptBrute_Death_04: -8056406160515482791
+      CorruptBrute_Death_05: 7807397436443185588
+      CorruptBrute_Grab_01: -8942812876583935153
+      CorruptBrute_Grab_02: 8608020948586899878
+      CorruptBrute_Grab_03: 7301002073830858231
+      CorruptBrute_Grab_04: -5073636968663034733
+      CorruptBrute_Grab_05: -3380070623756847292
+      CorruptBrute_Heavy_01: 1776951216285086305
+      CorruptBrute_Heavy_02: -684889139185453602
+      CorruptBrute_Heavy_03: -8220002567307897403
+      CorruptBrute_Heavy_04: -3649787395312299007
+      CorruptBrute_Heavy_05: -7615064210316723910
+      CorruptBrute_Heavy_06: -252504667083757041
+      CorruptBrute_Hurt_01: -7925173917700135257
+      CorruptBrute_Hurt_02: -3370156174470797977
+      CorruptBrute_Hurt_03: -1873005482261717378
+      CorruptBrute_Idle_01: -3760008015794551051
+      CorruptBrute_Idle_02: 4527032310730106227
+      CorruptBrute_Idle_03: 7576148129274207978
+      CorruptBrute_Idle_04: -92858769429618935
+      CorruptBrute_Light_01: 5636034860552375825
+      CorruptBrute_Light_02: 954957757953150397
+      CorruptBrute_Light_03: 2416046172123992165
+      CorruptBrute_Light_04: -7078353177539875873
+      CorruptBrute_Walk_01: 6979556874818869073
+      CorruptBrute_Walk_02: -1777790826874130310
+      CorruptBrute_Walk_03: 6479215223478017968
+      CorruptBrute_Walk_04: -992154054001682782
+      CorruptBrute_Walk_05: -5328264868138707862
+      CorruptBrute_Walk_06: -356975026932818817
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

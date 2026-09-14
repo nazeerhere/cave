@@ -47,7 +47,8 @@ namespace Cave.Progression
         [SerializeField, Min(0f)] private float frostTier3FreezeDuration = 2f;
 
         [Header("Flight Ground Smash")]
-        [SerializeField, Min(0f)] private float bashManaCost = 20f;
+        [FormerlySerializedAs("bashManaCost")]
+        [SerializeField, Min(0f)] private float groundSmashStaminaCost = 90f;
         [SerializeField, Min(1)] private int bashDamage = 2;
         [SerializeField, Min(0f)] private float bashSpeed = 20f;
         [SerializeField, Min(0.01f)] private float bashDuration = 0.18f;
@@ -115,7 +116,8 @@ namespace Cave.Progression
         [SerializeField, Min(0.1f)] private float strengthAuraRadius = 0.85f;
 
         [Header("Flight Tier 3 Ground Smash")]
-        [SerializeField, Min(0f)] private float tier3BashAdditionalManaCost;
+        [FormerlySerializedAs("tier3BashAdditionalManaCost")]
+        [SerializeField, Min(0f)] private float tier3GroundSmashAdditionalStaminaCost;
         [SerializeField, Min(0.1f)] private float bashShockwaveRadius = 2.5f;
         [SerializeField, Min(1)] private int bashShockwaveDamage = 2;
         [SerializeField, Min(0f)] private float bashShockwaveKnockback = 14f;
@@ -141,7 +143,7 @@ namespace Cave.Progression
         public int StrengthTier3DamageBonus => strengthTier3DamageBonus;
         public float FlightTier2EfficiencyBonus => flightTier2EfficiencyBonus;
         public float FlightTier3EfficiencyBonus => flightTier3EfficiencyBonus;
-        public float BashManaCost => bashManaCost;
+        public float GroundSmashStaminaCost => groundSmashStaminaCost;
         public int BashDamage => bashDamage;
         public float BashSpeed => bashSpeed;
         public float BashDuration => bashDuration;
@@ -187,7 +189,7 @@ namespace Cave.Progression
         public Color StrengthShieldRechargingAuraColor => strengthShieldRechargingAuraColor;
         public Color StrengthTier3SwordGlowColor => strengthTier3SwordGlowColor;
         public float StrengthAuraRadius => strengthAuraRadius;
-        public float Tier3BashAdditionalManaCost => tier3BashAdditionalManaCost;
+        public float Tier3GroundSmashAdditionalStaminaCost => tier3GroundSmashAdditionalStaminaCost;
         public float BashShockwaveRadius => bashShockwaveRadius;
         public int BashShockwaveDamage => bashShockwaveDamage;
         public float BashShockwaveKnockback => bashShockwaveKnockback;

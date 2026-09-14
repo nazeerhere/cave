@@ -207,9 +207,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd3090b4700374a06afac3ac6ecfc839, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  attack: {fileID: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attack: {fileID: 1375708915310517876}
 --- !u!1 &848056323
 GameObject:
   m_ObjectHideFlags: 0
@@ -835,6 +835,7 @@ MonoBehaviour:
   perfectMeleeKnockback: 10
   normalEnemyStaggerDuration: 0.35
   perfectEnemyStaggerDuration: 0.6
+  braceEntryWindow: 0.65
   normalStaminaRestoreFraction: 0.08
   normalManaRestoreFraction: 0.03
   perfectStaminaRestoreFraction: 0.15
@@ -993,6 +994,13 @@ MonoBehaviour:
   visionSizeMultiplier: 0.68
   maximumVisionPenaltyDuration: 10
   ordinaryDropChanceMultiplier: 0.7
+  terminalInsanityThreshold: 20
+  terminalAttackSpeedBonus: 0.45
+  terminalDamageBonus: 0.5
+  terminalIncomingDamageBonus: 0.4
+  berserkAttackMaintenanceWindow: 0.75
+  berserkVisionSizeMultiplier: 0.58
+  burnoutDuration: 4
   distractionLifetime: 6
   distractionInfluenceRadius: 6
   distractionPlacementDistance: 2.5
@@ -1088,6 +1096,10 @@ MonoBehaviour:
   cavesGlareDeathsTowardCost: 0
   stoneglassManaMaximumGrowth: 0
   stoneglassStaminaMaximumGrowth: 0
+  terminalBerserkActive: 0
+  burnoutActive: 0
+  berserkMaintenanceRemaining: 0
+  burnoutRemaining: 0
 --- !u!114 &1375708915310517876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1113,10 +1125,10 @@ MonoBehaviour:
   directionalReach: 1.1
   damageableLayers:
     serializedVersion: 2
-    m_Bits: 0
-  chargeIndicator: {fileID: 8095087772069042776, guid: 56994fc730fb34156a4b0e9185e9a497, type: 3}
-  attackVisual: {fileID: 0}
-  attackCollider: {fileID: 0}
+    m_Bits: 512
+  chargeIndicator: {fileID: 343721129}
+  attackVisual: {fileID: 494346240}
+  attackCollider: {fileID: 494346243}
 --- !u!114 &1375708915310517883
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1273,31 +1285,6 @@ MonoBehaviour:
   fallbackShockwaveColor: {r: 0.35, g: 0.85, b: 1, a: 0.9}
   isPreparingAerialHeavy: 0
   committedDiveDirection: {x: 0, y: -1}
---- !u!114 &1375708915310517890
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6905561519894568502}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ff868ecaaf954b21b85dd664687367a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  localOffset: {x: 0.288, y: -1.053, z: 0}
-  localScale: {x: 3.5, y: 2.5, z: 1}
-  sourceFacesRight: 1
-  idleFramesPerSecond: 4
-  runFramesPerSecond: 10
-  spinFramesPerSecond: 12
-  dashFramesPerSecond: 12
-  hitDuration: 0.2
-  castDuration: 0.35
-  interactDuration: 0.35
-  landingDuration: 0.15
-  knockbackSpeedThreshold: 8
-  runSpeedThreshold: 0.1
 --- !u!114 &1375708915310517888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1319,6 +1306,31 @@ MonoBehaviour:
   burnShotTier3Owned: 0
   flightTier3Owned: 0
   strengthTier3Owned: 0
+--- !u!114 &1375708915310517890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6905561519894568502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ff868ecaaf954b21b85dd664687367a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localOffset: {x: 0.288, y: -1.053, z: 0}
+  localScale: {x: 3.5, y: 2.5, z: 1}
+  sourceFacesRight: 1
+  idleFramesPerSecond: 4
+  runFramesPerSecond: 10
+  spinFramesPerSecond: 12
+  dashFramesPerSecond: 12
+  hitDuration: 0.2
+  castDuration: 0.35
+  interactDuration: 0.35
+  landingDuration: 0.15
+  knockbackSpeedThreshold: 8
+  runSpeedThreshold: 0.1
 --- !u!1 &7373049382146663387 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3532506738803664532, guid: 43c47d2cb19464ca7b267b5338625dea, type: 3}

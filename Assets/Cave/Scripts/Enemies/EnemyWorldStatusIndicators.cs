@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cave.Axioms.Phase;
 using Cave.Combat;
 using UnityEngine;
 
@@ -25,7 +26,9 @@ namespace Cave.Enemies
         [SerializeField] private int sortingOrderOffset = 18;
 
         private readonly List<MobStatusIconKind> activeKinds = new List<MobStatusIconKind>();
+        private readonly List<int> activeStackCounts = new List<int>();
         private readonly List<SpriteRenderer> iconRenderers = new List<SpriteRenderer>();
+        private readonly List<TextMesh> stackCountRenderers = new List<TextMesh>();
         private Damageable damageable;
         private SpriteRenderer bodyRenderer;
         private GameObject root;
@@ -36,7 +39,10 @@ namespace Cave.Enemies
         private EnemyCorruptionLifecycle corruption;
         private EyeBrain eye;
         private EyePossessedHost possessedHost;
+        private PhaseCombatState phase;
+        private EnemyTeamBuffState teamBuffState;
         private int appliedStatusMask = int.MinValue;
+        private int appliedImaginaryStacks = -1;
         private int nextBodyRendererRecoveryFrame;
         private int nextOptionalDependencyRefreshFrame;
         private bool rootVisible;
@@ -59,6 +65,8 @@ namespace Cave.Enemies
             corruption = GetComponent<EnemyCorruptionLifecycle>();
             eye = GetComponent<EyeBrain>();
             possessedHost = GetComponent<EyePossessedHost>();
+            phase = GetComponent<PhaseCombatState>();
+            teamBuffState = GetComponent<EnemyTeamBuffState>();
             if (iconRegistry == null)
             {
                 iconRegistry = Resources.Load<MobStatusIconRegistry>(RegistryResourceName);
@@ -71,6 +79,7 @@ namespace Cave.Enemies
         private void OnEnable()
         {
             appliedStatusMask = int.MinValue;
+            appliedImaginaryStacks = -1;
             rootVisible = false;
             if (root != null)
             {
@@ -81,18 +90,20 @@ namespace Cave.Enemies
         private void LateUpdate()
         {
             RefreshOptionalDependenciesIfDue();
-            int statusMask = BuildStatusMask();
-            if (statusMask != appliedStatusMask)
+            int statusMask = BuildStatusMask(out int imaginaryStacks);
+            if (statusMask != appliedStatusMask || imaginaryStacks != appliedImaginaryStacks)
             {
                 appliedStatusMask = statusMask;
-                RebuildIconRow(statusMask);
+                appliedImaginaryStacks = imaginaryStacks;
+                RebuildIconRow(statusMask, imaginaryStacks);
             }
 
             PositionAtFeet();
         }
 
-        private int BuildStatusMask()
+        private int BuildStatusMask(out int imaginaryStacks)
         {
+            imaginaryStacks = 0;
             if (damageable == null || damageable.CurrentHealth <= 0)
             {
                 return 0;
@@ -136,15 +147,40 @@ namespace Cave.Enemies
                 AddStatus(ref mask, MobStatusIconKind.Possessed);
             }
 
+            if (phase != null && phase.LatentStacks > 0)
+            {
+                imaginaryStacks = phase.LatentStacks;
+                AddStatus(ref mask, MobStatusIconKind.Imaginary);
+            }
+
+
+            if (teamBuffState != null)
+            {
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.Stagger);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.Frenzied);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.StrengthBuff);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.ElementallyBuffed);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.Regeneration);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.GazeLock);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.TowerSuppression);
+                AddTeamBuffIcon(ref mask, MobStatusIconKind.PinRoot);
+            }
+
             return mask;
         }
 
-        private void RebuildIconRow(int statusMask)
+        private void AddTeamBuffIcon(ref int mask, MobStatusIconKind kind)
         {
-            RebuildActiveKinds(statusMask);
+            if (teamBuffState.HasIcon(kind)) AddStatus(ref mask, kind);
+        }
+
+        private void RebuildIconRow(int statusMask, int imaginaryStacks)
+        {
+            RebuildActiveKinds(statusMask, imaginaryStacks);
             int visibleCount = 0;
-            foreach (MobStatusIconKind kind in activeKinds)
+            for (int index = 0; index < activeKinds.Count; index++)
             {
+                MobStatusIconKind kind = activeKinds[index];
                 Sprite icon = iconRegistry != null ? iconRegistry.GetIcon(kind) : null;
                 if (icon == null)
                 {
@@ -154,11 +190,17 @@ namespace Cave.Enemies
                 SpriteRenderer renderer = GetOrCreateRenderer(visibleCount++);
                 renderer.sprite = icon;
                 renderer.enabled = true;
+                ConfigureStackCount(visibleCount - 1, activeStackCounts[index]);
             }
 
             for (int index = visibleCount; index < iconRenderers.Count; index++)
             {
                 iconRenderers[index].enabled = false;
+            }
+
+            for (int index = visibleCount; index < stackCountRenderers.Count; index++)
+            {
+                stackCountRenderers[index].gameObject.SetActive(false);
             }
 
             rootVisible = visibleCount > 0;
@@ -174,7 +216,30 @@ namespace Cave.Enemies
                     0f,
                     0f);
                 renderer.transform.localScale = Vector3.one * ResolveSpriteScale(renderer.sprite, size);
+                if (index < stackCountRenderers.Count && stackCountRenderers[index].gameObject.activeSelf)
+                {
+                    stackCountRenderers[index].transform.localPosition = renderer.transform.localPosition
+                        + new Vector3(size * 0.32f, -size * 0.28f, -0.01f);
+                    stackCountRenderers[index].characterSize = size * 0.15f;
+                }
             }
+        }
+
+        private void ConfigureStackCount(int index, int stackCount)
+        {
+            if (stackCount <= 0)
+            {
+                if (index < stackCountRenderers.Count)
+                {
+                    stackCountRenderers[index].gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
+            TextMesh text = GetOrCreateStackCountRenderer(index);
+            text.text = stackCount.ToString();
+            text.gameObject.SetActive(true);
         }
 
         private SpriteRenderer GetOrCreateRenderer(int index)
@@ -194,6 +259,31 @@ namespace Cave.Enemies
             }
 
             return iconRenderers[index];
+        }
+
+        private TextMesh GetOrCreateStackCountRenderer(int index)
+        {
+            while (stackCountRenderers.Count <= index)
+            {
+                GameObject count = new GameObject("Status Stack Count") { hideFlags = HideFlags.DontSave };
+                count.transform.SetParent(root.transform, false);
+                TextMesh text = count.AddComponent<TextMesh>();
+                text.anchor = TextAnchor.MiddleCenter;
+                text.alignment = TextAlignment.Center;
+                text.fontSize = 24;
+                text.fontStyle = FontStyle.Bold;
+                text.color = new Color(0.94f, 0.98f, 1f, 1f);
+                MeshRenderer renderer = count.GetComponent<MeshRenderer>();
+                if (bodyRenderer != null)
+                {
+                    renderer.sortingLayerID = bodyRenderer.sortingLayerID;
+                    renderer.sortingOrder = bodyRenderer.sortingOrder + sortingOrderOffset + 1;
+                }
+
+                stackCountRenderers.Add(text);
+            }
+
+            return stackCountRenderers[index];
         }
 
         private void CreateRoot()
@@ -249,14 +339,17 @@ namespace Cave.Enemies
             return targetWorldSize / Mathf.Max(0.0001f, spriteDimension * inheritedScale);
         }
 
-        private void RebuildActiveKinds(int statusMask)
+        private void RebuildActiveKinds(int statusMask, int imaginaryStacks)
         {
             activeKinds.Clear();
-            for (int index = 0; index <= (int)MobStatusIconKind.Frenzied; index++)
+            activeStackCounts.Clear();
+            for (int index = 0; index <= (int)MobStatusIconKind.Stoneglass; index++)
             {
                 if ((statusMask & (1 << index)) != 0)
                 {
-                    activeKinds.Add((MobStatusIconKind)index);
+                    MobStatusIconKind kind = (MobStatusIconKind)index;
+                    activeKinds.Add(kind);
+                    activeStackCounts.Add(kind == MobStatusIconKind.Imaginary ? imaginaryStacks : 0);
                 }
             }
         }
@@ -279,6 +372,7 @@ namespace Cave.Enemies
             if (corruption == null) corruption = GetComponent<EnemyCorruptionLifecycle>();
             if (eye == null) eye = GetComponent<EyeBrain>();
             if (possessedHost == null) possessedHost = GetComponent<EyePossessedHost>();
+            if (teamBuffState == null) teamBuffState = GetComponent<EnemyTeamBuffState>();
         }
 
         private bool HasMissingDependencies()
@@ -290,7 +384,8 @@ namespace Cave.Enemies
                 || elementalEmpowerment == null
                 || corruption == null
                 || eye == null
-                || possessedHost == null;
+                || possessedHost == null
+                || teamBuffState == null;
         }
 
         private void RecoverBodyRendererIfNeeded()
@@ -369,6 +464,7 @@ namespace Cave.Enemies
         {
             rootVisible = false;
             appliedStatusMask = int.MinValue;
+            appliedImaginaryStacks = -1;
             if (root != null) root.SetActive(false);
         }
 

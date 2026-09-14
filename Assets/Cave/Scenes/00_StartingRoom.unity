@@ -472,12 +472,14 @@ MonoBehaviour:
   maximumChainExtension: 0.45
   sustainedGuardStaminaDrainPerSecond: 20
   blockedHitStaminaCost: 6
+  heavyGuardHealthDamageMultiplier: 0.35
   counterWindowDuration: 0.7
   lateMeleeDamageReduction: 0.5
   normalMeleeKnockback: 6
   perfectMeleeKnockback: 10
   normalEnemyStaggerDuration: 0.35
   perfectEnemyStaggerDuration: 0.6
+  braceEntryWindow: 0.65
   normalStaminaRestoreFraction: 0.08
   normalManaRestoreFraction: 0.03
   perfectStaminaRestoreFraction: 0.15
@@ -538,6 +540,17 @@ MonoBehaviour:
   damageableLayers:
     serializedVersion: 2
     m_Bits: 0
+  continuationWindow: 0.38
+  breakerStrikeDelay: 0.05
+  reversalStrikeDelay: 0.04
+  reaperStrikeDelay: 0.07
+  driveStrikeDelay: 0.06
+  judgmentStrikeDelay: 0.1
+  breakerRecovery: 0.14
+  reversalRecovery: 0.12
+  reaperRecovery: 0.19
+  driveRecovery: 0.2
+  judgmentRecovery: 0.28
   chargeIndicator: {fileID: 0}
   attackVisual: {fileID: 0}
   attackCollider: {fileID: 0}
@@ -556,11 +569,33 @@ MonoBehaviour:
   curseOfDistractionActive: 0
   detectivesCurseActive: 1
   curseOfAvariceActive: 1
+  curseOfStoneglassActive: 0
+  cavesGlareActive: 0
+  maximumInsanityStacks: 20
+  attackSpeedBonusPerStack: 0.025
+  attackDamageBonusPerStack: 0.02
+  incomingDamageBonusPerStack: 0.025
+  combatExitDelay: 3
+  combatDetectionRadius: 14
+  collapseVisionSecondsPerStack: 0.5
+  visionSizeMultiplier: 0.68
+  maximumVisionPenaltyDuration: 10
+  ordinaryDropChanceMultiplier: 0.7
+  terminalInsanityThreshold: 20
+  terminalAttackSpeedBonus: 0.45
+  terminalDamageBonus: 0.5
+  terminalIncomingDamageBonus: 0.4
+  berserkAttackMaintenanceWindow: 0.75
+  berserkVisionSizeMultiplier: 0.58
+  burnoutDuration: 4
   distractionLifetime: 6
   distractionInfluenceRadius: 6
   distractionPlacementDistance: 2.5
   distractionCooldown: 8
   distractionAttentionPriority: 1
+  distractionVisionDuration: 5
+  distractionResistanceDuration: 20
+  repeatedDistractionInsanityStacks: 2
   guaranteedRealDetectives: 2
   additionalResearchActions: 1
   masteryGainMultiplier: 1.4
@@ -571,32 +606,87 @@ MonoBehaviour:
     EnemyDetectionBonus: 0
     EnemyDangerBonus: 0
     PlayerMovementPenalty: 0
+    SpawnPressureMultiplier: 1
   - MinimumCurrency: 25
     DeathClaim: 0.4
     EnemyDetectionBonus: 0.1
     EnemyDangerBonus: 0.05
     PlayerMovementPenalty: 0.03
+    SpawnPressureMultiplier: 1.1
   - MinimumCurrency: 50
     DeathClaim: 0.5
     EnemyDetectionBonus: 0.2
     EnemyDangerBonus: 0.1
     PlayerMovementPenalty: 0.06
+    SpawnPressureMultiplier: 1.2
   - MinimumCurrency: 100
     DeathClaim: 0.6
     EnemyDetectionBonus: 0.35
     EnemyDangerBonus: 0.15
     PlayerMovementPenalty: 0.1
+    SpawnPressureMultiplier: 1.35
   - MinimumCurrency: 200
     DeathClaim: 0.7
     EnemyDetectionBonus: 0.5
     EnemyDangerBonus: 0.2
     PlayerMovementPenalty: 0.12
+    SpawnPressureMultiplier: 1.5
+  preparedResourceThreshold: 0.9
+  singlePreparedDamageBonus: 0.12
+  doublePreparedDamageBonus: 0.3
+  fullHealthMovementBonus: 0.12
+  fullManaMaximumGrowthPerSecond: 0.05
+  fullStaminaMaximumGrowthPerSecond: 0.05
+  fullResourceGrowthCapPercent: 0.25
+  manaDrainPerHit: 6
+  staminaDrainPerHit: 8
+  fullShatterManaDrain: 18
+  fullShatterStaminaDrain: 24
+  fullShatterIncomingDamageMultiplier: 1.35
+  resistancePenaltyPerHit: 0.02
+  resistanceFractureDuration: 30
+  guardStaminaDrainMultiplier: 1.15
+  strengthAdaptationFraction: 0.35
+  minimumStrengthAdaptationStep: 0.05
+  postMatchStrengthGain: 0.1
+  deathsPerPermanentCost: 3
+  generalShardsConsumedPerCost: 1
+  powerPurchasesConsumedPerCost: 1
+  healthRegenLevelsConsumedPerCost: 0
+  manaRegenLevelsConsumedPerCost: 0
+  maximumHealthMasteryConsumedPerCost: 1
+  maximumStaminaMasteryConsumedPerCost: 1
+  maximumManaMasteryConsumedPerCost: 1
+  ordinaryRevivalCorruptionChance: 0.35
+  lowHealthCorruptionChance: 0.2
+  lowHealthCorruptionThreshold: 0.25
+  allowRevivalAfterLowHealthCorruption: 0
+  corruptedRevivalDelay: 1.25
+  maximumCorruptedRevivals: 0
+  elementalCorruptionChance: 0.35
+  corruptionTransformationVfxPrefab: {fileID: 0}
+  elementalReactionVfxPrefab: {fileID: 0}
+  elementalReactionRadius: 2
+  elementalReactionDamage: 2
+  elementalReactionForce: 6
   distractionCooldownRemaining: 0
   currentAvariceTier: 0
   currentAvariceDeathClaim: 0
   currentEnemyDetectionMultiplier: 1
   currentEnemyDangerMultiplier: 1
   currentMovementMultiplier: 1
+  currentAvariceSpawnPressureMultiplier: 1
+  currentInsanityStacks: 0
+  visionPenaltyRemaining: 0
+  currentStoneglassFractureStacks: 0
+  cavesGlareDeathCount: 0
+  cavesGlareDeathsTowardCost: 0
+  stoneglassManaMaximumGrowth: 0
+  stoneglassStaminaMaximumGrowth: 0
+  terminalBerserkActive: 0
+  burnoutActive: 0
+  berserkMaintenanceRemaining: 0
+  burnoutRemaining: 0
 --- !u!114 &389651642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -622,6 +712,10 @@ MonoBehaviour:
   impactVfxScale: 0.42
   statusVfxLocalOffset: {x: 0, y: 0.75, z: 0.1}
   statusVfxScale: 1
+  visualScaleBaseMultiplier: 1
+  minimumVisualScaleMultiplier: 0.55
+  maximumVisualScaleMultiplier: 1.75
+  visualScaleOverride: 0
   sortingOrderOffset: 3
   minorStaggerVfxPrefab: {fileID: 0}
   normalStaggerVfxPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
@@ -662,6 +756,7 @@ MonoBehaviour:
   bashKnockback: 8
   bashStaggerDuration: 0.65
   bashCooldown: 0.35
+  spinBashRecovery: 0.75
   offensiveColor: {r: 1, g: 0.25, b: 0.08, a: 1}
   counterColor: {r: 0.3, g: 0.95, b: 1, a: 1}
   guardBreakVfxPrefab: {fileID: 2708598583397607911, guid: 6398d43fe79ea0140913dc5530c646af, type: 3}
@@ -670,8 +765,10 @@ MonoBehaviour:
   isGuardBreaking: 0
   isBashing: 0
   counterWindowAvailable: 0
+  successfulOffensiveGuardBreakCanBranch: 0
   vulnerableUntil: 0
   externallyInterruptedUntil: 0
+  spinBashRecoveryRemaining: 0
 --- !u!114 &389651644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -760,6 +857,7 @@ MonoBehaviour:
   groundCheckDistance: 0.08
   groundCheckWidth: 0.8
   jumpBufferTime: 0.1
+  useFrictionlessCharacterContacts: 1
 --- !u!50 &389651649
 Rigidbody2D:
   serializedVersion: 4
@@ -846,7 +944,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 439138675
-  m_SortingLayer: 2
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 774fe8dccef69a44d9179e4529aea50c, type: 3}
   m_Color: {r: 0.6627451, g: 0.6666667, b: 0.49803922, a: 1}
@@ -930,7 +1028,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 329167777
-  m_SortingLayer: 3
+  m_SortingLayer: 0
   m_SortingOrder: 10
   m_Sprite: {fileID: 21300000, guid: 335e30b416040a24b88a1c16eda337f7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -986,7 +1084,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &513458199
 GameObject:
@@ -2153,7 +2251,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 409274, guid: 7e29bfda6ae9b41179eef7f4860e49ac, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 409274, guid: 7e29bfda6ae9b41179eef7f4860e49ac, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2379,7 +2477,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1599298293
 GameObject:
@@ -2455,7 +2553,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1599757307
 GameObject:
@@ -2886,8 +2984,65 @@ Transform:
   - {fileID: 1605135101}
   - {fileID: 1801938459}
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1846745961
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.094
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.031
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038259798003843941, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6905561519894568502, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
+      propertyPath: m_Name
+      value: Player (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d04c39a3f74504d2cb030a1c8b5c1f87, type: 3}
 --- !u!1 &1850543178
 GameObject:
   m_ObjectHideFlags: 0

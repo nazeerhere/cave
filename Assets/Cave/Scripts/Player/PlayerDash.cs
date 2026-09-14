@@ -94,6 +94,12 @@ namespace Cave.Player
 
         private void Update()
         {
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                return;
+            }
+
             float horizontalInput = GameInput.Horizontal;
             if (!Mathf.Approximately(horizontalInput, 0f))
             {
@@ -142,6 +148,13 @@ namespace Cave.Player
                 return;
             }
 
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                EndDash();
+                return;
+            }
+
             if (actionGate != null && !actionGate.CanUseCombatActions)
             {
                 EndDash();
@@ -159,6 +172,12 @@ namespace Cave.Player
 
         public bool TryStartDash(float horizontalInput)
         {
+            PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (brace != null && brace.IsActionLocked)
+            {
+                return false;
+            }
+
             if (flightBash == null)
             {
                 flightBash = GetComponent<PlayerFlightBash>();

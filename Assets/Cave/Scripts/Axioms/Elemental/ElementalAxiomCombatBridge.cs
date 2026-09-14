@@ -125,17 +125,27 @@ namespace Cave.Axioms.Elemental
             }
 
             runtime.ApplyDelta(kind, amount, source, target.gameObject, timestamp);
+            // S remains the discrete Axiom stack state. Temporal control samples
+            // only this confirmed application as an excitation of A(t).
+            control.RecordSuccessfulApplication(kind, amount, timestamp);
             AxiomTrajectoryState trajectory;
             if (!runtime.TryGetTrajectory(kind, out trajectory))
             {
                 return;
             }
 
+            float counterFactor = 1f;
+            if (source != null)
+            {
+                AxiomMasteryState sourceMastery = AxiomMasteryState.EnsureOn(source);
+                counterFactor = sourceMastery != null ? sourceMastery.GetCounterFactor(kind) : 1f;
+            }
             dynamics.ApplySuccessfulInput(
                 kind,
                 trajectory.CurrentValue,
                 amount,
-                timestamp);
+                timestamp,
+                counterFactor);
             control.EvaluateAndRefresh(runtime, kind, timestamp, source, target.gameObject);
             MasteryDomain domain;
             if (source != null && AxiomMasteryState.TryDomain(kind, out domain))

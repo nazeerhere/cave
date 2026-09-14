@@ -16,6 +16,12 @@ namespace Cave.Editor
             EditorApplication.delayCall += ApplyFourByFourSlices;
         }
 
+        [MenuItem("Tools/Cave/Towers/Import Detective Crystal Sheet")]
+        private static void ImportFromMenu()
+        {
+            ApplyFourByFourSlices();
+        }
+
         private void OnPreprocessTexture()
         {
             if (assetPath != SheetPath) return;
@@ -56,8 +62,12 @@ namespace Cave.Editor
 
             SpriteMetaData[] desired = BuildSlices(texture.width, texture.height);
             if (Matches(importer.spritesheet, desired)) return;
+            importer.spriteImportMode = SpriteImportMode.Multiple;
             importer.spritesheet = desired;
-            importer.SaveAndReimport();
+            EditorUtility.SetDirty(importer);
+            AssetDatabase.WriteImportSettingsIfDirty(SheetPath);
+            AssetDatabase.ImportAsset(SheetPath, ImportAssetOptions.ForceUpdate);
+            Debug.Log("[Cave] Imported 16 Detective Tower crystal sprites from " + SheetPath + ".");
         }
 
         private static SpriteMetaData[] BuildSlices(int width, int height)

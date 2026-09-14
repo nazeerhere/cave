@@ -52,6 +52,53 @@ namespace Cave.Combat
             IgnoreCurrentCharacterBodies();
         }
 
+        /// <summary>
+        /// Begins a short, local body phase for a committed movement. Only character
+        /// bodies intersecting the body's swept path are ignored; this avoids a
+        /// scene-wide collider scan for defensive movement such as Slip.
+        /// </summary>
+        public void BeginAlongPath(
+            Collider2D committedBody,
+            Vector2 requestedExitDirection,
+            float pathDistance)
+        {
+            RestoreIgnoredPairs(false);
+            ownBody = committedBody;
+            body = ownBody != null ? ownBody.attachedRigidbody : GetComponent<Rigidbody2D>();
+            preferredExitDirection = requestedExitDirection.sqrMagnitude > 0.001f
+                ? requestedExitDirection.normalized
+                : Vector2.right;
+            if (ownBody == null || ownBody.isTrigger)
+            {
+                return;
+            }
+
+            isPhasingCharacterBodies = true;
+            ContactFilter2D filter = new ContactFilter2D
+            {
+                useTriggers = false,
+                useLayerMask = false
+            };
+            int count = ownBody.Cast(
+                preferredExitDirection,
+                filter,
+                castBuffer,
+                Mathf.Max(0f, pathDistance));
+            for (int index = 0; index < count; index++)
+            {
+                IgnoreCharacterBody(castBuffer[index].collider);
+            }
+
+            // A counter may begin while already in contact with its attacker.
+            // The fixed overlap buffer covers that edge case without scanning
+            // unrelated colliders elsewhere in the scene.
+            int overlapCount = ownBody.OverlapCollider(filter, overlapBuffer);
+            for (int index = 0; index < overlapCount; index++)
+            {
+                IgnoreCharacterBody(overlapBuffer[index]);
+            }
+        }
+
         public void BeginTargetOnly(
             Collider2D committedBody,
             Transform targetRoot,

@@ -50,6 +50,7 @@ namespace Cave.Enemies
         private float movementMultiplier = 1f;
         private float difficultySpeedMultiplier = 1f;
         private float corruptionSpeedMultiplier = 1f;
+        private float teamAuraSpeedMultiplier = 1f;
         private float movementSuspendedUntil;
         private int runtimeDamage;
         private bool damagedDuringDive;
@@ -141,7 +142,7 @@ namespace Cave.Enemies
                     break;
                 case FlyingSwarmState.Diving:
                     body.velocity = diveDirection * diveSpeed * difficultySpeedMultiplier
-                        * corruptionSpeedMultiplier;
+                        * corruptionSpeedMultiplier * teamAuraSpeedMultiplier;
                     if (Time.time >= stateEndsAt)
                     {
                         BeginRecovery();
@@ -178,6 +179,7 @@ namespace Cave.Enemies
             offset.y = Mathf.Clamp(offset.y, -verticalFollowRange, verticalFollowRange);
             Vector2 desiredVelocity = offset.sqrMagnitude > 0.01f
                 ? offset.normalized * moveSpeed * difficultySpeedMultiplier * movementMultiplier
+                    * teamAuraSpeedMultiplier
                     * corruptionSpeedMultiplier * speedScale
                 : Vector2.zero;
             desiredVelocity += CalculateSeparation();
@@ -306,6 +308,11 @@ namespace Cave.Enemies
             corruptionSpeedMultiplier = Mathf.Max(0.05f, multiplier);
         }
 
+        public void SetTeamAuraSpeedMultiplier(float multiplier)
+        {
+            teamAuraSpeedMultiplier = Mathf.Max(0.05f, multiplier);
+        }
+
         public void SetRuntimeDamage(int damage)
         {
             runtimeDamage = Mathf.Max(1, damage);
@@ -332,6 +339,7 @@ namespace Cave.Enemies
             currentState = FlyingSwarmState.Hovering;
             movementMultiplier = 1f;
             corruptionSpeedMultiplier = 1f;
+            teamAuraSpeedMultiplier = 1f;
             movementSuspendedUntil = 0f;
             nextAttackTime = Time.time + attackCooldown;
             body.velocity = Vector2.zero;

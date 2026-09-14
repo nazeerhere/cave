@@ -10,23 +10,37 @@ namespace Cave.Editor
     {
         private const string SheetPath =
             "Assets/Cave/Resources/Player/MinerFullActionSheet.png";
+        private const string HeavyRoot =
+            "Assets/Cave/Resources/Player/MinerHeavy/";
 
         private void OnPreprocessTexture()
         {
-            if (assetPath != SheetPath)
+            if (assetPath != SheetPath && !assetPath.StartsWith(HeavyRoot))
             {
                 return;
             }
 
             TextureImporter importer = (TextureImporter)assetImporter;
             importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = SpriteImportMode.Multiple;
+            importer.spriteImportMode = assetPath == SheetPath
+                ? SpriteImportMode.Multiple
+                : SpriteImportMode.Single;
             importer.filterMode = FilterMode.Point;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.mipmapEnabled = false;
             importer.alphaIsTransparency = true;
             importer.spritePixelsPerUnit = 160f;
-            importer.spritesheet = BuildSlices();
+            if (assetPath == SheetPath)
+            {
+                importer.spritesheet = BuildSlices();
+            }
+            else
+            {
+                // The approved frames are individually cropped. A shared
+                // bottom-centre pivot keeps the swordless Miner feet stable
+                // across all five Heavy sequences.
+                importer.spritePivot = new Vector2(.5f, 0f);
+            }
         }
 
         private static SpriteMetaData[] BuildSlices()

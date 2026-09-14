@@ -274,7 +274,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 0}
   directDamage: 1
   poisonTickDamage: 1
-  poisonInterval: 1.5
+  poisonInterval: 1
   poisonDuration: 6
   projectileSpeed: 6
   projectileLifetime: 7

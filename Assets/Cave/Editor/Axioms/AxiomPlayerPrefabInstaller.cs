@@ -36,6 +36,9 @@ namespace Cave.Editor
                     changed = true;
                 }
 
+                // AxiomRuntimeState installs its actor-local VFX presenter in Awake.
+                // This installer intentionally keeps no hard prefab/catalog reference.
+
                 if (changed)
                 {
                     PrefabUtility.SaveAsPrefabAsset(playerRoot, PlayerPrefabPath);

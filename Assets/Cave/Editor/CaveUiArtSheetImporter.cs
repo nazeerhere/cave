@@ -9,6 +9,7 @@ namespace Cave.Editor
     {
         private const string ChromeSheet = "Assets/Cave/Resources/UI/Shared/CaveUiChromeSheet.png";
         private const string IconSheet = "Assets/Cave/Resources/UI/Icons/CaveUiIconSheet.png";
+        private const string CurseIconSheet = "Assets/Cave/Resources/UI/Icons/11_Curse_Icons.png";
         private static bool importQueued;
 
         [InitializeOnLoadMethod]
@@ -17,9 +18,15 @@ namespace Cave.Editor
             EditorApplication.delayCall += ApplySlices;
         }
 
+        [MenuItem("Cave/UI/Rebuild Approved UI Sprite Sheets")]
+        private static void RebuildFromMenu()
+        {
+            ApplySlices();
+        }
+
         private void OnPreprocessTexture()
         {
-            if (assetPath != ChromeSheet && assetPath != IconSheet)
+            if (assetPath != ChromeSheet && assetPath != IconSheet && assetPath != CurseIconSheet)
             {
                 return;
             }
@@ -47,7 +54,9 @@ namespace Cave.Editor
 
             for (int index = 0; index < importedAssets.Length; index++)
             {
-                if (importedAssets[index] == ChromeSheet || importedAssets[index] == IconSheet)
+                if (importedAssets[index] == ChromeSheet
+                    || importedAssets[index] == IconSheet
+                    || importedAssets[index] == CurseIconSheet)
                 {
                     importQueued = true;
                     EditorApplication.delayCall += ApplySlices;
@@ -61,6 +70,7 @@ namespace Cave.Editor
             importQueued = false;
             Apply(ChromeSheet, ChromeSlices());
             Apply(IconSheet, IconSlices());
+            Apply(CurseIconSheet, CurseIconSlices());
         }
 
         private static void Apply(string path, SpriteMetaData[] desired)
@@ -118,8 +128,34 @@ namespace Cave.Editor
             };
         }
 
+        private static SpriteMetaData[] CurseIconSlices()
+        {
+            // The five emblems are the only genuinely missing family in v2.
+            // Preserve the supplied source sheet and slice it once for the altar.
+            return new[]
+            {
+                Slice("Ui_CurseInsanity", 24, 28, 450, 470, 0, 1086),
+                Slice("Ui_CurseDetective", 490, 24, 470, 470, 0, 1086),
+                Slice("Ui_CurseAvarice", 976, 28, 450, 470, 0, 1086),
+                Slice("Ui_CurseStoneglass", 222, 520, 500, 520, 0, 1086),
+                Slice("Ui_CurseGlare", 734, 520, 500, 520, 0, 1086)
+            };
+        }
+
         // Input coordinates use the supplied images' top-left origin.
         private static SpriteMetaData Slice(string name, int x, int top, int width, int height, int border)
+        {
+            return Slice(name, x, top, width, height, border, 1254);
+        }
+
+        private static SpriteMetaData Slice(
+            string name,
+            int x,
+            int top,
+            int width,
+            int height,
+            int border,
+            int sheetHeight)
         {
             return new SpriteMetaData
             {
@@ -127,7 +163,7 @@ namespace Cave.Editor
                 alignment = (int)SpriteAlignment.Custom,
                 pivot = new Vector2(0.5f, 0.5f),
                 border = new Vector4(border, border, border, border),
-                rect = new Rect(x, 1254 - top - height, width, height)
+                rect = new Rect(x, sheetHeight - top - height, width, height)
             };
         }
 

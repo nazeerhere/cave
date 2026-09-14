@@ -14,13 +14,14 @@ namespace Cave.Axioms.Control
         public float RefreshMagnitudeDelta;
         public float MinimumControlQuality;
         public float InterventionScale;
+        public AxiomTemporalControlProfile Temporal;
 
         public static AxiomControlReferenceProfile DefaultFor(AxiomKind kind)
         {
             AxiomTrajectoryReference reference = new AxiomTrajectoryReference
             {
                 EvaluateState = true,
-                State = 3f,
+                State = .7f,
                 StateTolerance = 1f,
                 EvaluateRate = true,
                 Rate = 0f,
@@ -37,7 +38,8 @@ namespace Cave.Axioms.Control
                 MinimumErrorMagnitude = .05f,
                 RefreshMagnitudeDelta = .25f,
                 MinimumControlQuality = .45f,
-                InterventionScale = .12f
+                InterventionScale = .12f,
+                Temporal = AxiomTemporalControlProfile.DefaultFor(kind)
             };
         }
     }
@@ -78,9 +80,32 @@ namespace Cave.Axioms.Control
         private AxiomControlOpportunity? order;
         private AxiomControlOpportunity? flow;
         private AxiomControlOpportunity? mass;
+        private AxiomTemporalControlChannel heatTemporal;
+        private AxiomTemporalControlChannel orderTemporal;
+        private AxiomTemporalControlChannel flowTemporal;
+        private AxiomTemporalControlChannel massTemporal;
+        private AxiomTemporalLockStage heatStage;
+        private AxiomTemporalLockStage orderStage;
+        private AxiomTemporalLockStage flowStage;
+        private AxiomTemporalLockStage massStage;
 
         public float LastInterventionQuality { get; private set; }
         public event Action<AxiomKind, AxiomErrorState, float, float> InterventionSucceeded;
+        /// <summary>Raised only for a new or materially changed real error opportunity.</summary>
+        public event Action<AxiomKind, AxiomErrorState, bool> OpportunityOpened;
+        /// <summary>Coarse transition only; presentation never determines control state.</summary>
+        public event Action<AxiomKind, AxiomTemporalLockStage, AxiomTemporalLockStage> TemporalStageChanged;
+        public event Action<AxiomKind> TemporalActivityStarted;
+
+        private void Awake()
+        {
+            BuildTemporalChannels();
+        }
+
+        private void Update()
+        {
+            AdvanceTemporalAll(Time.time);
+        }
         public bool TryGetActiveOpportunity(AxiomKind kind, float timestamp, out AxiomControlOpportunity opportunity)
         {
             AxiomControlOpportunity? current = GetOpportunity(kind);
@@ -109,7 +134,14 @@ namespace Cave.Axioms.Control
             }
 
             AxiomControlState state = actor.GetComponent<AxiomControlState>();
-            return state != null ? state : actor.AddComponent<AxiomControlState>();
+            if (state != null)
+            {
+                return state;
+            }
+
+            state = actor.AddComponent<AxiomControlState>();
+            actor.GetComponent<Cave.Axioms.Vfx.AxiomVfxPresenter>()?.RefreshBindings();
+            return state;
         }
 
         public void EvaluateAndRefresh(
@@ -124,14 +156,9 @@ namespace Cave.Axioms.Control
                 return;
             }
 
-            AxiomTrajectoryState trajectory;
-            if (!runtime.TryGetTrajectory(kind, out trajectory))
-            {
-                return;
-            }
-
             AxiomControlReferenceProfile profile = ResolveProfile(kind);
-            AxiomErrorState error = AxiomErrorEvaluator.Evaluate(trajectory, profile.Reference, timestamp);
+            AxiomTemporalControlSnapshot snapshot = AdvanceTemporal(kind, timestamp, profile);
+            AxiomErrorState error = EvaluateTemporalError(kind, snapshot, profile, timestamp);
             if (!error.HasError || error.Magnitude < profile.MinimumErrorMagnitude)
             {
                 return;
@@ -148,6 +175,7 @@ namespace Cave.Axioms.Control
 
             bool refreshed = hasCurrent;
             SetOpportunity(kind, new AxiomControlOpportunity(kind, error, profile, timestamp));
+            OpportunityOpened?.Invoke(kind, error, refreshed);
             runtime.RaiseFeedback(new AxiomFeedbackEvent(
                 kind,
                 refreshed ? AxiomFeedbackType.ControlOpportunityRefreshed : AxiomFeedbackType.ControlOpportunityOpened,
@@ -155,6 +183,60 @@ namespace Cave.Axioms.Control
                 source,
                 target,
                 timestamp));
+        }
+
+        /// <summary>Called only after a qualifying successful elemental application.</summary>
+        public void RecordSuccessfulApplication(AxiomKind kind, float amount, float timestamp)
+        {
+            if (!IsSupported(kind) || amount <= 0f)
+            {
+                return;
+            }
+
+            AxiomControlReferenceProfile profile = ResolveProfile(kind);
+            AxiomTemporalControlChannel channel = GetTemporalChannel(kind);
+            if (channel == null)
+            {
+                return;
+            }
+
+            bool wasInactive = channel.Snapshot().Activity <= .001f;
+            channel.RecordSuccessfulApplication(amount, timestamp, profile.Reference);
+            if (wasInactive)
+            {
+                TemporalActivityStarted?.Invoke(kind);
+            }
+            RaiseStageIfChanged(kind, channel.Snapshot());
+        }
+
+        public bool TryGetTemporalSnapshot(AxiomKind kind, float timestamp, out AxiomTemporalControlSnapshot snapshot)
+        {
+            if (!IsSupported(kind))
+            {
+                snapshot = default(AxiomTemporalControlSnapshot);
+                return false;
+            }
+
+            snapshot = AdvanceTemporal(kind, timestamp, ResolveProfile(kind));
+            return true;
+        }
+
+        /// <summary>
+        /// Event-time quality query used by Convergence. It advances only the four
+        /// actor-local temporal channels and never introduces a polling loop.
+        /// </summary>
+        public bool HasStrongCurrentControl(float timestamp)
+        {
+            return HasStrongCurrentControl(AxiomKind.Flow, timestamp)
+                || HasStrongCurrentControl(AxiomKind.Mass, timestamp)
+                || LastInterventionQuality >= .8f;
+        }
+
+        private bool HasStrongCurrentControl(AxiomKind kind, float timestamp)
+        {
+            AxiomTemporalControlSnapshot snapshot;
+            return TryGetTemporalSnapshot(kind, timestamp, out snapshot)
+                && (snapshot.RateHeld || snapshot.AccelerationHeld);
         }
 
         public bool TryIntervene(
@@ -188,16 +270,28 @@ namespace Cave.Axioms.Control
             }
 
             float normalizedError = Mathf.Clamp01(opportunity.Error.Magnitude / (1f + opportunity.Error.Magnitude));
-            float correction = opportunity.Profile.InterventionScale
+            float baseCorrection = opportunity.Profile.InterventionScale
                 * (.5f + normalizedError)
                 * LastInterventionQuality;
+            float desirableCorrection = baseCorrection;
+            float counterReduction = baseCorrection * .75f;
+            if (opportunity.Error.ErrorKind == AxiomErrorKind.Rate)
+            {
+                desirableCorrection *= .75f;
+                counterReduction *= 1.1f;
+            }
+            else if (opportunity.Error.ErrorKind == AxiomErrorKind.Acceleration)
+            {
+                desirableCorrection *= .35f;
+                counterReduction *= 1.45f;
+            }
             AxiomDynamicResponse response;
-            dynamics.ApplyControlCorrection(kind, correction, correction * .75f, timestamp, out response);
+            dynamics.ApplyControlCorrection(kind, desirableCorrection, counterReduction, timestamp, out response);
             ClearOpportunity(kind);
             runtime.RaiseFeedback(new AxiomFeedbackEvent(
                 kind,
                 AxiomFeedbackType.ControlInterventionSucceeded,
-                correction,
+                desirableCorrection,
                 source,
                 target,
                 timestamp));
@@ -245,6 +339,98 @@ namespace Cave.Axioms.Control
             }
 
             return AxiomControlReferenceProfile.DefaultFor(kind);
+        }
+
+        private void BuildTemporalChannels()
+        {
+            heatTemporal = new AxiomTemporalControlChannel(AxiomKind.Heat, ResolveProfile(AxiomKind.Heat).Temporal);
+            orderTemporal = new AxiomTemporalControlChannel(AxiomKind.Order, ResolveProfile(AxiomKind.Order).Temporal);
+            flowTemporal = new AxiomTemporalControlChannel(AxiomKind.Flow, ResolveProfile(AxiomKind.Flow).Temporal);
+            massTemporal = new AxiomTemporalControlChannel(AxiomKind.Mass, ResolveProfile(AxiomKind.Mass).Temporal);
+        }
+
+        private void AdvanceTemporalAll(float timestamp)
+        {
+            AdvanceTemporal(AxiomKind.Heat, timestamp, ResolveProfile(AxiomKind.Heat));
+            AdvanceTemporal(AxiomKind.Order, timestamp, ResolveProfile(AxiomKind.Order));
+            AdvanceTemporal(AxiomKind.Flow, timestamp, ResolveProfile(AxiomKind.Flow));
+            AdvanceTemporal(AxiomKind.Mass, timestamp, ResolveProfile(AxiomKind.Mass));
+        }
+
+        private AxiomTemporalControlSnapshot AdvanceTemporal(AxiomKind kind, float timestamp, AxiomControlReferenceProfile profile)
+        {
+            AxiomTemporalControlChannel channel = GetTemporalChannel(kind);
+            if (channel == null)
+            {
+                return default(AxiomTemporalControlSnapshot);
+            }
+
+            AxiomTemporalControlSnapshot snapshot = channel.AdvanceTo(timestamp, profile.Reference);
+            RaiseStageIfChanged(kind, snapshot);
+            return snapshot;
+        }
+
+        private AxiomTemporalControlChannel GetTemporalChannel(AxiomKind kind)
+        {
+            if (heatTemporal == null) BuildTemporalChannels();
+            switch (kind)
+            {
+                case AxiomKind.Heat: return heatTemporal;
+                case AxiomKind.Order: return orderTemporal;
+                case AxiomKind.Flow: return flowTemporal;
+                case AxiomKind.Mass: return massTemporal;
+                default: return null;
+            }
+        }
+
+        private void RaiseStageIfChanged(AxiomKind kind, AxiomTemporalControlSnapshot snapshot)
+        {
+            AxiomTemporalLockStage previous = GetStage(kind);
+            AxiomTemporalLockStage current = snapshot.PresentationStage;
+            if (previous == current) return;
+            SetStage(kind, current);
+            TemporalStageChanged?.Invoke(kind, current, previous);
+        }
+
+        private AxiomTemporalLockStage GetStage(AxiomKind kind)
+        {
+            switch (kind)
+            {
+                case AxiomKind.Heat: return heatStage;
+                case AxiomKind.Order: return orderStage;
+                case AxiomKind.Flow: return flowStage;
+                case AxiomKind.Mass: return massStage;
+                default: return AxiomTemporalLockStage.Uncontrolled;
+            }
+        }
+
+        private void SetStage(AxiomKind kind, AxiomTemporalLockStage stage)
+        {
+            switch (kind)
+            {
+                case AxiomKind.Heat: heatStage = stage; break;
+                case AxiomKind.Order: orderStage = stage; break;
+                case AxiomKind.Flow: flowStage = stage; break;
+                case AxiomKind.Mass: massStage = stage; break;
+            }
+        }
+
+        private static AxiomErrorState EvaluateTemporalError(AxiomKind kind, AxiomTemporalControlSnapshot snapshot, AxiomControlReferenceProfile profile, float timestamp)
+        {
+            AxiomTemporalControlProfile temporal = profile.Temporal.Sanitized(kind);
+            float state = snapshot.Activity - profile.Reference.State;
+            float rate = snapshot.Rate - profile.Reference.Rate;
+            float acceleration = snapshot.Acceleration - profile.Reference.Acceleration;
+            float stateOver = Abs(state) - temporal.StateHoldTolerance;
+            float rateOver = Abs(rate) - temporal.RateHoldTolerance;
+            float accelerationOver = Abs(acceleration) - temporal.AccelerationHoldTolerance;
+            if (accelerationOver > 0f && accelerationOver >= rateOver && accelerationOver >= stateOver)
+                return new AxiomErrorState(kind, AxiomErrorKind.Acceleration, acceleration, timestamp);
+            if (rateOver > 0f && rateOver >= stateOver)
+                return new AxiomErrorState(kind, AxiomErrorKind.Rate, rate, timestamp);
+            if (stateOver > 0f)
+                return new AxiomErrorState(kind, AxiomErrorKind.State, state, timestamp);
+            return new AxiomErrorState(kind, AxiomErrorKind.None, 0f, timestamp);
         }
 
         private AxiomControlOpportunity? GetOpportunity(AxiomKind kind)

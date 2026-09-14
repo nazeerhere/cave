@@ -12,6 +12,7 @@ namespace Cave.UI
         private GameObject panel;
         private Button[] curseButtons;
         private Image[] curseCards;
+        private Image[] curseIcons;
         private Text detailTitle;
         private Text detailBody;
         private Text activeState;
@@ -24,6 +25,7 @@ namespace Cave.UI
             GameObject selectionPanel,
             Button[] configuredCurseButtons,
             Image[] configuredCurseCards,
+            Image[] configuredCurseIcons,
             Text configuredDetailTitle,
             Text configuredDetailBody,
             Text configuredActiveState,
@@ -33,6 +35,7 @@ namespace Cave.UI
             panel = selectionPanel;
             curseButtons = configuredCurseButtons;
             curseCards = configuredCurseCards;
+            curseIcons = configuredCurseIcons;
             detailTitle = configuredDetailTitle;
             detailBody = configuredDetailBody;
             activeState = configuredActiveState;
@@ -62,6 +65,7 @@ namespace Cave.UI
                 || panel == null
                 || curseButtons == null
                 || curseCards == null
+                || curseIcons == null
                 || detailTitle == null
                 || detailBody == null
                 || activeState == null
@@ -177,7 +181,14 @@ namespace Cave.UI
                 if (cardLabel != null)
                 {
                     cardLabel.text = GetCardLabel(types[index])
-                        + "\n\n" + (active ? "◆ ACTIVE" : "◇ AVAILABLE");
+                        + "\n" + (active ? "◆ ACTIVE" : "◇ AVAILABLE");
+                }
+
+                if (index < curseIcons.Length && curseIcons[index] != null)
+                {
+                    curseIcons[index].color = selected
+                        ? Color.white
+                        : active ? new Color(0.9f, 0.82f, 1f, 1f) : new Color(0.7f, 0.64f, 0.78f, 0.92f);
                 }
             }
 
@@ -209,11 +220,11 @@ namespace Cave.UI
         {
             switch (type)
             {
-                case PlayerCurseType.Insanity: return "◉\nCURSE OF INSANITY";
-                case PlayerCurseType.Detective: return "⌕\nDETECTIVE'S CURSE";
-                case PlayerCurseType.Avarice: return "◆\nCURSE OF AVARICE";
-                case PlayerCurseType.Stoneglass: return "◈\nCURSE OF STONEGLASS";
-                default: return "◉\nTHE CAVE'S GLARE";
+                case PlayerCurseType.Insanity: return "CURSE OF INSANITY";
+                case PlayerCurseType.Detective: return "DETECTIVE'S CURSE";
+                case PlayerCurseType.Avarice: return "CURSE OF AVARICE";
+                case PlayerCurseType.Stoneglass: return "CURSE OF STONEGLASS";
+                default: return "THE CAVE'S GLARE";
             }
         }
 

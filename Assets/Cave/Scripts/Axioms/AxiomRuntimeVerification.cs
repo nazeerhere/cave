@@ -6,7 +6,15 @@ namespace Cave.Axioms
         public static bool TryRunAll(out string failure)
         {
             return VerifyTrajectoryClassification(out failure)
-                && VerifyErrorState(out failure);
+                && VerifyErrorState(out failure)
+                && VerifyCrossSystem(out failure);
+        }
+
+        private static bool VerifyCrossSystem(out string failure)
+        {
+            AxiomCrossSystemVerification.Result result = AxiomCrossSystemVerification.VerifyAll();
+            failure = result.Passed ? null : "Axiom cross-system deterministic verification failed.";
+            return result.Passed;
         }
 
         private static bool VerifyTrajectoryClassification(out string failure)

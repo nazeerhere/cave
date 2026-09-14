@@ -89,6 +89,7 @@ namespace Cave.UI
                 EnsureCurseHud(existingHud.transform.parent, font, playerHealth.gameObject);
                 EnsureCurseAltarHud(existingHud.transform.parent, font);
                 EnsureFrenzyBreakHud(existingHud.transform.parent, font, playerHealth.gameObject);
+                EnsureExistingMenuPresentation(uiRoot != null ? uiRoot.Find("Menus") : null, font);
                 ApplyFreeUiPackageSkin(existingHud.transform.parent);
                 CaveUiArt.ApplyOnce(existingHud.transform.parent, uiRoot != null ? uiRoot.Find("Menus") : null);
                 EnsureEventSystem();
@@ -197,14 +198,14 @@ namespace Cave.UI
 
             RectTransform menus = CreateStretchRect("Menus", root.transform);
             EnsureMenuCanvas(menus, canvas.sortingOrder + 1);
-            GameObject pauseMenu = CreateMenuPanel("Pause Menu", menus, new Vector2(420f, 380f));
+            GameObject pauseMenu = CreateMenuPanel("Pause Menu", menus, new Vector2(460f, 500f));
             Text pauseCrest = CreateCenteredText(
                 "Pause Crest",
                 pauseMenu.transform,
                 font,
                 "◆",
                 26,
-                new Vector2(0f, 164f),
+                new Vector2(0f, 240f),
                 new Vector2(80f, 30f));
             pauseCrest.color = CaveUiTheme.BorderBright;
             Text pauseTitle = CreateCenteredText(
@@ -213,7 +214,7 @@ namespace Cave.UI
                 font,
                 "PAUSED",
                 34,
-                new Vector2(0f, 124f));
+                new Vector2(0f, 204f));
             pauseTitle.fontStyle = FontStyle.Bold;
             pauseTitle.color = CaveUiTheme.Gold;
             Text pauseSubtitle = CreateCenteredText(
@@ -222,37 +223,37 @@ namespace Cave.UI
                 font,
                 "THE CAVE WAITS",
                 14,
-                new Vector2(0f, 90f));
+                new Vector2(0f, 170f));
             pauseSubtitle.color = CaveUiTheme.SecondaryText;
             Button resumeButton = CreateButton(
                 "RESUME",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, 36f),
+                new Vector2(0f, 102f),
                 new Vector2(270f, 50f));
             Button resetLevelButton = CreateButton(
                 "RESET LEVEL",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -28f),
+                new Vector2(0f, 40f),
                 new Vector2(270f, 50f));
             Button movesButton = CreateButton(
                 "MOVES LIST",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -92f),
+                new Vector2(0f, -22f),
                 new Vector2(270f, 50f));
             Button settingsButton = CreateButton(
                 "SETTINGS",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -156f),
+                new Vector2(0f, -146f),
                 new Vector2(270f, 50f));
             Button ledgerButton = CreateButton(
                 "ENEMY LEDGER",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -220f),
+                new Vector2(0f, -84f),
                 new Vector2(270f, 50f));
             Text pauseHint = CreateCenteredText(
                 "Pause Hint",
@@ -260,7 +261,7 @@ namespace Cave.UI
                 font,
                 "ESC  •  RESUME",
                 13,
-                new Vector2(0f, -284f));
+                new Vector2(0f, -226f));
             pauseHint.color = CaveUiTheme.SecondaryText;
 
             // The camera row extends the existing Settings menu without reducing
@@ -510,15 +511,20 @@ namespace Cave.UI
                 font,
                 new Vector2(160f, -306f),
                 new Vector2(220f, 44f));
+            MovesListPresentation movesPresentation = movesPanel.AddComponent<MovesListPresentation>();
+            movesPresentation.Configure(
+                font,
+                new[] { movesLeftText, movesRightText, movesChainLeftText, movesChainRightText });
+            movesPresentation.EnsureAxiomPresentation(font);
 
-            GameObject ledgerPanel = CreateMenuPanel("Enemy Ledger Panel", menus, new Vector2(620f, 660f));
+            GameObject ledgerPanel = CreateMenuPanel("Enemy Ledger Panel", menus, new Vector2(1120f, 690f));
             Text ledgerTitle = CreateCenteredText(
                 "Ledger Title", ledgerPanel.transform, font, "ENEMY LEDGER", 30, new Vector2(0f, 280f));
             ledgerTitle.fontStyle = FontStyle.Bold;
             ledgerTitle.color = CaveUiTheme.Gold;
-            CreateCardSurface("Ledger Surface", ledgerPanel.transform, new Vector2(0f, 8f), new Vector2(550f, 520f));
+            CreateCardSurface("Ledger Surface", ledgerPanel.transform, new Vector2(0f, 8f), new Vector2(1040f, 520f));
             Text ledgerBody = CreateCenteredText(
-                "Ledger Body", ledgerPanel.transform, font, string.Empty, 16, new Vector2(0f, 8f), new Vector2(510f, 490f));
+                "Ledger Body", ledgerPanel.transform, font, string.Empty, 16, new Vector2(0f, 8f), new Vector2(1000f, 490f));
             ledgerBody.alignment = TextAnchor.UpperLeft;
             ledgerBody.horizontalOverflow = HorizontalWrapMode.Wrap;
             ledgerBody.verticalOverflow = VerticalWrapMode.Overflow;
@@ -548,11 +554,105 @@ namespace Cave.UI
                 movesChainLeftText,
                 movesChainRightText,
                 movesPageText,
-                movesPageButton);
+                movesPageButton,
+                movesPresentation);
 
             CaveUiArt.ApplyOnce(gameplayHud, menus);
 
             EnsureEventSystem();
+        }
+
+        private static void EnsureExistingMenuPresentation(Transform menus, Font font)
+        {
+            if (menus == null)
+            {
+                return;
+            }
+
+            Transform moves = menus.Find("Moves List Panel");
+            MovesListPresentation presentation = moves != null ? moves.GetComponent<MovesListPresentation>() : null;
+            if (moves != null)
+            {
+                if (presentation == null)
+                {
+                    presentation = moves.gameObject.AddComponent<MovesListPresentation>();
+                }
+
+                presentation.Configure(
+                    font,
+                    new[]
+                    {
+                        moves.Find("Moves Left Text")?.GetComponent<Text>(),
+                        moves.Find("Moves Right Text")?.GetComponent<Text>(),
+                        moves.Find("Moves Chain Left Text")?.GetComponent<Text>(),
+                        moves.Find("Moves Chain Right Text")?.GetComponent<Text>()
+                    });
+            }
+
+            Transform legacyAxioms = menus.Find("Axioms Panel");
+            if (presentation != null)
+            {
+                if (legacyAxioms != null)
+                {
+                    presentation.AdoptLegacyAxiomPresentation(legacyAxioms, font);
+                }
+                else
+                {
+                    presentation.EnsureAxiomPresentation(font);
+                }
+            }
+
+            if (legacyAxioms != null)
+            {
+                Object.Destroy(legacyAxioms.gameObject);
+            }
+
+            RemoveStandaloneAxiomsButton(menus.Find("Pause Menu") as RectTransform);
+
+            Transform ledger = menus.Find("Enemy Ledger Panel");
+            if (ledger != null)
+            {
+                RectTransform ledgerRect = ledger as RectTransform;
+                if (ledgerRect != null)
+                {
+                    ledgerRect.sizeDelta = new Vector2(1120f, 690f);
+                }
+
+                Text body = ledger.Find("Ledger Body")?.GetComponent<Text>();
+                EnemyLedgerPagesHud pages = ledger.GetComponent<EnemyLedgerPagesHud>();
+                if (body != null && pages != null)
+                {
+                    pages.Configure(body);
+                }
+            }
+        }
+
+        private static void RemoveStandaloneAxiomsButton(RectTransform pauseMenu)
+        {
+            if (pauseMenu == null)
+            {
+                return;
+            }
+
+            pauseMenu.sizeDelta = new Vector2(460f, 500f);
+            RepositionPauseElement(pauseMenu, "SETTINGS Button", -146f);
+            RepositionPauseElement(pauseMenu, "Pause Hint", -226f);
+            Transform button = pauseMenu.Find("CAVE AXIOMS Button");
+            if (button != null)
+            {
+                Object.Destroy(button.gameObject);
+            }
+        }
+
+        private static void RepositionPauseElement(RectTransform parent, string childName, float y)
+        {
+            RectTransform child = parent.Find(childName) as RectTransform;
+            if (child != null)
+            {
+                Vector2 position = child.anchoredPosition;
+                position.y = y;
+                child.anchoredPosition = position;
+            }
         }
 
         private static void EnsureHealthRatioHud(PlayerHealthHud healthHud, Font font)
@@ -961,6 +1061,7 @@ namespace Cave.UI
                 new Vector2(194f, 42f));
             modesTabButton.GetComponentInChildren<Text>().fontSize = 18;
             shopTabButton.GetComponentInChildren<Text>().fontSize = 18;
+            modesTabButton.GetComponentInChildren<Text>().text = "SKILL PATH";
 
             CreateCardSurface(
                 "Active Mode Header",
@@ -971,7 +1072,7 @@ namespace Cave.UI
                 "Selected Mode",
                 selectionPanel,
                 font,
-                "ACTIVE MODE  •  SLOW SHOT",
+                "ACTIVE PATH  •  SLOW SHOT",
                 14,
                 new Vector2(-77f, 163f),
                 new Vector2(260f, 28f));
@@ -1045,10 +1146,10 @@ namespace Cave.UI
 
             CreateCardSurface("Health Potion Card", shopContent, new Vector2(0f, 139f), new Vector2(416f, 62f));
             CreateCardSurface("Mana Potion Card", shopContent, new Vector2(0f, 71f), new Vector2(416f, 62f));
-            CreateCardSurface("Landmine Card", shopContent, new Vector2(0f, 3f), new Vector2(416f, 62f));
+            CreateCardSurface("Oblivion Disk Card", shopContent, new Vector2(0f, 3f), new Vector2(416f, 62f));
             CreateItemIcon("Health Potion Icon", shopContent, font, new Vector2(-174f, 139f), "+", CaveUiTheme.Health);
             CreateItemIcon("Mana Potion Icon", shopContent, font, new Vector2(-174f, 71f), "✦", CaveUiTheme.Mana);
-            CreateItemIcon("Landmine Icon", shopContent, font, new Vector2(-174f, 3f), "◎", CaveUiTheme.Gold);
+            CreateItemIcon("Oblivion Disk Icon", shopContent, font, new Vector2(-174f, 3f), "◎", CaveUiTheme.Gold);
 
             Text healthPotionText = CreateCenteredText(
                 "Health Potion Info",
@@ -1085,16 +1186,16 @@ namespace Cave.UI
             manaPotionButton.GetComponentInChildren<Text>().fontSize = 14;
 
             Text landmineText = CreateCenteredText(
-                "Landmine Info",
+                "Oblivion Disk Info",
                 shopContent,
                 font,
-                "LANDMINE\nCrowd control  |  Cost: 8\nOwned: 0  |  Place: Q",
+                "OBLIVION DISK I\nCharges: ◇  |  Cost: 18\nRecharge: 12s  |  Place: Q",
                 13,
                 new Vector2(-43f, 3f),
                 new Vector2(242f, 56f));
             landmineText.alignment = TextAnchor.MiddleLeft;
             Button landmineButton = CreateButton(
-                "BUY MINE",
+                "UPGRADE",
                 shopContent,
                 font,
                 new Vector2(158f, 3f),
@@ -1702,7 +1803,7 @@ namespace Cave.UI
                 new Vector2(350f, 28f));
             ConfigureCompactStatusStrip(row);
 
-            const int slotCount = 7;
+            const int slotCount = 9;
             GameObject[] slots = new GameObject[slotCount];
             Text[] labels = new Text[slotCount];
             Image[] icons = new Image[slotCount];
@@ -1781,7 +1882,7 @@ namespace Cave.UI
             Font font,
             GameObject player)
         {
-            const int slotCount = 7;
+            const int slotCount = 9;
             RectTransform row = hud.transform as RectTransform;
             ConfigureCompactStatusStrip(row);
             GameObject[] slots = new GameObject[slotCount];
@@ -1841,7 +1942,7 @@ namespace Cave.UI
             row.anchorMax = new Vector2(0f, 1f);
             row.pivot = new Vector2(0f, 1f);
             row.anchoredPosition = new Vector2(24f, -108f);
-            row.sizeDelta = new Vector2(248f, 32f);
+            row.sizeDelta = new Vector2(320f, 32f);
         }
 
         private static void ConfigureCompactStatusSlot(
@@ -2006,11 +2107,15 @@ namespace Cave.UI
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(24f, -380f),
-                new Vector2(86f, 26f));
-            GameObject distraction = CreateCurseIcon(panel, font, "DISTRACTION", "◇", 0);
+                new Vector2(146f, 26f));
+            GameObject distraction = CreateCurseIcon(panel, font, "INSANITY", "◉", 0);
             GameObject detective = CreateCurseIcon(panel, font, "DETECTIVE", "◉", 1);
             GameObject avarice = CreateCurseIcon(panel, font, "AVARICE", "◆", 2);
+            GameObject stoneglass = CreateCurseIcon(panel, font, "STONEGLASS", "◈", 3);
+            GameObject cavesGlare = CreateCurseIcon(panel, font, "GLARE", "◉", 4);
+            Text insanityLabel = distraction.transform.Find("Curse Tier")?.GetComponent<Text>();
             Text avariceLabel = avarice.transform.Find("Curse Tier")?.GetComponent<Text>();
+            Text stoneglassLabel = stoneglass.transform.Find("Curse Tier")?.GetComponent<Text>();
             Text deathClaimNotice = CreateCenteredText(
                 "Avarice Death Claim Notice",
                 gameplayHud,
@@ -2026,7 +2131,11 @@ namespace Cave.UI
                 distraction,
                 detective,
                 avarice,
+                stoneglass,
+                cavesGlare,
+                insanityLabel,
                 avariceLabel,
+                stoneglassLabel,
                 deathClaimNotice,
                 player != null ? player.GetComponent<PlayerCurseController>() : null);
         }
@@ -2047,7 +2156,7 @@ namespace Cave.UI
             panel.anchorMax = new Vector2(0f, 1f);
             panel.pivot = new Vector2(0f, 1f);
             panel.anchoredPosition = new Vector2(24f, -380f);
-            panel.sizeDelta = new Vector2(86f, 26f);
+            panel.sizeDelta = new Vector2(146f, 26f);
 
             Transform header = panel.Find("Curse Header");
             if (header != null)
@@ -2055,10 +2164,14 @@ namespace Cave.UI
                 header.gameObject.SetActive(false);
             }
 
-            GameObject distraction = EnsureCompactCurseIcon(panel, font, "DISTRACTION", "◇", 0);
+            GameObject distraction = EnsureCompactCurseIcon(panel, font, "INSANITY", "◉", 0);
             GameObject detective = EnsureCompactCurseIcon(panel, font, "DETECTIVE", "◉", 1);
             GameObject avarice = EnsureCompactCurseIcon(panel, font, "AVARICE", "◆", 2);
+            GameObject stoneglass = EnsureCompactCurseIcon(panel, font, "STONEGLASS", "◈", 3);
+            GameObject cavesGlare = EnsureCompactCurseIcon(panel, font, "GLARE", "◉", 4);
+            Text insanityLabel = distraction.transform.Find("Curse Tier")?.GetComponent<Text>();
             Text avariceLabel = avarice.transform.Find("Curse Tier")?.GetComponent<Text>();
+            Text stoneglassLabel = stoneglass.transform.Find("Curse Tier")?.GetComponent<Text>();
             Text deathClaimNotice = hud.transform.parent != null
                 ? hud.transform.parent.Find("Avarice Death Claim Notice")?.GetComponent<Text>()
                 : null;
@@ -2066,7 +2179,11 @@ namespace Cave.UI
                 distraction,
                 detective,
                 avarice,
+                stoneglass,
+                cavesGlare,
+                insanityLabel,
                 avariceLabel,
+                stoneglassLabel,
                 deathClaimNotice,
                 player != null ? player.GetComponent<PlayerCurseController>() : null);
         }
@@ -2120,6 +2237,14 @@ namespace Cave.UI
             int index)
         {
             RectTransform slot = panel.Find(label + " Curse") as RectTransform;
+            if (slot == null && label == "INSANITY")
+            {
+                slot = panel.Find("DISTRACTION Curse") as RectTransform;
+                if (slot != null)
+                {
+                    slot.name = "INSANITY Curse";
+                }
+            }
             if (slot == null)
             {
                 return CreateCurseIcon(panel, font, label, symbol, index);
@@ -2254,7 +2379,6 @@ namespace Cave.UI
                 new Vector2(0f, 250f), new Vector2(820f, 28f));
             subtitle.color = CaveUiTheme.SecondaryText;
 
-            string[] symbols = { "◉", "⌕", "◆", "◈", "◉" };
             string[] labels =
             {
                 "CURSE OF\nINSANITY",
@@ -2268,15 +2392,35 @@ namespace Cave.UI
                 new Vector2(-432f, 105f), new Vector2(-216f, 105f), new Vector2(0f, 105f),
                 new Vector2(216f, 105f), new Vector2(432f, 105f)
             };
+            string[] iconNames =
+            {
+                "Ui_CurseInsanity",
+                "Ui_CurseDetective",
+                "Ui_CurseAvarice",
+                "Ui_CurseStoneglass",
+                "Ui_CurseGlare"
+            };
             Button[] curseButtons = new Button[5];
             Image[] curseCards = new Image[5];
+            Image[] curseIcons = new Image[5];
             for (int index = 0; index < curseButtons.Length; index++)
             {
                 curseButtons[index] = CreateButton(
-                    symbols[index] + "\n\n" + labels[index], panel, font, positions[index], new Vector2(196f, 180f));
+                    labels[index], panel, font, positions[index], new Vector2(196f, 180f));
                 curseCards[index] = curseButtons[index].GetComponent<Image>();
                 curseCards[index].color = CaveUiTheme.SurfaceInset;
                 AddPanelFrame(curseButtons[index].GetComponent<RectTransform>(), new Color(0.55f, 0.25f, 0.82f, 1f), 1f);
+                Text label = curseButtons[index].GetComponentInChildren<Text>();
+                if (label != null)
+                {
+                    label.alignment = TextAnchor.LowerCenter;
+                    label.rectTransform.anchoredPosition = new Vector2(0f, -16f);
+                    label.rectTransform.sizeDelta = new Vector2(172f, 62f);
+                }
+
+                curseIcons[index] = CreateCurseEmblem(
+                    curseButtons[index].transform,
+                    iconNames[index]);
             }
 
             Image detailCard = CreateCardSurface(
@@ -2301,11 +2445,30 @@ namespace Cave.UI
                 panel.gameObject,
                 curseButtons,
                 curseCards,
+                curseIcons,
                 detailTitle,
                 detailBody,
                 activeState,
                 actionButton,
                 close);
+        }
+
+        private static Image CreateCurseEmblem(Transform parent, string spriteName)
+        {
+            GameObject icon = new GameObject("Curse Emblem", typeof(RectTransform), typeof(Image));
+            icon.transform.SetParent(parent, false);
+            Image image = icon.GetComponent<Image>();
+            image.sprite = CaveUiArt.GetSprite(spriteName);
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.color = Color.white;
+            image.raycastTarget = false;
+            RectTransform rect = image.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, 27f);
+            rect.sizeDelta = new Vector2(86f, 86f);
+            return image;
         }
 
         private static void RepositionTopLeftPanel(Transform root, string name, Vector2 position)
