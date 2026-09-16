@@ -36,6 +36,7 @@ namespace Cave.Enemies
         private float bodyGravityScaleState;
         private bool runtimeBaselineCaptured;
         private bool respawnPending;
+        private bool missionManaged;
         private float runtimeRespawnDelay;
         private EnemyDifficultyScaler difficultyScaler;
 
@@ -43,6 +44,7 @@ namespace Cave.Enemies
         public float BaseRespawnDelay => respawnDelay;
         internal float AdditionalSafetyDelay => additionalSafetyDelay;
         internal bool RespawnEnabled => respawnEnabled;
+        internal bool IsMissionManaged => missionManaged;
 
         private void Awake()
         {
@@ -98,6 +100,7 @@ namespace Cave.Enemies
         {
             EnemyCorruptionLifecycle corruption = GetComponent<EnemyCorruptionLifecycle>();
             if ((corruption != null && corruption.SuppressStandardRespawn)
+                || missionManaged
                 || !respawnEnabled
                 || respawnPending)
             {
@@ -194,6 +197,16 @@ namespace Cave.Enemies
         public void SetRuntimeRespawnDelay(float delay)
         {
             runtimeRespawnDelay = Mathf.Max(0f, delay);
+        }
+
+        /// <summary>Mission-created enemies are owned by MissionSpawnDirector, never by this scheduler.</summary>
+        public void SetMissionManaged(bool managed)
+        {
+            missionManaged = managed;
+            if (managed)
+            {
+                CancelPendingRespawn();
+            }
         }
 
         private void RestoreEnabledStates()

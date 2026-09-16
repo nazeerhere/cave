@@ -37,7 +37,6 @@ namespace Cave.Enemies
 
         private Rigidbody2D body;
         private Damageable damageable;
-        private global::Sensor_Bandit groundSensor;
         private LightBanditBrain brain;
         private LightBanditCombat skirmisher;
         private EnemyMeleeCombat melee;
@@ -52,18 +51,13 @@ namespace Cave.Enemies
             visualRenderer = visualRenderer != null ? visualRenderer : GetComponent<SpriteRenderer>();
             body = GetComponent<Rigidbody2D>();
             damageable = GetComponent<Damageable>();
-            groundSensor = GetComponentInChildren<global::Sensor_Bandit>(true);
             brain = GetComponent<LightBanditBrain>();
             skirmisher = GetComponent<LightBanditCombat>();
             melee = GetComponent<EnemyMeleeCombat>();
 
-            // The imported demo reads keyboard/mouse input and writes Rigidbody2D
-            // velocity. Disable it only at runtime; do not modify vendor assets.
-            global::Bandit packageDemo = GetComponent<global::Bandit>();
-            if (packageDemo != null)
-            {
-                packageDemo.enabled = false;
-            }
+            // The removed vendor demo's input controller was disabled here in
+            // earlier builds. Cave's LightBanditBrain is now the only movement
+            // authority, so no vendor component needs to be resolved.
         }
 
         private void OnEnable()
@@ -113,9 +107,11 @@ namespace Cave.Enemies
             }
 
             bool wasGrounded = grounded;
-            grounded = groundSensor != null
-                ? groundSensor.State()
-                : Mathf.Abs(body.velocity.y) <= movementStopThreshold;
+            // The deleted vendor Sensor_Bandit only drove this legacy Animator
+            // parameter. The current Cave Bandit has no jump mechanic, so the
+            // Rigidbody's vertical velocity is the authoritative presentation
+            // signal and avoids a stale dependency on the removed demo package.
+            grounded = Mathf.Abs(body.velocity.y) <= movementStopThreshold;
             animator.SetBool(Grounded, grounded);
             animator.SetFloat(AirSpeed, body.velocity.y);
 

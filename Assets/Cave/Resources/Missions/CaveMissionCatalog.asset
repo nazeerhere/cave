@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8300ee119e184eb0a1090a7db9e74a1a, type: 3}
+  m_Name: CaveMissionCatalog
+  m_EditorClassIdentifier: Assembly-CSharp:Cave.Missions:CaveMissionCatalog
+  modes:
+  - mode: 0
+    displayName: CLASSIC SWEEP
+    description: Fight through the map's normal rounds and clear the final encounter.
+    objectiveSummary: Fight through the map's normal rounds and clear the final encounter.
+    icon: {fileID: 0}
+    expectsExtraction: 0
+  - mode: 1
+    displayName: CORRUPTION PURGE
+    description: Locate and destroy spreading corruption sources before time expires.
+    objectiveSummary: Locate and destroy spreading corruption sources before time
+      expires.
+    icon: {fileID: 0}
+    expectsExtraction: 1
+  - mode: 2
+    displayName: CORRUPT BOUNTY
+    description: Hunt a heavily empowered corrupted target, claim its bounty, and
+      escape.
+    objectiveSummary: Hunt a heavily empowered corrupted target, claim its bounty,
+      and escape.
+    icon: {fileID: 0}
+    expectsExtraction: 1
+  - mode: 3
+    displayName: CONTAINMENT
+    description: Defend a designated location against escalating enemy pressure.
+    objectiveSummary: Defend a designated location against escalating enemy pressure.
+    icon: {fileID: 0}
+    expectsExtraction: 0
+  maps:
+  - mapId: upper_cave
+    displayName: BREACH
+    sceneName: 01_UpperCave
+    description: Cross the fractured mining breach, fortified cavern approaches, and lower excavation works.
+    thumbnail: {fileID: 21300000, guid: 46df502a0f0f340768c8a8481a30b774, type: 3}
+    displayOrder: 0
+    initiallyUnlocked: 1
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 
+  - mapId: stronghold
+    displayName: STRONGHOLD
+    sceneName: 02_Stronghold
+    description: 'Mission area: STRONGHOLD.'
+    thumbnail: {fileID: 0}
+    displayOrder: 1
+    initiallyUnlocked: 0
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 
+  - mapId: hollow_districts
+    displayName: HOLLOW DISTRICTS
+    sceneName: 03_HollowDistricts
+    description: 'Mission area: HOLLOW DISTRICTS.'
+    thumbnail: {fileID: 0}
+    displayOrder: 2
+    initiallyUnlocked: 0
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 
+  - mapId: deep_veins
+    displayName: DEEP VEINS
+    sceneName: 04_DeepVeins
+    description: 'Mission area: DEEP VEINS.'
+    thumbnail: {fileID: 0}
+    displayOrder: 3
+    initiallyUnlocked: 0
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 
+  - mapId: heart_chamber
+    displayName: HEART CHAMBER
+    sceneName: 05_HeartChamber
+    description: 'Mission area: HEART CHAMBER.'
+    thumbnail: {fileID: 0}
+    displayOrder: 4
+    initiallyUnlocked: 0
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 

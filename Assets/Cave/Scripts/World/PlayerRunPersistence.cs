@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace Cave.World
 {
+    [DefaultExecutionOrder(-10000)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerHealth))]
     public sealed class PlayerRunPersistence : MonoBehaviour
@@ -12,6 +13,7 @@ namespace Cave.World
         private static string pendingSceneName;
         private static string pendingSpawnIdentifier;
         private static Vector3? destinationPlayerFallback;
+        private static bool transitionInFlight;
 
         private PlayerHealth playerHealth;
 
@@ -30,6 +32,7 @@ namespace Cave.World
             pendingSceneName = null;
             pendingSpawnIdentifier = null;
             destinationPlayerFallback = null;
+            transitionInFlight = false;
         }
 
         private void Awake()
@@ -37,7 +40,9 @@ namespace Cave.World
             playerHealth = GetComponent<PlayerHealth>();
             if (instance != null && instance != this)
             {
+                Debug.Log("[Cave][Mission] Destination Player Awake entered.", this);
                 CaptureDestinationFallback();
+                Debug.Log("[Cave][Mission] Suppressing destination authored Player in favor of the persistent Player.", this);
                 gameObject.SetActive(false);
                 Destroy(gameObject);
                 return;
@@ -45,21 +50,31 @@ namespace Cave.World
 
             instance = this;
             DontDestroyOnLoad(gameObject);
+            Debug.Log("[Cave][Mission] Persistent Player Awake entered.", this);
             SceneManager.sceneLoaded -= HandleSceneLoaded;
             SceneManager.sceneLoaded += HandleSceneLoaded;
         }
 
         public static bool PrepareTransition(string sceneName, string spawnIdentifier)
         {
-            if (instance == null || string.IsNullOrWhiteSpace(sceneName))
+            if (instance == null || string.IsNullOrWhiteSpace(sceneName) || transitionInFlight)
             {
                 return false;
             }
 
+            transitionInFlight = true;
             pendingSceneName = sceneName;
             pendingSpawnIdentifier = spawnIdentifier;
             destinationPlayerFallback = null;
             return true;
+        }
+
+        public static void CancelPendingTransition()
+        {
+            pendingSceneName = null;
+            pendingSpawnIdentifier = null;
+            destinationPlayerFallback = null;
+            transitionInFlight = false;
         }
 
         private void CaptureDestinationFallback()
@@ -79,25 +94,9 @@ namespace Cave.World
                 return;
             }
 
+            Debug.Log("[Cave][Mission] PlayerRunPersistence sceneLoaded callback entered for " + scene.name + ".", this);
+
             Vector3? destination = FindSpawnPoint(scene, pendingSpawnIdentifier);
-            foreach (PlayerHealth candidate in FindObjectsOfType<PlayerHealth>(true))
-            {
-                if (candidate == null
-                    || candidate == playerHealth
-                    || candidate.gameObject.scene != scene)
-                {
-                    continue;
-                }
-
-                if (!destinationPlayerFallback.HasValue)
-                {
-                    destinationPlayerFallback = candidate.transform.position;
-                }
-
-                candidate.gameObject.SetActive(false);
-                Destroy(candidate.gameObject);
-            }
-
             if (!destination.HasValue)
             {
                 destination = destinationPlayerFallback;
@@ -105,6 +104,7 @@ namespace Cave.World
 
             if (destination.HasValue)
             {
+                Debug.Log("[Cave][Mission] Spawn located for " + scene.name + ".", this);
                 Rigidbody2D body = GetComponent<Rigidbody2D>();
                 if (body != null)
                 {
@@ -118,11 +118,19 @@ namespace Cave.World
                 }
 
                 GetComponent<PlayerRespawn>()?.SetSpawnPosition(destination.Value);
+                Debug.Log("[Cave][Mission] Persistent Player positioned for " + scene.name
+                    + " at " + destination.Value + ".", this);
+            }
+            else
+            {
+                Debug.LogError("[Cave][Mission] No authored or fallback destination exists for "
+                    + scene.name + ".", this);
             }
 
             pendingSceneName = null;
             pendingSpawnIdentifier = null;
             destinationPlayerFallback = null;
+            transitionInFlight = false;
         }
 
         private static Vector3? FindSpawnPoint(Scene scene, string identifier)
@@ -132,12 +140,17 @@ namespace Cave.World
                 return null;
             }
 
-            foreach (LevelSpawnPoint spawnPoint in FindObjectsOfType<LevelSpawnPoint>(true))
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
             {
-                if (spawnPoint.gameObject.scene == scene
-                    && spawnPoint.SpawnIdentifier == identifier)
+                LevelSpawnPoint[] spawnPoints = roots[rootIndex].GetComponentsInChildren<LevelSpawnPoint>(true);
+                for (int spawnIndex = 0; spawnIndex < spawnPoints.Length; spawnIndex++)
                 {
-                    return spawnPoint.transform.position;
+                    LevelSpawnPoint spawnPoint = spawnPoints[spawnIndex];
+                    if (spawnPoint.SpawnIdentifier == identifier)
+                    {
+                        return spawnPoint.transform.position;
+                    }
                 }
             }
 

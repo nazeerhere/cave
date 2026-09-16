@@ -203,12 +203,15 @@ namespace Cave.UI
 
                 Button skillTab = selection.Find("MODES Button")?.GetComponent<Button>();
                 Button shopTab = selection.Find("SHOP Button")?.GetComponent<Button>();
+                Button domainTab = selection.Find("DOMAIN Button")?.GetComponent<Button>();
                 Text skillLabel = skillTab != null ? skillTab.GetComponentInChildren<Text>() : null;
                 if (skillLabel != null) skillLabel.text = "SKILL PATH";
                 ApplySkillTab(skillTab, true, false);
                 ApplySkillTab(shopTab, false, true);
+                ApplySkillTab(domainTab, false, false);
                 ApplyApprovedRows(selection.Find("Modes Content"));
                 ApplyApprovedRows(selection.Find("Shop Content"));
+                ApplyApprovedRows(selection.Find("Domain Content"));
             }
         }
 

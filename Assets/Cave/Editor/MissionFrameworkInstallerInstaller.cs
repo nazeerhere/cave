@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using Cave.Missions;
+using Cave.Player;
 using Cave.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -50,6 +51,7 @@ namespace Cave.Editor
 
         private static void AuthorHub(Scene scene)
         {
+            EnsureScenePlayerPersistence(scene);
             MissionTerminal existing = FindInScene<MissionTerminal>(scene);
             if (existing == null)
             {
@@ -64,6 +66,8 @@ namespace Cave.Editor
 
         private static void AuthorMap(Scene scene)
         {
+            EnsureScenePlayerPersistence(scene);
+            EnsureMainEntranceSpawn(scene);
             if (FindInScene<MissionMapBootstrap>(scene) == null) new GameObject("Mission Map Bootstrap").AddComponent<MissionMapBootstrap>();
             GameObject authoring = GameObject.Find("Mission Objective Authoring");
             if (authoring == null) authoring = new GameObject("Mission Objective Authoring");
@@ -75,6 +79,33 @@ namespace Cave.Editor
             CircleCollider2D trigger = extraction.GetComponent<CircleCollider2D>();
             if (trigger == null) trigger = extraction.AddComponent<CircleCollider2D>();
             trigger.isTrigger = true; trigger.radius = .8f;
+        }
+
+        private static void EnsureScenePlayerPersistence(Scene scene)
+        {
+            PlayerHealth player = FindInScene<PlayerHealth>(scene);
+            if (player == null)
+            {
+                Debug.LogError("[Cave] Mission scene '" + scene.name + "' has no authored PlayerHealth for PlayerRunPersistence.");
+                return;
+            }
+
+            if (player.GetComponent<PlayerRunPersistence>() == null)
+            {
+                player.gameObject.AddComponent<PlayerRunPersistence>();
+            }
+        }
+
+        private static void EnsureMainEntranceSpawn(Scene scene)
+        {
+            LevelSpawnPoint spawn = FindInScene<LevelSpawnPoint>(scene);
+            if (spawn == null)
+            {
+                Debug.LogError("[Cave] Mission map '" + scene.name + "' has no LevelSpawnPoint to configure as MainEntrance.");
+                return;
+            }
+
+            spawn.Configure("MainEntrance");
         }
 
         private static GameObject EnsureSocket<T>(Transform parent, string name, Vector3 position) where T : Component

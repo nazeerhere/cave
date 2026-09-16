@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Cave.Combat;
 using Cave.Enemies;
+using Cave.Player;
 using Cave.World;
 using UnityEngine;
 
@@ -48,15 +49,15 @@ namespace Cave.Pickups
         private void OnEnable()
         {
             hasEvaluatedDrop = false;
-            damageable.Died += HandleDeath;
+            damageable.DiedWithContext += HandleDeath;
         }
 
         private void OnDisable()
         {
-            damageable.Died -= HandleDeath;
+            damageable.DiedWithContext -= HandleDeath;
         }
 
-        private void HandleDeath()
+        private void HandleDeath(DamageContext killingBlow)
         {
             EnemyCorruptionLifecycle corruption = GetComponent<EnemyCorruptionLifecycle>();
             if (corruption != null && corruption.SuppressDeathRewards)
@@ -81,6 +82,12 @@ namespace Cave.Pickups
             {
                 return;
             }
+
+            CurseAltarZone.TryResolveAvariceDeposit(
+                damageable,
+                killingBlow,
+                out CurseAltarZone avariceDepositZone,
+                out float avariceDepositMultiplier);
 
             List<DropEntry> eligibleEntries = BuildEligibleEntries(entries);
             SkeletonInheritance inheritance = GetComponent<SkeletonInheritance>();
@@ -107,7 +114,7 @@ namespace Cave.Pickups
                 ? sharedSettings.GetDifficultyBand(difficultyTier)
                 : null;
             HashSet<DropCategory> spawnedCategories = new HashSet<DropCategory>();
-            SpawnEntry(primary, spawnOffset, band, 0);
+            SpawnEntry(primary, spawnOffset, band, 0, avariceDepositZone, avariceDepositMultiplier);
             spawnedCategories.Add(GetCategory(primary));
 
             float additionalChance = band != null ? band.AdditionalCategoryChance : 0f;
@@ -131,7 +138,7 @@ namespace Cave.Pickups
                 return;
             }
 
-            SpawnEntry(second, spawnOffset, band, 1);
+            SpawnEntry(second, spawnOffset, band, 1, avariceDepositZone, avariceDepositMultiplier);
             spawnedCategories.Add(GetCategory(second));
             if (band == null
                 || Random.value >= band.ThirdCategoryChance
@@ -144,7 +151,7 @@ namespace Cave.Pickups
             DropEntry third = ChooseAdditional(eligibleEntries, spawnedCategories);
             if (third != null)
             {
-                SpawnEntry(third, spawnOffset, band, 2);
+                SpawnEntry(third, spawnOffset, band, 2, avariceDepositZone, avariceDepositMultiplier);
             }
         }
 
@@ -225,7 +232,9 @@ namespace Cave.Pickups
             DropEntry entry,
             Vector2 baseOffset,
             DifficultyDropBand band,
-            int spawnIndex)
+            int spawnIndex,
+            CurseAltarZone avariceDepositZone,
+            float avariceDepositMultiplier)
         {
             float horizontalOffset = spawnIndex == 0 ? 0f : spawnIndex == 1 ? -0.22f : 0.22f;
             Vector2 spreadOffset = baseOffset + new Vector2(horizontalOffset, 0f);
@@ -233,22 +242,22 @@ namespace Cave.Pickups
                 entry.PickupPrefab,
                 (Vector2)transform.position + spreadOffset,
                 Quaternion.identity);
-            if (band == null)
-            {
-                return;
-            }
-
-            if (pickup is HealthPickup healthPickup)
+            if (band != null && pickup is HealthPickup healthPickup)
             {
                 healthPickup.SetAmount(band.HealthAmount);
             }
-            else if (pickup is ManaPickup manaPickup)
+            else if (band != null && pickup is ManaPickup manaPickup)
             {
                 manaPickup.SetAmount(band.ManaAmount);
             }
-            else if (pickup is CurrencyPickup currencyPickup)
+            else if (band != null && pickup is CurrencyPickup currencyPickup)
             {
                 currencyPickup.SetAmount(band.CurrencyAmount);
+            }
+
+            if (pickup is CurrencyPickup && avariceDepositZone != null)
+            {
+                pickup.ConfigureAvariceDeposit(avariceDepositZone, avariceDepositMultiplier);
             }
         }
 

@@ -22,6 +22,10 @@ namespace Cave.Combat
         private PhaseCombatState phaseCombatState;
 
         public event Action Died;
+        /// <summary>Death context for presentation/reward systems that need the
+        /// resolved killer without changing the long-standing parameterless
+        /// death event used by existing gameplay.</summary>
+        public event Action<DamageContext> DiedWithContext;
         public event Action<DamageContext, bool, int> DamageResolved;
 
         public int CurrentHealth { get; private set; }
@@ -61,6 +65,17 @@ namespace Cave.Combat
             if (damageContext.PermanentProgressionSource != null)
             {
                 amount = damageContext.PermanentProgressionSource.ResolvePlayerDamage(amount);
+            }
+
+            damageContext = CurseAltarZone.BindPlayerDamageZone(damageContext);
+            amount = CurseAltarZone.ResolvePlayerAttackDamage(
+                damageContext,
+                this,
+                amount,
+                out bool altarCritical);
+            if (altarCritical)
+            {
+                damageContext = damageContext.WithTraits(DamageTrait.AltarCritical);
             }
 
             EnemyDefenseController defense = GetComponent<EnemyDefenseController>();
@@ -104,13 +119,16 @@ namespace Cave.Combat
                 damageContext,
                 false,
                 appliedDamage);
+            CurseAltarZone.NotifyPlayerDamageResolved(damageContext, this, appliedDamage);
             CaveSfx.Play(CaveSfxCue.Hit, 0.75f);
 
             if (CurrentHealth == 0)
             {
                 GetComponent<EnemyCorruptionLifecycle>()?.PrepareForDeath();
-                damageContext.ReportKillingBlow();
+                damageContext.ReportKillingBlow(this);
+                CurseAltarZone.NotifyEnemyDied(this, damageContext);
                 PlayerSwordCosmetics.NotifyPlayerDefeatedEnemy(this, damageContext);
+                DiedWithContext?.Invoke(damageContext);
                 Died?.Invoke();
                 gameObject.SetActive(false);
                 return appliedDamage;
@@ -119,13 +137,23 @@ namespace Cave.Combat
             if (damageContext.IsPlayerDamage)
             {
                 EnemyStagger stagger = GetComponent<EnemyStagger>();
-                if (damageContext.HasTrait(DamageTrait.StaggerHeavy))
+                if (stagger != null && damageContext.HasTrait(DamageTrait.StaggerHeavy))
                 {
-                    stagger?.TryStagger(StaggerStrength.Heavy);
+                    stagger.TryStagger(
+                        StaggerStrength.Heavy,
+                        stagger.GetBaseDuration(StaggerStrength.Heavy)
+                            * CurseAltarZone.ResolvePlayerStaggerMultiplier(
+                                damageContext,
+                                StaggerStrength.Heavy));
                 }
-                else if (damageContext.HasTrait(DamageTrait.StaggerNormal))
+                else if (stagger != null && damageContext.HasTrait(DamageTrait.StaggerNormal))
                 {
-                    stagger?.TryStagger(StaggerStrength.Normal);
+                    stagger.TryStagger(
+                        StaggerStrength.Normal,
+                        stagger.GetBaseDuration(StaggerStrength.Normal)
+                            * CurseAltarZone.ResolvePlayerStaggerMultiplier(
+                                damageContext,
+                                StaggerStrength.Normal));
                 }
             }
 

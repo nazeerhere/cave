@@ -179,7 +179,7 @@ namespace Cave.Editor
             block.transform.SetParent(parent, false);
             block.transform.localPosition = position;
             SpriteRenderer renderer = block.AddComponent<SpriteRenderer>();
-            renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+            renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Cave/Resources/UI/HUD/Approved/HudCardRow.png");
             renderer.drawMode = SpriteDrawMode.Sliced;
             renderer.size = size;
             renderer.color = color;

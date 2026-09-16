@@ -410,8 +410,21 @@ namespace Cave.Projectiles
                     return;
                 }
 
-                if (other.GetComponentInParent<Damageable>() != null)
+                Damageable enemy = other.GetComponentInParent<Damageable>();
+                if (enemy != null)
                 {
+                    Damageable attacker = currentOwner != null
+                        ? currentOwner.GetComponentInParent<Damageable>()
+                        : null;
+                    if (CurseAltarZone.TryApplyEnemyFriendlyFire(
+                            attacker,
+                            enemy,
+                            Damage,
+                            DamageTrait.Projectile))
+                    {
+                        BeginExplosion();
+                    }
+
                     return;
                 }
             }

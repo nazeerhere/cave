@@ -1,5 +1,6 @@
 using System;
 using Cave.Enemies;
+using Cave.Player;
 using Cave.Progression;
 using UnityEngine;
 
@@ -20,7 +21,9 @@ namespace Cave.Combat
         /// <summary>Cannot be negated by ordinary Guard; parry remains a separate rule.</summary>
         Unblockable = 1 << 9,
         /// <summary>Committed heavy impact; Guard mitigates it but cannot fully negate it.</summary>
-        Heavy = 1 << 10
+        Heavy = 1 << 10,
+        /// <summary>Critical result granted by the active Detective altar zone.</summary>
+        AltarCritical = 1 << 11
     }
 
     public interface IDeflectableDamageSource
@@ -36,6 +39,7 @@ namespace Cave.Combat
         private readonly bool staminaMasteryEligible;
         private readonly bool manaMasteryEligible;
         private readonly DamageTrait damageTraits;
+        private readonly CurseAltarZone altarZone;
 
         public DamageContext(
             PlayerResourceMastery source,
@@ -50,6 +54,7 @@ namespace Cave.Combat
             staminaMasteryEligible = qualifiesForStaminaMastery;
             manaMasteryEligible = qualifiesForManaMastery;
             damageTraits = DamageTrait.Direct;
+            altarZone = null;
         }
 
         public DamageContext(GameObject source, DamageTrait traits)
@@ -60,6 +65,7 @@ namespace Cave.Combat
             staminaMasteryEligible = false;
             manaMasteryEligible = false;
             damageTraits = ApplyEnemyFrenzyTrait(source, traits);
+            altarZone = null;
         }
 
         private static DamageTrait ApplyEnemyFrenzyTrait(GameObject source, DamageTrait traits)
@@ -79,7 +85,8 @@ namespace Cave.Combat
             GameObject sourceObject,
             bool qualifiesForStaminaMastery,
             bool qualifiesForManaMastery,
-            DamageTrait traits)
+            DamageTrait traits,
+            CurseAltarZone sourceAltarZone)
         {
             masterySource = source;
             permanentProgressionSource = progressionSource;
@@ -87,12 +94,17 @@ namespace Cave.Combat
             staminaMasteryEligible = qualifiesForStaminaMastery;
             manaMasteryEligible = qualifiesForManaMastery;
             damageTraits = traits;
+            altarZone = sourceAltarZone;
         }
 
         public bool IsPlayerDamage => masterySource != null;
+        public GameObject PlayerSource => masterySource != null ? masterySource.gameObject : null;
         public GameObject Source => explicitSource;
         public PlayerPermanentProgression PermanentProgressionSource => permanentProgressionSource;
         public DamageTrait Traits => damageTraits == 0 ? DamageTrait.Direct : damageTraits;
+        public CurseAltarZone AltarZone => altarZone;
+        public bool IsCritical => HasTrait(DamageTrait.FrenzyCritical)
+            || HasTrait(DamageTrait.AltarCritical);
 
         public bool HasTrait(DamageTrait trait)
         {
@@ -107,16 +119,31 @@ namespace Cave.Combat
                 explicitSource,
                 staminaMasteryEligible,
                 manaMasteryEligible,
-                Traits | traits);
+                Traits | traits,
+                altarZone);
         }
 
-        internal void ReportKillingBlow()
+        public DamageContext WithAltarZone(CurseAltarZone zone)
+        {
+            return new DamageContext(
+                masterySource,
+                permanentProgressionSource,
+                explicitSource,
+                staminaMasteryEligible,
+                manaMasteryEligible,
+                Traits,
+                zone);
+        }
+
+        internal void ReportKillingBlow(Damageable victim)
         {
             if (masterySource != null)
             {
                 masterySource.ProcessKillingBlow(staminaMasteryEligible, manaMasteryEligible);
                 masterySource.GetComponent<Cave.Player.PlayerCurseController>()
                     ?.NotifyPlayerKillingBlow();
+                masterySource.GetComponent<PlayerCurseAltarController>()
+                    ?.NotifyPlayerKillingBlow(this, victim);
             }
         }
     }

@@ -1,5 +1,6 @@
 using System.Collections;
 using Cave.Combat;
+using Cave.Player;
 using Cave.Projectiles;
 using Cave.World;
 using UnityEngine;
@@ -38,6 +39,7 @@ namespace Cave.Enemies
         private bool brainControlled;
         private bool isWindingUp;
         private float castCompletesAt;
+        private Transform firingTarget;
 
         public float BaseFireInterval => fireInterval;
         public float BaseProjectileSpeed => projectileSpeed;
@@ -95,13 +97,21 @@ namespace Cave.Enemies
                 return false;
             }
 
+            // Paranoia only redirects this existing targeting choice while the
+            // mark is live.  Projectile, cooldown and movement authority all
+            // remain in this shooter; no alternate AI is created.
+            if (CurseAltarZone.TryGetConfusedTarget(gameObject, out Transform confusedTarget))
+            {
+                requestedTarget = confusedTarget;
+            }
+
             Vector2 direction = requestedTarget.position - transform.position;
             if (direction.sqrMagnitude > firingRange * firingRange)
             {
                 return false;
             }
 
-            target = requestedTarget;
+            firingTarget = requestedTarget;
             isWindingUp = true;
             castCompletesAt = Time.time + castWindup;
             AreaPulseEffect.Create(
@@ -143,12 +153,14 @@ namespace Cave.Enemies
         {
             isWindingUp = false;
             nextFireTime = Time.time + runtimeFireInterval;
-            if (target == null || !target.gameObject.activeInHierarchy || projectilePrefab == null)
+            Transform resolvedTarget = firingTarget;
+            firingTarget = null;
+            if (resolvedTarget == null || !resolvedTarget.gameObject.activeInHierarchy || projectilePrefab == null)
             {
                 return;
             }
 
-            SpawnProjectile(target, runtimeProjectileSpeed, runtimeProjectileDamage);
+            SpawnProjectile(resolvedTarget, runtimeProjectileSpeed, runtimeProjectileDamage);
         }
 
         private void SpawnProjectile(Transform requestedTarget, float requestedSpeed, int requestedDamage)
@@ -289,6 +301,7 @@ namespace Cave.Enemies
         private void OnDisable()
         {
             isWindingUp = false;
+            firingTarget = null;
         }
     }
 }

@@ -50,6 +50,7 @@ namespace Cave.Enemies
         private float runtimeFireCooldown;
         private EnemyEvolutionStage evolutionStage;
         private bool brainControlled;
+        private Transform firingTarget;
 
         public int BaseDirectDamage => directDamage;
         public float PoisonDamagePercentPerSecond => poisonDamagePercentPerSecond;
@@ -108,12 +109,17 @@ namespace Cave.Enemies
 
         public bool TryUse(Transform requestedTarget)
         {
+            if (CurseAltarZone.TryGetConfusedTarget(gameObject, out Transform confusedTarget))
+            {
+                requestedTarget = confusedTarget;
+            }
+
             if (!CanUse(requestedTarget))
             {
                 return false;
             }
 
-            target = requestedTarget;
+            firingTarget = requestedTarget;
             isWindingUp = true;
             fireCompletesAt = Time.time + attackWindup;
             Cave.Combat.AreaPulseEffect.Create(
@@ -133,13 +139,15 @@ namespace Cave.Enemies
         {
             isWindingUp = false;
             nextFireTime = Time.time + runtimeFireCooldown;
-            if (target == null)
+            Transform resolvedTarget = firingTarget;
+            firingTarget = null;
+            if (resolvedTarget == null)
             {
                 return;
             }
 
             Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position;
-            Vector2 direction = (Vector2)target.position - spawnPosition;
+            Vector2 direction = (Vector2)resolvedTarget.position - spawnPosition;
             if (direction.sqrMagnitude <= 0.001f)
             {
                 direction = Vector2.left;
@@ -226,6 +234,7 @@ namespace Cave.Enemies
         {
             isWindingUp = false;
             nextFireTime = 0f;
+            firingTarget = null;
         }
     }
 }

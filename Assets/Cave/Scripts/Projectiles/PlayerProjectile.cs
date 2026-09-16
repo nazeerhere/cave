@@ -3,6 +3,7 @@ using Cave.Axioms.Elemental;
 using Cave.Audio;
 using Cave.Combat;
 using Cave.Enemies;
+using Cave.Interactions;
 using Cave.Player;
 using Cave.Progression;
 using UnityEngine;
@@ -51,6 +52,8 @@ namespace Cave.Projectiles
         private bool reflectedByEnemy;
         private GameObject enemyParryOwner;
         private FrenzyBreakActivation frenzyActivation;
+        private InteractionIdentity interactionIdentity;
+        private bool interactionDestroyedReported;
 
         public int BaseDamage => baseDamage;
         public int SkillTier => firedTier;
@@ -119,6 +122,14 @@ namespace Cave.Projectiles
             reflectedByEnemy = false;
             enemyParryOwner = null;
             hasLaunched = true;
+            interactionDestroyedReported = false;
+            interactionIdentity = InteractionRuntime.TrackSpawn(
+                gameObject,
+                InteractionTraits.Projectile | InteractionTraits.Moving | InteractionTraits.ManaPowered,
+                InteractionOwnership.Player,
+                damageContext.Source,
+                true,
+                1);
             ConfigureTierVisuals();
             body.velocity = direction.normalized * speed;
             Invoke(nameof(Expire), lifetime);
@@ -173,9 +184,14 @@ namespace Cave.Projectiles
                     DamageContext impactContext = isFrenzyCritical
                         ? damageContext.WithTraits(DamageTrait.FrenzyCritical)
                         : damageContext;
+                    InteractionRuntime.ReportHit(interactionIdentity, damageable.gameObject, impactDamage);
                     int appliedDamage = damageable.TakeDamageResolved(
                         impactDamage,
                         impactContext);
+                    InteractionRuntime.ReportDamageApplied(
+                        interactionIdentity,
+                        damageable.gameObject,
+                        appliedDamage);
                     ElementalAxiomCombatBridge.TryApplyProjectileHit(
                         damageable,
                         firedMode,
@@ -485,6 +501,12 @@ namespace Cave.Projectiles
 
         private void OnDestroy()
         {
+            if (!interactionDestroyedReported && interactionIdentity != null)
+            {
+                interactionDestroyedReported = true;
+                InteractionRuntime.ReportDestroyed(interactionIdentity);
+            }
+
             if (tierTrailMaterial != null)
             {
                 Destroy(tierTrailMaterial);

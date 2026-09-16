@@ -1,6 +1,8 @@
 using System;
 using Cave.Audio;
+using Cave.Axioms.Mastery;
 using Cave.Combat;
+using Cave.Domain;
 using Cave.InputSystem;
 using Cave.Player;
 using Cave.Projectiles;
@@ -11,6 +13,13 @@ namespace Cave.UI
 {
     public sealed class PlayerSpecialModeHud : MonoBehaviour
     {
+        private enum SelectionTab
+        {
+            Modes,
+            Shop,
+            Domain
+        }
+
         [SerializeField] private Text currentModeText;
         [SerializeField] private Text selectionCurrentModeText;
         [SerializeField] private Text currencyText;
@@ -38,6 +47,15 @@ namespace Cave.UI
         [SerializeField] private RectTransform permanentProgressionMount;
         [SerializeField] private RectTransform generalShardSummaryMount;
 
+        [Header("Domain Tab")]
+        [SerializeField] private GameObject domainContent;
+        [SerializeField] private Button domainTabButton;
+        [SerializeField] private Text domainSeedText;
+        [SerializeField] private Text powerExpressionText;
+        [SerializeField] private Text axiomPhenomenaText;
+        [SerializeField] private Text territoryPrincipleText;
+        [SerializeField] private Text domainComplexityText;
+
         private static readonly SpecialMode[] Modes =
         {
             SpecialMode.SlowShot,
@@ -54,6 +72,8 @@ namespace Cave.UI
         private PlayerMana playerMana;
         private PlayerProjectileLauncher projectileLauncher;
         private PlayerLandmineInventory landmines;
+        private AxiomMasteryState domainMastery;
+        private bool domainSeedSubscribed;
 
         public RectTransform PermanentProgressionMount => permanentProgressionMount;
         public RectTransform GeneralShardSummaryMount => generalShardSummaryMount;
@@ -80,7 +100,14 @@ namespace Cave.UI
             Text landmineProductText,
             Button landmineBuyButton,
             RectTransform progressionMount,
-            RectTransform shardSummaryMount)
+            RectTransform shardSummaryMount,
+            GameObject domainTabContent,
+            Button domainTab,
+            Text seedStatusText,
+            Text expressionStatusText,
+            Text phenomenaStatusText,
+            Text territoryStatusText,
+            Text complexityStatusText)
         {
             currentModeText = modeText;
             selectionCurrentModeText = panelModeText;
@@ -104,10 +131,18 @@ namespace Cave.UI
             landmineButton = landmineBuyButton;
             permanentProgressionMount = progressionMount;
             generalShardSummaryMount = shardSummaryMount;
+            domainContent = domainTabContent;
+            domainTabButton = domainTab;
+            domainSeedText = seedStatusText;
+            powerExpressionText = expressionStatusText;
+            axiomPhenomenaText = phenomenaStatusText;
+            territoryPrincipleText = territoryStatusText;
+            domainComplexityText = complexityStatusText;
 
             toggleButton.onClick.AddListener(ToggleSelectionPanel);
-            modesTabButton.onClick.AddListener(() => ShowTab(true));
-            shopTabButton.onClick.AddListener(() => ShowTab(false));
+            modesTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Modes));
+            shopTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Shop));
+            domainTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Domain));
             healthPotionButton.onClick.AddListener(BuyHealthPotion);
             manaPotionButton.onClick.AddListener(BuyManaPotion);
             landmineButton.onClick.AddListener(BuyLandmine);
@@ -122,7 +157,8 @@ namespace Cave.UI
                 }
             }
 
-            ShowTab(true);
+            SubscribeDomainSeed();
+            ShowTab(SelectionTab.Modes);
             selectionPanel.SetActive(true);
         }
 
@@ -131,8 +167,12 @@ namespace Cave.UI
             if (specialMode != modeState)
             {
                 UnsubscribeMode();
+                BindDomainMastery(null);
                 specialMode = modeState;
                 SubscribeMode();
+                BindDomainMastery(specialMode != null
+                    ? specialMode.GetComponent<AxiomMasteryState>()
+                    : null);
             }
 
             if (playerCurrency != currency)
@@ -333,8 +373,11 @@ namespace Cave.UI
             ToggleSelectionPanel();
         }
 
-        private void ShowTab(bool showModes)
+        private void ShowTab(SelectionTab tab)
         {
+            bool showModes = tab == SelectionTab.Modes;
+            bool showShop = tab == SelectionTab.Shop;
+            bool showDomain = tab == SelectionTab.Domain;
             if (modesContent != null)
             {
                 modesContent.SetActive(showModes);
@@ -342,13 +385,24 @@ namespace Cave.UI
 
             if (shopContent != null)
             {
-                shopContent.SetActive(!showModes);
+                shopContent.SetActive(showShop);
+            }
+
+            if (domainContent != null)
+            {
+                domainContent.SetActive(showDomain);
             }
 
             SetTabVisual(modesTabButton, showModes);
-            SetTabVisual(shopTabButton, !showModes);
+            SetTabVisual(shopTabButton, showShop);
+            SetTabVisual(domainTabButton, showDomain);
             CaveUiArt.ApplySkillTab(modesTabButton, showModes, false);
-            CaveUiArt.ApplySkillTab(shopTabButton, !showModes, true);
+            CaveUiArt.ApplySkillTab(shopTabButton, showShop, true);
+            CaveUiArt.ApplySkillTab(domainTabButton, showDomain, false);
+            if (showDomain)
+            {
+                RefreshDomain();
+            }
         }
 
         private static void SetTabVisual(Button button, bool selected)
@@ -384,6 +438,7 @@ namespace Cave.UI
             }
 
             RefreshShop();
+            RefreshDomain();
         }
 
         private void RefreshModeButtons()
@@ -487,6 +542,64 @@ namespace Cave.UI
             }
         }
 
+        private void RefreshDomain()
+        {
+            bool hasSeed = DomainProgression.HasDomainSeed;
+            if (domainSeedText != null)
+            {
+                domainSeedText.text = hasSeed
+                    ? "DOMAIN SEED\nAWAKENED  •  PERMANENT"
+                    : "DOMAIN\n[ LOCKED ]\nA Domain Seed is required.";
+            }
+
+            if (powerExpressionText != null)
+            {
+                powerExpressionText.text = hasSeed
+                    ? "POWER EXPRESSION\nPROJECTILES  •  FRENZY\nHYBRID  [ UNAVAILABLE ]"
+                    : "PERSONAL DOMAIN CONSTRUCTION AWAITS THE SEED.";
+            }
+
+            if (axiomPhenomenaText != null)
+            {
+                axiomPhenomenaText.text = hasSeed
+                    ? BuildAxiomPhenomenaReadout()
+                    : "AXIOM PHENOMENA\nUnlock the Domain Seed to view current-run potential.";
+            }
+
+            if (territoryPrincipleText != null)
+            {
+                territoryPrincipleText.text = hasSeed
+                    ? "TERRITORY PRINCIPLE\nFUTURE SELECTION AREA"
+                    : "TERRITORY PRINCIPLE\nLOCKED";
+            }
+
+            if (domainComplexityText != null)
+            {
+                domainComplexityText.text = hasSeed
+                    ? "DOMAIN COMPLEXITY\nCAPACITY  0 / 0  •  FUTURE READOUT"
+                    : "DOMAIN COMPLEXITY\nLOCKED";
+            }
+        }
+
+        private string BuildAxiomPhenomenaReadout()
+        {
+            string result = "AXIOM PHENOMENA  •  CURRENT RUN\n";
+            for (int index = 0; index < DomainMasteryQuery.PhenomenonCount; index++)
+            {
+                MasteryDomain phenomenon = DomainMasteryQuery.GetPhenomenon(index);
+                float mastery = DomainMasteryQuery.GetMastery(domainMastery, phenomenon);
+                result += DomainMasteryQuery.GetDisplayName(phenomenon)
+                    + " " + Mathf.RoundToInt(mastery * 100f) + "%"
+                    + (DomainMasteryQuery.IsEligible(domainMastery, phenomenon) ? "  READY" : string.Empty);
+                if (index + 1 < DomainMasteryQuery.PhenomenonCount)
+                {
+                    result += index == 2 ? "\n" : "  •  ";
+                }
+            }
+
+            return result;
+        }
+
         private void HandleModeChanged(SpecialMode mode)
         {
             UpdateMode(mode);
@@ -506,6 +619,60 @@ namespace Cave.UI
         private void HandleManaChanged(float current, float maximum)
         {
             RefreshShop();
+        }
+
+        private void HandleDomainSeedGranted()
+        {
+            RefreshDomain();
+            SetFeedback("Domain Seed awakened. The Domain foundation is now available.");
+        }
+
+        private void HandleDomainMasteryChanged(MasteryDomain phenomenon, float value)
+        {
+            RefreshDomain();
+        }
+
+        private void BindDomainMastery(AxiomMasteryState mastery)
+        {
+            if (domainMastery == mastery)
+            {
+                return;
+            }
+
+            if (domainMastery != null)
+            {
+                domainMastery.MasteryChanged -= HandleDomainMasteryChanged;
+            }
+
+            domainMastery = mastery;
+            if (domainMastery != null)
+            {
+                domainMastery.MasteryChanged += HandleDomainMasteryChanged;
+            }
+
+            RefreshDomain();
+        }
+
+        private void SubscribeDomainSeed()
+        {
+            if (domainSeedSubscribed)
+            {
+                return;
+            }
+
+            DomainProgression.DomainSeedGranted += HandleDomainSeedGranted;
+            domainSeedSubscribed = true;
+        }
+
+        private void UnsubscribeDomainSeed()
+        {
+            if (!domainSeedSubscribed)
+            {
+                return;
+            }
+
+            DomainProgression.DomainSeedGranted -= HandleDomainSeedGranted;
+            domainSeedSubscribed = false;
         }
 
         private void UpdateMode(SpecialMode mode)
@@ -677,6 +844,8 @@ namespace Cave.UI
             UnsubscribeMode();
             UnsubscribeCurrency();
             UnsubscribeProgression();
+            BindDomainMastery(null);
+            UnsubscribeDomainSeed();
             BindLauncher(null);
         }
     }

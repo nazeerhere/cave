@@ -509,6 +509,27 @@ namespace Cave.Combat
             return Mathf.Max(baseDamage, Mathf.RoundToInt(baseDamage * multiplier));
         }
 
+        /// <summary>Uses the established critical-resistance calculation for altar-granted normal crits.</summary>
+        public bool TryResolveAltarCriticalDamage(
+            int baseDamage,
+            Damageable target,
+            float chance,
+            out int resolvedDamage)
+        {
+            resolvedDamage = baseDamage;
+            if (target == null || baseDamage <= 0 || UnityEngine.Random.value > Mathf.Clamp01(chance))
+            {
+                return false;
+            }
+
+            resolvedDamage = ResolveCriticalDamage(
+                baseDamage,
+                target,
+                FrenzyBreakInfusion.Physical,
+                0);
+            return true;
+        }
+
         internal void ApplyFrenzyImpact(
             Damageable target,
             Vector2 attackDirection,

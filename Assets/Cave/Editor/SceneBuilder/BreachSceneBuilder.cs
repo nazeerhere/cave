@@ -9,14 +9,17 @@ using UnityEngine.SceneManagement;
 
 namespace Cave.Editor.SceneBuilder
 {
-    /// <summary>Builds the authored first-outskirts room; it never populates enemy prefabs.</summary>
+    /// <summary>
+    /// Legacy pre-import room generator. The approved Breach environment is now
+    /// imported from staging; use this only for an intentional destructive rebuild.
+    /// </summary>
     public static class UpperCaveSceneBuilder
     {
         public const string UpperCaveScenePath = "Assets/Cave/Scenes/01_UpperCave.unity";
         private const string SourceScenePath = "Assets/Cave/Scenes/Sprint5_Hazards.unity";
         private const string UpperCaveTilesPath = "Assets/Cave/Art/Rooms/Breach/BreachTileSheet_Source.png";
 
-        [MenuItem("Tools/Cave/Scene Builder/Build 01 Upper Cave (New Scene Only)")]
+        [MenuItem("Tools/Cave/Legacy/Destructive Rebuild/Build 01 Upper Cave (Pre-Import Layout)")]
         public static void BuildFromMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())

@@ -249,6 +249,21 @@ namespace Cave.Projectiles
                     Impact();
                     return;
                 }
+
+                Damageable enemy = other.GetComponentInParent<Damageable>();
+                Damageable attacker = currentOwner != null
+                    ? currentOwner.GetComponentInParent<Damageable>()
+                    : null;
+                if (enemy != null
+                    && CurseAltarZone.TryApplyEnemyFriendlyFire(
+                        attacker,
+                        enemy,
+                        directDamage,
+                        DamageTrait.Projectile))
+                {
+                    Impact();
+                    return;
+                }
             }
             else if (currentTeam == ProjectileTeam.Player)
             {

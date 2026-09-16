@@ -1,4 +1,5 @@
 using Cave.Combat;
+using Cave.Player;
 using Cave.Projectiles;
 using UnityEngine;
 
@@ -161,6 +162,11 @@ namespace Cave.Enemies
 
         public bool TryUse(Transform requestedTarget)
         {
+            if (CurseAltarZone.TryGetConfusedTarget(gameObject, out Transform confusedTarget))
+            {
+                requestedTarget = confusedTarget;
+            }
+
             if (!CanUse(requestedTarget))
             {
                 return false;

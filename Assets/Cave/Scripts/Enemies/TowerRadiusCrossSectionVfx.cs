@@ -80,10 +80,4 @@ namespace Cave.Enemies
             fullFrameDiameterWorldUnits = Mathf.Max(.01f, diameterWorldUnits);
         }
     }
-
-    public sealed class TowerRadiusCrossSectionCatalog : ScriptableObject
-    {
-        [SerializeField] private TowerRadiusCrossSectionVfx prefab;
-        public TowerRadiusCrossSectionVfx Prefab => prefab;
-    }
 }

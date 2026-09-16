@@ -423,6 +423,51 @@ MonoBehaviour:
   - {fileID: 990193941}
   pulseSpeed: 0.22
   brightnessRange: 0.1
+--- !u!1 &123460921
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 123460922}
+  - component: {fileID: 123460923}
+  m_Layer: 0
+  m_Name: Purge Socket C
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &123460922
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 123460921}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 3, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 415957305}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &123460923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 123460921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 774a1055f355470eaba7a50c438181ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourcePrefab: {fileID: 0}
 --- !u!1 &146496276
 GameObject:
   m_ObjectHideFlags: 0
@@ -452,6 +497,7 @@ GameObject:
   - component: {fileID: 146496281}
   - component: {fileID: 146496280}
   - component: {fileID: 146496279}
+  - component: {fileID: 910060001}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -459,6 +505,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &910060001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 146496276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bd247bf716441de959d246a30e88673, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &146496277
 Transform:
   m_ObjectHideFlags: 0
@@ -500,6 +558,7 @@ MonoBehaviour:
   maximumChainExtension: 0.45
   sustainedGuardStaminaDrainPerSecond: 20
   blockedHitStaminaCost: 6
+  heavyGuardHealthDamageMultiplier: 0.35
   counterWindowDuration: 0.7
   lateMeleeDamageReduction: 0.5
   normalMeleeKnockback: 6
@@ -602,7 +661,7 @@ MonoBehaviour:
   aerialHeavyHoldThreshold: 0.25
   diagonalDiveAngle: 40
   minimumHorizontalDirection: 0.15
-  manaCost: 20
+  groundSmashStaminaCost: 20
   damage: 2
   diveSpeed: 20
   maximumDescentDuration: 1.5
@@ -612,7 +671,7 @@ MonoBehaviour:
   heavyStaggerDuration: 0.65
   upwardKnockbackBias: 0.3
   minimumFloorNormalY: 0.45
-  tier3AdditionalManaCost: 0
+  tier3GroundSmashAdditionalStaminaCost: 0
   shockwaveRadius: 2.5
   shockwaveDamage: 2
   shockwaveKnockback: 14
@@ -688,13 +747,13 @@ MonoBehaviour:
   manaInfusionHoldThreshold: 0.3
   levelTwoHoldThreshold: 0.65
   levelThreeHoldThreshold: 1
-  armedTimeout: 12
-  boundAttackSafetyTimeout: 5
+  baseFrenzyDuration: 5
+  frenzyMasteryWindowFraction: 0.25
+  frenzyMasteryDurationPerLevel: 0.25
+  maximumFrenzyMasteryDurationBonus: 2
+  baseInfusionCost: 1
+  manaPerAcceptedDamage: 0.25
   combatContextRadius: 7
-  staminaCostFraction: 0.35
-  levelOneManaCostFraction: 0.25
-  levelTwoManaCostFraction: 0.4
-  levelThreeManaCostFraction: 0.55
   baseCriticalBonus: 1.75
   normalLevelOneBonus: 0.8
   normalLevelTwoBonus: 1.2
@@ -736,13 +795,12 @@ MonoBehaviour:
   spinBashRemaining: 0
   isPreparingFrenzy: 0
   frenzyArmed: 0
-  frenzyBound: 0
+  frenzyCriticalArmed: 0
+  frenzyMasteryAwarded: 0
+  currentFrenzyDuration: 0
   armedInfusion: 0
   armedInfusionLevel: 0
   armedRole: 0
-  armedRemaining: 0
-  boundAttackKind: 0
-  boundSafetyRemaining: 0
 --- !u!114 &146496286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -769,6 +827,17 @@ MonoBehaviour:
   damageableLayers:
     serializedVersion: 2
     m_Bits: 0
+  continuationWindow: 0.38
+  breakerStrikeDelay: 0.05
+  reversalStrikeDelay: 0.04
+  reaperStrikeDelay: 0.07
+  driveStrikeDelay: 0.06
+  judgmentStrikeDelay: 0.1
+  breakerRecovery: 0.14
+  reversalRecovery: 0.12
+  reaperRecovery: 0.19
+  driveRecovery: 0.2
+  judgmentRecovery: 0.28
   chargeIndicator: {fileID: 8095087772069042776, guid: 56994fc730fb34156a4b0e9185e9a497, type: 3}
   attackVisual: {fileID: 0}
   attackCollider: {fileID: 0}
@@ -1953,6 +2022,42 @@ Transform:
   m_Father: {fileID: 1265245435}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &415957304
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 415957305}
+  m_Layer: 0
+  m_Name: Mission Objective Authoring
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &415957305
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415957304}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 554894223}
+  - {fileID: 1478144732}
+  - {fileID: 123460922}
+  - {fileID: 1008909922}
+  - {fileID: 1786912858}
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &438954194
 GameObject:
   m_ObjectHideFlags: 0
@@ -2121,6 +2226,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!115 &522477428
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 5
+  m_Script: 
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_ExecutionOrder: 0
+  m_ClassName: MissionMapBootstrap
+  m_Namespace: Cave.Missions
 --- !u!1 &540706183
 GameObject:
   m_ObjectHideFlags: 0
@@ -2215,6 +2334,51 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!1 &554894222
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 554894223}
+  - component: {fileID: 554894224}
+  m_Layer: 0
+  m_Name: Purge Socket A
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &554894223
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554894222}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 415957305}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &554894224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554894222}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 774a1055f355470eaba7a50c438181ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourcePrefab: {fileID: 0}
 --- !u!1 &558783083
 GameObject:
   m_ObjectHideFlags: 0
@@ -4029,6 +4193,50 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &1008909921
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1008909922}
+  - component: {fileID: 1008909923}
+  m_Layer: 0
+  m_Name: Containment Socket
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1008909922
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008909921}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 415957305}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1008909923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008909921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 015662cc3a92436b8e771d20c42454f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1014496410
 GameObject:
   m_ObjectHideFlags: 0
@@ -4488,7 +4696,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28d4bb1aac2f42f89f55f9f969a4d25e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnIdentifier: FromDeepVeins
+  spawnIdentifier: MainEntrance
 --- !u!114 &1334322674
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4537,6 +4745,51 @@ Transform:
   m_Father: {fileID: 1265245435}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1478144731
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1478144732}
+  - component: {fileID: 1478144733}
+  m_Layer: 0
+  m_Name: Purge Socket B
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1478144732
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1478144731}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 415957305}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1478144733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1478144731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 774a1055f355470eaba7a50c438181ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourcePrefab: {fileID: 0}
 --- !u!1 &1512225520
 GameObject:
   m_ObjectHideFlags: 0
@@ -4907,6 +5160,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!115 &1656918459
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 5
+  m_Script: 
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_ExecutionOrder: 0
+  m_ClassName: ExtractionPoint
+  m_Namespace: Cave.Missions
 --- !u!1 &1670871582
 GameObject:
   m_ObjectHideFlags: 0
@@ -5031,6 +5298,67 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &1786912857
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1786912858}
+  - component: {fileID: 1786912860}
+  - component: {fileID: 1786912859}
+  m_Layer: 0
+  m_Name: Extraction Point
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1786912858
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786912857}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 4, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 415957305}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1786912859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786912857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb96b4703a0f402fb3a5b5fcb98035d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!58 &1786912860
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786912857}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.8
 --- !u!1 &1828501614
 GameObject:
   m_ObjectHideFlags: 0
@@ -5199,6 +5527,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!115 &1902299936
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 5
+  m_Script: 
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_ExecutionOrder: 0
+  m_ClassName: CorruptionSourceSocket
+  m_Namespace: Cave.Missions
 --- !u!1 &1935209240
 GameObject:
   m_ObjectHideFlags: 0
@@ -5234,6 +5576,50 @@ Transform:
   - {fileID: 820066426}
   - {fileID: 608567012}
   m_Father: {fileID: 277579103}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2029564032
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2029564034}
+  - component: {fileID: 2029564033}
+  m_Layer: 0
+  m_Name: Mission Map Bootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2029564033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2029564032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 215a14c94ea14cbb8dd6153c4df3b05a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &2029564034
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2029564032}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2086265145
@@ -5284,6 +5670,20 @@ MonoBehaviour:
   identifier: HeartChamberCameraBounds
   destinationScene: 
   boundsSize: {x: 56, y: 31}
+--- !u!115 &2090904092
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 5
+  m_Script: 
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_ExecutionOrder: 0
+  m_ClassName: ContainmentSocket
+  m_Namespace: Cave.Missions
 --- !u!1 &2118367456
 GameObject:
   m_ObjectHideFlags: 0

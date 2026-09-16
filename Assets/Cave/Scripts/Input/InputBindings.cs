@@ -134,7 +134,10 @@ namespace Cave.InputSystem
         {
             moveLeft = new KeyBinding(KeyCode.A, KeyCode.LeftArrow);
             moveRight = new KeyBinding(KeyCode.D, KeyCode.RightArrow);
-            jump = new KeyBinding(KeyCode.Space, KeyCode.UpArrow);
+            // Up/Down are reserved for route intent (PathJunction2D).  Space is
+            // the default jump key; the secondary slot remains available for a
+            // non-directional user rebind.
+            jump = new KeyBinding(KeyCode.Space, KeyCode.None);
             basicAttack = new KeyBinding(KeyCode.X, KeyCode.W);
             chargedAttack = new KeyBinding(KeyCode.C, KeyCode.None);
             parry = new KeyBinding(KeyCode.V, KeyCode.None);
@@ -183,6 +186,8 @@ namespace Cave.InputSystem
             {
                 LoadSavedKey(GameAction.Dash, BindingSlot.Secondary);
             }
+
+            MigrateDirectionalJumpBinding();
         }
 
         public void Save()
@@ -221,6 +226,33 @@ namespace Cave.InputSystem
             TryRebind(action, slot, savedKey, out _);
         }
 
+        private void MigrateDirectionalJumpBinding()
+        {
+            KeyBinding binding = jump;
+            bool changed = false;
+            if (binding.Primary == KeyCode.UpArrow || binding.Primary == KeyCode.DownArrow)
+            {
+                binding = binding.WithKey(BindingSlot.Primary, KeyCode.None);
+                changed = true;
+            }
+
+            if (binding.Secondary == KeyCode.UpArrow || binding.Secondary == KeyCode.DownArrow)
+            {
+                binding = binding.WithKey(BindingSlot.Secondary, KeyCode.None);
+                changed = true;
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            jump = binding;
+            PlayerPrefs.SetInt(GetPlayerPrefsKey(GameAction.Jump, BindingSlot.Primary), (int)binding.Primary);
+            PlayerPrefs.SetInt(GetPlayerPrefsKey(GameAction.Jump, BindingSlot.Secondary), (int)binding.Secondary);
+            PlayerPrefs.Save();
+        }
+
         private static string GetPlayerPrefsKey(GameAction action, BindingSlot slot)
         {
             return PlayerPrefsPrefix + action + "." + slot;
@@ -231,6 +263,13 @@ namespace Cave.InputSystem
             KeyCode newKey,
             out GameAction conflictingAction)
         {
+            if (actionBeingChanged == GameAction.Jump
+                && (newKey == KeyCode.UpArrow || newKey == KeyCode.DownArrow))
+            {
+                conflictingAction = actionBeingChanged;
+                return true;
+            }
+
             foreach (GameAction action in Enum.GetValues(typeof(GameAction)))
             {
                 if (action != actionBeingChanged && GetBinding(action).Contains(newKey))

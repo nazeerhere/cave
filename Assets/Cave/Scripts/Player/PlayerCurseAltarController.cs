@@ -19,7 +19,6 @@ namespace Cave.Player
         [SerializeField, Min(1f)] private float summonedAltarLifetime = 25f;
         [SerializeField, Min(0f)] private float summonCooldown = 20f;
         [SerializeField] private Vector2 summonedAltarOffset = new Vector2(2f, 0f);
-        [SerializeField, Min(1f)] private float combatPressureRadius = 7f;
 
         [Header("Interaction")]
         [SerializeField, Min(0.5f)] private float interactionRange = 2.4f;
@@ -39,6 +38,11 @@ namespace Cave.Player
         public float InteractionRange => interactionRange;
         public bool IsSelectionOpen => selectedAltar != null;
         public PlayerCurseController Curses => curses;
+
+        internal void NotifyPlayerKillingBlow(DamageContext killingBlow, Damageable victim)
+        {
+            CurseAltarZone.NotifyPlayerKillingBlow(this, killingBlow, victim);
+        }
 
         private void Awake()
         {
@@ -110,8 +114,7 @@ namespace Cave.Player
         public bool TrySummonAltar()
         {
             if (summonedAltar != null
-                || Time.time < nextSummonTime
-                || HostileMobQuery.CountRealHostiles(transform.position, combatPressureRadius) > 0)
+                || Time.time < nextSummonTime)
             {
                 return false;
             }

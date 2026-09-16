@@ -92,7 +92,12 @@ namespace Cave.Enemies
 
         public bool TryStagger(StaggerStrength strength)
         {
-            return TryStagger(strength, ResolveBaseDuration(strength));
+            return TryStagger(strength, GetBaseDuration(strength));
+        }
+
+        public float GetBaseDuration(StaggerStrength strength)
+        {
+            return ResolveBaseDuration(strength);
         }
 
         public bool TryStagger(StaggerStrength strength, float baseDuration)

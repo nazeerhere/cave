@@ -34,25 +34,19 @@ namespace Cave.Missions
 
     public sealed class ClassicSweepMissionController : MissionControllerBase
     {
+        private MissionSpawnDirector spawnDirector;
+
         public override void Initialize(MissionRunContext context)
         {
             base.Initialize(context);
+            spawnDirector = GetComponent<MissionSpawnDirector>();
+            if (spawnDirector == null) { Fail("No MissionSpawnDirector is authored in this map."); return; }
+            spawnDirector.PopulationCleared += NotifyMapCleared;
+            spawnDirector.BeginClassicSweep();
             Publish("CLASSIC SWEEP", "Clear the map's normal encounters.");
         }
         public void NotifyMapCleared() { PrimaryComplete(false); }
-    }
-
-    public sealed class CorruptionSourceSocket : MonoBehaviour
-    {
-        [SerializeField] private CorruptionSource sourcePrefab;
-        public CorruptionSource Spawn()
-        {
-            CorruptionSource source = sourcePrefab != null
-                ? Instantiate(sourcePrefab, transform.position, Quaternion.identity, transform)
-                : new GameObject("Corruption Source").AddComponent<CorruptionSource>();
-            if (sourcePrefab == null) source.transform.position = transform.position;
-            return source;
-        }
+        private void OnDestroy() { if (spawnDirector != null) spawnDirector.PopulationCleared -= NotifyMapCleared; }
     }
 
     [RequireComponent(typeof(Damageable), typeof(CircleCollider2D))]
@@ -68,7 +62,7 @@ namespace Cave.Missions
             if (GetComponent<SpriteRenderer>() == null)
             {
                 SpriteRenderer visual = gameObject.AddComponent<SpriteRenderer>();
-                visual.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd"); visual.color = new Color(.65f, .1f, .85f, .9f); visual.sortingOrder = 8;
+                visual.sprite = Resources.Load<Sprite>("UI/Missions/ModeIcons/MissionMode_CorruptionPurge"); visual.color = new Color(.65f, .1f, .85f, .9f); visual.sortingOrder = 8;
                 transform.localScale = Vector3.one * .75f;
             }
         }
@@ -88,6 +82,8 @@ namespace Cave.Missions
         public override void Initialize(MissionRunContext context)
         {
             base.Initialize(context);
+            MissionSpawnDirector spawnDirector = GetComponent<MissionSpawnDirector>();
+            if (spawnDirector == null) { Fail("No MissionSpawnDirector is authored in this map."); return; }
             CorruptionSourceSocket[] sockets = FindObjectsOfType<CorruptionSourceSocket>(true);
             if (sockets.Length == 0) { Fail("No corruption source sockets are authored in this map."); return; }
             System.Random random = new System.Random(context.RunSeed);
@@ -99,7 +95,9 @@ namespace Cave.Missions
                 CorruptionSource source = sockets[i].Spawn();
                 source.Destroyed += HandleDestroyed;
                 active.Add(source);
+                spawnDirector.RegisterCorruptionSource(source, sockets[i].transform);
             }
+            spawnDirector.BeginCorruptionPurge();
             total = active.Count;
             endsAt = Time.time + timeLimit;
             nextTimerPublish = Time.time;
@@ -159,17 +157,11 @@ namespace Cave.Missions
         public override void Initialize(MissionRunContext context)
         {
             base.Initialize(context);
-            Damageable[] candidates = FindObjectsOfType<Damageable>(true);
-            List<Damageable> eligible = new List<Damageable>(candidates.Length);
-            for (int i = 0; i < candidates.Length; i++)
+            MissionSpawnDirector spawnDirector = GetComponent<MissionSpawnDirector>();
+            if (spawnDirector != null && spawnDirector.BeginCorruptBounty(out GameObject candidate))
             {
-                if (!candidates[i].gameObject.activeInHierarchy || candidates[i].GetComponent<EnemyArchetypeProfile>() == null) continue;
-                eligible.Add(candidates[i]);
-            }
-            if (eligible.Count > 0)
-            {
-                Damageable selected = eligible[new System.Random(context.RunSeed).Next(eligible.Count)];
-                target = selected.gameObject.AddComponent<BountyTarget>();
+                target = candidate.GetComponent<BountyTarget>();
+                if (target == null) target = candidate.AddComponent<BountyTarget>();
                 target.Defeated += HandleDefeated;
                 target.ApplyBoundedModifier();
                 Publish("CORRUPT BOUNTY", "Locate the marked target.");
@@ -187,8 +179,6 @@ namespace Cave.Missions
         }
         private void HandleClaimed() { Publish("CORRUPT BOUNTY", "Reach extraction."); PrimaryComplete(true); }
     }
-
-    public sealed class ContainmentSocket : MonoBehaviour { }
 
     [RequireComponent(typeof(CircleCollider2D))]
     public sealed class ContainmentSite : MonoBehaviour
@@ -214,10 +204,13 @@ namespace Cave.Missions
     {
         [SerializeField] private bool requireExtractionAfterDefense;
         private ContainmentSite site;
+        private MissionSpawnDirector spawnDirector;
         private float nextPublish;
         public override void Initialize(MissionRunContext context)
         {
             base.Initialize(context);
+            spawnDirector = GetComponent<MissionSpawnDirector>();
+            if (spawnDirector == null) { Fail("No MissionSpawnDirector is authored in this map."); return; }
             ContainmentSocket socket = FindObjectOfType<ContainmentSocket>();
             if (socket == null) { Fail("No containment socket is authored in this map."); return; }
             site = socket.GetComponent<ContainmentSite>();
@@ -230,26 +223,13 @@ namespace Cave.Missions
             if (site == null || !site.IsActive || Context == null || Context.State != MissionLifecycleState.Active || Time.time < nextPublish) return;
             nextPublish = Time.time + 1f; Publish("CONTAINMENT", "Hold the site: " + Mathf.CeilToInt(site.Remaining));
         }
-        private void HandleComplete() { PrimaryComplete(requireExtractionAfterDefense); }
-        private void HandleActivated() { Publish("CONTAINMENT", "Hold the site."); }
-        private void OnDestroy() { if (site != null) { site.Completed -= HandleComplete; site.Activated -= HandleActivated; } }
+        private void HandleComplete() { spawnDirector?.StopContainment(); PrimaryComplete(requireExtractionAfterDefense); }
+        private void HandleActivated() { spawnDirector?.BeginContainment(); Publish("CONTAINMENT", "Hold the site."); }
+        private void OnDestroy()
+        {
+            if (site != null) { site.Completed -= HandleComplete; site.Activated -= HandleActivated; }
+            spawnDirector?.StopContainment();
+        }
     }
 
-    [RequireComponent(typeof(CircleCollider2D))]
-    public sealed class ExtractionPoint : MonoBehaviour
-    {
-        private bool activePoint;
-        private void Awake() { GetComponent<Collider2D>().isTrigger = true; gameObject.SetActive(false); }
-        public void Activate() { gameObject.SetActive(true); activePoint = true; }
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            if (!activePoint || other.GetComponentInParent<PlayerHealth>() == null) return;
-            activePoint = false; MissionRunContext.Current.SetState(MissionLifecycleState.Success);
-        }
-        public static void ActivateScenePoint(Component owner)
-        {
-            ExtractionPoint point = FindObjectOfType<ExtractionPoint>(true);
-            if (point != null) point.Activate(); else Debug.LogWarning("Mission requires extraction, but no ExtractionPoint is authored.", owner);
-        }
-    }
 }

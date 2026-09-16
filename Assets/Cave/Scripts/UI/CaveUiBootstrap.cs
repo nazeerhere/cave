@@ -1051,16 +1051,23 @@ namespace Cave.UI
                 "MODES",
                 selectionPanel,
                 font,
-                new Vector2(-105f, 207f),
-                new Vector2(194f, 42f));
+                new Vector2(-140f, 207f),
+                new Vector2(128f, 42f));
             Button shopTabButton = CreateButton(
                 "SHOP",
                 selectionPanel,
                 font,
-                new Vector2(105f, 207f),
-                new Vector2(194f, 42f));
+                new Vector2(0f, 207f),
+                new Vector2(128f, 42f));
+            Button domainTabButton = CreateButton(
+                "DOMAIN",
+                selectionPanel,
+                font,
+                new Vector2(140f, 207f),
+                new Vector2(128f, 42f));
             modesTabButton.GetComponentInChildren<Text>().fontSize = 18;
             shopTabButton.GetComponentInChildren<Text>().fontSize = 18;
+            domainTabButton.GetComponentInChildren<Text>().fontSize = 16;
             modesTabButton.GetComponentInChildren<Text>().text = "SKILL PATH";
 
             CreateCardSurface(
@@ -1143,6 +1150,72 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0f, -24f),
                 new Vector2(424f, 480f));
+
+            RectTransform domainContent = CreateRect(
+                "Domain Content",
+                selectionPanel,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -24f),
+                new Vector2(424f, 480f));
+
+            CreateCardSurface("Domain Seed Card", domainContent, new Vector2(0f, 136f), new Vector2(416f, 70f));
+            CreateCardSurface("Power Expression Card", domainContent, new Vector2(0f, 65f), new Vector2(416f, 64f));
+            CreateCardSurface("Axiom Phenomena Card", domainContent, new Vector2(0f, -18f), new Vector2(416f, 94f));
+            CreateCardSurface("Territory Principle Card", domainContent, new Vector2(0f, -101f), new Vector2(416f, 52f));
+            CreateCardSurface("Domain Complexity Card", domainContent, new Vector2(0f, -161f), new Vector2(416f, 52f));
+
+            Text domainSeedText = CreateCenteredText(
+                "Domain Seed Status",
+                domainContent,
+                font,
+                "DOMAIN\n[ LOCKED ]\nA Domain Seed is required.",
+                14,
+                new Vector2(0f, 136f),
+                new Vector2(388f, 64f));
+            domainSeedText.fontStyle = FontStyle.Bold;
+            domainSeedText.color = CaveUiTheme.Gold;
+
+            Text powerExpressionText = CreateCenteredText(
+                "Power Expression Status",
+                domainContent,
+                font,
+                "PERSONAL DOMAIN CONSTRUCTION AWAITS THE SEED.",
+                13,
+                new Vector2(0f, 65f),
+                new Vector2(388f, 56f));
+            powerExpressionText.color = CaveUiTheme.PrimaryText;
+
+            Text axiomPhenomenaText = CreateCenteredText(
+                "Axiom Phenomena Status",
+                domainContent,
+                font,
+                "AXIOM PHENOMENA\nUnlock the Domain Seed to view current-run potential.",
+                12,
+                new Vector2(0f, -18f),
+                new Vector2(388f, 86f));
+            axiomPhenomenaText.color = CaveUiTheme.PrimaryText;
+
+            Text territoryPrincipleText = CreateCenteredText(
+                "Territory Principle Status",
+                domainContent,
+                font,
+                "TERRITORY PRINCIPLE\nLOCKED",
+                13,
+                new Vector2(0f, -101f),
+                new Vector2(388f, 46f));
+            territoryPrincipleText.color = CaveUiTheme.Mana;
+
+            Text domainComplexityText = CreateCenteredText(
+                "Domain Complexity Status",
+                domainContent,
+                font,
+                "DOMAIN COMPLEXITY\nLOCKED",
+                13,
+                new Vector2(0f, -161f),
+                new Vector2(388f, 46f));
+            domainComplexityText.color = CaveUiTheme.BorderBright;
 
             CreateCardSurface("Health Potion Card", shopContent, new Vector2(0f, 139f), new Vector2(416f, 62f));
             CreateCardSurface("Mana Potion Card", shopContent, new Vector2(0f, 71f), new Vector2(416f, 62f));
@@ -1264,7 +1337,14 @@ namespace Cave.UI
                 landmineText,
                 landmineButton,
                 progressionMount,
-                shardSummaryMount);
+                shardSummaryMount,
+                domainContent.gameObject,
+                domainTabButton,
+                domainSeedText,
+                powerExpressionText,
+                axiomPhenomenaText,
+                territoryPrincipleText,
+                domainComplexityText);
             modeHud.Bind(specialMode, playerCurrency);
             PlayerSwordCosmetics.EnsureInstalled(specialMode.gameObject);
             PlayerSwordCosmeticHud swordHud = modesContent.gameObject.AddComponent<PlayerSwordCosmeticHud>();

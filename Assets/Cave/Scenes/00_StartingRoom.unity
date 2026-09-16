@@ -424,6 +424,7 @@ GameObject:
   - component: {fileID: 389651642}
   - component: {fileID: 389651641}
   - component: {fileID: 389651640}
+  - component: {fileID: 910010001}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1783,6 +1784,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f48f53481ae65487ab8becd3cb0aa456, type: 3}
+--- !u!114 &910010001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389651637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bd247bf716441de959d246a30e88673, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &922270806
 GameObject:
   m_ObjectHideFlags: 0
@@ -2504,7 +2517,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1599298293}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7c4e4583a924cb592de85c773c1a474, type: 3}
   m_Name: 
@@ -3238,3 +3251,60 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.7625778, y: 0.34697983}
   m_EdgeRadius: 0
+--- !u!1001 &1931615616820104625
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1931615617326543338, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_Name
+      value: Expedition Mission Terminal
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_RootOrder
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 17.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.78
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1931615617326543343, guid: 8073eca2215014426a92020bfc764b7a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8073eca2215014426a92020bfc764b7a, type: 3}

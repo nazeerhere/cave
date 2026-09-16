@@ -187,8 +187,26 @@ namespace Cave.Projectiles
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (impacted || IsOwnedCollider(other) || IsFriendlyEnemyCollider(other))
+            if (impacted || IsOwnedCollider(other))
             {
+                return;
+            }
+
+            if (IsFriendlyEnemyCollider(other))
+            {
+                Damageable enemy = other.GetComponentInParent<Damageable>();
+                Damageable attacker = currentOwner != null
+                    ? currentOwner.GetComponentInParent<Damageable>()
+                    : null;
+                if (CurseAltarZone.TryApplyEnemyFriendlyFire(
+                        attacker,
+                        enemy,
+                        damage,
+                        DamageTrait.Projectile))
+                {
+                    Impact();
+                }
+
                 return;
             }
 

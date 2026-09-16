@@ -24,6 +24,9 @@ namespace Cave.Player
         [Header("Jump Request")]
         [SerializeField, Min(0f)] private float jumpBufferTime = 0.1f;
 
+        [Header("Landing Diagnostics")]
+        [SerializeField] private bool logLandingTransitions;
+
         [Header("Character Body Contact")]
         [SerializeField] private bool useFrictionlessCharacterContacts = true;
 
@@ -47,6 +50,7 @@ namespace Cave.Player
         private PhysicsMaterial2D runtimeFrictionlessMaterial;
         private PhysicsMaterial2D runtimeCharacterContactMaterial;
         private bool usingCharacterContactMaterial;
+        private Collider2D lastGroundCollider;
         private readonly Collider2D[] groundCheckResults = new Collider2D[8];
 
         public bool IsGrounded { get; private set; }
@@ -70,6 +74,7 @@ namespace Cave.Player
             brace = GetComponent<PlayerBrace>();
             ConfigureCollisionMaterial();
             IsGrounded = CheckGrounded();
+            TryGetGroundSurface(out lastGroundCollider);
             UpdateCharacterBodyFriction();
             wasGrounded = IsGrounded;
         }
@@ -93,12 +98,27 @@ namespace Cave.Player
 
         private void FixedUpdate()
         {
-            IsGrounded = CheckGrounded();
+            Collider2D groundCollider;
+            IsGrounded = TryGetGroundSurface(out groundCollider);
+            if (groundCollider != null)
+            {
+                lastGroundCollider = groundCollider;
+            }
+            if (IsGrounded != wasGrounded)
+            {
+                LogLandingTransition(IsGrounded ? "ground acquired" : "ground lost", groundCollider);
+            }
+
             if (IsGrounded && body.velocity.y <= 0.1f)
             {
                 // A valid world-floor contact always closes the previous airborne
                 // cycle. Character support/depenetration can otherwise skip the
                 // airborne observation that previously released this latch.
+                if (jumpConsumedForAirborneCycle)
+                {
+                    LogLandingTransition("landing latch reset", groundCollider);
+                }
+
                 jumpConsumedForAirborneCycle = false;
             }
 
@@ -146,7 +166,10 @@ namespace Cave.Player
 
             bool bufferedJumpActive = Time.time <= jumpRequestExpiresAt;
             bool characterEscapeSupport = !IsGrounded && IsStandingOnCharacterBody();
-            bool shouldJump = (GameInput.JumpHeld || bufferedJumpActive)
+            // A jump begins only from a buffered press.  Treating a held input as
+            // a new request makes every landing a new jump after the airborne
+            // latch is reset, which is especially visible on polygon terrain.
+            bool shouldJump = bufferedJumpActive
                 && !IsExternallyMovementLocked
                 && !braceLocked
                 && (IsGrounded || characterEscapeSupport)
@@ -163,6 +186,7 @@ namespace Cave.Player
                 jumpConsumedForAirborneCycle = true;
                 jumpRequestExpiresAt = float.NegativeInfinity;
                 IsGrounded = false;
+                LogLandingTransition("jump initiated", groundCollider);
                 Jumped?.Invoke();
             }
         }
@@ -254,6 +278,28 @@ namespace Cave.Player
         private bool CheckGrounded()
         {
             return TryGetGroundSurface(out _);
+        }
+
+        private void LogLandingTransition(string transition, Collider2D groundCollider)
+        {
+            if (!logLandingTransitions)
+            {
+                return;
+            }
+
+            Collider2D reportedGround = groundCollider != null ? groundCollider : lastGroundCollider;
+            Debug.Log(
+                "[Cave][Landing] " + transition
+                + " grounded=" + IsGrounded
+                + " velocityY=" + (body != null ? body.velocity.y.ToString("0.###") : "n/a")
+                + " jumpPressed=" + GameInput.JumpPressed
+                + " jumpHeld=" + GameInput.JumpHeld
+                + " jumpBuffered=" + (Time.time <= jumpRequestExpiresAt)
+                + " jumpConsumed=" + jumpConsumedForAirborneCycle
+                + " ground=" + (reportedGround != null ? reportedGround.name : "none")
+                + " layer=" + (reportedGround != null ? LayerMask.LayerToName(reportedGround.gameObject.layer) : "none")
+                + " trigger=" + (reportedGround != null && reportedGround.isTrigger),
+                this);
         }
 
         private bool IsStandingOnCharacterBody()

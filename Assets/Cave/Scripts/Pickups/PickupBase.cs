@@ -11,6 +11,8 @@ namespace Cave.Pickups
 
         private Collider2D[] pickupColliders;
         private bool isConsumed;
+        private CurseAltarZone configuredAvariceZone;
+        private float configuredAvariceDepositMultiplier = 1f;
 
         protected virtual void Awake()
         {
@@ -23,6 +25,22 @@ namespace Cave.Pickups
             if (lifetime > 0f)
             {
                 Destroy(gameObject, lifetime);
+            }
+        }
+
+        private void Start()
+        {
+            // Drop configuration (including currency amount) is completed by the
+            // spawner before Start, so the altar receives the authoritative value.
+            bool absorbed = configuredAvariceZone != null
+                ? CurseAltarZone.TryAbsorbPickup(
+                    this,
+                    configuredAvariceZone,
+                    configuredAvariceDepositMultiplier)
+                : CurseAltarZone.TryAbsorbPickup(this);
+            if (!isConsumed && absorbed)
+            {
+                ConsumeWithoutPlayerPickup();
             }
         }
 
@@ -42,15 +60,41 @@ namespace Cave.Pickups
             }
 
             isConsumed = true;
-            foreach (Collider2D pickupCollider in pickupColliders)
-            {
-                pickupCollider.enabled = false;
-            }
+            DisablePickupColliders();
 
             CaveSfx.Play(CaveSfxCue.Bonus, 0.75f);
             Destroy(gameObject);
         }
 
         protected abstract bool TryApply(PlayerHealth playerHealth, GameObject playerObject);
+
+        public virtual bool TryGetAltarValue(out int value)
+        {
+            value = 0;
+            return false;
+        }
+
+        /// <summary>Assigns a death-owned Avarice deposit before Start so the
+        /// pickup cannot be captured by a different overlapping altar.</summary>
+        public void ConfigureAvariceDeposit(CurseAltarZone zone, float multiplier)
+        {
+            configuredAvariceZone = zone;
+            configuredAvariceDepositMultiplier = Mathf.Max(0f, multiplier);
+        }
+
+        private void ConsumeWithoutPlayerPickup()
+        {
+            isConsumed = true;
+            DisablePickupColliders();
+            Destroy(gameObject);
+        }
+
+        private void DisablePickupColliders()
+        {
+            foreach (Collider2D pickupCollider in pickupColliders)
+            {
+                pickupCollider.enabled = false;
+            }
+        }
     }
 }

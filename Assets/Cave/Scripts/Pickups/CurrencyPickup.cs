@@ -12,6 +12,12 @@ namespace Cave.Pickups
             value = Mathf.Max(1, amount);
         }
 
+        public override bool TryGetAltarValue(out int altarValue)
+        {
+            altarValue = value;
+            return altarValue > 0;
+        }
+
         protected override bool TryApply(PlayerHealth playerHealth, GameObject playerObject)
         {
             PlayerCurrency playerCurrency = playerObject.GetComponent<PlayerCurrency>();

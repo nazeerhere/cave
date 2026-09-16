@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Cave.Enemies
 {
     /// <summary>
-    /// Presentation-only frame player for the approved Detective, Brute, and
-    /// Corrupt Brute sheets. Gameplay components remain the source of truth for
+    /// Presentation-only frame player for the approved Detective, Brute, Troll,
+    /// Corrupt Bandit, and Wizard sheets. Gameplay components remain the source of truth for
     /// all movement, attack, damage, and crowd-control decisions.
     /// </summary>
     [DisallowMultipleComponent]
@@ -19,7 +19,10 @@ namespace Cave.Enemies
             Brute,
             CorruptBrute,
             Troll,
-            CorruptTroll
+            CorruptTroll,
+            CorruptBandit,
+            Wizard,
+            CorruptWizard
         }
 
         private enum VisualState
@@ -32,6 +35,8 @@ namespace Cave.Enemies
             Grab,
             Study,
             Utility,
+            BanditLunge,
+            BanditDashAttack,
             Hurt,
             Death,
             LegacyFallback
@@ -66,9 +71,25 @@ namespace Cave.Enemies
         [SerializeField, Min(1f)] private float runFramesPerSecond = 10f;
         [SerializeField, Min(1f)] private float actionFramesPerSecond = 10f;
 
+        [Header("Corrupt Bandit Playback")]
+        [SerializeField, Min(1f)] private float banditSlashFramesPerSecond = 8f;
+        [SerializeField, Min(1f)] private float banditFollowupFramesPerSecond = 3.5f;
+        [SerializeField, Min(1f)] private float banditLungeFramesPerSecond = 6f;
+        [SerializeField, Min(1f)] private float banditShadowStepFramesPerSecond = 20f;
+        [SerializeField, Min(1f)] private float banditDashFramesPerSecond = 6f;
+        [SerializeField, Min(1f)] private float banditHurtFramesPerSecond = 20f;
+
         private Rigidbody2D body;
         private Damageable damageable;
         private EnemyMeleeCombat melee;
+        private LightBanditCombat lightBandit;
+        private WizardSupportAbilities wizardSupport;
+        private SwarmCaller wizardSummons;
+        private EnemyShooter wizardShooter;
+        private EnemySlowShooter corruptWizardSlowBolt;
+        private EnemyHealAbility corruptWizardHeal;
+        private EnemyDamageBuffAbility corruptWizardBuff;
+        private NecromancerDetectiveSummoner corruptWizardDetectiveSummons;
         private BruteControlAbilities bruteControl;
         private EnemyDefenseController defense;
         private DetectiveBrain detectiveBrain;
@@ -201,6 +222,14 @@ namespace Cave.Enemies
             body = body != null ? body : GetComponent<Rigidbody2D>();
             damageable = damageable != null ? damageable : GetComponent<Damageable>();
             melee = melee != null ? melee : GetComponent<EnemyMeleeCombat>();
+            lightBandit = lightBandit != null ? lightBandit : GetComponent<LightBanditCombat>();
+            wizardSupport = wizardSupport != null ? wizardSupport : GetComponent<WizardSupportAbilities>();
+            wizardSummons = wizardSummons != null ? wizardSummons : GetComponentInChildren<SwarmCaller>(true);
+            wizardShooter = wizardShooter != null ? wizardShooter : GetComponentInChildren<EnemyShooter>(true);
+            corruptWizardSlowBolt = corruptWizardSlowBolt != null ? corruptWizardSlowBolt : GetComponentInChildren<EnemySlowShooter>(true);
+            corruptWizardHeal = corruptWizardHeal != null ? corruptWizardHeal : GetComponentInChildren<EnemyHealAbility>(true);
+            corruptWizardBuff = corruptWizardBuff != null ? corruptWizardBuff : GetComponentInChildren<EnemyDamageBuffAbility>(true);
+            corruptWizardDetectiveSummons = corruptWizardDetectiveSummons != null ? corruptWizardDetectiveSummons : GetComponent<NecromancerDetectiveSummoner>();
             bruteControl = bruteControl != null ? bruteControl : GetComponent<BruteControlAbilities>();
             defense = defense != null ? defense : GetComponent<EnemyDefenseController>();
             detectiveBrain = detectiveBrain != null ? detectiveBrain : GetComponent<DetectiveBrain>();
@@ -250,6 +279,65 @@ namespace Cave.Enemies
                 }
             }
 
+            if (visualRole == VisualRole.CorruptBandit && lightBandit != null)
+            {
+                switch (lightBandit.CurrentAction)
+                {
+                    case LightBanditAction.DashBashWindup:
+                    case LightBanditAction.DashBash:
+                        return VisualState.BanditLunge;
+                    case LightBanditAction.DashSlashWindup:
+                    case LightBanditAction.DashSlash:
+                        return VisualState.BanditDashAttack;
+                    case LightBanditAction.Backstep:
+                    case LightBanditAction.Sidestep:
+                    case LightBanditAction.DashFeint:
+                        return VisualState.Utility;
+                }
+            }
+
+            if (visualRole == VisualRole.Wizard && wizardSupport != null && wizardSupport.IsCasting)
+            {
+                switch (wizardSupport.CurrentAction)
+                {
+                    case WizardCastAction.SummonEyes:
+                        return VisualState.Grab;
+                    case WizardCastAction.Heal:
+                        return VisualState.Study;
+                    default:
+                        return VisualState.Utility;
+                }
+            }
+
+            if (visualRole == VisualRole.CorruptWizard)
+            {
+                if ((wizardSummons != null && wizardSummons.IsSummoning)
+                    || (corruptWizardDetectiveSummons != null && corruptWizardDetectiveSummons.IsBusy))
+                {
+                    return VisualState.Grab;
+                }
+
+                if (corruptWizardHeal != null && corruptWizardHeal.IsCasting)
+                {
+                    return VisualState.Study;
+                }
+
+                if (corruptWizardBuff != null && corruptWizardBuff.IsCasting)
+                {
+                    return VisualState.Utility;
+                }
+
+                if (corruptWizardSlowBolt != null && corruptWizardSlowBolt.IsBusy)
+                {
+                    return VisualState.Light;
+                }
+            }
+
+            if (visualRole == VisualRole.Wizard && wizardShooter != null && wizardShooter.IsBusy)
+            {
+                return VisualState.Light;
+            }
+
             if (bruteControl != null && bruteControl.IsBusy)
             {
                 // Corrupt Brute has approved grapple art. The normal Brute does
@@ -268,6 +356,12 @@ namespace Cave.Enemies
 
             if (melee != null && melee.IsAttacking)
             {
+                if (visualRole == VisualRole.CorruptBandit)
+                {
+                    return melee.CurrentSequenceDecision == EnemyMeleeDecision.Basic
+                        ? VisualState.Light
+                        : VisualState.Heavy;
+                }
                 return melee.CurrentSequenceDecision == EnemyMeleeDecision.Charged
                     ? VisualState.Heavy
                     : VisualState.Light;
@@ -291,6 +385,8 @@ namespace Cave.Enemies
                 case VisualState.Light: return NonEmptyOr(lightFrames, idleFrames);
                 case VisualState.Heavy: return NonEmptyOr(heavyFrames, lightFrames, idleFrames);
                 case VisualState.Grab: return NonEmptyOr(grabFrames, idleFrames);
+                case VisualState.BanditLunge: return NonEmptyOr(grabFrames, idleFrames);
+                case VisualState.BanditDashAttack: return NonEmptyOr(studyFrames, idleFrames);
                 case VisualState.Study: return NonEmptyOr(studyFrames, idleFrames);
                 case VisualState.Utility: return NonEmptyOr(utilityFrames, idleFrames);
                 case VisualState.Hurt: return NonEmptyOr(hurtFrames, idleFrames);
@@ -309,17 +405,35 @@ namespace Cave.Enemies
             bool loop = currentState == VisualState.Idle
                 || currentState == VisualState.Walk
                 || currentState == VisualState.Run
-                || currentState == VisualState.Study;
-            float framesPerSecond = currentState == VisualState.Idle
-                ? idleFramesPerSecond
-                : currentState == VisualState.Walk
-                    ? walkFramesPerSecond
-                    : currentState == VisualState.Run
-                        ? runFramesPerSecond
-                        : actionFramesPerSecond;
+                || (currentState == VisualState.Study && visualRole != VisualRole.CorruptBandit);
+            float framesPerSecond = FramesPerSecondFor(currentState);
             int index = Mathf.FloorToInt((Time.time - stateStartedAt) * framesPerSecond);
             index = loop ? index % currentFrames.Length : Mathf.Min(index, currentFrames.Length - 1);
             return currentFrames[index];
+        }
+
+        private float FramesPerSecondFor(VisualState state)
+        {
+            if (visualRole == VisualRole.CorruptBandit)
+            {
+                switch (state)
+                {
+                    case VisualState.Light: return banditSlashFramesPerSecond;
+                    case VisualState.Heavy: return banditFollowupFramesPerSecond;
+                    case VisualState.BanditLunge: return banditLungeFramesPerSecond;
+                    case VisualState.Utility: return banditShadowStepFramesPerSecond;
+                    case VisualState.BanditDashAttack: return banditDashFramesPerSecond;
+                    case VisualState.Hurt: return banditHurtFramesPerSecond;
+                }
+            }
+
+            return state == VisualState.Idle
+                ? idleFramesPerSecond
+                : state == VisualState.Walk
+                    ? walkFramesPerSecond
+                    : state == VisualState.Run
+                        ? runFramesPerSecond
+                        : actionFramesPerSecond;
         }
 
         private void UpdateFacing()

@@ -29,6 +29,7 @@ namespace Cave.Enemies
         [SerializeField] private Color guardBreakTelegraphColor = new Color(1f, 0.2f, 0.12f, 1f);
 
         private float nextDamageTime;
+        private readonly Dictionary<Damageable, float> nextFriendlyDamageTimes = new Dictionary<Damageable, float>();
         private int runtimeContactDamage;
         private int runtimeGuardBreakDamage;
         private float archetypeDamageMultiplier = 1f;
@@ -101,19 +102,21 @@ namespace Cave.Enemies
         {
             nextDamageTime = 0f;
             contactCounts.Clear();
+            nextFriendlyDamageTimes.Clear();
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
             PlayerHealth playerHealth = collision.collider.GetComponentInParent<PlayerHealth>();
-            if (playerHealth == null)
+            if (playerHealth != null)
             {
+                contactCounts.TryGetValue(playerHealth, out int count);
+                contactCounts[playerHealth] = count + 1;
+                TryBeginAttack(playerHealth);
                 return;
             }
 
-            contactCounts.TryGetValue(playerHealth, out int count);
-            contactCounts[playerHealth] = count + 1;
-            TryBeginAttack(playerHealth);
+            TryApplyInsanityFriendlyContactDamage(collision.collider);
         }
 
         private void OnCollisionStay2D(Collision2D collision)
@@ -122,7 +125,10 @@ namespace Cave.Enemies
             if (playerHealth != null)
             {
                 TryBeginAttack(playerHealth);
+                return;
             }
+
+            TryApplyInsanityFriendlyContactDamage(collision.collider);
         }
 
         private void OnCollisionExit2D(Collision2D collision)
@@ -240,6 +246,37 @@ namespace Cave.Enemies
             }
 
             return stagger != null && !stagger.CanAct;
+        }
+
+        private void TryApplyInsanityFriendlyContactDamage(Collider2D collider)
+        {
+            Damageable attacker = GetComponentInParent<Damageable>();
+            Damageable target = collider != null ? collider.GetComponentInParent<Damageable>() : null;
+            if (attacker == null || target == null || target == attacker || IsOwnerStaggered())
+            {
+                return;
+            }
+
+            if (nextFriendlyDamageTimes.TryGetValue(target, out float nextTime) && Time.time < nextTime)
+            {
+                return;
+            }
+
+            int normalDamage = Mathf.Max(1, Mathf.RoundToInt(runtimeContactDamage * archetypeDamageMultiplier));
+            EnemyDamageModifiers modifiers = GetComponentInParent<EnemyDamageModifiers>();
+            if (modifiers != null)
+            {
+                normalDamage = modifiers.ResolveDamage(normalDamage);
+            }
+
+            if (CurseAltarZone.TryApplyEnemyFriendlyFire(
+                    attacker,
+                    target,
+                    normalDamage,
+                    damageTraits | DamageTrait.Melee))
+            {
+                nextFriendlyDamageTimes[target] = Time.time + contactCooldown;
+            }
         }
 
         private void ShowTelegraph(Color color, float scale)

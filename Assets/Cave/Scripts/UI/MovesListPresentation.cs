@@ -184,11 +184,10 @@ namespace Cave.UI
             CreateSquareIcon(row.transform, iconName, new Vector2(-377f, 0f), accent);
             Text name = Label(row.transform, "Name", font, title, 13, CaveUiTheme.PrimaryText, TextAnchor.MiddleLeft);
             Set(name.rectTransform, new Vector2(-332f, 0f), new Vector2(130f, 34f));
-            Text key = Label(row.transform, "Input", font, input, 11, CaveUiTheme.BorderBright, TextAnchor.MiddleCenter);
-            Set(key.rectTransform, new Vector2(-184f, 0f), new Vector2(110f, 28f));
-            Image keyBacking = key.gameObject.AddComponent<Image>();
+            Image keyBacking = Panel(row.transform, "Input Background", new Vector2(-184f, 0f), new Vector2(110f, 28f), CaveUiTheme.BorderBright);
             CaveUiArt.ApplyCard(keyBacking, true, CaveUiTheme.BorderBright);
-            key.rectTransform.SetAsLastSibling();
+            Text key = Label(keyBacking.transform, "Input", font, input, 11, CaveUiTheme.BorderBright, TextAnchor.MiddleCenter);
+            Set(key.rectTransform, Vector2.zero, new Vector2(104f, 24f));
             Text body = Label(row.transform, "Description", font, description, 11, CaveUiTheme.SecondaryText, TextAnchor.MiddleLeft);
             Set(body.rectTransform, new Vector2(8f, 0f), new Vector2(374f, 36f));
         }
