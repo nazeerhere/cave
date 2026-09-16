@@ -20,6 +20,7 @@ namespace Cave.Combat
         private int runtimeMaximumHealth;
         private Color persistentTint = Color.white;
         private PhaseCombatState phaseCombatState;
+        private bool runtimeInitialized;
 
         public event Action Died;
         /// <summary>Death context for presentation/reward systems that need the
@@ -34,9 +35,29 @@ namespace Cave.Combat
 
         private void Awake()
         {
-            runtimeMaximumHealth = maxHealth;
-            CurrentHealth = runtimeMaximumHealth;
-            renderers = GetComponentsInChildren<SpriteRenderer>();
+            InitializeRuntimeState();
+        }
+
+        /// <summary>
+        /// Resolves health and presentation state for explicit runtime factories
+        /// and deterministic verification without invoking Unity lifecycle
+        /// methods manually. Repeated calls preserve live health and tint state.
+        /// </summary>
+        public void InitializeRuntimeState()
+        {
+            if (!runtimeInitialized)
+            {
+                runtimeMaximumHealth = maxHealth;
+                CurrentHealth = runtimeMaximumHealth;
+                runtimeInitialized = true;
+            }
+
+            if (renderers != null && originalColors != null)
+            {
+                return;
+            }
+
+            renderers = GetComponentsInChildren<SpriteRenderer>(true);
             originalColors = new Color[renderers.Length];
 
             for (int index = 0; index < renderers.Length; index++)
@@ -57,6 +78,7 @@ namespace Cave.Combat
 
         public int TakeDamageResolved(int amount, DamageContext damageContext)
         {
+            InitializeRuntimeState();
             if (amount <= 0 || CurrentHealth <= 0)
             {
                 return 0;
@@ -162,12 +184,16 @@ namespace Cave.Combat
                 StopCoroutine(flashRoutine);
             }
 
-            flashRoutine = StartCoroutine(FlashDamage());
+            if (Application.isPlaying)
+            {
+                flashRoutine = StartCoroutine(FlashDamage());
+            }
             return appliedDamage;
         }
 
         public void RestoreToFullHealth()
         {
+            InitializeRuntimeState();
             if (flashRoutine != null)
             {
                 StopCoroutine(flashRoutine);
@@ -185,6 +211,7 @@ namespace Cave.Combat
 
         public int RestoreHealthResolved(int amount)
         {
+            InitializeRuntimeState();
             if (amount <= 0 || CurrentHealth <= 0 || CurrentHealth >= runtimeMaximumHealth)
             {
                 return 0;
@@ -197,6 +224,7 @@ namespace Cave.Combat
 
         public void SetPersistentTint(Color tint)
         {
+            InitializeRuntimeState();
             persistentTint = new Color(
                 Mathf.Clamp01(tint.r),
                 Mathf.Clamp01(tint.g),
@@ -207,6 +235,7 @@ namespace Cave.Combat
 
         public void ReapplyPersistentTint()
         {
+            InitializeRuntimeState();
             if (flashRoutine == null)
             {
                 RestoreOriginalColors();
@@ -215,6 +244,7 @@ namespace Cave.Combat
 
         public void SetRuntimeMaximumHealth(int maximumHealth, bool restoreToFull)
         {
+            InitializeRuntimeState();
             runtimeMaximumHealth = Mathf.Max(1, maximumHealth);
             CurrentHealth = restoreToFull
                 ? runtimeMaximumHealth
@@ -223,6 +253,7 @@ namespace Cave.Combat
 
         public void SetRuntimeMaximumHealthPreservingRatio(int maximumHealth)
         {
+            InitializeRuntimeState();
             int previousMaximum = Mathf.Max(1, runtimeMaximumHealth);
             float healthFraction = CurrentHealth / (float)previousMaximum;
             runtimeMaximumHealth = Mathf.Max(1, maximumHealth);

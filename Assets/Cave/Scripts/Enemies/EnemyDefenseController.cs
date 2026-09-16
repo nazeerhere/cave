@@ -103,6 +103,7 @@ namespace Cave.Enemies
         private bool defensePoseApplied;
         private EnemyMeleeCombat meleePresentation;
         private GuardResonanceState guardResonance;
+        private bool runtimeInitialized;
 
         public event Action<EnemyDefenseState, bool> DefenseResolved;
         public event Action GuardBroken;
@@ -135,20 +136,45 @@ namespace Cave.Enemies
 
         private void Awake()
         {
-            facingDirection = startsFacingRight ? 1f : -1f;
-            stagger = GetComponent<EnemyStagger>();
-            guardResonance = GuardResonanceState.EnsureOn(gameObject);
-            if (guardResonance != null)
-            {
-                guardResonance.ResonanceBroken += HandleResonanceBroken;
-                guardResonance.DestabilizedStarted += EndBlockingForDestabilization;
-            }
-            CachePresentation();
+            InitializeRuntimeDependencies();
         }
 
         private void Start()
         {
+            InitializeRuntimeDependencies();
+        }
+
+        /// <summary>
+        /// Resolves defense runtime state for explicit factories and deterministic
+        /// verification without invoking Unity lifecycle methods manually.
+        /// Awake remains the normal production initialization path.
+        /// </summary>
+        public void InitializeRuntimeDependencies()
+        {
+            if (!runtimeInitialized)
+            {
+                facingDirection = startsFacingRight ? 1f : -1f;
+                runtimeInitialized = true;
+            }
+
             stagger = GetComponent<EnemyStagger>();
+
+            GuardResonanceState resolvedResonance = GuardResonanceState.EnsureOn(gameObject);
+            if (guardResonance != resolvedResonance && guardResonance != null)
+            {
+                guardResonance.ResonanceBroken -= HandleResonanceBroken;
+                guardResonance.DestabilizedStarted -= EndBlockingForDestabilization;
+            }
+
+            guardResonance = resolvedResonance;
+            if (guardResonance != null)
+            {
+                guardResonance.ResonanceBroken -= HandleResonanceBroken;
+                guardResonance.ResonanceBroken += HandleResonanceBroken;
+                guardResonance.DestabilizedStarted -= EndBlockingForDestabilization;
+                guardResonance.DestabilizedStarted += EndBlockingForDestabilization;
+            }
+
             CachePresentation();
         }
 

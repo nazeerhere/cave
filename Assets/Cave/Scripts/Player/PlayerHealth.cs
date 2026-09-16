@@ -19,6 +19,7 @@ namespace Cave.Player
         private SidewaysParryAttack guard;
         private PhaseCombatState phaseCombatState;
         private float invulnerableUntil;
+        private bool runtimeInitialized;
 
         public event Action<int, int> HealthChanged;
         public event Action DamageTaken;
@@ -30,11 +31,26 @@ namespace Cave.Player
 
         private void Awake()
         {
+            InitializeRuntime();
+        }
+
+        /// <summary>
+        /// Resolves required sibling components for explicit runtime factories
+        /// and deterministic verification without invoking Awake manually.
+        /// Awake remains the normal production initialization path.
+        /// </summary>
+        public void InitializeRuntime()
+        {
             playerRespawn = GetComponent<PlayerRespawn>();
+            playerRespawn?.InitializeRuntime();
             strengthShield = GetComponent<PlayerStrengthShield>();
             strengthDeflection = GetComponent<PlayerStrengthDeflection>();
             guard = GetComponent<SidewaysParryAttack>();
-            CurrentHealth = maxHealth;
+            if (!runtimeInitialized)
+            {
+                CurrentHealth = maxHealth;
+                runtimeInitialized = true;
+            }
         }
 
         public bool TryTakeDamage(int amount)

@@ -19,8 +19,24 @@ namespace Cave.Player
 
         private void Awake()
         {
+            InitializeRuntimeDependencies();
+        }
+
+        /// <summary>
+        /// Resolves the status dependencies for explicit runtime factories and
+        /// deterministic verification without invoking Unity lifecycle methods
+        /// manually. Awake remains the normal production initialization path.
+        /// </summary>
+        public void InitializeRuntimeDependencies()
+        {
+            PlayerHealth resolvedHealth = GetComponent<PlayerHealth>();
+            if (playerHealth != resolvedHealth && playerHealth != null)
+            {
+                playerHealth.Died -= ClearSlow;
+            }
+
             playerController = GetComponent<PlayerController>();
-            playerHealth = GetComponent<PlayerHealth>();
+            playerHealth = resolvedHealth;
             statusVisuals = GetComponent<EnemyStatusVisuals>();
             if (statusVisuals == null)
             {
@@ -30,7 +46,11 @@ namespace Cave.Player
             statusVisuals.Configure(
                 Resources.Load<SpecialModeTier2Settings>("SpecialModeTier2Settings"));
 
-            playerHealth.Died += ClearSlow;
+            if (playerHealth != null)
+            {
+                playerHealth.Died -= ClearSlow;
+                playerHealth.Died += ClearSlow;
+            }
         }
 
         private void Update()

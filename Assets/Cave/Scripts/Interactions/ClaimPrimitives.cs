@@ -104,40 +104,59 @@ namespace Cave.Interactions
         [SerializeField, Min(1)] private int authorityStrength = 1;
 
         private InteractionIdentity identity;
+        private ClaimAuthorityNetwork authorityNetwork;
         private bool initialized;
         private bool destroyedReported;
+
+        public event Action<ClaimAnchor, bool> ActiveStateChanged;
+        public event Action<ClaimAnchor> AnchorDestroyed;
 
         public bool IsActive => isActive;
         public int AuthorityStrength => authorityStrength;
         public InteractionIdentity Identity => identity;
+        public ClaimAuthorityNetwork AuthorityNetwork => authorityNetwork;
 
         private void Awake()
         {
             identity = GetComponent<InteractionIdentity>();
         }
 
-        public void InitializeRuntime(int strength)
+        public void InitializeRuntime(int strength, ClaimAuthorityNetwork network = null)
         {
             authorityStrength = Mathf.Max(1, strength);
             isActive = true;
             destroyedReported = false;
+            authorityNetwork = network;
             identity = InteractionRuntime.TrackSpawn(
                 gameObject,
                 InteractionTraits.None,
                 InteractionOwnership.Claim,
-                gameObject,
+                authorityNetwork != null ? authorityNetwork.AuthoritySource : gameObject,
                 false,
                 authorityStrength);
             initialized = true;
+            authorityNetwork?.RegisterAnchor(this);
+            ActiveStateChanged?.Invoke(this, true);
         }
 
         public void Deactivate()
         {
+            if (!isActive)
+            {
+                return;
+            }
+
             isActive = false;
+            ActiveStateChanged?.Invoke(this, false);
         }
 
-        private void OnDestroy()
+        /// <summary>
+        /// Retires a runtime anchor that was destroyed or expired while still
+        /// allowing ordinary deactivation to remain a non-destruction state.
+        /// </summary>
+        public void NotifyDestroyed()
         {
+            Deactivate();
             if (initialized && !destroyedReported && identity != null)
             {
                 destroyedReported = true;
@@ -145,13 +164,36 @@ namespace Cave.Interactions
             }
         }
 
-        public static ClaimAnchor CreateRuntime(Vector2 position, int strength = 1)
+        private void OnDestroy()
+        {
+            NotifyDestroyed();
+            authorityNetwork?.UnregisterAnchor(this);
+            AnchorDestroyed?.Invoke(this);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = isActive ? new Color(0.85f, 0.25f, 1f, 0.9f) : new Color(0.35f, 0.35f, 0.35f, 0.55f);
+            Gizmos.DrawWireSphere(transform.position, 0.32f);
+#if UNITY_EDITOR
+            UnityEditor.Handles.Label(
+                transform.position + Vector3.up * 0.45f,
+                "Claim Anchor\n" + (isActive ? "Active" : "Inactive")
+                + " | Strength " + authorityStrength
+                + " | Owner " + (identity != null ? identity.Ownership.ToString() : "Uninitialized"));
+#endif
+        }
+
+        public static ClaimAnchor CreateRuntime(
+            Vector2 position,
+            int strength = 1,
+            ClaimAuthorityNetwork network = null)
         {
             GameObject anchorObject = new GameObject("Claim Anchor");
             anchorObject.transform.position = position;
             anchorObject.AddComponent<InteractionIdentity>();
             ClaimAnchor anchor = anchorObject.AddComponent<ClaimAnchor>();
-            anchor.InitializeRuntime(strength);
+            anchor.InitializeRuntime(strength, network);
             return anchor;
         }
     }
@@ -272,9 +314,22 @@ namespace Cave.Interactions
                     ClaimAnchor anchor = attempt.Claimant.GetComponent<ClaimAnchor>();
                     return anchor != null && anchor.IsActive;
                 case ClaimProvenance.CreatedByClaimOwner:
-                    return attempt.Target.AuthoritySource == attempt.Claimant.gameObject;
+                    ClaimAnchor creationAnchor = attempt.Claimant.GetComponent<ClaimAnchor>();
+                    return attempt.Target.AuthoritySource == attempt.Claimant.gameObject
+                        || (creationAnchor != null
+                            && creationAnchor.AuthorityNetwork != null
+                            && attempt.Target.AuthoritySource
+                                == creationAnchor.AuthorityNetwork.AuthoritySource);
+                case ClaimProvenance.InsideClaimedTerritory:
+                    ClaimAnchor territorialAnchor = attempt.Claimant.GetComponent<ClaimAnchor>();
+                    return territorialAnchor != null
+                        && territorialAnchor.IsActive
+                        && territorialAnchor.AuthorityNetwork != null
+                        && territorialAnchor.AuthorityNetwork.HasTerritorialEvidence(
+                            territorialAnchor,
+                            attempt.Target);
                 default:
-                    // Capture/territory/consent require future explicit evidence;
+                    // Capture and consent require future explicit evidence;
                     // accepting them before that evidence exists would be arbitrary.
                     return false;
             }

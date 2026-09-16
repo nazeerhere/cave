@@ -41,6 +41,10 @@ namespace Cave.Combat
             effectObject.transform.rotation = Quaternion.Euler(0f, 0f, rotationDegrees);
             CombatShapeEffect effect = effectObject.AddComponent<CombatShapeEffect>();
             effect.Initialize(shape, size, effectColor, lifetime, lineWidth);
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(effectObject);
+            }
         }
 
         private void Initialize(
@@ -78,7 +82,14 @@ namespace Cave.Combat
             lineRenderer.endColor = faded;
             if (progress >= 1f)
             {
-                Destroy(gameObject);
+                if (Application.isPlaying)
+                {
+                    Destroy(gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(gameObject);
+                }
             }
         }
 
@@ -171,7 +182,14 @@ namespace Cave.Combat
         {
             if (effectMaterial != null)
             {
-                Destroy(effectMaterial);
+                if (Application.isPlaying)
+                {
+                    Destroy(effectMaterial);
+                }
+                else
+                {
+                    DestroyImmediate(effectMaterial);
+                }
             }
         }
     }

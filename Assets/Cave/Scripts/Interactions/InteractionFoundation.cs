@@ -32,7 +32,9 @@ namespace Cave.Interactions
         OwnershipChanged,
         Destroyed,
         ClaimAttempted,
-        ClaimResolved
+        ClaimResolved,
+        EnteredTerritory,
+        ExitedTerritory
     }
 
     /// <summary>

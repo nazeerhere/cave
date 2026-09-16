@@ -54,12 +54,22 @@ namespace Cave.Projectiles
         private FrenzyBreakActivation frenzyActivation;
         private InteractionIdentity interactionIdentity;
         private bool interactionDestroyedReported;
+        private bool claimSuspended;
+        private bool runtimeReferencesCached;
 
         public int BaseDamage => baseDamage;
         public int SkillTier => firedTier;
         public int RemainingEnemyHits => remainingEnemyHits;
         public bool IsPiercing => remainingEnemyHits > 1;
         public bool CanBeEnemyParried => hasLaunched && !hasImpacted && !reflectedByEnemy;
+        public InteractionIdentity InteractionIdentity => interactionIdentity;
+        public bool IsClaimSuspended => claimSuspended;
+        public bool CanBeClaimSuspended => hasLaunched
+            && !hasImpacted
+            && !claimSuspended
+            && body != null
+            && projectileCollider != null
+            && interactionIdentity != null;
 
         public void SetFrenzyBreakActivation(FrenzyBreakActivation activation)
         {
@@ -68,8 +78,24 @@ namespace Cave.Projectiles
 
         private void Awake()
         {
+            CacheRuntimeReferences();
+        }
+
+        private bool CacheRuntimeReferences()
+        {
+            if (runtimeReferencesCached)
+            {
+                return body != null && projectileCollider != null;
+            }
+
             body = GetComponent<Rigidbody2D>();
             projectileCollider = GetComponent<Collider2D>();
+            if (body == null || projectileCollider == null)
+            {
+                Debug.LogError("[Cave] PlayerProjectile requires Rigidbody2D and Collider2D before launch.", this);
+                return false;
+            }
+
             projectileCollider.isTrigger = true;
             visualRenderers = GetComponentsInChildren<SpriteRenderer>(true);
             baseVisualColors = new Color[visualRenderers.Length];
@@ -80,6 +106,8 @@ namespace Cave.Projectiles
 
             baseScale = transform.localScale;
             CacheScalableVisualTransforms();
+            runtimeReferencesCached = true;
+            return true;
         }
 
         public void Launch(Vector2 direction, SpecialMode mode, int damage)
@@ -111,6 +139,11 @@ namespace Cave.Projectiles
             int skillTier,
             SpecialModeTier2Settings specialModeSettings)
         {
+            if (!CacheRuntimeReferences())
+            {
+                return;
+            }
+
             firedMode = mode;
             resolvedDamage = Mathf.Max(1, damage);
             damageContext = context.WithTraits(DamageTrait.Projectile);
@@ -122,6 +155,7 @@ namespace Cave.Projectiles
             reflectedByEnemy = false;
             enemyParryOwner = null;
             hasLaunched = true;
+            claimSuspended = false;
             interactionDestroyedReported = false;
             interactionIdentity = InteractionRuntime.TrackSpawn(
                 gameObject,
@@ -133,6 +167,59 @@ namespace Cave.Projectiles
             ConfigureTierVisuals();
             body.velocity = direction.normalized * speed;
             Invoke(nameof(Expire), lifetime);
+        }
+
+        /// <summary>
+        /// Safely parks a live player projectile after a successful explicit
+        /// Claim. Ownership remains entirely with ClaimResolver; this method
+        /// only pauses projectile behaviour so future Repossession can reuse
+        /// the same object and interaction identity.
+        /// </summary>
+        public bool TrySuspendForClaim(Transform holder)
+        {
+            if (!CacheRuntimeReferences() || !CanBeClaimSuspended)
+            {
+                return false;
+            }
+
+            claimSuspended = true;
+            hasImpacted = true;
+            frenzyActivation?.Complete();
+            frenzyActivation = null;
+            CancelInvoke();
+            body.velocity = Vector2.zero;
+            body.simulated = false;
+            projectileCollider.enabled = false;
+            if (holder != null)
+            {
+                transform.SetParent(holder, true);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Terminal cleanup for a captured projectile whose authority owner is
+        /// retiring. Captures never resume normal hit processing implicitly.
+        /// </summary>
+        public void RetireClaimCapture()
+        {
+            if (!claimSuspended)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            // Editor verification can exercise a real boss-death cleanup
+            // chain. Unity forbids deferred Destroy while not playing, so use
+            // immediate cleanup only in that editor-only execution context.
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(gameObject);
+                return;
+            }
+#endif
+            Destroy(gameObject);
         }
 
         private void OnTriggerEnter2D(Collider2D other)

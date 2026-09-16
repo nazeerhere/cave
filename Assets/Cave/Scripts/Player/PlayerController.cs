@@ -55,6 +55,7 @@ namespace Cave.Player
 
         public bool IsGrounded { get; private set; }
         public bool IsExternallyMovementLocked => Time.time < externalMovementLockUntil;
+        public float StatusMovementMultiplier => statusMovementMultiplier;
 
         private void Awake()
         {

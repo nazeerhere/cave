@@ -213,12 +213,26 @@ namespace Cave.Enemies
         {
             if (burnMaterial != null)
             {
-                Destroy(burnMaterial);
+                if (Application.isPlaying)
+                {
+                    Destroy(burnMaterial);
+                }
+                else
+                {
+                    DestroyImmediate(burnMaterial);
+                }
             }
 
             if (frostMaterial != null)
             {
-                Destroy(frostMaterial);
+                if (Application.isPlaying)
+                {
+                    Destroy(frostMaterial);
+                }
+                else
+                {
+                    DestroyImmediate(frostMaterial);
+                }
             }
         }
     }

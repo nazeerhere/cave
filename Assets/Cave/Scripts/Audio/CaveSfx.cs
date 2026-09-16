@@ -75,6 +75,15 @@ namespace Cave.Audio
                 return;
             }
 
+            // Editor verification may exercise real combat code (including
+            // Damageable's normal hit cue). Persistence is a play-mode-only
+            // Unity operation, so editor tooling intentionally receives a
+            // silent no-op instead of creating a scene object.
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
             library = Resources.Load<CaveSfxLibrary>(LibraryResourceName);
             GameObject audioObject = new GameObject("[Cave] SFX");
             Object.DontDestroyOnLoad(audioObject);
