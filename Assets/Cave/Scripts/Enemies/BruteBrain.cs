@@ -242,7 +242,11 @@ namespace Cave.Enemies
             PlayerAttackState playerAttack = player.GetComponent<PlayerAttackState>();
             bool playerCommitted = playerAttack != null && playerAttack.IsActivelyAttacking;
 
-            float charged = chargedWeight + (playerCommitted ? committedPlayerChargeBonus : 0f);
+            CombatTacticalIntent tacticalIntent;
+            bool pressureIntent = TryGetCombatTacticalIntent(out tacticalIntent)
+                && tacticalIntent == CombatTacticalIntent.Pressure;
+            float charged = (chargedWeight + (playerCommitted ? committedPlayerChargeBonus : 0f))
+                * (pressureIntent ? 1.2f : 1f);
             float feint = guardHeld ? guardedFeintWeight : 0f;
             float guardBreak = baseGuardBreakWeight
                 + (guardHeld ? guardedBreakWeight : 0f)

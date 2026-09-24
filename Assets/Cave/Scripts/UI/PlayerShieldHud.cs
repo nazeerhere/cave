@@ -8,10 +8,10 @@ namespace Cave.UI
 {
     public sealed class PlayerShieldHud : MonoBehaviour
     {
-        private const float VisualRefreshInterval = 0.1f;
-
         [SerializeField] private Text statusText;
         [SerializeField] private Image progressFill;
+        [SerializeField] private RectTransform healthFill;
+        [SerializeField] private GameObject compactRoot;
 
         private PlayerStrengthShield shield;
         private PlayerSpecialModeUpgradeState upgradeState;
@@ -19,13 +19,30 @@ namespace Cave.UI
         private string displayedStatus;
         private Color displayedColor = new Color(-1f, -1f, -1f, -1f);
         private float displayedProgress = -1f;
-        private float nextVisualRefreshTime;
         private StrengthShieldState displayedState = (StrengthShieldState)(-1);
 
         public void Configure(Text shieldStatusText, Image rechargeProgressFill)
         {
             statusText = shieldStatusText;
             progressFill = rechargeProgressFill;
+        }
+
+        /// <summary>
+        /// Configures the compact shield segment that lives inside the existing
+        /// health bar. Shield state remains event-driven by PlayerStrengthShield;
+        /// this only changes how that state is presented.
+        /// </summary>
+        public void ConfigureCompact(
+            Image shieldProgressFill,
+            RectTransform healthProgressFill,
+            GameObject shieldSegmentRoot)
+        {
+            statusText = null;
+            progressFill = shieldProgressFill;
+            healthFill = healthProgressFill;
+            compactRoot = shieldSegmentRoot;
+            displayedState = (StrengthShieldState)(-1);
+            displayedProgress = -1f;
         }
 
         public void Bind(PlayerStrengthShield strengthShield)
@@ -86,16 +103,11 @@ namespace Cave.UI
 
         private void UpdateShield(StrengthShieldState state, float progress)
         {
-            bool stateChanged = displayedState != state;
-            if (!stateChanged
-                && Time.unscaledTime < nextVisualRefreshTime
-                && displayedProgress >= 0f)
-            {
-                return;
-            }
-
-            nextVisualRefreshTime = Time.unscaledTime + VisualRefreshInterval;
             displayedState = state;
+            bool showCompactSegment = state == StrengthShieldState.Ready
+                || state == StrengthShieldState.Broken
+                || state == StrengthShieldState.Recharging;
+            ApplyCompactLayout(showCompactSegment);
             if (statusText != null)
             {
                 string prefix = "SHIELD  •  " + GetTierLabel() + "  •  ";
@@ -146,6 +158,27 @@ namespace Cave.UI
                     displayedProgress = fill;
                     progressFill.rectTransform.localScale = new Vector3(fill, 1f, 1f);
                 }
+            }
+        }
+
+        private void ApplyCompactLayout(bool showCompactSegment)
+        {
+            if (compactRoot != null && compactRoot.activeSelf != showCompactSegment)
+            {
+                compactRoot.SetActive(showCompactSegment);
+            }
+
+            if (healthFill == null)
+            {
+                return;
+            }
+
+            Vector2 anchorMaximum = healthFill.anchorMax;
+            float requestedMaximumX = showCompactSegment ? 0.8f : 1f;
+            if (!Mathf.Approximately(anchorMaximum.x, requestedMaximumX))
+            {
+                anchorMaximum.x = requestedMaximumX;
+                healthFill.anchorMax = anchorMaximum;
             }
         }
 

@@ -55,6 +55,7 @@ namespace Cave.Enemies
         private EnemySwarm swarmIdentity;
         private SkeletonInheritance inheritance;
         private EnemyDefenseController learnedDefense;
+        private Cave.Domain.ClaimWraith claimWraith;
         private float nextDefensiveDecisionTime;
         private float nextGuardBreakDecisionTime;
 
@@ -64,6 +65,7 @@ namespace Cave.Enemies
             swarmIdentity = GetComponent<EnemySwarm>();
             inheritance = GetComponent<SkeletonInheritance>();
             learnedDefense = GetComponent<EnemyDefenseController>();
+            claimWraith = GetComponent<Cave.Domain.ClaimWraith>();
             GetComponent<EnemyArchetypeProfile>()?.AddRuntimeArchetype(EnemyArchetype.Melee);
             meleeCombat?.ConfigureSkeletonGuardBreak(
                 inheritance != null && inheritance.GuardBreakUnlocked);
@@ -112,6 +114,11 @@ namespace Cave.Enemies
             }
 
             meleeCombat.SetCombatFacing(toPlayer.x);
+            if (claimWraith != null && claimWraith.TryShadowStep(player, toPlayer))
+            {
+                HoldPosition(MobBrainState.Reposition, "Claim Wraith Shadow Step");
+                return;
+            }
             if (meleeCombat.IsInRange(EnemyMeleeDecision.Basic, player))
             {
                 if (TryUseLearnedBlock(player))
@@ -302,7 +309,7 @@ namespace Cave.Enemies
         private bool TryUseLearnedBlock(PlayerHealth player)
         {
             if (inheritance == null
-                || !inheritance.BlockUnlocked
+                || (!inheritance.BlockUnlocked && claimWraith == null)
                 || learnedDefense == null
                 || Time.time < nextDefensiveDecisionTime)
             {
@@ -320,7 +327,8 @@ namespace Cave.Enemies
                 : 1f;
             nextDefensiveDecisionTime = Time.time
                 + defensiveDecisionCooldown * cooldownMultiplier;
-            float chance = inheritance.ImprovedBlockUnlocked
+            float chance = claimWraith != null ? improvedBlockPostureChance
+                : inheritance.ImprovedBlockUnlocked
                 ? improvedBlockPostureChance
                 : learnedBlockPostureChance;
             if (currentRank == SkeletonRank.General)
@@ -340,7 +348,7 @@ namespace Cave.Enemies
         private bool TryUseLearnedGuardBreak(PlayerHealth player)
         {
             if (inheritance == null
-                || !inheritance.GuardBreakUnlocked
+                || (!inheritance.GuardBreakUnlocked && claimWraith == null)
                 || Time.time < nextGuardBreakDecisionTime
                 || !meleeCombat.IsInRange(EnemyMeleeDecision.GuardBreak, player))
             {
@@ -352,13 +360,13 @@ namespace Cave.Enemies
             float chance;
             if (guardHeld)
             {
-                chance = inheritance.ImprovedGuardBreakUnlocked
+                chance = claimWraith != null ? improvedGuardedBreakChance : inheritance.ImprovedGuardBreakUnlocked
                     ? improvedGuardedBreakChance
                     : learnedGuardedBreakChance;
             }
             else
             {
-                chance = inheritance.ImprovedGuardBreakUnlocked
+                chance = claimWraith != null ? improvedNeutralGuardBreakChance : inheritance.ImprovedGuardBreakUnlocked
                     ? improvedNeutralGuardBreakChance
                     : learnedNeutralGuardBreakChance;
             }

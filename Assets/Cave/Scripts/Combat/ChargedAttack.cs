@@ -92,6 +92,7 @@ namespace Cave.Combat
         private PhaseCombatState ownPhaseCombatState;
         private AxiomVfxPresenter axiomVfxPresenter;
         private PlayerHealth playerHealth;
+        private PlayerSwordCosmetics swordCosmetics;
 
         public bool IsCharging => isCharging;
         public bool IsAttacking => isAttacking;
@@ -115,6 +116,7 @@ namespace Cave.Combat
             ownPhaseCombatState = GetComponent<PhaseCombatState>();
             axiomVfxPresenter = GetComponent<AxiomVfxPresenter>();
             playerHealth = GetComponent<PlayerHealth>();
+            swordCosmetics = GetComponent<PlayerSwordCosmetics>();
             swordPivot = spinSwordAttack != null ? spinSwordAttack.SwordPivot : null;
             attackTransform = attackCollider != null
                 ? attackCollider.transform
@@ -240,7 +242,9 @@ namespace Cave.Combat
                 return;
             }
 
-            if (!isCharging && !isAttacking && brace != null && brace.IsBraced && GameInput.ChargePressed)
+            bool projectileChannelHeld = GameInput.FireProjectileHeld;
+            if (!isCharging && !isAttacking && !projectileChannelHeld
+                && brace != null && brace.IsBraced && GameInput.ChargePressed)
             {
                 brace.LeaveForHeavy();
                 return;
@@ -258,6 +262,7 @@ namespace Cave.Combat
 
             if (!isCharging
                 && !isAttacking
+                && !projectileChannelHeld
                 && groundSlam != null
                 && groundSlam.HandleAerialHeavyInput())
             {
@@ -270,6 +275,7 @@ namespace Cave.Combat
             if (!isCharging
                 && !isAttacking
                 && Time.time >= nextAttackTime
+                && !projectileChannelHeld
                 && (GameInput.ChargePressed || heldFormalFollowUp))
             {
                 BeginCharge();
@@ -422,11 +428,11 @@ namespace Cave.Combat
             }
 
             int startingTier = combatFlow != null ? combatFlow.ConsumeChargedStartingTier() : 0;
-            float startingDuration = startingTier >= 2
-                ? chargedTwoThreshold
-                : startingTier == 1
-                    ? minimumChargeTime
-                    : 0f;
+            float startingDuration = StartingDurationForTier(
+                startingTier,
+                minimumChargeTime,
+                chargedTwoThreshold,
+                maximumChargeTime);
             chargeStartingDuration = startingDuration;
             chargeStartedAt = Time.time;
             SetChargeIndicatorActive(true);
@@ -505,6 +511,17 @@ namespace Cave.Combat
             return heldDuration >= chargedTwoThreshold ? 2 : 1;
         }
 
+        internal static float StartingDurationForTier(
+            int startingTier,
+            float minimumTierOneDuration,
+            float tierTwoDuration,
+            float tierThreeDuration)
+        {
+            if (startingTier >= 3) return tierThreeDuration;
+            if (startingTier == 2) return tierTwoDuration;
+            return startingTier == 1 ? minimumTierOneDuration : 0f;
+        }
+
         private int DamageForTier(int tier)
         {
             if (tier >= 3)
@@ -563,7 +580,16 @@ namespace Cave.Combat
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             if (attackTransform != null)
             {
-                Vector3 directionalOffset = (Vector3)(direction.normalized * directionalReach);
+                if (swordCosmetics == null)
+                {
+                    swordCosmetics = GetComponent<PlayerSwordCosmetics>();
+                }
+
+                float reachMultiplier = swordCosmetics != null
+                    ? swordCosmetics.EffectiveReachMultiplier
+                    : 1f;
+                Vector3 directionalOffset = (Vector3)(direction.normalized
+                    * directionalReach * reachMultiplier);
                 attackTransform.localPosition = restingAttackPosition + directionalOffset;
                 attackTransform.localRotation = restingAttackRotation * Quaternion.Euler(0f, 0f, angle);
             }

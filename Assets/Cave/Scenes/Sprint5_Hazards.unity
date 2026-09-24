@@ -1270,7 +1270,7 @@ MonoBehaviour:
   constructionFailureResetDelay: 3
   failedBuilderRecovery: 1.1
   towerRebuildDelay: 8
-  towerMaximumHealth: 45
+  towerMaximumHealth: 67.5
   towerInitialRadius: 2
   towerMaximumRadius: 20
   towerRadiusGrowthPerSecond: 0.04
@@ -4993,7 +4993,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 1.75
   pinDamage: 1
-  pinCooldown: 8
+  pinCooldown: 16
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:
@@ -6103,7 +6103,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 1.75
   pinDamage: 1
-  pinCooldown: 8
+  pinCooldown: 16
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:
@@ -8479,7 +8479,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 1.75
   pinDamage: 1
-  pinCooldown: 8
+  pinCooldown: 16
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:
@@ -9858,7 +9858,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 1.75
   pinDamage: 1
-  pinCooldown: 8
+  pinCooldown: 16
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:
@@ -10534,7 +10534,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 1.75
   pinDamage: 1
-  pinCooldown: 8
+  pinCooldown: 16
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:
@@ -12686,7 +12686,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 2
   pinDamage: 2
-  pinCooldown: 5
+  pinCooldown: 10
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:
@@ -16615,7 +16615,7 @@ MonoBehaviour:
   constructionFailureResetDelay: 3
   failedBuilderRecovery: 1.1
   towerRebuildDelay: 8
-  towerMaximumHealth: 45
+  towerMaximumHealth: 67.5
   towerInitialRadius: 2
   towerMaximumRadius: 20
   towerRadiusGrowthPerSecond: 0.04

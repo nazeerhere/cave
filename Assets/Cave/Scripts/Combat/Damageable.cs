@@ -18,6 +18,7 @@ namespace Cave.Combat
         private Color[] originalColors;
         private Coroutine flashRoutine;
         private int runtimeMaximumHealth;
+        private bool suppressNextDeactivation;
         private Color persistentTint = Color.white;
         private PhaseCombatState phaseCombatState;
         private bool runtimeInitialized;
@@ -152,7 +153,12 @@ namespace Cave.Combat
                 PlayerSwordCosmetics.NotifyPlayerDefeatedEnemy(this, damageContext);
                 DiedWithContext?.Invoke(damageContext);
                 Died?.Invoke();
-                gameObject.SetActive(false);
+                if (!suppressNextDeactivation)
+                {
+                    gameObject.SetActive(false);
+                }
+
+                suppressNextDeactivation = false;
                 return appliedDamage;
             }
 
@@ -220,6 +226,16 @@ namespace Cave.Combat
             int healthBeforeRestore = CurrentHealth;
             CurrentHealth = Mathf.Min(runtimeMaximumHealth, CurrentHealth + amount);
             return CurrentHealth - healthBeforeRestore;
+        }
+
+        /// <summary>
+        /// Explicit encounter seam for forms which transition on defeat rather
+        /// than being permanently removed. It applies to one resolved death
+        /// only and must be requested from a death subscriber.
+        /// </summary>
+        public void SuppressNextDeactivation()
+        {
+            suppressNextDeactivation = true;
         }
 
         public void SetPersistentTint(Color tint)

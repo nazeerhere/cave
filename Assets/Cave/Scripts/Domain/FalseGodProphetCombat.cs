@@ -18,13 +18,17 @@ namespace Cave.Domain
     {
         Idle,
         MoveFloat,
+        Move,
         Hurt,
         Block,
         BasicCast,
         ShadowCast,
         ClaimCommand,
         CausalBeam,
-        Ascension
+        Ascension,
+        TitheReconfigurationCast,
+        HighAuthorityCast,
+        FinalAscension
     }
 
     public enum FalseGodTriuneAnchorKind
@@ -50,7 +54,13 @@ namespace Cave.Domain
                 case FalseGodAbilityKind.CrystalChainHook:
                 case FalseGodAbilityKind.TriuneAnchors:
                 case FalseGodAbilityKind.Appropriation:
+                case FalseGodAbilityKind.ClaimBurst:
                     return FalseGodProphetPresentationState.ClaimCommand;
+                case FalseGodAbilityKind.Repossession:
+                    return FalseGodProphetPresentationState.HighAuthorityCast;
+                case FalseGodAbilityKind.Tithe:
+                case FalseGodAbilityKind.Reconfiguration:
+                    return FalseGodProphetPresentationState.TitheReconfigurationCast;
                 case FalseGodAbilityKind.CausalBeam:
                     return FalseGodProphetPresentationState.CausalBeam;
                 case FalseGodAbilityKind.Block:
@@ -58,6 +68,17 @@ namespace Cave.Domain
                 default:
                     return FalseGodProphetPresentationState.Idle;
             }
+        }
+
+        /// <summary>Version 2 shares the broad body vocabulary but promotes its authority casts.</summary>
+        public static FalseGodProphetPresentationState ForMonkAbility(FalseGodAbilityKind ability)
+        {
+            if (ability == FalseGodAbilityKind.CausalBeam || ability == FalseGodAbilityKind.Repossession)
+            {
+                return FalseGodProphetPresentationState.HighAuthorityCast;
+            }
+
+            return ForAbility(ability);
         }
     }
 
@@ -78,6 +99,7 @@ namespace Cave.Domain
         private float slowMultiplier = 1f;
         private float slowDuration;
         private bool appliesSlow;
+        private bool appliesGuardBreak;
         private bool spent;
 
         public bool AppliesSlow => appliesSlow;
@@ -97,7 +119,8 @@ namespace Cave.Domain
             float lifetime,
             bool applySlow = false,
             float requestedSlowMultiplier = 1f,
-            float requestedSlowDuration = 0f)
+            float requestedSlowDuration = 0f,
+            bool applyGuardBreak = false)
         {
             EnsureReferences();
             owner = projectileOwner;
@@ -106,6 +129,7 @@ namespace Cave.Domain
                 : Vector2.right;
             damage = Mathf.Max(1, resolvedDamage);
             appliesSlow = applySlow;
+            appliesGuardBreak = applyGuardBreak;
             slowMultiplier = Mathf.Clamp(requestedSlowMultiplier, 0.1f, 1f);
             slowDuration = Mathf.Max(0f, requestedSlowDuration);
             spent = false;
@@ -128,7 +152,11 @@ namespace Cave.Domain
             PlayerHealth player = other.GetComponentInParent<PlayerHealth>();
             if (player != null)
             {
-                TryApplyToPlayer(player);
+                bool hit = TryApplyToPlayer(player);
+                if (hit && appliesGuardBreak)
+                {
+                    owner?.GetComponent<FalseGodWraithSpawner>()?.TryManifestFromShadowDash(transform.position);
+                }
                 Retire();
                 return;
             }
@@ -154,7 +182,7 @@ namespace Cave.Domain
             bool accepted = player.TryTakeDamage(
                 damage,
                 new DamageContext(owner != null ? owner : gameObject,
-                    DamageTrait.Direct | DamageTrait.Projectile));
+                    DamageTrait.Direct | DamageTrait.Projectile | (appliesGuardBreak ? DamageTrait.GuardBreak : (DamageTrait)0)));
             if (accepted && appliesSlow)
             {
                 PlayerSlowStatus slow = player.GetComponent<PlayerSlowStatus>();
@@ -164,6 +192,12 @@ namespace Cave.Domain
                 }
 
                 slow.ApplySlow(slowMultiplier, slowDuration);
+            }
+
+            if (accepted && appliesGuardBreak)
+            {
+                Vector2 away = (Vector2)player.transform.position - (Vector2)transform.position;
+                player.GetComponent<PlayerGuardBreak>()?.ApplyEnemyGuardBreak(away);
             }
 
             return accepted;
@@ -412,6 +446,9 @@ namespace Cave.Domain
             renderer.color = color;
             renderer.sortingOrder = 18;
             projectileObject.transform.localScale = appliesSlow ? Vector3.one * 0.18f : Vector3.one * 0.15f;
+            FalseGodProphetVfxPlayback.Attach(projectileObject,
+                appliesSlow ? FalseGodProphetVfxKind.SlowBolt : FalseGodProphetVfxKind.EchoProjectile,
+                false);
             FalseGodProphetProjectile projectile = projectileObject.AddComponent<FalseGodProphetProjectile>();
             projectile.Initialize(gameObject, direction, speed, resolvedDamage, projectileLifetime,
                 appliesSlow, requestedSlowMultiplier, requestedSlowDuration);
@@ -431,7 +468,7 @@ namespace Cave.Domain
         }
     }
 
-    /// <summary>Committed horizontal shadow projectile; it samples its trajectory once at cast time.</summary>
+    /// <summary>Committed shadow projectile; it samples its full 2D trajectory once at cast time.</summary>
     [DisallowMultipleComponent]
     public sealed class FalseGodDashShadow : MonoBehaviour
     {
@@ -457,7 +494,7 @@ namespace Cave.Domain
                 return false;
             }
 
-            lastCommittedDirection = ResolveHorizontalDirection(target.position);
+            lastCommittedDirection = ResolveCommittedDirection(target.position);
             nextCastTime = Time.time + cooldown;
             castRoutine = StartCoroutine(PerformCast(damageMultiplier));
             return true;
@@ -465,7 +502,7 @@ namespace Cave.Domain
 
         public FalseGodProphetProjectile FireImmediatelyForVerification(Vector2 targetPoint, float damageMultiplier = 1f)
         {
-            lastCommittedDirection = ResolveHorizontalDirection(targetPoint);
+            lastCommittedDirection = ResolveCommittedDirection(targetPoint);
             return SpawnShadow(damageMultiplier);
         }
 
@@ -503,6 +540,7 @@ namespace Cave.Domain
             yield return new WaitForSeconds(startupTelegraph);
             if (isActiveAndEnabled)
             {
+                GetComponent<FalseGodCombatController>()?.ReleasePresentationHold();
                 SpawnShadow(damageMultiplier);
             }
 
@@ -523,16 +561,18 @@ namespace Cave.Domain
             renderer.color = new Color(0.35f, 0.1f, 0.55f, 0.8f);
             renderer.sortingOrder = 17;
             shadowObject.transform.localScale = new Vector3(0.4f, 0.18f, 1f);
+            FalseGodProphetVfxPlayback.Attach(shadowObject, FalseGodProphetVfxKind.DashShadow, false);
             lastShadow = shadowObject.AddComponent<FalseGodProphetProjectile>();
             lastShadow.Initialize(gameObject, lastCommittedDirection, speed,
-                Mathf.Max(1, Mathf.RoundToInt(damage * damageMultiplier)), lifetime);
+                Mathf.Max(1, Mathf.RoundToInt(damage * damageMultiplier)), lifetime,
+                false, 1f, 0f, true);
             return lastShadow;
         }
 
-        private Vector2 ResolveHorizontalDirection(Vector2 targetPoint)
+        private Vector2 ResolveCommittedDirection(Vector2 targetPoint)
         {
-            float horizontal = targetPoint.x - transform.position.x;
-            return new Vector2(Mathf.Abs(horizontal) > 0.01f ? Mathf.Sign(horizontal) : 1f, 0f);
+            Vector2 direction = targetPoint - (Vector2)transform.position;
+            return direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
         }
     }
 
@@ -556,6 +596,7 @@ namespace Cave.Domain
         [SerializeField, Min(0f)] private float cooldown = 6.5f;
 
         private readonly List<ClaimAnchor> anchorScratch = new List<ClaimAnchor>(8);
+        private readonly List<ClaimAnchor> sourceCandidates = new List<ClaimAnchor>(8);
         private FalseGodRuntimeFoundation foundation;
         private Coroutine routine;
         private LineRenderer tetherLine;
@@ -564,10 +605,14 @@ namespace Cave.Domain
         private PlayerHealth target;
         private int remainingDurability;
         private float nextCastTime;
+        private ClaimAnchor lastSelectedSource;
 
         public bool IsActive => routine != null || (source != null && target != null);
         public ClaimAnchor Source => source;
         public int RemainingDurability => remainingDurability;
+        public int AvailableRouteCount { get; private set; }
+        public ClaimAnchor LastSelectedRoute => lastSelectedSource;
+        public ClaimAnchor CurrentSelectedRoute => source;
 
         private void Awake()
         {
@@ -685,6 +730,7 @@ namespace Cave.Domain
 
         private IEnumerator PerformHook()
         {
+            FalseGodProphetVfxPlayback.PlayOneShot(FalseGodProphetVfxKind.CrystalChainHook, source.transform.position, 1.1f);
             FalseGodCombatPresentation.CreateImpactTelegraph(source.transform.position, 0.42f, telegraphDuration);
             yield return new WaitForSeconds(telegraphDuration);
             if (source == null || !source.IsActive || target == null || !target.gameObject.activeInHierarchy)
@@ -694,6 +740,7 @@ namespace Cave.Domain
             }
 
             Vector2 hookPosition = source.transform.position;
+            GetComponent<FalseGodCombatController>()?.ReleasePresentationHold();
             Vector2 destination = target.transform.position;
             Vector2 direction = (destination - hookPosition).normalized;
             float travelRemaining = Vector2.Distance(hookPosition, destination);
@@ -745,8 +792,7 @@ namespace Cave.Domain
             }
 
             network.CopyActiveAnchors(anchorScratch);
-            float bestDistance = float.MaxValue;
-            int bestId = int.MaxValue;
+            sourceCandidates.Clear();
             for (int index = 0; index < anchorScratch.Count; index++)
             {
                 ClaimAnchor candidate = anchorScratch[index];
@@ -756,17 +802,21 @@ namespace Cave.Domain
                     continue;
                 }
 
-                float distance = Vector2.Distance(transform.position, candidate.transform.position);
-                int candidateId = candidate.GetInstanceID();
-                if (distance <= maximumSourceRange
-                    && (distance < bestDistance || (Mathf.Approximately(distance, bestDistance) && candidateId < bestId)))
+                if (Vector2.Distance(transform.position, candidate.transform.position) <= maximumSourceRange)
                 {
-                    selected = candidate;
-                    bestDistance = distance;
-                    bestId = candidateId;
+                    sourceCandidates.Add(candidate);
                 }
             }
 
+            AvailableRouteCount = sourceCandidates.Count;
+            if (sourceCandidates.Count == 0) return false;
+            int pick = UnityEngine.Random.Range(0, sourceCandidates.Count);
+            if (sourceCandidates.Count > 1 && sourceCandidates[pick] == lastSelectedSource)
+            {
+                pick = (pick + 1) % sourceCandidates.Count;
+            }
+            selected = sourceCandidates[pick];
+            lastSelectedSource = selected;
             return selected != null;
         }
 
@@ -879,6 +929,19 @@ namespace Cave.Domain
         {
             InitializeRuntime();
             return defense != null && defense.TryEnterDefensivePosture(blockDuration);
+        }
+
+        /// <summary>
+        /// Monk reuse of the same guard rules: more deliberate, still bounded,
+        /// and still fully subject to Guard Break.
+        /// </summary>
+        public void ConfigureMonkBlock()
+        {
+            blockChance = Mathf.Clamp01(Mathf.Max(blockChance, 0.58f));
+            blockDuration = Mathf.Max(blockDuration, 0.48f);
+            recoveryDuration = Mathf.Min(recoveryDuration, 0.42f);
+            cooldown = Mathf.Min(cooldown, 2.4f);
+            InitializeRuntime();
         }
     }
 
@@ -1042,6 +1105,14 @@ namespace Cave.Domain
             GameObject anchorObject = new GameObject("False God Triune " + kind + " Anchor");
             anchorObject.transform.position = (Vector2)transform.position + ResolveOffset(kind) * placementRadius;
             anchorObject.transform.SetParent(transform, true);
+            // Match Claim Crystal hit detection: player melee and projectile
+            // pipelines target this layer and resolve Damageable from the
+            // trigger collider without a Triune-specific weapon path.
+            int damageableLayer = LayerMask.NameToLayer("Damageable");
+            if (damageableLayer >= 0)
+            {
+                anchorObject.layer = damageableLayer;
+            }
             anchorObject.AddComponent<InteractionIdentity>();
             Damageable health = anchorObject.AddComponent<Damageable>();
             health.InitializeRuntimeState();
@@ -1054,6 +1125,7 @@ namespace Cave.Domain
             anchor.InitializeRuntime(kind, anchorDurability);
             anchor.Retired += HandleAnchorRetired;
             anchors.Add(kind, anchor);
+            FalseGodProphetVfxPlayback.PlayOneShot(FalseGodProphetVfxKind.TriuneAnchors, anchorObject.transform.position, 0.8f);
             FalseGodCombatPresentation.CreateImpactTelegraph(anchorObject.transform.position, 0.48f, 0.45f);
             RefreshSuppression();
             return true;

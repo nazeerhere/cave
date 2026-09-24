@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cave.Axioms.Mastery;
 using Cave.Enemies;
 using Cave.InputSystem;
 using Cave.Player;
@@ -236,7 +237,7 @@ namespace Cave.Combat
 
         [Header("Current Flow (Read Only)")]
         [SerializeField] private FormalFollowUpSource followUpSource;
-        [SerializeField, Range(0, 2)] private int chargedStartingTier;
+        [SerializeField, Range(0, 3)] private int chargedStartingTier;
         [SerializeField, Min(0f)] private float followUpRemaining;
         [SerializeField] private bool formalChainInProgress;
         [SerializeField] private bool spinBashAvailable;
@@ -550,6 +551,9 @@ namespace Cave.Combat
             if (manaInfused)
             {
                 ConsumeDamageBasedInfusionMana(appliedDamage);
+#if UNITY_EDITOR
+                TraceFrenzyMasteryKillAttempt(target);
+#endif
                 TryAwardFrenzyMasteryForLateInfusedKill(target);
             }
 
@@ -594,7 +598,10 @@ namespace Cave.Combat
                         settings.SlowFieldMovementMultiplier,
                         frenzyDamageableLayers,
                         settings.FrostFieldOutlineColor,
-                        settings.FrostFieldFillColor);
+                        settings.FrostFieldFillColor,
+                        settings.FrostTier2PinDuration,
+                        settings.SlowFieldMergeGrowth,
+                        settings.SlowFieldMaximumRadius);
                 }
             }
             else if (targetStillAlive
@@ -652,7 +659,7 @@ namespace Cave.Combat
         private void GrantChargedFollowUp(FormalFollowUpSource source, int tier)
         {
             followUpSource = source;
-            chargedStartingTier = Mathf.Clamp(tier, 1, 2);
+            chargedStartingTier = Mathf.Clamp(tier, 1, 3);
             followUpExpiresAt = Time.time + followUpWindow;
             followUpRemaining = followUpWindow;
             StateChanged?.Invoke();
@@ -662,17 +669,20 @@ namespace Cave.Combat
         {
             if (quality == PlayerDefenseQuality.PerfectParry)
             {
-                GrantChargedFollowUp(FormalFollowUpSource.PerfectParry, 2);
+                GrantChargedFollowUp(FormalFollowUpSource.PerfectParry,
+                    HeavyFollowUpPolicy.StartingTier(FormalFollowUpSource.PerfectParry));
             }
             else if (quality == PlayerDefenseQuality.NormalParry)
             {
-                GrantChargedFollowUp(FormalFollowUpSource.NormalParry, 1);
+                GrantChargedFollowUp(FormalFollowUpSource.NormalParry,
+                    HeavyFollowUpPolicy.StartingTier(FormalFollowUpSource.NormalParry));
             }
         }
 
         private void HandleOffensiveGuardBreakSucceeded()
         {
-            GrantChargedFollowUp(FormalFollowUpSource.GuardBreak, 1);
+            GrantChargedFollowUp(FormalFollowUpSource.GuardBreak,
+                HeavyFollowUpPolicy.StartingTier(FormalFollowUpSource.GuardBreak));
         }
 
         private void HandlePlayerDied()
@@ -801,6 +811,8 @@ namespace Cave.Combat
             // One successful mana-infused enemy kill is the sole default
             // qualification per activation, including for multi-target actions.
             frenzyMasteryAwarded = true;
+            PlayerMasteryEvidenceRuntime.EnsureOn(gameObject)?.SubmitFrenzy(
+                new FrenzyMasterySample(0f, 0, 1), PlayerMasteryPolicy.Default);
             if (frenzyMastery != null && frenzyMastery.TryGainQualifiedLevel())
             {
                 FeedbackRequested?.Invoke("FRENZY MASTERY +1");
@@ -808,6 +820,25 @@ namespace Cave.Combat
 
             StateChanged?.Invoke();
         }
+
+#if UNITY_EDITOR
+        private void TraceFrenzyMasteryKillAttempt(Damageable target)
+        {
+            float remaining = Mathf.Max(0f, frenzyExpiresAt - Time.time);
+            float masteryWindow = currentFrenzyDuration
+                * Mathf.Clamp01(frenzyMasteryWindowFraction);
+            Debug.Log(
+                "[Cave][FrenzyMasteryTrace] mana-infused impact"
+                + " target=" + (target != null ? target.gameObject.name : "<none>")
+                + " targetAlive=" + (target != null && target.gameObject.activeInHierarchy)
+                + " frenzyActive=" + IsFrenzyActive
+                + " alreadyAwarded=" + frenzyMasteryAwarded
+                + " duration=" + currentFrenzyDuration.ToString("0.##")
+                + " remaining=" + remaining.ToString("0.##")
+                + " masteryWindow=" + masteryWindow.ToString("0.##"),
+                this);
+        }
+#endif
 
         private float ResolveInfusionBonus(FrenzyBreakInfusion infusion, int infusionLevel)
         {
@@ -1066,6 +1097,24 @@ namespace Cave.Combat
             maximumFrenzyMasteryDurationBonus = Mathf.Max(0f, maximumFrenzyMasteryDurationBonus);
             baseInfusionCost = Mathf.Max(0f, baseInfusionCost);
             manaPerAcceptedDamage = Mathf.Max(0f, manaPerAcceptedDamage);
+        }
+    }
+
+    /// <summary>Authoritative one-shot entry tiers for the normal Heavy state machine.</summary>
+    public static class HeavyFollowUpPolicy
+    {
+        public static int StartingTier(FormalFollowUpSource source)
+        {
+            switch (source)
+            {
+                case FormalFollowUpSource.NormalParry:
+                case FormalFollowUpSource.GuardBreak:
+                    return 2;
+                case FormalFollowUpSource.PerfectParry:
+                    return 3;
+                default:
+                    return 0;
+            }
         }
     }
 }

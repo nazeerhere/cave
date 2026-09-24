@@ -69,12 +69,26 @@ namespace Cave.Enemies
             bool retreating = IsPlayerRetreating(player, toPlayer)
                 || context.HasSignal(BattlefieldSignal.PlayerRetreating);
             float horizontalDistance = Mathf.Abs(toPlayer.x);
+            CombatTacticalIntent tacticalIntent;
+            bool hasTacticalIntent = TryGetCombatTacticalIntent(out tacticalIntent);
 
             if (horizontalDistance > melee.BasicEngagementRange)
             {
+                // The CTC only supplies a preference. The Bandit still owns the
+                // legal sidestep capability and its cooldown.
+                if (hasTacticalIntent
+                    && tacticalIntent == CombatTacticalIntent.Flank
+                    && skirmisher != null
+                    && skirmisher.TrySidestep(player))
+                {
+                    HoldPosition(MobBrainState.Reposition, "CTC flank sidestep");
+                    return;
+                }
+
                 float dashChance = basePursuitDashChance
                     + (context.HasTag(BattlefieldArchetypeTag.Frontline) ? frontlineDashBonus : 0f)
-                    + (context.HasSignal(BattlefieldSignal.PlayerRetreating) ? eyeRetreatDashBonus : 0f);
+                    + (context.HasSignal(BattlefieldSignal.PlayerRetreating) ? eyeRetreatDashBonus : 0f)
+                    + (hasTacticalIntent && tacticalIntent == CombatTacticalIntent.Pressure ? 0.12f : 0f);
                 if (retreating && skirmisher != null && Random.value <= Mathf.Clamp01(dashChance))
                 {
                     bool bash = (guardHeld || braced || lowStamina)

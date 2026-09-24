@@ -223,6 +223,8 @@ namespace Cave.Enemies
         public float MaximumCombatRange => MaximumAttackRange();
         public EnemyMeleeUseRejection LastUseRejection => lastUseRejection;
         public bool IsAttackCommitted => attackCommitted;
+        /// <summary>Raised only after a melee hit is accepted by PlayerHealth.</summary>
+        public event System.Action<PlayerHealth, DamageTrait> AttackHitResolved;
         public bool IsGuardBreakInProgress => guardBreakState == EnemyGuardBreakState.Windup
             || guardBreakState == EnemyGuardBreakState.CounterWindow
             || guardBreakState == EnemyGuardBreakState.Committed;
@@ -676,9 +678,13 @@ namespace Cave.Enemies
 
             int resolvedDamage = ResolveModifiedDamage(attack.Damage);
             int healthBeforeHit = target.CurrentHealth;
-            target.TryTakeDamage(
+            bool hitAccepted = target.TryTakeDamage(
                 resolvedDamage,
                 new DamageContext(gameObject, DamageTrait.Melee | attack.ExtraTraits));
+            if (hitAccepted)
+            {
+                AttackHitResolved?.Invoke(target, DamageTrait.Melee | attack.ExtraTraits);
+            }
             CaveSfx.Play(CaveSfxCue.Whoosh, attack.IsCharged ? 0.9f : 0.7f);
             if (target.CurrentHealth >= healthBeforeHit || attack.Knockback <= 0f)
             {
@@ -1209,7 +1215,10 @@ namespace Cave.Enemies
                 {
                     traits |= DamageTrait.AreaOfEffect;
                 }
-                target.TryTakeDamage(resolvedDamage, new DamageContext(gameObject, traits));
+                if (target.TryTakeDamage(resolvedDamage, new DamageContext(gameObject, traits)))
+                {
+                    AttackHitResolved?.Invoke(target, traits);
+                }
                 CaveSfx.Play(CaveSfxCue.Whoosh, 0.65f);
                 if (createsShockwave)
                 {

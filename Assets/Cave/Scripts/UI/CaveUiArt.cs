@@ -191,7 +191,7 @@ namespace Cave.UI
             Transform selection = gameplayHud.Find("Special Mode Selection");
             if (selection is RectTransform selectionRect)
             {
-                selectionRect.sizeDelta = new Vector2(560f, 650f);
+                selectionRect.sizeDelta = new Vector2(1220f, 700f);
                 Image panel = selection.GetComponent<Image>();
                 Sprite panelSprite = GetSprite("SkillPathPanelFrame");
                 if (panel != null && panelSprite != null)
@@ -200,6 +200,10 @@ namespace Cave.UI
                     panel.type = Image.Type.Sliced;
                     panel.color = Color.white;
                 }
+
+                DisableLegacyDecoration(selection);
+                Transform legacyRod = selection.Find("Free UI Package Header Rod");
+                if (legacyRod != null) legacyRod.gameObject.SetActive(false);
 
                 Button skillTab = selection.Find("MODES Button")?.GetComponent<Button>();
                 Button shopTab = selection.Find("SHOP Button")?.GetComponent<Button>();

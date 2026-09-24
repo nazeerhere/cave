@@ -52,6 +52,42 @@ namespace Cave.Interactions
         public int ClaimedObjectCount => Load.ClaimedObjects;
 
         /// <summary>
+        /// Registers an already resolver-approved relationship owned by this
+        /// network. It is intentionally direct and local; no scene discovery is
+        /// used by advanced Claim abilities.
+        /// </summary>
+        public void RegisterClaimedObject(InteractionIdentity identity)
+        {
+            if (disposed || identity == null || identity.AuthoritySource != AuthoritySource)
+            {
+                return;
+            }
+
+            if (claimedObjects.Add(identity))
+            {
+                RecalculateLoad();
+            }
+        }
+
+        /// <summary>Copies only currently owned Claim objects into caller storage.</summary>
+        public void CopyClaimedObjects(List<InteractionIdentity> destination)
+        {
+            if (destination == null)
+            {
+                return;
+            }
+
+            destination.Clear();
+            foreach (InteractionIdentity identity in claimedObjects)
+            {
+                if (identity != null && identity.AuthoritySource == AuthoritySource)
+                {
+                    destination.Add(identity);
+                }
+            }
+        }
+
+        /// <summary>
         /// Copies this authority's currently active anchors into caller-owned
         /// storage. Combat abilities use this bounded relationship list rather
         /// than discovering anchors through a scene-wide query.
@@ -286,7 +322,11 @@ namespace Cave.Interactions
             ClaimAnchor anchor = result.Attempt.Claimant != null
                 ? result.Attempt.Claimant.GetComponent<ClaimAnchor>()
                 : null;
-            if (anchor != null && anchors.Contains(anchor) && claimedObjects.Add(result.Attempt.Target))
+            bool isNetworkAuthority = result.Attempt.Claimant != null
+                && result.Attempt.Claimant.gameObject == AuthoritySource;
+            if ((isNetworkAuthority || (anchor != null && anchors.Contains(anchor)))
+                && result.Attempt.Target.AuthoritySource == AuthoritySource
+                && claimedObjects.Add(result.Attempt.Target))
             {
                 RecalculateLoad();
             }
@@ -628,6 +668,14 @@ namespace Cave.Interactions
 
             GameObject crystalObject = new GameObject("Claim Crystal");
             crystalObject.transform.position = request.Position;
+            // Player sword and projectile hit detection use the project's
+            // Damageable layer.  The crystal remains a trigger-only hurtbox;
+            // it never becomes a physical obstacle.
+            int damageableLayer = LayerMask.NameToLayer("Damageable");
+            if (damageableLayer >= 0)
+            {
+                crystalObject.layer = damageableLayer;
+            }
             crystalObject.AddComponent<InteractionIdentity>();
             ClaimAnchor anchor = crystalObject.AddComponent<ClaimAnchor>();
             anchor.InitializeRuntime(request.AuthorityStrength, request.Network);

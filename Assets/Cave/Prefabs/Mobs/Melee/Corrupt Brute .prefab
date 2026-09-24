@@ -1064,7 +1064,7 @@ MonoBehaviour:
   pinRange: 2
   pinDuration: 2
   pinDamage: 2
-  pinCooldown: 5
+  pinCooldown: 10
   wallCheckDistance: 0.75
   wallPinBonusDamage: 1
   worldMask:

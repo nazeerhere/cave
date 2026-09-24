@@ -579,7 +579,7 @@ MonoBehaviour:
   constructionFailureResetDelay: 3
   failedBuilderRecovery: 1.1
   towerRebuildDelay: 8
-  towerMaximumHealth: 300
+  towerMaximumHealth: 450
   towerInitialRadius: 2
   towerMaximumRadius: 20
   towerRadiusGrowthPerSecond: 0.04

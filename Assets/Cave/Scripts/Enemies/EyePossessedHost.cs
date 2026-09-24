@@ -69,6 +69,7 @@ namespace Cave.Enemies
 
             if (player != null && HasLineOfSight(player.transform.position))
             {
+                PublishKnowledgeObservation(player.transform.position);
                 EyeWatcherNetwork.Broadcast(this, player.transform.position, watcherRadius, memoryDuration);
                 UpdateGaze();
             }
@@ -148,6 +149,20 @@ namespace Cave.Enemies
                     gazeEndsAt = Time.time;
                 }
             }
+        }
+
+        /// <summary>Possessed hosts retain their existing sight behavior and can
+        /// contribute the same formation-bounded location knowledge as an Eye.</summary>
+        private void PublishKnowledgeObservation(Vector2 playerPosition)
+        {
+            KnowledgeActor knowledge = KnowledgeActor.EnsureOn(gameObject);
+            if (knowledge == null)
+            {
+                return;
+            }
+
+            KnowledgeFact location = knowledge.ObservePlayerLocation(playerPosition, Time.time);
+            GetComponent<CombatTacticalMember>()?.ShareKnowledge(location);
         }
 
         private void CreateGazeLine()

@@ -34,7 +34,7 @@ namespace Cave.UI
 
         private void Build()
         {
-            RectTransform panel = CreateRect("Sword Collection", transform, new Vector2(0f, -215f), new Vector2(416f, 92f));
+            RectTransform panel = CreateRect("Sword Collection", transform, new Vector2(0f, -206f), new Vector2(940f, 116f));
             Image background = panel.gameObject.AddComponent<Image>();
             background.color = CaveUiTheme.SurfaceInset;
 
@@ -42,15 +42,15 @@ namespace Cave.UI
             title.fontStyle = FontStyle.Bold;
             title.color = CaveUiTheme.Gold;
             title.alignment = TextAnchor.UpperLeft;
-            title.rectTransform.anchoredPosition = new Vector2(-194f, 33f);
-            title.rectTransform.sizeDelta = new Vector2(180f, 20f);
+            title.rectTransform.anchoredPosition = new Vector2(-444f, 44f);
+            title.rectTransform.sizeDelta = new Vector2(240f, 20f);
 
             buttons = new Button[4];
             labels = new Text[4];
             for (int index = 0; index < buttons.Length; index++)
             {
                 int selectionIndex = index;
-                RectTransform card = CreateRect("Sword Card " + index, panel, new Vector2(-153f + index * 102f, -8f), new Vector2(94f, 62f));
+                RectTransform card = CreateRect("Sword Card " + index, panel, new Vector2(-342f + index * 228f, -10f), new Vector2(210f, 72f));
                 Image cardImage = card.gameObject.AddComponent<Image>();
                 cardImage.color = CaveUiTheme.SurfaceRaised;
                 Button button = card.gameObject.AddComponent<Button>();
@@ -61,7 +61,7 @@ namespace Cave.UI
                 label.alignment = TextAnchor.MiddleCenter;
                 label.color = CaveUiTheme.PrimaryText;
                 label.rectTransform.anchoredPosition = Vector2.zero;
-                label.rectTransform.sizeDelta = new Vector2(88f, 56f);
+                label.rectTransform.sizeDelta = new Vector2(194f, 64f);
                 labels[index] = label;
             }
         }

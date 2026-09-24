@@ -23,7 +23,12 @@ namespace Cave.Domain
         public bool IsAcquired => acquired;
     }
 
-    /// <summary>Future source of a player's personal Domain power.</summary>
+    /// <summary>
+    /// Legacy serialized placeholder vocabulary for a future Domain's power
+    /// source. Do not use this enum for new Laws; <see cref="LawExpression"/>
+    /// is the authoritative Law vocabulary. Values remain unchanged here to
+    /// preserve existing serialized data until an explicit migration is made.
+    /// </summary>
     public enum PowerExpression
     {
         Projectiles,
@@ -32,8 +37,10 @@ namespace Cave.Domain
     }
 
     /// <summary>
-    /// Inert, centralized vocabulary for how future Domain authority occupies
-    /// space. These are not Derived Laws and have no simulation in this pass.
+    /// Legacy serialized placeholder vocabulary for future Domain spatial data.
+    /// Do not use this enum for new Laws; <see cref="LawTerritoryPrinciple"/>
+    /// is the authoritative Law vocabulary. Values remain unchanged here to
+    /// preserve existing serialized data until an explicit migration is made.
     /// </summary>
     public enum TerritoryPrinciple
     {
@@ -66,9 +73,11 @@ namespace Cave.Domain
     }
 
     /// <summary>
-    /// Data-only outline of a future personal Domain. It is intentionally not
-    /// persisted: a Domain Seed and current-run mastery are the prerequisites,
-    /// while future construction choices remain run-local.
+    /// Legacy data-only placeholder for earlier Domain UI/configuration work.
+    /// Its multi-phenomenon list is not a Law and must not be used as a new
+    /// runtime Law source. It remains intact because these serialized fields
+    /// may be referenced by existing assets; a later migration may adapt it
+    /// explicitly to a collection of <see cref="DomainLaw"/> values.
     /// </summary>
     [Serializable]
     public sealed class DomainConfiguration

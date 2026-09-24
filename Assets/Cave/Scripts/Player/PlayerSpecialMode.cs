@@ -3,6 +3,7 @@ using Cave.Axioms;
 using Cave.Axioms.Control;
 using Cave.Axioms.Mastery;
 using Cave.Combat;
+using Cave.Domain;
 using UnityEngine;
 
 namespace Cave.Player
@@ -45,6 +46,8 @@ namespace Cave.Player
                 gameObject.AddComponent<AxiomPlayerMovementControl>();
             }
             AxiomMasteryState.EnsureOn(gameObject);
+            PlayerMasteryEvidenceRuntime.EnsureOn(gameObject);
+            PlayerDomainLawCollection.EnsureOn(gameObject);
             AxiomControlState control = AxiomControlState.EnsureOn(gameObject);
             control.InterventionSucceeded -= HandleAxiomCorrection;
             control.InterventionSucceeded += HandleAxiomCorrection;

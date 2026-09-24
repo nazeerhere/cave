@@ -66,6 +66,7 @@ namespace Cave.InputSystem
             && WasPressed(GameAction.GuardBreak);
         public static bool FireProjectilePressed => GameplayInputEnabled && WasPressed(GameAction.FireProjectile);
         public static bool FireProjectileHeld => GameplayInputEnabled && IsHeld(GameAction.FireProjectile);
+        public static bool FireProjectileReleased => GameplayInputEnabled && WasReleased(GameAction.FireProjectile);
         public static bool UseHealthPotionPressed => GameplayInputEnabled
             && WasPressed(GameAction.UseHealthPotion);
         public static bool UseManaPotionPressed => GameplayInputEnabled

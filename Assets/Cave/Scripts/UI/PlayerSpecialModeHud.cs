@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cave.Audio;
 using Cave.Axioms.Mastery;
 using Cave.Combat;
@@ -25,6 +26,7 @@ namespace Cave.UI
         [SerializeField] private Text currencyText;
         [SerializeField] private Text feedbackText;
         [SerializeField] private GameObject selectionPanel;
+        [SerializeField] private GameObject modalBackdrop;
         [SerializeField] private Button toggleButton;
 
         [Header("Modes Tab")]
@@ -50,11 +52,7 @@ namespace Cave.UI
         [Header("Domain Tab")]
         [SerializeField] private GameObject domainContent;
         [SerializeField] private Button domainTabButton;
-        [SerializeField] private Text domainSeedText;
-        [SerializeField] private Text powerExpressionText;
-        [SerializeField] private Text axiomPhenomenaText;
-        [SerializeField] private Text territoryPrincipleText;
-        [SerializeField] private Text domainComplexityText;
+        [SerializeField] private DomainPageView domainPage;
 
         private static readonly SpecialMode[] Modes =
         {
@@ -73,7 +71,18 @@ namespace Cave.UI
         private PlayerProjectileLauncher projectileLauncher;
         private PlayerLandmineInventory landmines;
         private AxiomMasteryState domainMastery;
+        private PlayerMasteryEvidenceRuntime domainEvidence;
+        private PlayerDomainLawCollection domainLaws;
         private bool domainSeedSubscribed;
+        private readonly Dictionary<CanvasGroup, HudGroupState> suppressedHudGroups = new Dictionary<CanvasGroup, HudGroupState>();
+
+        private struct HudGroupState
+        {
+            public float Alpha;
+            public bool Interactable;
+            public bool BlocksRaycasts;
+            public bool IgnoreParentGroups;
+        }
 
         public RectTransform PermanentProgressionMount => permanentProgressionMount;
         public RectTransform GeneralShardSummaryMount => generalShardSummaryMount;
@@ -84,6 +93,7 @@ namespace Cave.UI
             Text currentCurrencyText,
             Text statusText,
             GameObject modeSelectionPanel,
+            GameObject selectionBackdrop,
             Button panelToggleButton,
             Button[] selectionButtons,
             Text[] selectionLabels,
@@ -103,17 +113,14 @@ namespace Cave.UI
             RectTransform shardSummaryMount,
             GameObject domainTabContent,
             Button domainTab,
-            Text seedStatusText,
-            Text expressionStatusText,
-            Text phenomenaStatusText,
-            Text territoryStatusText,
-            Text complexityStatusText)
+            DomainPageView domainPageView)
         {
             currentModeText = modeText;
             selectionCurrentModeText = panelModeText;
             currencyText = currentCurrencyText;
             feedbackText = statusText;
             selectionPanel = modeSelectionPanel;
+            modalBackdrop = selectionBackdrop;
             toggleButton = panelToggleButton;
             modeButtons = selectionButtons;
             modeButtonLabels = selectionLabels;
@@ -133,11 +140,7 @@ namespace Cave.UI
             generalShardSummaryMount = shardSummaryMount;
             domainContent = domainTabContent;
             domainTabButton = domainTab;
-            domainSeedText = seedStatusText;
-            powerExpressionText = expressionStatusText;
-            axiomPhenomenaText = phenomenaStatusText;
-            territoryPrincipleText = territoryStatusText;
-            domainComplexityText = complexityStatusText;
+            domainPage = domainPageView;
 
             toggleButton.onClick.AddListener(ToggleSelectionPanel);
             modesTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Modes));
@@ -159,7 +162,7 @@ namespace Cave.UI
 
             SubscribeDomainSeed();
             ShowTab(SelectionTab.Modes);
-            selectionPanel.SetActive(true);
+            SetModalVisible(true);
         }
 
         public void Bind(PlayerSpecialMode modeState, PlayerCurrency currency)
@@ -173,6 +176,9 @@ namespace Cave.UI
                 BindDomainMastery(specialMode != null
                     ? specialMode.GetComponent<AxiomMasteryState>()
                     : null);
+                BindDomainProduction(specialMode != null
+                    ? PlayerMasteryEvidenceRuntime.EnsureOn(specialMode.gameObject) : null,
+                    specialMode != null ? PlayerDomainLawCollection.EnsureOn(specialMode.gameObject) : null);
             }
 
             if (playerCurrency != currency)
@@ -362,9 +368,23 @@ namespace Cave.UI
 
         private void ToggleSelectionPanel()
         {
+            SetModalVisible(selectionPanel == null || !selectionPanel.activeSelf);
+        }
+
+        private void SetModalVisible(bool visible)
+        {
+            SetUnderlyingHudVisible(!visible);
+
+            if (modalBackdrop != null)
+            {
+                modalBackdrop.SetActive(visible);
+                if (visible) modalBackdrop.transform.SetAsLastSibling();
+            }
+
             if (selectionPanel != null)
             {
-                selectionPanel.SetActive(!selectionPanel.activeSelf);
+                selectionPanel.SetActive(visible);
+                if (visible) selectionPanel.transform.SetAsLastSibling();
             }
         }
 
@@ -393,12 +413,16 @@ namespace Cave.UI
                 domainContent.SetActive(showDomain);
             }
 
+            SetModeHeaderVisible(!showDomain);
+            SetDomainFooterVisible(!showDomain);
+
             SetTabVisual(modesTabButton, showModes);
             SetTabVisual(shopTabButton, showShop);
             SetTabVisual(domainTabButton, showDomain);
             CaveUiArt.ApplySkillTab(modesTabButton, showModes, false);
             CaveUiArt.ApplySkillTab(shopTabButton, showShop, true);
             CaveUiArt.ApplySkillTab(domainTabButton, showDomain, false);
+            ApplyDomainTabAccent(showDomain);
             if (showDomain)
             {
                 RefreshDomain();
@@ -421,6 +445,23 @@ namespace Cave.UI
             {
                 label.color = selected ? CaveUiTheme.BorderBright : CaveUiTheme.PrimaryText;
                 label.fontStyle = selected ? FontStyle.Bold : FontStyle.Normal;
+            }
+        }
+
+        private void ApplyDomainTabAccent(bool selected)
+        {
+            if (domainTabButton == null) return;
+
+            Image image = domainTabButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = selected ? CaveUiTheme.Gold : Color.white;
+            }
+
+            Text label = domainTabButton.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                label.color = selected ? CaveUiTheme.PrimaryText : CaveUiTheme.SecondaryText;
             }
         }
 
@@ -544,60 +585,108 @@ namespace Cave.UI
 
         private void RefreshDomain()
         {
-            bool hasSeed = DomainProgression.HasDomainSeed;
-            if (domainSeedText != null)
+            // The Domain page can be configured before the player owner's Awake
+            // path has installed its current-run authoring components. Reconcile
+            // that normal lifecycle ordering here instead of leaving the page in
+            // its null-context fallback state.
+            if (specialMode != null)
             {
-                domainSeedText.text = hasSeed
-                    ? "DOMAIN SEED\nAWAKENED  •  PERMANENT"
-                    : "DOMAIN\n[ LOCKED ]\nA Domain Seed is required.";
-            }
-
-            if (powerExpressionText != null)
-            {
-                powerExpressionText.text = hasSeed
-                    ? "POWER EXPRESSION\nPROJECTILES  •  FRENZY\nHYBRID  [ UNAVAILABLE ]"
-                    : "PERSONAL DOMAIN CONSTRUCTION AWAITS THE SEED.";
-            }
-
-            if (axiomPhenomenaText != null)
-            {
-                axiomPhenomenaText.text = hasSeed
-                    ? BuildAxiomPhenomenaReadout()
-                    : "AXIOM PHENOMENA\nUnlock the Domain Seed to view current-run potential.";
-            }
-
-            if (territoryPrincipleText != null)
-            {
-                territoryPrincipleText.text = hasSeed
-                    ? "TERRITORY PRINCIPLE\nFUTURE SELECTION AREA"
-                    : "TERRITORY PRINCIPLE\nLOCKED";
-            }
-
-            if (domainComplexityText != null)
-            {
-                domainComplexityText.text = hasSeed
-                    ? "DOMAIN COMPLEXITY\nCAPACITY  0 / 0  •  FUTURE READOUT"
-                    : "DOMAIN COMPLEXITY\nLOCKED";
-            }
-        }
-
-        private string BuildAxiomPhenomenaReadout()
-        {
-            string result = "AXIOM PHENOMENA  •  CURRENT RUN\n";
-            for (int index = 0; index < DomainMasteryQuery.PhenomenonCount; index++)
-            {
-                MasteryDomain phenomenon = DomainMasteryQuery.GetPhenomenon(index);
-                float mastery = DomainMasteryQuery.GetMastery(domainMastery, phenomenon);
-                result += DomainMasteryQuery.GetDisplayName(phenomenon)
-                    + " " + Mathf.RoundToInt(mastery * 100f) + "%"
-                    + (DomainMasteryQuery.IsEligible(domainMastery, phenomenon) ? "  READY" : string.Empty);
-                if (index + 1 < DomainMasteryQuery.PhenomenonCount)
+                PlayerMasteryEvidenceRuntime evidence = PlayerMasteryEvidenceRuntime.EnsureOn(specialMode.gameObject);
+                PlayerDomainLawCollection laws = PlayerDomainLawCollection.EnsureOn(specialMode.gameObject);
+                if (domainEvidence != evidence || domainLaws != laws)
                 {
-                    result += index == 2 ? "\n" : "  •  ";
+                    BindDomainProduction(evidence, laws);
                 }
             }
 
-            return result;
+            if (domainPage != null)
+            {
+                domainPage.Refresh(domainMastery);
+            }
+        }
+
+        private void SetModeHeaderVisible(bool visible)
+        {
+            if (selectionPanel == null) return;
+
+            SetChildVisible("Active Mode Header", visible);
+            SetChildVisible("Selected Mode", visible);
+            SetChildVisible("Mode Currency", visible);
+        }
+
+        private void SetDomainFooterVisible(bool visible)
+        {
+            if (feedbackText != null)
+            {
+                feedbackText.gameObject.SetActive(visible);
+            }
+
+            if (generalShardSummaryMount != null)
+            {
+                generalShardSummaryMount.gameObject.SetActive(visible);
+            }
+        }
+
+        private void SetUnderlyingHudVisible(bool visible)
+        {
+            if (visible)
+            {
+                foreach (KeyValuePair<CanvasGroup, HudGroupState> entry in suppressedHudGroups)
+                {
+                    CanvasGroup group = entry.Key;
+                    if (group == null) continue;
+
+                    HudGroupState state = entry.Value;
+                    group.alpha = state.Alpha;
+                    group.interactable = state.Interactable;
+                    group.blocksRaycasts = state.BlocksRaycasts;
+                    group.ignoreParentGroups = state.IgnoreParentGroups;
+                }
+
+                suppressedHudGroups.Clear();
+                return;
+            }
+
+            if (selectionPanel == null) return;
+
+            Transform hudRoot = selectionPanel.transform.parent;
+            if (hudRoot == null) return;
+
+            for (int index = 0; index < hudRoot.childCount; index++)
+            {
+                Transform child = hudRoot.GetChild(index);
+                if (child.gameObject == selectionPanel || child.gameObject == modalBackdrop) continue;
+
+                CanvasGroup group = child.GetComponent<CanvasGroup>();
+                if (group == null)
+                {
+                    group = child.gameObject.AddComponent<CanvasGroup>();
+                }
+
+                if (!suppressedHudGroups.ContainsKey(group))
+                {
+                    suppressedHudGroups.Add(group, new HudGroupState
+                    {
+                        Alpha = group.alpha,
+                        Interactable = group.interactable,
+                        BlocksRaycasts = group.blocksRaycasts,
+                        IgnoreParentGroups = group.ignoreParentGroups
+                    });
+                }
+
+                group.alpha = 0f;
+                group.interactable = false;
+                group.blocksRaycasts = false;
+            }
+        }
+
+        private void SetChildVisible(string name, bool visible)
+        {
+            Transform child = selectionPanel.transform.Find(name);
+            if (child != null)
+            {
+                child.gameObject.SetActive(visible);
+            }
         }
 
         private void HandleModeChanged(SpecialMode mode)
@@ -651,6 +740,13 @@ namespace Cave.UI
             }
 
             RefreshDomain();
+        }
+
+        private void BindDomainProduction(PlayerMasteryEvidenceRuntime evidence, PlayerDomainLawCollection laws)
+        {
+            domainEvidence = evidence;
+            domainLaws = laws;
+            if (domainPage != null) domainPage.BindProduction(domainEvidence, domainLaws);
         }
 
         private void SubscribeDomainSeed()
@@ -841,6 +937,7 @@ namespace Cave.UI
 
         private void OnDestroy()
         {
+            SetUnderlyingHudVisible(true);
             UnsubscribeMode();
             UnsubscribeCurrency();
             UnsubscribeProgression();

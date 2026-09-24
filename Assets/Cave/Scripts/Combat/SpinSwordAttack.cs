@@ -39,6 +39,14 @@ namespace Cave.Combat
         private Quaternion restingRotation;
         private Vector3 authoredPivotPosition;
         private Vector3 authoredPivotScale;
+        private Vector3 authoredColliderPosition;
+        private Vector2 authoredBoxColliderSize;
+        private Vector2 authoredBoxColliderOffset;
+        private float authoredCircleColliderRadius;
+        private Vector2 authoredCircleColliderOffset;
+        private Vector2 authoredCapsuleColliderSize;
+        private Vector2 authoredCapsuleColliderOffset;
+        private float weaponReachMultiplier = 1f;
         private float authoredSwordFacing = 1f;
         private float currentSwordFacing = 1f;
         private float currentStamina;
@@ -63,10 +71,23 @@ namespace Cave.Combat
         public bool IsAttacking => isAttacking;
         public GameObject SwordVisualObject => swordVisual;
         public Transform SwordPivot => swordPivot;
+        public float WeaponReachMultiplier => weaponReachMultiplier;
 
         public bool UsesAttackCollider(Collider2D candidate)
         {
             return candidate != null && candidate == attackCollider;
+        }
+
+        /// <summary>
+        /// Applies a selection-derived multiplier from authored baselines. This
+        /// changes only the sword trigger envelope; it cannot affect damage,
+        /// stamina, or attack cadence and never compounds across equips.
+        /// </summary>
+        public void SetWeaponReachMultiplier(float multiplier)
+        {
+            weaponReachMultiplier = Mathf.Max(0.01f, multiplier);
+            ApplyWeaponReachGeometry();
+            ApplySwordFacing(currentSwordFacing);
         }
 
         private void Awake()
@@ -87,6 +108,8 @@ namespace Cave.Combat
                 authoredPivotScale = swordPivot.localScale;
                 authoredSwordFacing = ResolveAuthoredSwordFacing();
             }
+
+            CaptureAttackColliderGeometry();
 
             currentStamina = maximumStamina;
             if (GetComponent<PlayerBrace>() == null)
@@ -292,7 +315,7 @@ namespace Cave.Combat
             currentSwordFacing = Mathf.Sign(facing);
             float mirror = currentSwordFacing == authoredSwordFacing ? 1f : -1f;
             swordPivot.localPosition = new Vector3(
-                authoredPivotPosition.x * mirror,
+                authoredPivotPosition.x * mirror * weaponReachMultiplier,
                 authoredPivotPosition.y,
                 authoredPivotPosition.z);
             swordPivot.localScale = new Vector3(
@@ -312,7 +335,7 @@ namespace Cave.Combat
             float directionalAngle = PrepareSwordForDirection(direction);
             float mirror = currentSwordFacing == authoredSwordFacing ? 1f : -1f;
             swordPivot.localPosition = new Vector3(
-                authoredPivotPosition.x * mirror + handOffset.x * mirror,
+                authoredPivotPosition.x * mirror * weaponReachMultiplier + handOffset.x * mirror,
                 authoredPivotPosition.y + handOffset.y,
                 authoredPivotPosition.z);
             swordPivot.localRotation = restingRotation
@@ -339,6 +362,70 @@ namespace Cave.Combat
             return Mathf.Abs(authoredPivotPosition.x) > 0.001f
                 ? Mathf.Sign(authoredPivotPosition.x)
                 : 1f;
+        }
+
+        private void CaptureAttackColliderGeometry()
+        {
+            if (attackCollider == null)
+            {
+                return;
+            }
+
+            authoredColliderPosition = attackCollider.transform.localPosition;
+            BoxCollider2D box = attackCollider as BoxCollider2D;
+            if (box != null)
+            {
+                authoredBoxColliderSize = box.size;
+                authoredBoxColliderOffset = box.offset;
+                return;
+            }
+
+            CircleCollider2D circle = attackCollider as CircleCollider2D;
+            if (circle != null)
+            {
+                authoredCircleColliderRadius = circle.radius;
+                authoredCircleColliderOffset = circle.offset;
+                return;
+            }
+
+            CapsuleCollider2D capsule = attackCollider as CapsuleCollider2D;
+            if (capsule != null)
+            {
+                authoredCapsuleColliderSize = capsule.size;
+                authoredCapsuleColliderOffset = capsule.offset;
+            }
+        }
+
+        private void ApplyWeaponReachGeometry()
+        {
+            if (attackCollider == null)
+            {
+                return;
+            }
+
+            attackCollider.transform.localPosition = authoredColliderPosition * weaponReachMultiplier;
+            BoxCollider2D box = attackCollider as BoxCollider2D;
+            if (box != null)
+            {
+                box.size = authoredBoxColliderSize * weaponReachMultiplier;
+                box.offset = authoredBoxColliderOffset * weaponReachMultiplier;
+                return;
+            }
+
+            CircleCollider2D circle = attackCollider as CircleCollider2D;
+            if (circle != null)
+            {
+                circle.radius = authoredCircleColliderRadius * weaponReachMultiplier;
+                circle.offset = authoredCircleColliderOffset * weaponReachMultiplier;
+                return;
+            }
+
+            CapsuleCollider2D capsule = attackCollider as CapsuleCollider2D;
+            if (capsule != null)
+            {
+                capsule.size = authoredCapsuleColliderSize * weaponReachMultiplier;
+                capsule.offset = authoredCapsuleColliderOffset * weaponReachMultiplier;
+            }
         }
 
         private void RegenerateStamina()

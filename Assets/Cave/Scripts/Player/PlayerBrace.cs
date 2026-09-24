@@ -24,12 +24,7 @@ namespace Cave.Player
         [Header("Full Brace")]
         [FormerlySerializedAs("movementMultiplier")]
         [SerializeField, Range(0.1f, 1f)] private float fullMovementMultiplier = 0.33f;
-        [SerializeField, Min(0f)] private float earlyRecoveryPerSecond = 75f;
-        [SerializeField, Min(0f)] private float sustainedRecoveryPerSecond = 32f;
-        [SerializeField, Min(0f)] private float earlyRecoveryDuration = 2.5f;
         [Header("Deep Brace")]
-        [SerializeField, Min(0f)] private float deepManaRecoveryPerSecond = 4f;
-        [SerializeField, Min(0f)] private float deepSettlingDelay = 0.4f;
         [SerializeField, Min(0f)] private float deepExitRecovery = 0.2f;
         [Header("Deflect / Exit")]
         [SerializeField, Min(0.05f)] private float deflectResponseWindow = 0.2f;
@@ -53,7 +48,6 @@ namespace Cave.Player
         private PlayerRecoveryModifiers recoveryModifiers;
         private ChargedAttack chargedAttack;
         private float braceStartedAt;
-        private float deepEnteredAt;
         private float deepExitUntil;
         private float deflectExpiresAt;
         private bool exitDiscountPending;
@@ -109,7 +103,7 @@ namespace Cave.Player
                 controller?.SetBraceMovementMultiplier(fullMovementMultiplier);
             }
 
-            if (stage == BraceStage.Full) RestoreFullBraceStamina();
+            if (stage == BraceStage.Full) RestoreBraceResources();
         }
 
         public bool TryEnterFromGuardBreak()
@@ -169,7 +163,6 @@ namespace Cave.Player
         {
             if (stage != BraceStage.Full || controller == null || controller.IsExternallyMovementLocked
                 || (stun != null && stun.IsStunned)) return false;
-            deepEnteredAt = Time.time;
             deflectExpiresAt = 0f;
             exitDiscountPending = false;
             SetStage(BraceStage.Deep);
@@ -182,23 +175,31 @@ namespace Cave.Player
         {
             if (!CanContinueDeepBrace()) { ExitDeepBrace(); return; }
             controller?.SetBraceMovementMultiplier(0f);
-            // Deep Brace is an extension of Full Brace, not a replacement for it:
-            // preserve the same stamina recovery calculation (and its Tower modifier)
-            // while Deep's separate settling delay gates only its mana recovery.
-            RestoreFullBraceStamina();
-            if (Time.time < deepEnteredAt + deepSettlingDelay || mana == null) return;
-            if (recoveryModifiers == null) recoveryModifiers = GetComponent<PlayerRecoveryModifiers>();
-            float multiplier = recoveryModifiers != null ? recoveryModifiers.ManaRegenerationMultiplier : 1f;
-            mana.RestoreMana(deepManaRecoveryPerSecond * multiplier * Time.deltaTime);
+            RestoreBraceResources();
         }
 
-        private void RestoreFullBraceStamina()
+        private void RestoreBraceResources()
         {
-            if (stamina == null) return;
+            float maximumStamina = stamina != null ? stamina.MaximumStamina : 0f;
+            float maximumMana = mana != null ? mana.MaximumMana : 0f;
+            BraceResourceRecovery recovery = BraceResourceRecoveryPolicy.Resolve(
+                stage,
+                maximumStamina,
+                maximumMana,
+                Time.deltaTime);
+
             if (recoveryModifiers == null) recoveryModifiers = GetComponent<PlayerRecoveryModifiers>();
-            float multiplier = recoveryModifiers != null ? recoveryModifiers.StaminaRegenerationMultiplier : 1f;
-            float rate = braceElapsed <= earlyRecoveryDuration ? earlyRecoveryPerSecond : sustainedRecoveryPerSecond;
-            stamina.RestoreStamina(rate * multiplier * Time.deltaTime);
+            if (stamina != null && recovery.Stamina > 0f)
+            {
+                float multiplier = recoveryModifiers != null ? recoveryModifiers.StaminaRegenerationMultiplier : 1f;
+                stamina.RestoreStamina(recovery.Stamina * multiplier);
+            }
+
+            if (mana != null && recovery.Mana > 0f)
+            {
+                float multiplier = recoveryModifiers != null ? recoveryModifiers.ManaRegenerationMultiplier : 1f;
+                mana.RestoreMana(recovery.Mana * multiplier);
+            }
         }
 
         private bool BeginActionExit()

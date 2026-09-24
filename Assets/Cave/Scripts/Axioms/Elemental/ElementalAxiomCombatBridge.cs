@@ -1,6 +1,7 @@
 using Cave.Combat;
 using Cave.Axioms.Control;
 using Cave.Axioms.Mastery;
+using Cave.Domain;
 using Cave.Player;
 using UnityEngine;
 
@@ -113,7 +114,7 @@ namespace Cave.Axioms.Elemental
             AxiomControlOpportunity opportunity;
             if (control.TryGetActiveOpportunity(kind, timestamp, out opportunity))
             {
-                control.TryIntervene(
+                bool intervened = control.TryIntervene(
                     runtime,
                     dynamics,
                     kind,
@@ -122,6 +123,19 @@ namespace Cave.Axioms.Elemental
                     timestamp,
                     source,
                     target.gameObject);
+                if (intervened && source != null)
+                {
+                    LawPhenomenon phenomenon;
+                    MasteryEvidenceDimension dimension;
+                    if (TryMapEvidence(kind, opportunity.Error.ErrorKind, out phenomenon, out dimension))
+                    {
+                        PlayerMasteryEvidenceRuntime owner = source.GetComponent<PlayerMasteryEvidenceRuntime>();
+                        owner?.Submit(new PhenomenonMasteryEvidenceSubmission(
+                            phenomenon, dimension, Mathf.Max(.1f, opportunity.Error.Magnitude), true,
+                            context.HasTrait(DamageTrait.Projectile) ? LawExpression.Projectile : (LawExpression?)null),
+                            PlayerMasteryPolicy.Default);
+                    }
+                }
             }
 
             runtime.ApplyDelta(kind, amount, source, target.gameObject, timestamp);
@@ -151,6 +165,28 @@ namespace Cave.Axioms.Elemental
             if (source != null && AxiomMasteryState.TryDomain(kind, out domain))
             {
                 AxiomMasteryState.EnsureOn(source).Record(new MasteryEvidence(domain, MasteryEvidenceKind.OrdinaryUse, 1f, amount, timestamp));
+            }
+        }
+
+        private static bool TryMapEvidence(AxiomKind kind, AxiomErrorKind error,
+            out LawPhenomenon phenomenon, out MasteryEvidenceDimension dimension)
+        {
+            phenomenon = LawPhenomenon.Heat;
+            switch (kind)
+            {
+                case AxiomKind.Heat: phenomenon = LawPhenomenon.Heat; break;
+                case AxiomKind.Flow: phenomenon = LawPhenomenon.Flow; break;
+                case AxiomKind.Mass: phenomenon = LawPhenomenon.Mass; break;
+                case AxiomKind.Phase: phenomenon = LawPhenomenon.Phase; break;
+                case AxiomKind.Order: phenomenon = LawPhenomenon.Order; break;
+                default: dimension = default(MasteryEvidenceDimension); return false;
+            }
+            switch (error)
+            {
+                case AxiomErrorKind.State: dimension = MasteryEvidenceDimension.State; return true;
+                case AxiomErrorKind.Rate: dimension = MasteryEvidenceDimension.Rate; return true;
+                case AxiomErrorKind.Acceleration: dimension = MasteryEvidenceDimension.Acceleration; return true;
+                default: dimension = default(MasteryEvidenceDimension); return false;
             }
         }
     }

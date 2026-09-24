@@ -46,7 +46,7 @@ namespace Cave.Player
         [SerializeField] private GameObject sacrificeExplosionVisualPrefab;
 
         [Header("Field Node Tuning")]
-        [SerializeField, Min(1)] private int mineHealth = 4;
+        [SerializeField, Min(1)] private int mineHealth = 8;
         [SerializeField, Min(0.1f)] private float mineEnergy = 8f;
         [SerializeField, Min(0f)] private float mineLifetime = 36f;
         [SerializeField, Min(0.1f)] private float maximumLinkDistance = 9f;

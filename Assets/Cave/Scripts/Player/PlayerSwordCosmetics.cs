@@ -17,6 +17,7 @@ namespace Cave.Player
     [DisallowMultipleComponent]
     public sealed class PlayerSwordCosmetics : MonoBehaviour
     {
+        public const float UpgradedSwordMultiplier = 1.2f;
         private const string Unlock1Key = "Cave.CosmeticSword1.Unlocked";
         private const string Unlock2Key = "Cave.CosmeticSword2.Unlocked";
         private const string Unlock3Key = "Cave.CosmeticSword3.Unlocked";
@@ -63,6 +64,20 @@ namespace Cave.Player
         public bool Sword1Unlocked => PlayerPrefs.GetInt(Unlock1Key, 0) != 0;
         public bool Sword2Unlocked => PlayerPrefs.GetInt(Unlock2Key, 0) != 0;
         public bool Sword3Unlocked => PlayerPrefs.GetInt(Unlock3Key, 0) != 0;
+        public bool IsUpgradedSword => IsUpgraded(selectedAppearance);
+        public float EffectiveReachMultiplier => ReachMultiplierFor(selectedAppearance);
+
+        public static bool IsUpgraded(SwordCosmeticSelection selection)
+        {
+            return selection == SwordCosmeticSelection.Sword1
+                || selection == SwordCosmeticSelection.Sword2
+                || selection == SwordCosmeticSelection.Sword3;
+        }
+
+        public static float ReachMultiplierFor(SwordCosmeticSelection selection)
+        {
+            return IsUpgraded(selection) ? UpgradedSwordMultiplier : 1f;
+        }
 
         public static void EnsureInstalled(GameObject player)
         {
@@ -211,6 +226,7 @@ namespace Cave.Player
             }
 
             selectedAppearance = selection;
+            spinAttack?.SetWeaponReachMultiplier(ReachMultiplierFor(selection));
             if (activeVisualInstance != null)
             {
                 activeVisualInstance.SetActive(false);
@@ -321,9 +337,11 @@ namespace Cave.Player
 
         private float ScaleFor(SwordCosmeticSelection selection)
         {
-            if (selection == SwordCosmeticSelection.Sword1) return sword1Scale;
-            if (selection == SwordCosmeticSelection.Sword2) return sword2Scale;
-            return selection == SwordCosmeticSelection.Sword3 ? sword3Scale : 1f;
+            if (selection == SwordCosmeticSelection.Sword1) return sword1Scale * UpgradedSwordMultiplier;
+            if (selection == SwordCosmeticSelection.Sword2) return sword2Scale * UpgradedSwordMultiplier;
+            return selection == SwordCosmeticSelection.Sword3
+                ? sword3Scale * UpgradedSwordMultiplier
+                : 1f;
         }
 
         private GameObject VisualPrefabFor(SwordCosmeticSelection selection)

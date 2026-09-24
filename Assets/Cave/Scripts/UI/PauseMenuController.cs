@@ -382,9 +382,9 @@ namespace Cave.UI
                     + "QUICK BRACE\n"
                     + "Guard + GB after the Parry timing window. Brief and mobile; its next Spin or Heavy costs less.\n\n"
                     + "FULL BRACE\n"
-                    + "Reached automatically from Quick Brace. Main defensive stance; restores Stamina and can Deflect.\n\n"
+                    + "BRACE I. Reached automatically from Quick Brace. Main defensive stance; restores 5% maximum Stamina per second and can Deflect.\n\n"
                     + "DEEP BRACE\n"
-                    + "Press GB again from Full. Immobile and no Guard; restores Mana slowly while held.";
+                    + "BRACE II. Press GB again from Full. Immobile and no Guard; restores 3% maximum Stamina and 5% maximum Mana per second while held.";
             }
         }
 

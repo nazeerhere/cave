@@ -91,23 +91,23 @@ namespace Cave.UI
             shardText.fontStyle = FontStyle.Bold;
             shardText.color = CaveUiTheme.GeneralShard;
 
-            healthButton = CreateButton(root.transform, font, string.Empty, new Vector2(-101f, 29f));
-            SetRect(healthButton.GetComponent<RectTransform>(), new Vector2(-101f, 29f), new Vector2(194f, 34f));
+            healthButton = CreateButton(root.transform, font, string.Empty, new Vector2(0f, 70f));
+            SetRect(healthButton.GetComponent<RectTransform>(), new Vector2(0f, 70f), new Vector2(880f, 34f));
             healthText = healthButton.GetComponentInChildren<Text>();
             healthButton.onClick.AddListener(() => Purchase(progression.TryPurchaseHealthRegeneration(), "Health Regeneration"));
 
-            manaButton = CreateButton(root.transform, font, string.Empty, new Vector2(101f, 29f));
-            SetRect(manaButton.GetComponent<RectTransform>(), new Vector2(101f, 29f), new Vector2(194f, 34f));
+            manaButton = CreateButton(root.transform, font, string.Empty, new Vector2(0f, 25f));
+            SetRect(manaButton.GetComponent<RectTransform>(), new Vector2(0f, 25f), new Vector2(880f, 34f));
             manaText = manaButton.GetComponentInChildren<Text>();
             manaButton.onClick.AddListener(() => Purchase(progression.TryPurchaseManaRegeneration(), "Mana Regeneration"));
 
-            speedButton = CreateButton(root.transform, font, string.Empty, new Vector2(-101f, -9f));
-            SetRect(speedButton.GetComponent<RectTransform>(), new Vector2(-101f, -9f), new Vector2(194f, 34f));
+            speedButton = CreateButton(root.transform, font, string.Empty, new Vector2(0f, -20f));
+            SetRect(speedButton.GetComponent<RectTransform>(), new Vector2(0f, -20f), new Vector2(880f, 34f));
             speedText = speedButton.GetComponentInChildren<Text>();
             speedButton.onClick.AddListener(() => Purchase(progression.TryPurchaseSpeedBurst(), "Speed Burst"));
 
-            Button power = CreateButton(root.transform, font, string.Empty, new Vector2(101f, -9f));
-            SetRect(power.GetComponent<RectTransform>(), new Vector2(101f, -9f), new Vector2(194f, 34f));
+            Button power = CreateButton(root.transform, font, string.Empty, new Vector2(0f, -65f));
+            SetRect(power.GetComponent<RectTransform>(), new Vector2(0f, -65f), new Vector2(880f, 34f));
             powerText = power.GetComponentInChildren<Text>();
             HoldRepeatButton repeatPurchase = power.gameObject.AddComponent<HoldRepeatButton>();
             repeatPurchase.Configure(
@@ -115,7 +115,7 @@ namespace Cave.UI
                 succeeded => Purchase(succeeded, "Power"));
 
             feedbackText = CreateText(root.transform, font, string.Empty, 11);
-            SetRect(feedbackText.rectTransform, new Vector2(0f, -49f), new Vector2(398f, 18f));
+            SetRect(feedbackText.rectTransform, new Vector2(0f, -99f), new Vector2(860f, 18f));
             feedbackText.color = CaveUiTheme.BorderBright;
 
             shardGainPopupText = CreateText(canvas, font, string.Empty, 22);
@@ -262,7 +262,7 @@ namespace Cave.UI
             outline.effectColor = CaveUiTheme.IronLight;
             outline.effectDistance = new Vector2(2f, -2f);
             Button button = buttonObject.AddComponent<Button>();
-            SetRect(buttonObject.GetComponent<RectTransform>(), position, new Vector2(286f, 44f));
+            SetRect(buttonObject.GetComponent<RectTransform>(), position, new Vector2(880f, 44f));
             Text text = CreateText(buttonObject.transform, font, label, 13);
             RectTransform textRect = text.rectTransform;
             textRect.anchorMin = Vector2.zero;

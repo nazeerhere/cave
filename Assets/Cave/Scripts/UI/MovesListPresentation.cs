@@ -149,9 +149,9 @@ namespace Cave.UI
         {
             CreateSection(parent, font, "FOLLOW-UPS / CHAINS", 220f);
             CreateChainRow(parent, font, "SPIN", "Spin", "BASH", "Bash", "Spin then Guard Break", 166f, CaveUiTheme.BorderBright);
-            CreateChainRow(parent, font, "PARRY", "Guard", "HEAVY T1", "Heavy", "Normal Parry starts Heavy at Tier 1", 106f, CaveUiTheme.BorderBright);
-            CreateChainRow(parent, font, "PERFECT PARRY", "Guard", "HEAVY T2", "Heavy", "Perfect Parry starts Heavy at Tier 2", 46f, CaveUiTheme.Mana);
-            CreateChainRow(parent, font, "GUARD BREAK", "GuardBreak", "HEAVY T1", "Heavy", "Successful break opens a Heavy follow-up", -14f, CaveUiTheme.Gold);
+            CreateChainRow(parent, font, "PARRY", "Guard", "HEAVY T2", "Heavy", "Normal Parry starts the Heavy chain at Tier 2", 106f, CaveUiTheme.BorderBright);
+            CreateChainRow(parent, font, "PERFECT PARRY", "Guard", "HEAVY T3", "Heavy", "Perfect Parry starts the Heavy chain at Tier 3", 46f, CaveUiTheme.Mana);
+            CreateChainRow(parent, font, "GUARD BREAK", "GuardBreak", "HEAVY T2", "Heavy", "Successful break starts the Heavy chain at Tier 2", -14f, CaveUiTheme.Gold);
             CreateChainRow(parent, font, "HEAVY / GB", "Heavy", "CROSS STEP", "CrossStep", "Dash after commitment to reposition", -74f, CaveUiTheme.BorderBright);
             CreateBraceCard(parent, font);
         }
@@ -209,7 +209,7 @@ namespace Cave.UI
 
         private static void CreateBraceCard(Transform parent, Font font)
         {
-            CreateCompactCard(parent, font, "BRACE", "GUARD + GB after the Parry window enters Brace.\n\nQUICK — mobile and cheaper next exit.\nFULL — restores Stamina and can Deflect.\nDEEP — immobile; restores Mana slowly.", new Vector2(0f, -192f), new Vector2(808f, 116f), CaveUiTheme.Mana);
+            CreateCompactCard(parent, font, "BRACE", "GUARD + GB after the Parry window enters Brace.\n\nQUICK — mobile and cheaper next exit.\nFULL / BRACE I — restores 5% max Stamina per second; can Deflect.\nDEEP / BRACE II — immobile; restores 3% max Stamina + 5% max Mana per second.", new Vector2(0f, -192f), new Vector2(808f, 116f), CaveUiTheme.Mana);
         }
 
         private static void CreateCompactCard(Transform parent, Font font, string title, string body, Vector2 position, Vector2 size, Color accent)

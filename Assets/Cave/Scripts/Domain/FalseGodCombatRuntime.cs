@@ -21,7 +21,12 @@ namespace Cave.Domain
         DashShadow,
         CrystalChainHook,
         TriuneAnchors,
-        Block
+        Block,
+        Repossession,
+        Tithe,
+        Reconfiguration,
+        ClaimBurst,
+        ClaimTeleport
     }
 
     /// <summary>
@@ -46,12 +51,19 @@ namespace Cave.Domain
         private FalseGodTriuneAnchors triuneAnchors;
         private FalseGodProphetBlock prophetBlock;
         private FalseGodProphetPhaseBoundary phaseBoundary;
+        private FalseGodFormController formController;
+        private FalseGodMonkCombat monkCombat;
+        private FalseGodClaimBurst claimBurst;
+        private FalseGodClaimTeleport claimTeleport;
         private bool stopped;
         private bool deathSubscribed;
+        private readonly List<FalseGodAbilityKind> actionScratch = new List<FalseGodAbilityKind>(8);
+        private FalseGodAbilityKind previousAction;
 
         public FalseGodAbilityKind CurrentAbility { get; private set; }
         public FalseGodProphetPresentationState PresentationState { get; private set; } = FalseGodProphetPresentationState.Idle;
         public ClaimLoadSnapshot ClaimLoad => foundation != null ? foundation.ClaimLoad : default;
+        public FalseGodForm CurrentForm => formController != null ? formController.CurrentForm : FalseGodForm.Prophet;
         public bool IsCasting => CurrentAbility != FalseGodAbilityKind.None;
         public event Action<FalseGodProphetPresentationState> PresentationStateChanged;
 
@@ -74,6 +86,10 @@ namespace Cave.Domain
             triuneAnchors = GetComponent<FalseGodTriuneAnchors>();
             prophetBlock = GetComponent<FalseGodProphetBlock>();
             phaseBoundary = GetComponent<FalseGodProphetPhaseBoundary>();
+            formController = GetComponent<FalseGodFormController>();
+            monkCombat = GetComponent<FalseGodMonkCombat>();
+            claimBurst = GetComponent<FalseGodClaimBurst>();
+            claimTeleport = GetComponent<FalseGodClaimTeleport>();
             projectileHold?.InitializeRuntime(foundation != null ? foundation.AuthorityNetwork : null);
             triuneAnchors?.InitializeRuntimeDependencies();
             if (phaseBoundary != null)
@@ -82,6 +98,8 @@ namespace Cave.Domain
                 phaseBoundary.AscensionRequested -= HandleAscensionRequested;
                 phaseBoundary.AscensionRequested += HandleAscensionRequested;
             }
+            formController?.InitializeRuntimeDependencies();
+            monkCombat?.InitializeRuntimeDependencies();
             SubscribeDeath();
         }
 
@@ -111,8 +129,19 @@ namespace Cave.Domain
                 return;
             }
 
-            // Establish territory first; after that, exploit a bounded relay
-            // path. Appropriation is explicit and never scans projectiles.
+            if (CurrentForm == FalseGodForm.TrueBodyFinalPending)
+            {
+                return;
+            }
+
+            if (CurrentForm == FalseGodForm.Monk)
+            {
+                UpdateMonkCombat();
+                return;
+            }
+
+            // Establish the first authority source before selecting from the
+            // contextual action pool. Every other action keeps its own legality.
             if (foundation != null
                 && foundation.ActiveClaimAnchors == 0
                 && crystalRain != null
@@ -123,63 +152,17 @@ namespace Cave.Domain
                 return;
             }
 
-            triuneAnchors?.SetSuppressionTarget(combatTarget);
-            if (triuneAnchors != null && triuneAnchors.ActiveAnchorCount < 3)
-            {
-                FalseGodTriuneAnchorKind nextAnchor = !triuneAnchors.HasActive(FalseGodTriuneAnchorKind.Heal)
-                    ? FalseGodTriuneAnchorKind.Heal
-                    : !triuneAnchors.HasActive(FalseGodTriuneAnchorKind.Empower)
-                        ? FalseGodTriuneAnchorKind.Empower
-                        : FalseGodTriuneAnchorKind.Suppress;
-                if (triuneAnchors.TryCreate(nextAnchor))
-                {
-                    CurrentAbility = FalseGodAbilityKind.TriuneAnchors;
-                    SetPresentationState(FalseGodProphetPresentationMap.ForAbility(CurrentAbility));
-                    return;
-                }
-            }
-
             PlayerHealth targetHealth = combatTarget.GetComponentInParent<PlayerHealth>();
             float basicDamageMultiplier = triuneAnchors != null
                 ? triuneAnchors.ResolveBasicCastDamageMultiplier()
                 : 1f;
             float distance = Vector2.Distance(transform.position, combatTarget.position);
-            if (targetHealth != null && prophetChainHook != null && foundation != null
-                && foundation.ActiveClaimAnchors > 0 && prophetChainHook.TryCast(targetHealth))
+            if (distance < 1.5f && UnityEngine.Random.value < 0.02f && claimTeleport != null && claimTeleport.TryTeleport())
             {
-                CurrentAbility = FalseGodAbilityKind.CrystalChainHook;
-                SetPresentationState(FalseGodProphetPresentationMap.ForAbility(CurrentAbility));
+                previousAction = FalseGodAbilityKind.ClaimTeleport;
                 return;
             }
-
-            if (prophetBasicCast != null && distance > 4f
-                && prophetBasicCast.TryCastSlowBolt(combatTarget, basicDamageMultiplier))
-            {
-                CurrentAbility = FalseGodAbilityKind.SlowBolt;
-                SetPresentationState(FalseGodProphetPresentationMap.ForAbility(CurrentAbility));
-                return;
-            }
-
-            if (prophetDashShadow != null && distance > 2f
-                && prophetDashShadow.TryCast(combatTarget, basicDamageMultiplier))
-            {
-                CurrentAbility = FalseGodAbilityKind.DashShadow;
-                SetPresentationState(FalseGodProphetPresentationMap.ForAbility(CurrentAbility));
-                return;
-            }
-
-            if (prophetBasicCast != null && prophetBasicCast.TryCastEcho(combatTarget, basicDamageMultiplier))
-            {
-                CurrentAbility = FalseGodAbilityKind.EchoProjectile;
-                SetPresentationState(FalseGodProphetPresentationMap.ForAbility(CurrentAbility));
-                return;
-            }
-
-            if (causalBeam != null && causalBeam.TryBegin(combatTarget.position, targetHealth))
-            {
-                CurrentAbility = FalseGodAbilityKind.CausalBeam;
-                SetPresentationState(FalseGodProphetPresentationMap.ForAbility(CurrentAbility));
-            }
+            TrySelectProphetAction(targetHealth, distance, basicDamageMultiplier);
         }
 
         public void SetCombatTarget(Transform target)
@@ -206,6 +189,53 @@ namespace Cave.Domain
             CurrentAbility = FalseGodAbilityKind.None;
             SetPresentationState(FalseGodProphetPresentationState.Idle);
             return captured;
+        }
+
+        public bool TryRepossess(InteractionIdentity target, out ClaimResult result)
+        {
+            result = default;
+            if (stopped || CurrentForm != FalseGodForm.Monk || monkCombat == null)
+            {
+                return false;
+            }
+
+            CurrentAbility = FalseGodAbilityKind.Repossession;
+            SetPresentationState(FalseGodProphetPresentationMap.ForMonkAbility(CurrentAbility));
+            bool succeeded = monkCombat.TryRepossess(target, out result);
+            CurrentAbility = FalseGodAbilityKind.None;
+            SetPresentationState(FalseGodProphetPresentationState.Idle);
+            return succeeded;
+        }
+
+        public bool TryTithe(ClaimCrystal source, FalseGodTitheOutcome outcome, out int benefit)
+        {
+            benefit = 0;
+            if (stopped || CurrentForm != FalseGodForm.Monk || monkCombat == null)
+            {
+                return false;
+            }
+
+            CurrentAbility = FalseGodAbilityKind.Tithe;
+            SetPresentationState(FalseGodProphetPresentationMap.ForMonkAbility(CurrentAbility));
+            bool succeeded = monkCombat.TryTithe(source, outcome, out benefit);
+            CurrentAbility = FalseGodAbilityKind.None;
+            SetPresentationState(FalseGodProphetPresentationState.Idle);
+            return succeeded;
+        }
+
+        public bool TryReconfigure(ClaimCrystal crystal, ClaimCrystalConfigurationMode mode, PlayerHealth offensiveTarget = null)
+        {
+            if (stopped || CurrentForm != FalseGodForm.Monk || monkCombat == null)
+            {
+                return false;
+            }
+
+            CurrentAbility = FalseGodAbilityKind.Reconfiguration;
+            SetPresentationState(FalseGodProphetPresentationMap.ForMonkAbility(CurrentAbility));
+            bool succeeded = monkCombat.TryReconfigure(crystal, mode, offensiveTarget);
+            CurrentAbility = FalseGodAbilityKind.None;
+            SetPresentationState(FalseGodProphetPresentationState.Idle);
+            return succeeded;
         }
 
         /// <summary>Reactive entry point; actual damage resolution remains in EnemyDefenseController.</summary>
@@ -238,6 +268,63 @@ namespace Cave.Domain
             PresentationStateChanged?.Invoke(state);
         }
 
+        public void ReleasePresentationHold()
+        {
+            GetComponent<FalseGodProphetPresentation>()?.ReleaseGameplayHold();
+        }
+
+        private void TrySelectProphetAction(PlayerHealth targetHealth, float distance, float damageMultiplier)
+        {
+            actionScratch.Clear();
+            triuneAnchors?.SetSuppressionTarget(combatTarget);
+            if (triuneAnchors != null && triuneAnchors.ActiveAnchorCount < 3) actionScratch.Add(FalseGodAbilityKind.TriuneAnchors);
+            if (targetHealth != null && foundation != null && foundation.ActiveClaimAnchors > 0 && prophetChainHook != null) actionScratch.Add(FalseGodAbilityKind.CrystalChainHook);
+            if (prophetBasicCast != null) actionScratch.Add(FalseGodAbilityKind.EchoProjectile);
+            if (prophetBasicCast != null && distance > 3.5f) actionScratch.Add(FalseGodAbilityKind.SlowBolt);
+            if (prophetDashShadow != null && distance > 1.5f && distance < 8f) actionScratch.Add(FalseGodAbilityKind.DashShadow);
+            if (causalBeam != null && distance > 2.5f) actionScratch.Add(FalseGodAbilityKind.CausalBeam);
+            PlayerAttackState playerPressure = targetHealth != null ? targetHealth.GetComponent<PlayerAttackState>() : null;
+            bool closePressure = distance < 2.25f && playerPressure != null
+                && (playerPressure.IsDefending || playerPressure.IsActivelyAttacking);
+            if (closePressure) actionScratch.Add(FalseGodAbilityKind.Block);
+            if (distance < 2.2f && playerPressure != null && playerPressure.IsDefending && claimBurst != null) actionScratch.Add(FalseGodAbilityKind.ClaimBurst);
+
+            for (int attempts = actionScratch.Count; attempts > 0; attempts--)
+            {
+                int pick = UnityEngine.Random.Range(0, actionScratch.Count);
+                if (actionScratch.Count > 1 && actionScratch[pick] == previousAction)
+                {
+                    pick = (pick + 1) % actionScratch.Count;
+                }
+
+                FalseGodAbilityKind choice = actionScratch[pick];
+                actionScratch.RemoveAt(pick);
+                bool started = choice == FalseGodAbilityKind.EchoProjectile ? prophetBasicCast.TryCastEcho(combatTarget, damageMultiplier)
+                    : choice == FalseGodAbilityKind.SlowBolt ? prophetBasicCast.TryCastSlowBolt(combatTarget, damageMultiplier)
+                    : choice == FalseGodAbilityKind.DashShadow ? prophetDashShadow.TryCast(combatTarget, damageMultiplier)
+                    : choice == FalseGodAbilityKind.CausalBeam ? causalBeam.TryBegin(combatTarget.position, targetHealth)
+                    : choice == FalseGodAbilityKind.CrystalChainHook ? prophetChainHook.TryCast(targetHealth)
+                    : choice == FalseGodAbilityKind.ClaimBurst ? claimBurst.TryCast(targetHealth)
+                    : choice == FalseGodAbilityKind.Block ? TryBlock()
+                    : TryCreateNextTriune();
+                if (started)
+                {
+                    if (choice != FalseGodAbilityKind.Block) CurrentAbility = choice;
+                    previousAction = choice;
+                    SetPresentationState(FalseGodProphetPresentationMap.ForAbility(choice));
+                    return;
+                }
+            }
+        }
+
+        private bool TryCreateNextTriune()
+        {
+            if (triuneAnchors == null) return false;
+            FalseGodTriuneAnchorKind next = !triuneAnchors.HasActive(FalseGodTriuneAnchorKind.Heal) ? FalseGodTriuneAnchorKind.Heal
+                : !triuneAnchors.HasActive(FalseGodTriuneAnchorKind.Empower) ? FalseGodTriuneAnchorKind.Empower : FalseGodTriuneAnchorKind.Suppress;
+            return triuneAnchors.TryCreate(next);
+        }
+
         public void StopCombat()
         {
             if (stopped)
@@ -255,16 +342,94 @@ namespace Cave.Domain
             prophetChainHook?.BreakTether();
             triuneAnchors?.RetireAll();
             projectileHold?.RetireAll();
+            monkCombat?.ClearRuntimeState();
             CurrentAbility = FalseGodAbilityKind.None;
             SetPresentationState(FalseGodProphetPresentationState.Idle);
         }
 
         private void HandleDied()
         {
+            // FormController may complete Prophet -> Monk from an earlier
+            // Damageable subscription. Do not subsequently stop the newly
+            // activated Monk controller for the same resolved defeat.
+            if (formController != null && formController.CurrentForm == FalseGodForm.Monk)
+            {
+                stopped = false;
+                SetPresentationState(FalseGodProphetPresentationState.Idle);
+                return;
+            }
+
             StopCombat();
             if (phaseBoundary != null && phaseBoundary.HasRequestedAscension)
             {
                 SetPresentationState(FalseGodProphetPresentationState.Ascension);
+            }
+        }
+
+        public void ActivateMonkForm()
+        {
+            StopCombat();
+            stopped = false;
+            prophetBlock?.ConfigureMonkBlock();
+            monkCombat?.InitializeRuntimeDependencies();
+            SetPresentationState(FalseGodProphetPresentationState.Idle);
+        }
+
+        public void EnterFinalAscensionPending()
+        {
+            StopCombat();
+            SetPresentationState(FalseGodProphetPresentationState.FinalAscension);
+        }
+
+        private void UpdateMonkCombat()
+        {
+            if (monkCombat == null)
+            {
+                return;
+            }
+
+            PlayerHealth targetHealth = combatTarget.GetComponentInParent<PlayerHealth>();
+            if (monkCombat.TryGetRepossessionCandidate(out InteractionIdentity repossessionTarget)
+                && TryRepossess(repossessionTarget, out _))
+            {
+                return;
+            }
+
+            bool underPressure = damageable != null && damageable.CurrentHealth * 2 <= damageable.MaximumHealth;
+            if ((ClaimLoad.TotalRelationships >= 2 || underPressure)
+                && monkCombat.TryGetTitheSource(out ClaimCrystal titheSource)
+                && TryTithe(titheSource, underPressure ? FalseGodTitheOutcome.Heal : FalseGodTitheOutcome.TemporaryShield, out _))
+            {
+                return;
+            }
+
+            if (monkCombat.CanSelectReconfiguration
+                && monkCombat.TryGetReconfigurationTarget(out ClaimCrystal crystal))
+            {
+                ClaimCrystalConfiguration configuration = crystal.GetComponent<ClaimCrystalConfiguration>();
+                ClaimCrystalConfigurationMode next = configuration == null
+                    ? ClaimCrystalConfigurationMode.Defensive
+                    : configuration.Mode == ClaimCrystalConfigurationMode.Defensive
+                        ? ClaimCrystalConfigurationMode.Offensive
+                        : ClaimCrystalConfigurationMode.Defensive;
+                TryReconfigure(crystal, next, targetHealth);
+                return;
+            }
+
+            float basicDamageMultiplier = triuneAnchors != null
+                ? triuneAnchors.ResolveBasicCastDamageMultiplier()
+                : 1f;
+            if (causalBeam != null && causalBeam.TryBegin(combatTarget.position, targetHealth))
+            {
+                CurrentAbility = FalseGodAbilityKind.CausalBeam;
+                SetPresentationState(FalseGodProphetPresentationMap.ForMonkAbility(CurrentAbility));
+                return;
+            }
+
+            if (prophetBasicCast != null && prophetBasicCast.TryCastEcho(combatTarget, basicDamageMultiplier))
+            {
+                CurrentAbility = FalseGodAbilityKind.EchoProjectile;
+                SetPresentationState(FalseGodProphetPresentationMap.ForMonkAbility(CurrentAbility));
             }
         }
 
@@ -301,6 +466,11 @@ namespace Cave.Domain
             }
             else if (CurrentAbility == FalseGodAbilityKind.Block
                 && (prophetBlock == null || !prophetBlock.IsBlocking))
+            {
+                CurrentAbility = FalseGodAbilityKind.None;
+            }
+            else if (CurrentAbility == FalseGodAbilityKind.ClaimBurst
+                && (claimBurst == null || !claimBurst.IsCasting))
             {
                 CurrentAbility = FalseGodAbilityKind.None;
             }
@@ -436,6 +606,7 @@ namespace Cave.Domain
 
             for (int index = 0; index < impactScratch.Count; index++)
             {
+                GetComponent<FalseGodCombatController>()?.ReleasePresentationHold();
                 ManifestImpact(impactScratch[index]);
                 if (impactInterval > 0f && index < impactScratch.Count - 1)
                 {
@@ -478,6 +649,8 @@ namespace Cave.Domain
                 return false;
             }
 
+            FalseGodProphetVfxPlayback.PlayOneShot(FalseGodProphetVfxKind.CrystalRain, impactPoint, 1.15f);
+            FalseGodProphetVfxPlayback.PlayOneShot(FalseGodProphetVfxKind.CrystalManifestation, crystal.transform.position, 0.9f);
             FalseGodCombatPresentation.CreateCrystalImpact(impactPoint);
             return true;
         }
@@ -581,7 +754,7 @@ namespace Cave.Domain
     public sealed class CausalBeamAbility : MonoBehaviour
     {
         [SerializeField, Min(0f)] private float windupDuration = 0.65f;
-        [SerializeField, Min(0f)] private float activeDuration = 0.25f;
+        [SerializeField, Min(0f)] private float activeDuration = 0.325f;
         [SerializeField, Min(0.1f)] private float cooldown = 5f;
         [SerializeField, Range(0, 2)] private int maximumRelayCount = 2;
         [SerializeField, Min(0.1f)] private float maximumRelayDistance = 7f;
@@ -591,6 +764,7 @@ namespace Cave.Domain
 
         private readonly List<ClaimAnchor> anchorScratch = new List<ClaimAnchor>(8);
         private readonly List<ClaimAnchor> routeRelays = new List<ClaimAnchor>(2);
+        private readonly List<ClaimAnchor> routeCandidates = new List<ClaimAnchor>(8);
         private readonly List<Vector3> pathScratch = new List<Vector3>(4);
         private FalseGodRuntimeFoundation foundation;
         private Coroutine castRoutine;
@@ -600,6 +774,8 @@ namespace Cave.Domain
 
         public bool IsCasting => castRoutine != null;
         public int LastRelayCount { get; private set; }
+        public int AvailableRouteCount { get; private set; }
+        public ClaimAnchor LastSelectedRoute { get; private set; }
 
         private void Awake()
         {
@@ -652,13 +828,15 @@ namespace Cave.Domain
 
         private IEnumerator PerformCast(PlayerHealth target)
         {
-            ShowBeam(0.045f, new Color(0.85f, 0.2f, 1f, 0.65f));
+            FalseGodProphetVfxPlayback.PlayOneShot(FalseGodProphetVfxKind.CausalBeam, transform.position, 1.25f);
+            ShowBeam(0.09f, new Color(0.85f, 0.2f, 1f, 0.65f));
             if (windupDuration > 0f)
             {
                 yield return new WaitForSeconds(windupDuration);
             }
 
-            ShowBeam(0.11f, new Color(0.95f, 0.6f, 1f, 1f));
+            GetComponent<FalseGodCombatController>()?.ReleasePresentationHold();
+            ShowBeam(0.18f, new Color(0.95f, 0.6f, 1f, 1f));
             if (target != null)
             {
                 target.TryTakeDamage(damage, new DamageContext(
@@ -720,9 +898,7 @@ namespace Cave.Domain
             }
 
             Vector2 direction = targetDelta / targetDistance;
-            ClaimAnchor best = null;
-            float bestScore = float.MaxValue;
-            int bestId = int.MaxValue;
+            routeCandidates.Clear();
             for (int index = 0; index < anchorScratch.Count; index++)
             {
                 ClaimAnchor candidate = anchorScratch[index];
@@ -744,17 +920,18 @@ namespace Cave.Domain
                     continue;
                 }
 
-                float score = lateral * 100f + along;
-                int instanceId = candidate.GetInstanceID();
-                if (best == null || score < bestScore || (Mathf.Approximately(score, bestScore) && instanceId < bestId))
-                {
-                    best = candidate;
-                    bestScore = score;
-                    bestId = instanceId;
-                }
+                routeCandidates.Add(candidate);
             }
 
-            return best;
+            AvailableRouteCount = routeCandidates.Count;
+            if (routeCandidates.Count == 0) return null;
+            int pick = UnityEngine.Random.Range(0, routeCandidates.Count);
+            if (routeCandidates.Count > 1 && routeCandidates[pick] == LastSelectedRoute)
+            {
+                pick = (pick + 1) % routeCandidates.Count;
+            }
+            LastSelectedRoute = routeCandidates[pick];
+            return LastSelectedRoute;
         }
 
         private bool HasLineOfSight(Vector2 start, Vector2 end)
@@ -793,6 +970,8 @@ namespace Cave.Domain
             visual.transform.SetParent(transform, false);
             beamRenderer = visual.AddComponent<LineRenderer>();
             beamRenderer.useWorldSpace = true;
+            beamRenderer.alignment = LineAlignment.View;
+            beamRenderer.textureMode = LineTextureMode.Stretch;
             beamRenderer.startWidth = 0.05f;
             beamRenderer.endWidth = 0.05f;
             beamRenderer.sortingOrder = 30;
@@ -979,12 +1158,22 @@ namespace Cave.Domain
     /// <summary>Development-only factory; it never serializes a production prefab or adds spawn-table references.</summary>
     public static class FalseGodDevelopmentShell
     {
-        public static FalseGodCombatController Create(Vector2 position)
+        public static FalseGodCombatController Create(Vector2 position, bool includeMonkForm = false)
         {
             GameObject shell = new GameObject("False God Development Shell");
             shell.transform.position = position;
-            CircleCollider2D body = shell.AddComponent<CircleCollider2D>();
-            body.radius = 0.55f;
+            // Buapah currently uses one predictable root-level body/hurtbox.
+            // This is deliberately not an attack collider and remains a simple
+            // solid shape for the development shell's existing world contacts.
+            int damageableLayer = LayerMask.NameToLayer("Damageable");
+            if (damageableLayer >= 0)
+            {
+                shell.layer = damageableLayer;
+            }
+
+            BoxCollider2D body = shell.AddComponent<BoxCollider2D>();
+            body.size = new Vector2(1.2f, 1.8f);
+            body.offset = new Vector2(0f, -0.2f);
             Damageable damageable = shell.AddComponent<Damageable>();
             damageable.InitializeRuntimeState();
             damageable.SetRuntimeMaximumHealth(12, true);
@@ -998,7 +1187,15 @@ namespace Cave.Domain
             shell.AddComponent<FalseGodCrystalChainHook>();
             shell.AddComponent<FalseGodTriuneAnchors>();
             shell.AddComponent<FalseGodProphetBlock>();
+            shell.AddComponent<FalseGodClaimBurst>();
+            shell.AddComponent<FalseGodClaimTeleport>();
+            shell.AddComponent<FalseGodWraithSpawner>();
             shell.AddComponent<FalseGodProphetPhaseBoundary>();
+            if (includeMonkForm)
+            {
+                shell.AddComponent<FalseGodFormController>();
+                shell.AddComponent<FalseGodMonkCombat>();
+            }
             FalseGodCombatController controller = shell.AddComponent<FalseGodCombatController>();
             controller.InitializeRuntime();
             return controller;
@@ -1015,6 +1212,7 @@ namespace Cave.Domain
 
         public static void CreateCaptureCue(Vector2 position)
         {
+            FalseGodProphetVfxPlayback.PlayOneShot(FalseGodProphetVfxKind.Appropriation, position, 0.8f);
             CreateRing("Appropriation Capture Cue", position, 0.42f, 0.4f, new Color(1f, 0.6f, 1f, 1f));
         }
 

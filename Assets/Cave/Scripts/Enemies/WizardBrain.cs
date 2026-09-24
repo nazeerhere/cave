@@ -140,6 +140,21 @@ namespace Cave.Enemies
                 return;
             }
 
+            CombatTacticalMember tacticalMember = GetComponent<CombatTacticalMember>();
+            CombatTacticalIntent tacticalIntent;
+            if (tacticalMember != null
+                && tacticalMember.TryGetIntent(out tacticalIntent)
+                && tacticalIntent == CombatTacticalIntent.Support
+                && support != null
+                && support.TryBeginEmpower())
+            {
+                // This is a preference only: WizardSupportAbilities remains the
+                // legal authority for target selection, cooldowns, and casting.
+                flight.HoldPosition();
+                SetDecision(WizardBrainState.Cast, "CTC support empower");
+                return;
+            }
+
             if (support != null
                 && playerDistance <= preferredSupportRange + supportRangeTolerance
                 && support.TryBeginForcePlayerTeleport(player))

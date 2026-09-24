@@ -178,13 +178,37 @@ namespace Cave.Interactions
         [SerializeField] private InteractionOwnership ownership;
         [SerializeField] private GameObject authoritySource;
         [SerializeField, Min(0)] private int authorityStrength;
+        // Kept deliberately small: Repossession needs truthful authority history,
+        // not an unbounded event ledger.
+        [SerializeField] private GameObject originatingAuthoritySource;
+        [SerializeField] private GameObject previousAuthoritySource;
 
         public InteractionOwnership Ownership => ownership;
         public GameObject AuthoritySource => authoritySource;
         public int AuthorityStrength => authorityStrength;
+        public GameObject OriginatingAuthoritySource => originatingAuthoritySource;
+        public GameObject PreviousAuthoritySource => previousAuthoritySource;
+
+        public bool HasAuthorityHistory(GameObject source)
+        {
+            return source != null
+                && (authoritySource == source
+                    || originatingAuthoritySource == source
+                    || previousAuthoritySource == source);
+        }
 
         internal void Establish(InteractionOwnership value, GameObject source, int strength)
         {
+            if (originatingAuthoritySource == null && source != null)
+            {
+                originatingAuthoritySource = source;
+            }
+
+            if (authoritySource != null && authoritySource != source)
+            {
+                previousAuthoritySource = authoritySource;
+            }
+
             ownership = value;
             authoritySource = source;
             authorityStrength = Mathf.Max(0, strength);
@@ -208,6 +232,7 @@ namespace Cave.Interactions
         public InteractionOwnership Ownership => state != null ? state.Ownership : InteractionOwnership.Neutral;
         public GameObject AuthoritySource => state != null ? state.AuthoritySource : null;
         public int AuthorityStrength => state != null ? state.AuthorityStrength : 0;
+        public bool HasAuthorityHistory(GameObject source) => state != null && state.HasAuthorityHistory(source);
 
         internal void EstablishAtSpawn(
             InteractionTraits semanticTraits,
@@ -272,6 +297,35 @@ namespace Cave.Interactions
                 axiom: axiom,
                 currentOwnership: owner));
             return identity;
+        }
+
+        /// <summary>
+        /// Explicit handoff for systems such as reflection or redirection which
+        /// resolve ownership outside Claim. The handoff preserves the bounded
+        /// authority history used by Repossession and emits the standard event.
+        /// </summary>
+        public static bool TransferResolvedOwnership(
+            InteractionIdentity identity,
+            InteractionOwnership ownership,
+            GameObject authoritySource,
+            int authorityStrength)
+        {
+            if (identity == null)
+            {
+                return false;
+            }
+
+            InteractionOwnership previous = identity.Ownership;
+            identity.ApplyResolvedOwnership(ownership, authoritySource, authorityStrength);
+            InteractionEventBus.Emit(new InteractionEvent(
+                InteractionEventKind.OwnershipChanged,
+                identity,
+                identity.gameObject,
+                identity.Traits,
+                Mathf.Max(0, authorityStrength),
+                previousOwnership: previous,
+                currentOwnership: ownership));
+            return true;
         }
 
         public static void ReportHit(InteractionIdentity source, GameObject target, int value = 0)

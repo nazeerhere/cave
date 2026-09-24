@@ -188,12 +188,14 @@ namespace Cave.Enemies
             hasLineOfSight = HasLineOfSight(player.transform.position);
             if (hasLineOfSight)
             {
+                BattlefieldSignal observedSignals = BuildBattlefieldSignals();
+                PublishKnowledgeObservation(player.transform.position, observedSignals);
                 EyeWatcherNetwork.Broadcast(
                     this,
                     player.transform.position,
                     watcherRadius,
                     sharedLocationMemory,
-                    BuildBattlefieldSignals());
+                    observedSignals);
             }
 
             isFrenzied = Time.time < frenzyEndsAt;
@@ -483,6 +485,25 @@ namespace Cave.Enemies
             }
 
             return signals;
+        }
+
+        /// <summary>
+        /// The Eye's existing line-of-sight result is the authority for this
+        /// observation. Sharing is optional and only succeeds when the Eye has
+        /// authored membership in an explicit tactical formation.
+        /// </summary>
+        private void PublishKnowledgeObservation(Vector2 playerPosition, BattlefieldSignal signals)
+        {
+            KnowledgeActor knowledge = KnowledgeActor.EnsureOn(gameObject);
+            if (knowledge == null)
+            {
+                return;
+            }
+
+            float now = Time.time;
+            KnowledgeFact location = knowledge.ObservePlayerLocation(playerPosition, now);
+            knowledge.ObservePlayerSignals(signals, now);
+            GetComponent<CombatTacticalMember>()?.ShareKnowledge(location);
         }
 
         private bool IsPlayerDeliberatelyFacingAway()

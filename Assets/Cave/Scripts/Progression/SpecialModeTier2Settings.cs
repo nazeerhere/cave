@@ -71,6 +71,8 @@ namespace Cave.Progression
         [SerializeField, Min(0.1f)] private float slowFieldRadius = 2.5f;
         [SerializeField, Min(0.1f)] private float slowFieldDuration = 5f;
         [SerializeField, Range(0.05f, 1f)] private float slowFieldMovementMultiplier = 0.8f;
+        [SerializeField, Min(0f)] private float slowFieldMergeGrowth = 0.4f;
+        [SerializeField, Min(0.1f)] private float slowFieldMaximumRadius = 4.5f;
 
         [Header("Burn Tier 3 Spread")]
         [SerializeField, Min(0.1f)] private float burnSpreadRadius = 2.5f;
@@ -162,6 +164,8 @@ namespace Cave.Progression
         public float SlowFieldRadius => slowFieldRadius;
         public float SlowFieldDuration => slowFieldDuration;
         public float SlowFieldMovementMultiplier => slowFieldMovementMultiplier;
+        public float SlowFieldMergeGrowth => slowFieldMergeGrowth;
+        public float SlowFieldMaximumRadius => slowFieldMaximumRadius;
         public float BurnSpreadRadius => burnSpreadRadius;
         public int MaximumBurnSpreadTargets => maximumBurnSpreadTargets;
         public Color BurnStatusColor => burnStatusColor;

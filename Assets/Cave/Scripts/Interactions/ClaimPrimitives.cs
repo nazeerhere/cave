@@ -11,7 +11,9 @@ namespace Cave.Interactions
         TouchedOrCaptured,
         InsideClaimedTerritory,
         GrantedByConsent,
-        ExistingClaimAnchor
+        ExistingClaimAnchor,
+        /// <summary>Explicit reclamation of an object with retained Claim authority history.</summary>
+        Repossession
     }
 
     public enum ClaimRejectionReason
@@ -90,6 +92,12 @@ namespace Cave.Interactions
         [SerializeField, Min(0)] private int resistanceStrength;
 
         public int ResistanceStrength => resistanceStrength;
+
+        /// <summary>Explicit runtime/test setup without reflection or serialized-field mutation.</summary>
+        public void ConfigureRuntimeResistance(int strength)
+        {
+            resistanceStrength = Mathf.Max(0, strength);
+        }
     }
 
     /// <summary>
@@ -328,6 +336,12 @@ namespace Cave.Interactions
                         && territorialAnchor.AuthorityNetwork.HasTerritorialEvidence(
                             territorialAnchor,
                             attempt.Target);
+                case ClaimProvenance.Repossession:
+                    ClaimAuthorityNetwork claimantNetwork = attempt.Claimant.GetComponent<ClaimAuthorityNetwork>();
+                    return claimantNetwork != null
+                        && claimantNetwork.CanMaintainAuthority
+                        && attempt.Target.Ownership != InteractionOwnership.Claim
+                        && attempt.Target.HasAuthorityHistory(claimantNetwork.AuthoritySource);
                 default:
                     // Capture and consent require future explicit evidence;
                     // accepting them before that evidence exists would be arbitrary.

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cave.Axioms.Elemental;
+using Cave.Axioms.Phase;
 using Cave.Audio;
 using Cave.Combat;
 using Cave.Enemies;
@@ -43,6 +44,9 @@ namespace Cave.Projectiles
         private int firedTier = 1;
         private SpriteRenderer[] visualRenderers;
         private Color[] baseVisualColors;
+        private Sprite[] baseVisualSprites;
+        private SpriteDrawMode[] baseVisualDrawModes;
+        private Vector2[] baseVisualSizes;
         private Vector3 baseScale;
         private float tierScale = 1f;
         private Transform[] scalableVisualTransforms;
@@ -56,11 +60,26 @@ namespace Cave.Projectiles
         private bool interactionDestroyedReported;
         private bool claimSuspended;
         private bool runtimeReferencesCached;
+        private bool isHeavyProjectile;
+        private float heavyExplosionRadius;
+        private GameObject launchOwner;
+        private GameObject ownerOverride;
+        private readonly List<Collider2D> ignoredOwnerColliders = new List<Collider2D>();
+        private bool usesProvidedPresentation;
+        private bool usesImaginaryPresentation;
+        private float launchedAt;
+        private Vector3 launchPosition;
+        private bool firstContactTraced;
+        private bool firstTerminalTraced;
+        private bool firstMovementTraced;
 
         public int BaseDamage => baseDamage;
         public int SkillTier => firedTier;
         public int RemainingEnemyHits => remainingEnemyHits;
         public bool IsPiercing => remainingEnemyHits > 1;
+        public bool IsHeavyProjectile => isHeavyProjectile;
+        public bool UsesProvidedPresentation => usesProvidedPresentation;
+        public bool UsesImaginaryPresentation => usesImaginaryPresentation;
         public bool CanBeEnemyParried => hasLaunched && !hasImpacted && !reflectedByEnemy;
         public InteractionIdentity InteractionIdentity => interactionIdentity;
         public bool IsClaimSuspended => claimSuspended;
@@ -74,6 +93,27 @@ namespace Cave.Projectiles
         public void SetFrenzyBreakActivation(FrenzyBreakActivation activation)
         {
             frenzyActivation = activation;
+        }
+
+        /// <summary>Explicit launcher ownership fallback when damage context is intentionally absent.</summary>
+        public void SetOwner(GameObject owner)
+        {
+            ownerOverride = owner;
+        }
+
+        /// <summary>
+        /// Configures the launched instance as the terminal Heavy expression of
+        /// the current projectile path. Heavy never inherits rapid pierce.
+        /// Root scale is intentional here: it defines both the visible and
+        /// collision footprint, unlike cosmetic tier scaling on child visuals.
+        /// </summary>
+        public void ConfigureHeavyProjectile(float scaleMultiplier, float explosionRadius)
+        {
+            isHeavyProjectile = true;
+            heavyExplosionRadius = Mathf.Max(0.1f, explosionRadius);
+            remainingEnemyHits = ChargedProjectilePolicy.HeavyMaximumEnemyHits;
+            damageContext = damageContext.WithTraits(DamageTrait.Heavy | DamageTrait.AreaOfEffect);
+            transform.localScale = baseScale * Mathf.Max(1f, scaleMultiplier);
         }
 
         private void Awake()
@@ -99,9 +139,15 @@ namespace Cave.Projectiles
             projectileCollider.isTrigger = true;
             visualRenderers = GetComponentsInChildren<SpriteRenderer>(true);
             baseVisualColors = new Color[visualRenderers.Length];
+            baseVisualSprites = new Sprite[visualRenderers.Length];
+            baseVisualDrawModes = new SpriteDrawMode[visualRenderers.Length];
+            baseVisualSizes = new Vector2[visualRenderers.Length];
             for (int index = 0; index < visualRenderers.Length; index++)
             {
                 baseVisualColors[index] = visualRenderers[index].color;
+                baseVisualSprites[index] = visualRenderers[index].sprite;
+                baseVisualDrawModes[index] = visualRenderers[index].drawMode;
+                baseVisualSizes[index] = visualRenderers[index].size;
             }
 
             baseScale = transform.localScale;
@@ -150,6 +196,9 @@ namespace Cave.Projectiles
             remainingEnemyHits = Mathf.Max(1, maximumEnemyHits);
             firedTier = Mathf.Clamp(skillTier, 1, 3);
             tier3Settings = specialModeSettings;
+            isHeavyProjectile = false;
+            heavyExplosionRadius = 0f;
+            transform.localScale = baseScale;
             hitTargets.Clear();
             axiomApplicationReceipt.Clear();
             reflectedByEnemy = false;
@@ -157,6 +206,13 @@ namespace Cave.Projectiles
             hasLaunched = true;
             claimSuspended = false;
             interactionDestroyedReported = false;
+            launchedAt = Time.time;
+            launchPosition = transform.position;
+            firstContactTraced = false;
+            firstTerminalTraced = false;
+            firstMovementTraced = false;
+            ConfigureOwnerCollisionFiltering(damageContext.Source != null ? damageContext.Source : ownerOverride);
+            ownerOverride = null;
             interactionIdentity = InteractionRuntime.TrackSpawn(
                 gameObject,
                 InteractionTraits.Projectile | InteractionTraits.Moving | InteractionTraits.ManaPowered,
@@ -166,6 +222,7 @@ namespace Cave.Projectiles
                 1);
             ConfigureTierVisuals();
             body.velocity = direction.normalized * speed;
+            TraceSpawn();
             Invoke(nameof(Expire), lifetime);
         }
 
@@ -229,11 +286,22 @@ namespace Cave.Projectiles
                 return;
             }
 
+            TraceFirstContact(other);
+
+            // The player's body, weapon, and transient attack colliders share
+            // one owner hierarchy. They are never valid targets for this shot,
+            // including on the spawn frame before Physics2D has applied ignores.
+            if (!reflectedByEnemy && IsOwnerCollider(other))
+            {
+                return;
+            }
+
             PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
             if (playerHealth != null)
             {
                 if (reflectedByEnemy)
                 {
+                    TraceFirstTerminal("reflected-player-hit", other);
                     playerHealth.TryTakeDamage(
                         resolvedDamage,
                         new DamageContext(enemyParryOwner, DamageTrait.Direct | DamageTrait.Projectile));
@@ -260,46 +328,19 @@ namespace Cave.Projectiles
                         return;
                     }
 
-                    hitTargets.Add(damageable);
-                    int frenzyDamage = resolvedDamage;
-                    bool isFrenzyCritical = frenzyActivation != null
-                        && frenzyActivation.TryResolveDamage(
-                            resolvedDamage,
-                            damageable,
-                            out frenzyDamage);
-                    int impactDamage = isFrenzyCritical ? frenzyDamage : resolvedDamage;
-                    DamageContext impactContext = isFrenzyCritical
-                        ? damageContext.WithTraits(DamageTrait.FrenzyCritical)
-                        : damageContext;
-                    InteractionRuntime.ReportHit(interactionIdentity, damageable.gameObject, impactDamage);
-                    int appliedDamage = damageable.TakeDamageResolved(
-                        impactDamage,
-                        impactContext);
-                    InteractionRuntime.ReportDamageApplied(
-                        interactionIdentity,
-                        damageable.gameObject,
-                        appliedDamage);
-                    ElementalAxiomCombatBridge.TryApplyProjectileHit(
-                        damageable,
-                        firedMode,
-                        appliedDamage,
-                        isFrenzyCritical,
-                        damageContext,
-                        Time.time,
-                        axiomApplicationReceipt);
-                    if (frenzyActivation != null
-                        && (frenzyActivation.ManaInfused || isFrenzyCritical))
+                    if (isHeavyProjectile)
                     {
-                        frenzyActivation.ApplyImpact(
-                            damageable,
-                            body.velocity,
-                            appliedDamage,
-                            isFrenzyCritical);
+                        TraceFirstTerminal("heavy-damageable-hit", other);
+                        BeginHeavyImpact();
+                        Destroy(gameObject);
+                        return;
                     }
-                    ApplyStatusEffect(damageable, appliedDamage > 0);
+
+                    ResolveProjectileHit(damageable);
                     remainingEnemyHits--;
                     if (remainingEnemyHits <= 0)
                     {
+                        TraceFirstTerminal("damageable-hit", other);
                         BeginImpact();
                         Destroy(gameObject);
                     }
@@ -310,10 +351,88 @@ namespace Cave.Projectiles
 
             if ((environmentLayers.value & (1 << other.gameObject.layer)) != 0)
             {
+                TraceFirstTerminal(isHeavyProjectile ? "heavy-environment-hit" : "environment-hit", other);
                 CaveSfx.Play(CaveSfxCue.Hit, 0.55f);
-                BeginImpact();
+                if (isHeavyProjectile)
+                {
+                    BeginHeavyImpact();
+                }
+                else
+                {
+                    BeginImpact();
+                }
                 Destroy(gameObject);
             }
+        }
+
+        private void ResolveProjectileHit(Damageable damageable)
+        {
+            if (damageable == null || !hitTargets.Add(damageable))
+            {
+                return;
+            }
+
+            int frenzyDamage = resolvedDamage;
+            bool isFrenzyCritical = frenzyActivation != null
+                && frenzyActivation.TryResolveDamage(
+                    resolvedDamage,
+                    damageable,
+                    out frenzyDamage);
+            int impactDamage = isFrenzyCritical ? frenzyDamage : resolvedDamage;
+            DamageContext impactContext = isFrenzyCritical
+                ? damageContext.WithTraits(DamageTrait.FrenzyCritical)
+                : damageContext;
+            InteractionRuntime.ReportHit(interactionIdentity, damageable.gameObject, impactDamage);
+            int appliedDamage = damageable.TakeDamageResolved(impactDamage, impactContext);
+            InteractionRuntime.ReportDamageApplied(
+                interactionIdentity,
+                damageable.gameObject,
+                appliedDamage);
+            ElementalAxiomCombatBridge.TryApplyProjectileHit(
+                damageable,
+                firedMode,
+                appliedDamage,
+                isFrenzyCritical,
+                damageContext,
+                Time.time,
+                axiomApplicationReceipt);
+            if (frenzyActivation != null
+                && (frenzyActivation.ManaInfused || isFrenzyCritical))
+            {
+                frenzyActivation.ApplyImpact(
+                    damageable,
+                    body.velocity,
+                    appliedDamage,
+                    isFrenzyCritical);
+            }
+
+            ApplyStatusEffect(damageable, appliedDamage > 0);
+        }
+
+        private void BeginHeavyImpact()
+        {
+            if (hasImpacted)
+            {
+                return;
+            }
+
+            // The explosion is the one authoritative Heavy hit. The collision
+            // target is included by the radius query, so it cannot receive an
+            // accidental direct-hit plus AoE double application.
+            Collider2D[] overlaps = Physics2D.OverlapCircleAll(
+                transform.position,
+                heavyExplosionRadius,
+                damageableLayers);
+            for (int index = 0; index < overlaps.Length; index++)
+            {
+                Damageable damageable = overlaps[index] != null
+                    ? overlaps[index].GetComponentInParent<Damageable>()
+                    : null;
+                ResolveProjectileHit(damageable);
+            }
+
+            CaveSfx.Play(CaveSfxCue.Explosion, 0.75f);
+            BeginImpact();
         }
 
         public bool TryEnemyParry(GameObject defender)
@@ -333,6 +452,9 @@ namespace Cave.Projectiles
             }
 
             reflectedByEnemy = true;
+            ResetOwnerCollisionFiltering();
+            launchOwner = null;
+            ownerOverride = null;
             enemyParryOwner = defender;
             remainingEnemyHits = 1;
             hitTargets.Clear();
@@ -441,7 +563,10 @@ namespace Cave.Projectiles
                     tier3Settings.SlowFieldMovementMultiplier,
                     damageableLayers,
                     tier3Settings.FrostFieldOutlineColor,
-                    tier3Settings.FrostFieldFillColor);
+                    tier3Settings.FrostFieldFillColor,
+                    tier3Settings.FrostTier2PinDuration,
+                    tier3Settings.SlowFieldMergeGrowth,
+                    tier3Settings.SlowFieldMaximumRadius);
             }
 
             body.velocity = Vector2.zero;
@@ -451,6 +576,7 @@ namespace Cave.Projectiles
 
         private void Update()
         {
+            TraceFirstMovement();
             frenzyActivation?.KeepAlive();
             if (hasLaunched && firedTier >= 3 && !hasImpacted)
             {
@@ -461,29 +587,40 @@ namespace Cave.Projectiles
 
         private void ConfigureTierVisuals()
         {
-            if ((firedMode != SpecialMode.SlowShot && firedMode != SpecialMode.BurnShot)
-                || tier3Settings == null)
+            usesImaginaryPresentation = launchOwner != null
+                && launchOwner.GetComponent<PhaseCombatState>()?.HasOpening == true;
+            usesProvidedPresentation = ApplyProvidedPresentation();
+
+            if (tier3Settings == null)
             {
                 return;
             }
 
             Color tierColor = tier3Settings.GetProjectileTierColor(firedMode, firedTier);
-            for (int index = 0; index < visualRenderers.Length; index++)
+            if (!usesProvidedPresentation
+                && (firedMode == SpecialMode.SlowShot || firedMode == SpecialMode.BurnShot))
             {
-                visualRenderers[index].color = Color.Lerp(baseVisualColors[index], tierColor, 0.78f);
+                for (int index = 0; index < visualRenderers.Length; index++)
+                {
+                    visualRenderers[index].color = Color.Lerp(baseVisualColors[index], tierColor, 0.78f);
+                }
+
+                tierScale = firedTier >= 3
+                    ? tier3Settings.Tier3ProjectileScale
+                    : firedTier >= 2
+                        ? tier3Settings.Tier2ProjectileScale
+                        : 1f;
+                ApplyVisualScale(tierScale);
+            }
+            else
+            {
+                // The supplied art already carries the intended Stage 1/2/3
+                // size progression. Root scale stays untouched so hitboxes do
+                // not inherit source-pixel dimensions.
+                tierScale = 1f;
             }
 
-            tierScale = firedTier >= 3
-                ? tier3Settings.Tier3ProjectileScale
-                : firedTier >= 2
-                    ? tier3Settings.Tier2ProjectileScale
-                    : 1f;
-            ApplyVisualScale(tierScale);
-
-            if (firedTier < 2)
-            {
-                return;
-            }
+            if (firedTier < 2) return;
 
             tierTrail = gameObject.AddComponent<TrailRenderer>();
             tierTrailMaterial = new Material(Shader.Find("Sprites/Default"));
@@ -549,6 +686,85 @@ namespace Cave.Projectiles
             }
         }
 
+        private bool ApplyProvidedPresentation()
+        {
+            Sprite presentation = PlayerProjectilePresentation.Resolve(
+                firedMode,
+                firedTier,
+                usesImaginaryPresentation);
+            if (presentation == null)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < visualRenderers.Length; index++)
+            {
+                SpriteRenderer renderer = visualRenderers[index];
+                if (renderer == null) continue;
+                renderer.sprite = presentation;
+                renderer.drawMode = SpriteDrawMode.Simple;
+                renderer.color = Color.white;
+            }
+
+            return true;
+        }
+
+        private void RestoreBasePresentation()
+        {
+            for (int index = 0; index < visualRenderers.Length; index++)
+            {
+                SpriteRenderer renderer = visualRenderers[index];
+                if (renderer == null) continue;
+                renderer.sprite = baseVisualSprites[index];
+                renderer.drawMode = baseVisualDrawModes[index];
+                renderer.size = baseVisualSizes[index];
+                renderer.color = baseVisualColors[index];
+            }
+
+            usesProvidedPresentation = false;
+            usesImaginaryPresentation = false;
+        }
+
+        private void ConfigureOwnerCollisionFiltering(GameObject owner)
+        {
+            ResetOwnerCollisionFiltering();
+            launchOwner = owner;
+            if (launchOwner == null || projectileCollider == null) return;
+
+            Collider2D[] ownerColliders = launchOwner.GetComponentsInChildren<Collider2D>(true);
+            for (int index = 0; index < ownerColliders.Length; index++)
+            {
+                Collider2D ownerCollider = ownerColliders[index];
+                if (ownerCollider == null || ownerCollider == projectileCollider) continue;
+                Physics2D.IgnoreCollision(projectileCollider, ownerCollider, true);
+                ignoredOwnerColliders.Add(ownerCollider);
+            }
+        }
+
+        private void ResetOwnerCollisionFiltering()
+        {
+            if (projectileCollider != null)
+            {
+                for (int index = 0; index < ignoredOwnerColliders.Count; index++)
+                {
+                    Collider2D ignored = ignoredOwnerColliders[index];
+                    if (ignored != null)
+                    {
+                        Physics2D.IgnoreCollision(projectileCollider, ignored, false);
+                    }
+                }
+            }
+
+            ignoredOwnerColliders.Clear();
+        }
+
+        private bool IsOwnerCollider(Collider2D collider)
+        {
+            return collider != null
+                && launchOwner != null
+                && (collider.gameObject == launchOwner || collider.transform.IsChildOf(launchOwner.transform));
+        }
+
         private int ResolveVisualSortingOrder()
         {
             int sortingOrder = 0;
@@ -567,12 +783,18 @@ namespace Cave.Projectiles
                 return;
             }
 
+            TraceFirstTerminal("lifetime-expired", null);
             BeginImpact();
             Destroy(gameObject);
         }
 
         private void OnDisable()
         {
+            if (hasLaunched && !hasImpacted)
+            {
+                TraceFirstTerminal("disabled-without-impact", null);
+            }
+
             frenzyActivation?.Complete();
             frenzyActivation = null;
             if (body != null)
@@ -583,11 +805,19 @@ namespace Cave.Projectiles
             hitTargets.Clear();
             ApplyVisualScale(1f);
             transform.localScale = baseScale;
+            RestoreBasePresentation();
+            ResetOwnerCollisionFiltering();
+            launchOwner = null;
             CancelInvoke();
         }
 
         private void OnDestroy()
         {
+            if (hasLaunched && !hasImpacted)
+            {
+                TraceFirstTerminal("destroyed-without-impact", null);
+            }
+
             if (!interactionDestroyedReported && interactionIdentity != null)
             {
                 interactionDestroyedReported = true;
@@ -598,6 +828,206 @@ namespace Cave.Projectiles
             {
                 Destroy(tierTrailMaterial);
             }
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void TraceSpawn()
+        {
+            Debug.Log(
+                "[Cave][ProjectileTrace] SPAWN"
+                + " id=" + GetInstanceID()
+                + " kind=" + (isHeavyProjectile ? "charged" : "regular")
+                + " element=" + firedMode
+                + " stage=" + firedTier
+                + " imaginary=" + usesImaginaryPresentation
+                + " position=" + launchPosition
+                + " projectileCollider=" + (projectileCollider != null ? projectileCollider.GetType().Name : "<missing>")
+                + " bounds=" + (projectileCollider != null ? projectileCollider.bounds.ToString() : "<missing>")
+                + " layer=" + gameObject.layer + "(" + LayerMask.LayerToName(gameObject.layer) + ")"
+                + " tag=" + gameObject.tag
+                + " velocity=" + (body != null ? body.velocity.ToString() : "<missing>")
+                + " lifetime=" + lifetime.ToString("0.##")
+                + " owner=" + (launchOwner != null ? HierarchyPath(launchOwner.transform) : "<none>"),
+                this);
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void TraceFirstMovement()
+        {
+            if (!hasLaunched || hasImpacted || firstMovementTraced)
+            {
+                return;
+            }
+
+            firstMovementTraced = true;
+            Debug.Log(
+                "[Cave][ProjectileTrace] FIRST MOVEMENT"
+                + " id=" + GetInstanceID()
+                + " kind=" + (isHeavyProjectile ? "charged" : "regular")
+                + " age=" + Mathf.Max(0f, Time.time - launchedAt).ToString("0.000")
+                + " position=" + transform.position
+                + " velocity=" + (body != null ? body.velocity.ToString() : "<missing>")
+                + " simulated=" + (body != null && body.simulated),
+                this);
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void TraceFirstContact(Collider2D other)
+        {
+            if (firstContactTraced)
+            {
+                return;
+            }
+
+            firstContactTraced = true;
+            TraceProjectileInteraction("FIRST CONTACT", "non-terminal-observation", other);
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void TraceFirstTerminal(string branch, Collider2D other)
+        {
+            if (firstTerminalTraced)
+            {
+                return;
+            }
+
+            firstTerminalTraced = true;
+            TraceProjectileInteraction("FIRST TERMINAL", branch, other);
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void TraceProjectileInteraction(string eventName, string branch, Collider2D other)
+        {
+            bool ownerCollider = IsOwnerCollider(other);
+            bool weaponOrAttackCollider = other != null
+                && (other.GetComponentInParent<SpinSwordAttack>() != null
+                    || other.GetComponentInParent<ChargedAttack>() != null
+                    || other.GetComponentInParent<SidewaysParryAttack>() != null);
+            Damageable damageable = other != null ? other.GetComponentInParent<Damageable>() : null;
+            bool worldCollision = other != null
+                && (environmentLayers.value & (1 << other.gameObject.layer)) != 0;
+            string otherName = other != null ? other.gameObject.name : "<none>";
+            string otherPath = other != null ? HierarchyPath(other.transform) : "<none>";
+            string otherType = other != null ? other.GetType().Name : "<none>";
+            int otherLayer = other != null ? other.gameObject.layer : -1;
+            string layerName = otherLayer >= 0 ? LayerMask.LayerToName(otherLayer) : "<none>";
+            string projectileName = projectileCollider != null ? projectileCollider.GetType().Name : "<missing>";
+            Debug.Log(
+                "[Cave][ProjectileTrace] " + eventName
+                + " branch=" + branch
+                + " id=" + GetInstanceID()
+                + " kind=" + (isHeavyProjectile ? "charged" : "regular")
+                + " element=" + firedMode
+                + " stage=" + firedTier
+                + " imaginary=" + usesImaginaryPresentation
+                + " age=" + Mathf.Max(0f, Time.time - launchedAt).ToString("0.000")
+                + " spawn=" + launchPosition
+                + " position=" + transform.position
+                + " projectileCollider=" + projectileName
+                + " projectileBounds=" + (projectileCollider != null ? projectileCollider.bounds.ToString() : "<missing>")
+                + " projectileLayer=" + gameObject.layer + "(" + LayerMask.LayerToName(gameObject.layer) + ")"
+                + " other=" + otherName
+                + " path=" + otherPath
+                + " otherCollider=" + otherType
+                + " layer=" + otherLayer + "(" + layerName + ")"
+                + " tag=" + (other != null ? other.tag : "<none>")
+                + " trigger=" + (other != null && other.isTrigger)
+                + " owner=" + ownerCollider
+                + " weaponOrAttack=" + weaponOrAttackCollider
+                + " damageable=" + (damageable != null)
+                + " world=" + worldCollision
+                + " faction=" + FactionFor(other, damageable)
+                + " callback=OnTriggerEnter2D"
+                + " ownerFilter=" + ownerCollider,
+                this);
+        }
+
+        private static string FactionFor(Collider2D collider, Damageable damageable)
+        {
+            if (collider == null)
+            {
+                return "none";
+            }
+
+            if (collider.GetComponentInParent<PlayerHealth>() != null)
+            {
+                return "player";
+            }
+
+            if (collider.GetComponentInParent<MobBrainBase>() != null)
+            {
+                return "enemy";
+            }
+
+            return damageable != null ? "damageable-unclassified" : "unclassified";
+        }
+
+        private static string HierarchyPath(Transform target)
+        {
+            if (target == null)
+            {
+                return "<none>";
+            }
+
+            string result = target.name;
+            for (Transform current = target.parent; current != null; current = current.parent)
+            {
+                result = current.name + "/" + result;
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>Loads approved projectile art without coupling sprite pixels to gameplay colliders.</summary>
+    internal static class PlayerProjectilePresentation
+    {
+        private const float PixelsPerUnit = 1200f;
+        private static readonly Dictionary<string, Sprite> CachedSprites = new Dictionary<string, Sprite>();
+
+        internal static Sprite Resolve(SpecialMode mode, int tier, bool imaginaryOverride)
+        {
+            string resourcePath = ResourcePathFor(mode, tier, imaginaryOverride);
+            Sprite cached;
+            if (CachedSprites.TryGetValue(resourcePath, out cached)) return cached;
+
+            Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null) return null;
+            Sprite sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(.5f, .5f),
+                PixelsPerUnit,
+                0,
+                SpriteMeshType.FullRect);
+            CachedSprites[resourcePath] = sprite;
+            return sprite;
+        }
+
+        private static string FamilyFor(SpecialMode mode)
+        {
+            switch (mode)
+            {
+                case SpecialMode.BurnShot: return "Fire";
+                case SpecialMode.SlowShot: return "Ice";
+                case SpecialMode.Flight: return "Wind";
+                case SpecialMode.DamageBoost: return "Earth";
+                default: return "Fire";
+            }
+        }
+
+        internal static string ResourcePathFor(SpecialMode mode, int tier, bool imaginaryOverride)
+        {
+            string family = imaginaryOverride ? "Imaginary_Axiom" : FamilyFor(mode);
+            return "Projectiles/Player/" + family + "/" + FileNameFor(family, tier);
+        }
+
+        private static string FileNameFor(string family, int tier)
+        {
+            int stage = Mathf.Clamp(tier, 1, 3);
+            return family == "Imaginary_Axiom"
+                ? "imaginary_axiom_stage_" + stage
+                : family.ToLowerInvariant() + "_stage_" + stage;
         }
     }
 }

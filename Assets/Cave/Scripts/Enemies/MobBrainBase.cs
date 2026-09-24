@@ -68,6 +68,22 @@ namespace Cave.Enemies
         protected float DecisionInterval => decisionInterval;
         protected PlayerHealth Target => target;
 
+        /// <summary>
+        /// Optional formation-local context. A missing, disabled, or invalid CTC
+        /// member is deliberately indistinguishable from no tactical preference.
+        /// </summary>
+        protected bool TryGetCombatTacticalIntent(out CombatTacticalIntent intent)
+        {
+            CombatTacticalMember member = GetComponent<CombatTacticalMember>();
+            if (member != null && member.TryGetIntent(out intent))
+            {
+                return true;
+            }
+
+            intent = CombatTacticalIntent.None;
+            return false;
+        }
+
         protected virtual void Awake()
         {
             RefreshRuntimeDependencies();
