@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: PlayerCombatSettings
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 3294087927466119601, guid: bab4ce133cd5f4840ad8f04baadd0e55, type: 3}
+  heavyProjectilePrefab: {fileID: 3294087927466119601, guid: f21afade887c14d3cb74c26383056ef7, type: 3}

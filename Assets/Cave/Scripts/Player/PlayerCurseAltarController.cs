@@ -87,10 +87,9 @@ namespace Cave.Player
                 }
             }
 
-            if (GameInput.SummonCurseAltarPressed)
-            {
-                TrySummonAltar();
-            }
+            // The rebindable altar action is shared with Domain manifestation.
+            // PlayerSharedDomainActivationInput owns its tap/hold dispatch so a
+            // completed hold can never fall through into an altar summon.
         }
 
         public bool HasAvailableAltar()

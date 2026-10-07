@@ -54,6 +54,7 @@ namespace Cave.Player
         private PlayerHealth health;
         private PlayerProjectileLauncher projectileLauncher;
         private PlayerSpecialMode specialMode;
+        private PlayerSkinCosmetics skinCosmetics;
         private PlayerFlightBash flightBash;
         private Rigidbody2D body;
         private VisualState currentState;
@@ -111,11 +112,12 @@ namespace Cave.Player
             health = GetComponent<PlayerHealth>();
             projectileLauncher = GetComponent<PlayerProjectileLauncher>();
             specialMode = GetComponent<PlayerSpecialMode>();
+            BindSkinCosmetics();
             flightBash = GetComponent<PlayerFlightBash>();
             body = GetComponent<Rigidbody2D>();
             wasGrounded = playerController != null && playerController.IsGrounded;
             stateStartedAt = Time.time;
-            currentFrames = Frames("Miner_Idle_");
+            currentFrames = FramesForState(VisualState.Idle);
             CreatePresentationRenderer();
         }
 
@@ -142,6 +144,8 @@ namespace Cave.Player
                 specialMode.SpecialModeChanged -= HandleModeChanged;
                 specialMode.SpecialModeChanged += HandleModeChanged;
             }
+
+            BindSkinCosmetics();
         }
 
         private void OnDisable()
@@ -162,6 +166,11 @@ namespace Cave.Player
             {
                 specialMode.SpecialModeChanged -= HandleModeChanged;
             }
+
+            if (skinCosmetics != null)
+            {
+                skinCosmetics.SelectionChanged -= HandleSkinSelectionChanged;
+            }
         }
 
         private void Update()
@@ -181,6 +190,13 @@ namespace Cave.Player
 
         private void LateUpdate()
         {
+            // Cosmetics is installed by the Nexus bootstrap on legacy player prefabs.
+            // Acquire it lazily so this presentation driver also works when it awakened first.
+            if (skinCosmetics == null)
+            {
+                BindSkinCosmetics();
+            }
+
             if (visualRenderer == null)
             {
                 return;
@@ -198,7 +214,7 @@ namespace Cave.Player
                 && appliedHeavyVisualRevision != chargedAttack.HeavyVisualRevision)
             {
                 appliedHeavyVisualRevision = chargedAttack.HeavyVisualRevision;
-                currentFrames = FramesForHeavy(chargedAttack.ActiveHeavyIndex);
+                currentFrames = FramesForState(VisualState.Heavy);
                 stateStartedAt = Time.time;
             }
 
@@ -322,6 +338,31 @@ namespace Cave.Player
 
         private Sprite[] FramesForState(VisualState state)
         {
+            PlayerSkinSelection selectedSkin = skinCosmetics != null
+                ? skinCosmetics.SelectedAppearance
+                : PlayerSkinSelection.DefaultMiner;
+            if (selectedSkin != PlayerSkinSelection.DefaultMiner)
+            {
+                string animationName = state == VisualState.Heavy
+                    ? "Heavy_" + Mathf.Clamp((chargedAttack != null ? chargedAttack.ActiveHeavyIndex : 0) + 1, 1, 5)
+                    : state.ToString();
+                Sprite[] selectedFrames = PlayerSkinLibrary.LoadFrames(selectedSkin, animationName);
+                if (selectedFrames.Length > 0)
+                {
+                    if (state == VisualState.Heavy)
+                    {
+                        appliedHeavyVisualRevision = chargedAttack != null ? chargedAttack.HeavyVisualRevision : -1;
+                    }
+
+                    return selectedFrames;
+                }
+            }
+
+            return DefaultFramesForState(state);
+        }
+
+        private Sprite[] DefaultFramesForState(VisualState state)
+        {
             switch (state)
             {
                 case VisualState.Run: return Frames("Miner_Run_");
@@ -442,5 +483,36 @@ namespace Cave.Player
         private void HandleRespawned() { isDead = false; hitUntil = 0f; }
         private void HandleProjectileFired(Vector2 _) { castUntil = Mathf.Max(castUntil, Time.time + castDuration); }
         private void HandleModeChanged(SpecialMode _) { castUntil = Mathf.Max(castUntil, Time.time + castDuration); }
+        private void BindSkinCosmetics()
+        {
+            PlayerSkinCosmetics resolved = GetComponent<PlayerSkinCosmetics>();
+            if (resolved == skinCosmetics)
+            {
+                if (skinCosmetics != null && isActiveAndEnabled)
+                {
+                    skinCosmetics.SelectionChanged -= HandleSkinSelectionChanged;
+                    skinCosmetics.SelectionChanged += HandleSkinSelectionChanged;
+                }
+
+                return;
+            }
+            if (skinCosmetics != null)
+            {
+                skinCosmetics.SelectionChanged -= HandleSkinSelectionChanged;
+            }
+
+            skinCosmetics = resolved;
+            if (skinCosmetics != null && isActiveAndEnabled)
+            {
+                skinCosmetics.SelectionChanged -= HandleSkinSelectionChanged;
+                skinCosmetics.SelectionChanged += HandleSkinSelectionChanged;
+            }
+        }
+        private void HandleSkinSelectionChanged(PlayerSkinSelection _)
+        {
+            currentFrames = FramesForState(currentState);
+            stateStartedAt = Time.time;
+            displayedSprite = null;
+        }
     }
 }

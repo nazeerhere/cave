@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cave.Axioms;
 using Cave.Axioms.Elemental;
 using Cave.Axioms.Convergence;
 using Cave.Audio;
@@ -18,6 +19,9 @@ namespace Cave.Combat
     public sealed class ChargedAttack : MonoBehaviour
     {
         public event Action<Damageable> HeavyTargetHit;
+        /// <summary>Resolved heavy contact, including whether that exact hit
+        /// ended the target. This is an observation seam only.</summary>
+        public event Action<Damageable, bool, bool> HeavyTargetResolved;
 
         [Header("Charge Timing")]
         [SerializeField, Min(0.01f)] private float minimumChargeTime = 0.25f;
@@ -28,6 +32,11 @@ namespace Cave.Combat
         [SerializeField, Range(1, 100)] private int chargedOneDamage = 4;
         [SerializeField, Range(1, 100)] private int chargedTwoDamage = 9;
         [SerializeField, Range(1, 100)] private int chargedThreeDamage = 18;
+
+        [Header("Heavy Stamina Costs")]
+        [SerializeField, Min(0f)] private float tierOneHeavyStaminaCost = 25f;
+        [SerializeField, Min(0f)] private float tierTwoHeavyStaminaCost = 50f;
+        [SerializeField, Min(0f)] private float tierThreeHeavyStaminaCost = 90f;
 
         [Header("Knockback")]
         [SerializeField, Min(0f)] private float baseKnockback = 5f;
@@ -354,12 +363,14 @@ namespace Cave.Combat
             bool hadActivePhaseExposureBeforeHit = phaseBeforeHit != null && phaseBeforeHit.HasActiveExposure;
             bool imaginaryWasActive = HasActiveImaginaryState();
             Vector3 hitPosition = other.ClosestPoint(transform.position);
+            bool wasHostile = HostileMobQuery.IsRealHostile(damageable);
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            bool frenzyAxiomVariant = frenzyActivation != null;
             ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
                 gameObject,
                 damageable,
                 appliedDamage,
-                isFrenzyCritical,
+                frenzyAxiomVariant,
                 damageContext,
                 Time.time,
                 axiomApplicationReceipt);
@@ -377,6 +388,8 @@ namespace Cave.Combat
             }
             if (appliedDamage > 0)
             {
+                AxiomPhenomenonApplicationBridge.Apply(
+                    gameObject, AxiomKind.Compression, currentChargeTier, gameObject, damageable.gameObject, Time.time);
                 AxiomConvergenceState.TryRecognize(
                     gameObject,
                     damageable.gameObject,
@@ -387,8 +400,11 @@ namespace Cave.Combat
                     Time.time);
             }
             HeavyTargetHit?.Invoke(damageable);
-            if (frenzyActivation != null
-                && (frenzyActivation.ManaInfused || isFrenzyCritical))
+            if (appliedDamage > 0)
+            {
+                HeavyTargetResolved?.Invoke(damageable, damageable.CurrentHealth <= 0, wasHostile);
+            }
+            if (frenzyActivation != null)
             {
                 frenzyActivation.ApplyImpact(
                     damageable,
@@ -447,7 +463,7 @@ namespace Cave.Combat
                 ownPhaseCombatState = GetComponent<PhaseCombatState>();
             }
 
-            return ownPhaseCombatState != null && ownPhaseCombatState.HasOpening;
+            return ownPhaseCombatState != null && ownPhaseCombatState.HasImaginaryActive;
         }
 
         private void PlayImaginaryImpact(Vector3 hitPosition)
@@ -481,6 +497,14 @@ namespace Cave.Combat
             currentKnockback = Mathf.Lerp(baseKnockback, maximumKnockback, chargeAmount);
             currentChargeTier = CalculateChargeTier(heldDuration);
             currentDamage = DamageForTier(currentChargeTier);
+            if (!TryPayHeavyStamina(currentChargeTier))
+            {
+                ResetChain();
+                RestoreAttackOrientation();
+                combatFlow?.NotifyChargedCancelled();
+                return;
+            }
+
             frenzyActivation = null;
             curseController?.NotifyOffensiveCommitment();
             combatFlow?.TryCommitFrenzyBreak(
@@ -493,6 +517,11 @@ namespace Cave.Combat
             heavyVisualRevision++;
             CaveSfx.Play(CaveSfxCue.Whoosh, 0.9f);
             StartCoroutine(PerformAttack());
+            if (currentChargeTier >= 3)
+            {
+                ownPhaseCombatState = PhaseCombatState.EnsureOn(gameObject);
+                ownPhaseCombatState.ActivateImaginary(Time.time, currentAttackSequence);
+            }
             combatFlow?.NotifyChargedCommitted();
         }
 
@@ -530,6 +559,23 @@ namespace Cave.Combat
             }
 
             return tier == 2 ? chargedTwoDamage : chargedOneDamage;
+        }
+
+        private bool TryPayHeavyStamina(int tier)
+        {
+            if (spinSwordAttack == null)
+            {
+                spinSwordAttack = GetComponent<SpinSwordAttack>();
+            }
+
+            return spinSwordAttack != null
+                && spinSwordAttack.TrySpendStamina(HeavyStaminaCostForTier(tier));
+        }
+
+        private float HeavyStaminaCostForTier(int tier)
+        {
+            if (tier >= 3) return tierThreeHeavyStaminaCost;
+            return tier == 2 ? tierTwoHeavyStaminaCost : tierOneHeavyStaminaCost;
         }
 
         private void CancelCharge()

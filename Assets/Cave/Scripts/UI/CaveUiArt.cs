@@ -36,6 +36,9 @@ namespace Cave.UI
             ApplyPanel(gameplayHud, "Curse Altar Selection", "Ui_MainFrame", new Color(0.68f, 0.34f, 0.92f, 1f));
             ApplyPanel(gameplayHud, "Special Mode Selection/MODES Button", "Ui_TabNormal", CaveUiTheme.BorderBright);
             ApplyPanel(gameplayHud, "Special Mode Selection/SHOP Button", "Ui_TabNormal", CaveUiTheme.BronzeLight);
+            ApplyPanel(gameplayHud, "Special Mode Selection/DOMAIN Button", "Ui_TabNormal", CaveUiTheme.BronzeLight);
+            ApplyPanel(gameplayHud, "Special Mode Selection/MASTERY Button", "Ui_TabNormal", CaveUiTheme.BronzeLight);
+            ApplyPanel(gameplayHud, "Special Mode Selection/COSMETICS Button", "Ui_TabNormal", CaveUiTheme.BronzeLight);
 
             ApplyIcon(gameplayHud, "Player Health/Health Icon", "Ui_IconVitality", CaveUiTheme.Health);
             ApplyIcon(gameplayHud, "Player Stamina/Stamina Icon", "Ui_IconMode", CaveUiTheme.Stamina);
@@ -208,11 +211,15 @@ namespace Cave.UI
                 Button skillTab = selection.Find("MODES Button")?.GetComponent<Button>();
                 Button shopTab = selection.Find("SHOP Button")?.GetComponent<Button>();
                 Button domainTab = selection.Find("DOMAIN Button")?.GetComponent<Button>();
+                Button masteryTab = selection.Find("MASTERY Button")?.GetComponent<Button>();
+                Button cosmeticsTab = selection.Find("COSMETICS Button")?.GetComponent<Button>();
                 Text skillLabel = skillTab != null ? skillTab.GetComponentInChildren<Text>() : null;
                 if (skillLabel != null) skillLabel.text = "SKILL PATH";
                 ApplySkillTab(skillTab, true, false);
                 ApplySkillTab(shopTab, false, true);
                 ApplySkillTab(domainTab, false, false);
+                ApplySkillTab(masteryTab, false, false);
+                ApplySkillTab(cosmeticsTab, false, false);
                 ApplyApprovedRows(selection.Find("Modes Content"));
                 ApplyApprovedRows(selection.Find("Shop Content"));
                 ApplyApprovedRows(selection.Find("Domain Content"));

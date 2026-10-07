@@ -146,7 +146,7 @@ namespace Cave.Axioms.Vfx
 
             // Covers a presenter added after an already-armed actor-local state
             // without introducing a polling loop.
-            if (playerController != null && phase != null && phase.HasOpening)
+            if (playerController != null && phase != null && phase.HasImaginaryActive)
             {
                 HandleImaginaryOpeningArmed(phase.RemainingOpeningSeconds);
             }

@@ -159,7 +159,7 @@ namespace Cave.UI
         private void BuildSkillsPage(Transform parent, Font font)
         {
             CreateCompactCard(parent, font, "SKILLS", "SLOW SHOT\nFrost response and ranged pressure.\n\nBURN SHOT\nFire response.\n\nFLIGHT\nWind movement and Ground Smash.", new Vector2(-276f, 56f), new Vector2(250f, 350f), CaveUiTheme.BorderBright);
-            CreateCompactCard(parent, font, "RESOURCES", "MANA\nPowers projectiles and skills.\n\nSTAMINA\nPowers Spin, Heavy, movement, and Ground Smash.\n\n" + Binding(GameAction.FireProjectile) + "  Fire the current mode projectile.", new Vector2(0f, 56f), new Vector2(250f, 350f), CaveUiTheme.Mana);
+            CreateCompactCard(parent, font, "RESOURCES", "MANA\nPowers standard projectiles and skills.\n\nSTAMINA\nPowers Spin, Heavy, movement, and Ground Smash.\n\n" + Binding(GameAction.FireProjectile) + "  Fire the current mode projectile.", new Vector2(0f, 56f), new Vector2(250f, 350f), CaveUiTheme.Mana);
             CreateCompactCard(parent, font, "SPECIAL RULES", "FRENZY BREAK\n" + Binding(GameAction.Interact) + " tap prepares Physical; hold infuses Mana.\n\nUNBLOCKABLE ≠ UNPARRYABLE\nSome attacks bypass Guard but can still be perfectly parried.", new Vector2(276f, 56f), new Vector2(250f, 350f), CaveUiTheme.Gold);
         }
 

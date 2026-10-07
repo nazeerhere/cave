@@ -51,7 +51,6 @@ namespace Cave.Axioms.Control
             }
 
             float now = Time.fixedTime;
-            control.ResolveExpired(runtime, now);
             UpdateFlow(now);
             UpdateMass(now);
         }
@@ -101,7 +100,8 @@ namespace Cave.Axioms.Control
                     out ignored);
             }
 
-            control.EvaluateAndRefresh(runtime, AxiomKind.Flow, timestamp, gameObject, gameObject);
+            control.EvaluateAndRefresh(runtime, dynamics, AxiomKind.Flow,
+                AxiomOpportunityCandidateSource.TrajectoryDeviation, timestamp, gameObject, gameObject);
         }
 
         private void UpdateMass(float timestamp)
@@ -144,7 +144,8 @@ namespace Cave.Axioms.Control
                     gameObject);
             }
 
-            control.EvaluateAndRefresh(runtime, AxiomKind.Mass, timestamp, gameObject, gameObject);
+            control.EvaluateAndRefresh(runtime, dynamics, AxiomKind.Mass,
+                AxiomOpportunityCandidateSource.TrajectoryDeviation, timestamp, gameObject, gameObject);
         }
 
         private bool HasStacks(AxiomKind kind, float timestamp, out AxiomDynamicResponse response)

@@ -3,126 +3,56 @@ using Cave.Axioms.Frequency;
 
 namespace Cave.Axioms.Phase
 {
-    /// <summary>
-    /// Runtime-independent deterministic coverage for Phase opening, stack, and
-    /// collapse rules. It deliberately models combat resolution by requiring a
-    /// positive applied-damage value before an armed hit or collapse can resolve.
-    /// </summary>
+    /// <summary>Runtime-independent coverage for player-owned Imaginary and latent Phase collapse.</summary>
     public static class PhaseCombatVerification
     {
         public static bool TryRunAll(out string failure)
         {
-            return VerifyNoOpening(out failure)
-                && VerifyOpeningAndWrongTarget(out failure)
-                && VerifyBlockedAndQualifyingHit(out failure)
-                && VerifyExpiryAndReplacement(out failure)
+            return VerifyTimedMode(out failure)
+                && VerifyMasteryDuration(out failure)
+                && VerifyFirstHeavyOrdering(out failure)
+                && VerifyResonanceActivation(out failure)
                 && VerifyTierAndParity(out failure)
-                && VerifyBlockedChargeAndRefresh(out failure)
-                && VerifyResonanceToPhaseBridge(out failure);
+                && VerifyExposureTiming(out failure);
         }
 
-        private static bool VerifyNoOpening(out string failure)
+        private static bool VerifyTimedMode(out string failure)
         {
-            Model model = new Model();
-            object target = new object();
-            return Expect(!model.TryQualifyingHit(target, 1, true, 0f) && model.Stacks == 0,
-                "Ordinary hit applied Phase without an opening.", out failure);
+            ImaginaryModel model = new ImaginaryModel();
+            model.Activate(0f, 0f, 4);
+            return Expect(model.IsActive(4.19f)
+                && !model.OrdinaryHitConsumesMode(1f)
+                && model.IsActive(1f)
+                && !model.IsActive(4.2f),
+                "Imaginary did not remain player-owned for its full 4.2-second duration.", out failure);
         }
 
-        private static bool VerifyOpeningAndWrongTarget(out string failure)
+        private static bool VerifyMasteryDuration(out string failure)
         {
-            Model model = new Model();
-            object intended = new object();
-            model.Arm(intended, 0f);
-            bool wrongConsumed = model.TryQualifyingHit(new object(), 1, true, 0.1f);
-            return Expect(model.HasOpening(0.1f)
-                && !wrongConsumed
-                && model.OpeningTarget == intended
-                && model.Stacks == 0,
-                "A target-bound Phase opening was consumed by the wrong target.", out failure);
+            ImaginaryModel model = new ImaginaryModel();
+            model.Activate(0f, 0f, 0);
+            float baseDuration = model.Duration;
+            model.Activate(10f, 1f, 0);
+            return Expect(baseDuration == 4.2f && model.Duration > baseDuration,
+                "Phase mastery did not increase Imaginary duration above its baseline.", out failure);
         }
 
-        private static bool VerifyBlockedAndQualifyingHit(out string failure)
+        private static bool VerifyFirstHeavyOrdering(out string failure)
         {
-            Model model = new Model();
-            object target = new object();
-            model.Arm(target, 0f);
-            bool blockedConsumed = model.TryQualifyingHit(target, 0, true, 0.1f);
-            bool preservedAfterBlockedHit = model.HasOpening(0.1f);
-            bool validConsumed = model.TryQualifyingHit(target, 1, true, 0.2f);
-            return Expect(!blockedConsumed
-                && preservedAfterBlockedHit
-                && validConsumed
-                && !model.HasOpening(0.2f)
-                && model.Stacks == 1,
-                "Blocked or qualifying armed-hit behavior was incorrect.", out failure);
+            ImaginaryModel model = new ImaginaryModel();
+            model.Activate(0f, 0f, 8);
+            bool activatingHeavyConsumed = model.TryConsumeHeavyToken(8, 0.1f);
+            bool firstFollowingHeavyConsumed = model.TryConsumeHeavyToken(9, 0.2f);
+            bool secondFollowingHeavyConsumed = model.TryConsumeHeavyToken(10, 0.3f);
+            model.Activate(1f, 0f, 0);
+            return Expect(!activatingHeavyConsumed
+                && firstFollowingHeavyConsumed
+                && !secondFollowingHeavyConsumed
+                && model.ResistanceBreakAvailable,
+                "Imaginary heavy-token ordering or reset was incorrect.", out failure);
         }
 
-        private static bool VerifyExpiryAndReplacement(out string failure)
-        {
-            Model model = new Model();
-            object first = new object();
-            object replacement = new object();
-            model.Arm(first, 0f);
-            model.Arm(replacement, 1f);
-            bool replaced = model.HasOpening(1.1f) && model.OpeningTarget == replacement;
-            bool expired = !model.TryQualifyingHit(replacement, 1, true, 4.1f)
-                && model.Stacks == 0;
-            return Expect(replaced && expired,
-                "Phase opening did not replace cleanly or expire without application.", out failure);
-        }
-
-        private static bool VerifyTierAndParity(out string failure)
-        {
-            Model tierOne = new Model();
-            tierOne.AddStacks(1);
-            bool tierOneCollapsed = tierOne.TryCollapseOnSuccessfulHit(1, 9, 0f);
-
-            Model even = new Model();
-            even.AddStacks(2);
-            bool evenCollapsed = even.TryCollapseOnSuccessfulHit(2, 9, 0f);
-
-            Model one = new Model();
-            one.AddStacks(1);
-            one.TryCollapseOnSuccessfulHit(2, 9, 0f);
-            Model three = new Model();
-            three.AddStacks(3);
-            three.TryCollapseOnSuccessfulHit(2, 9, 0f);
-            Model five = new Model();
-            five.AddStacks(5);
-            five.TryCollapseOnSuccessfulHit(3, 18, 0f);
-            Model seven = new Model();
-            seven.AddStacks(7);
-            seven.TryCollapseOnSuccessfulHit(2, 9, 0f);
-
-            return Expect(!tierOneCollapsed && tierOne.Stacks == 1
-                && evenCollapsed && even.Stacks == 0 && even.ActiveEffect == PhaseEffectClass.None
-                && one.ActiveEffect == PhaseEffectClass.Strong
-                && three.ActiveEffect == PhaseEffectClass.WeakLong
-                && five.ActiveEffect == PhaseEffectClass.Strong && five.ActiveDuration > one.ActiveDuration
-                && seven.ActiveEffect == PhaseEffectClass.WeakLong && seven.ActiveDuration > three.ActiveDuration,
-                "Tier threshold or Phase parity result was incorrect.", out failure);
-        }
-
-        private static bool VerifyBlockedChargeAndRefresh(out string failure)
-        {
-            Model model = new Model();
-            model.AddStacks(1);
-            bool blockedCollapse = model.TryCollapseOnSuccessfulHit(2, 0, 0f);
-            model.TryCollapseOnSuccessfulHit(2, 9, 0.1f);
-            float strongMultiplier = model.ActiveMultiplier;
-            float initialExpiry = model.ActiveExpiresAt;
-            model.AddStacks(3);
-            model.TryCollapseOnSuccessfulHit(2, 9, 0.2f);
-            return Expect(!blockedCollapse
-                && model.Stacks == 0
-                && model.ActiveEffect == PhaseEffectClass.Strong
-                && model.ActiveMultiplier == strongMultiplier
-                && model.ActiveExpiresAt > initialExpiry,
-                "Blocked charged hit or active Phase replacement policy was incorrect.", out failure);
-        }
-
-        private static bool VerifyResonanceToPhaseBridge(out string failure)
+        private static bool VerifyResonanceActivation(out string failure)
         {
             GuardResonanceSettings settings = new GuardResonanceSettings(0.8f, 0.15f, 2.5f, 4);
             GuardResonanceTracker tracker = new GuardResonanceTracker();
@@ -131,22 +61,36 @@ namespace Cave.Axioms.Phase
             tracker.RegisterContact(1.6f, settings);
             tracker.RegisterContact(2.4f, settings);
             GuardResonanceContactResult breakResult = tracker.RegisterContact(3.2f, settings);
+            ImaginaryModel model = new ImaginaryModel();
+            if (breakResult.Broke) model.Activate(3.2f, 0f, 0);
+            return Expect(breakResult.Broke && model.IsActive(3.3f) && model.ResistanceBreakAvailable,
+                "Resonance break did not establish a player-owned Imaginary activation.", out failure);
+        }
 
-            Model phase = new Model();
-            object defender = new object();
-            // Break only arms the opening; it cannot create a stack itself.
-            if (breakResult.Broke)
-            {
-                phase.Arm(defender, 3.2f);
-            }
+        private static bool VerifyTierAndParity(out string failure)
+        {
+            ExposureModel tierOne = new ExposureModel();
+            tierOne.AddStacks(1);
+            bool tierOneCollapsed = tierOne.TryCollapseOnSuccessfulHit(1, 9);
+            ExposureModel even = new ExposureModel();
+            even.AddStacks(2);
+            bool evenCollapsed = even.TryCollapseOnSuccessfulHit(2, 9);
+            ExposureModel odd = new ExposureModel();
+            odd.AddStacks(3);
+            odd.TryCollapseOnSuccessfulHit(2, 9);
+            return Expect(!tierOneCollapsed && tierOne.Stacks == 1
+                && evenCollapsed && even.ActiveEffect == PhaseEffectClass.None
+                && odd.ActiveEffect == PhaseEffectClass.WeakLong,
+                "Latent Phase collapse parity regressed during Imaginary migration.", out failure);
+        }
 
-            bool applied = phase.TryQualifyingHit(defender, 1, true, 3.3f);
-            bool collapsed = phase.TryCollapseOnSuccessfulHit(2, 9, 3.4f);
-            return Expect(breakResult.Broke
-                && applied
-                && collapsed
-                && phase.ActiveEffect == PhaseEffectClass.Strong,
-                "Resonance -> opening -> Phase -> Tier-2 collapse sequence was incorrect.", out failure);
+        private static bool VerifyExposureTiming(out string failure)
+        {
+            PhaseExposureDefinition one = PhaseCombatRules.ResolveExposure(1, 1.35f, 1.18f, 3.5f, 5.6f, .84f);
+            PhaseExposureDefinition three = PhaseCombatRules.ResolveExposure(3, 1.35f, 1.18f, 3.5f, 5.6f, .84f);
+            PhaseExposureDefinition five = PhaseCombatRules.ResolveExposure(5, 1.35f, 1.18f, 3.5f, 5.6f, .84f);
+            return Expect(one.Duration == 3.5f && three.Duration == 6.44f && five.Duration == 5.18f,
+                "Phase exposure timings no longer preserve the requested 1.4x values.", out failure);
         }
 
         private static bool Expect(bool condition, string message, out string failure)
@@ -155,97 +99,55 @@ namespace Cave.Axioms.Phase
             return condition;
         }
 
-        private sealed class Model
+        private sealed class ImaginaryModel
         {
-            private const float OpeningDuration = 3f;
+            private const float BaseDuration = 4.2f;
+            private const float FullMasteryBonus = .8f;
+            private float expiresAt;
+            private bool resistanceBreakAvailable;
+            private int activationAttackSequence;
+            public float Duration { get; private set; }
+            public bool ResistanceBreakAvailable => resistanceBreakAvailable;
+            public void Activate(float timestamp, float phaseMastery, int attackSequence)
+            {
+                Duration = BaseDuration + Math.Max(0f, Math.Min(1f, phaseMastery)) * FullMasteryBonus;
+                expiresAt = timestamp + Duration;
+                resistanceBreakAvailable = true;
+                activationAttackSequence = attackSequence;
+            }
+            public bool IsActive(float timestamp)
+            {
+                if (timestamp < expiresAt) return true;
+                resistanceBreakAvailable = false;
+                return false;
+            }
+            public bool OrdinaryHitConsumesMode(float timestamp) { return false; }
+            public bool TryConsumeHeavyToken(int attackSequence, float timestamp)
+            {
+                if (!IsActive(timestamp) || !resistanceBreakAvailable
+                    || (activationAttackSequence != 0 && attackSequence == activationAttackSequence)) return false;
+                resistanceBreakAvailable = false;
+                return true;
+            }
+        }
+
+        private sealed class ExposureModel
+        {
             private const float StrongMultiplier = 1.35f;
             private const float WeakMultiplier = 1.18f;
-            private const float StrongDuration = 2.5f;
-            private const float WeakDuration = 4f;
-            private const float DurationPerPair = 0.6f;
-
-            private object openingTarget;
-            private float openingExpiresAt;
+            private const float StrongDuration = 3.5f;
+            private const float WeakDuration = 5.6f;
+            private const float DurationPerPair = .84f;
             private int stacks;
-            private PhaseEffectClass activeEffect;
-            private float activeMultiplier = 1f;
-            private float activeExpiresAt;
-            private float activeDuration;
-
             public int Stacks => stacks;
-            public object OpeningTarget => openingTarget;
-            public PhaseEffectClass ActiveEffect => activeEffect;
-            public float ActiveMultiplier => activeMultiplier;
-            public float ActiveExpiresAt => activeExpiresAt;
-            public float ActiveDuration => activeDuration;
-
-            public void Arm(object target, float timestamp)
+            public PhaseEffectClass ActiveEffect { get; private set; }
+            public void AddStacks(int amount) { stacks += Math.Max(0, amount); }
+            public bool TryCollapseOnSuccessfulHit(int chargeTier, int appliedDamage)
             {
-                openingTarget = target;
-                openingExpiresAt = timestamp + OpeningDuration;
-            }
-
-            public bool HasOpening(float timestamp)
-            {
-                if (openingTarget == null || timestamp >= openingExpiresAt)
-                {
-                    openingTarget = null;
-                    openingExpiresAt = 0f;
-                    return false;
-                }
-
-                return true;
-            }
-
-            public bool TryQualifyingHit(object target, int appliedDamage, bool meleeNonArea, float timestamp)
-            {
-                if (!HasOpening(timestamp)
-                    || openingTarget != target
-                    || appliedDamage <= 0
-                    || !meleeNonArea)
-                {
-                    return false;
-                }
-
-                openingTarget = null;
-                openingExpiresAt = 0f;
-                stacks++;
-                return true;
-            }
-
-            public void AddStacks(int amount)
-            {
-                stacks += Math.Max(0, amount);
-            }
-
-            public bool TryCollapseOnSuccessfulHit(int chargeTier, int appliedDamage, float timestamp)
-            {
-                if (chargeTier < 2 || appliedDamage <= 0 || stacks <= 0)
-                {
-                    return false;
-                }
-
-                PhaseExposureDefinition exposure = PhaseCombatRules.ResolveExposure(
-                    stacks,
-                    StrongMultiplier,
-                    WeakMultiplier,
-                    StrongDuration,
-                    WeakDuration,
-                    DurationPerPair);
+                if (chargeTier < 2 || appliedDamage <= 0 || stacks <= 0) return false;
+                PhaseExposureDefinition exposure = PhaseCombatRules.ResolveExposure(stacks, StrongMultiplier, WeakMultiplier, StrongDuration, WeakDuration, DurationPerPair);
                 stacks = 0;
-                if (!exposure.IsActive)
-                {
-                    return true;
-                }
-
-                if (activeEffect == PhaseEffectClass.None || exposure.DamageMultiplier >= activeMultiplier)
-                {
-                    activeEffect = exposure.EffectClass;
-                    activeMultiplier = exposure.DamageMultiplier;
-                }
-
-                activeDuration = exposure.Duration;
-                activeExpiresAt = Math.Max(activeExpiresAt, timestamp + exposure.Duration);
+                ActiveEffect = exposure.EffectClass;
                 return true;
             }
         }

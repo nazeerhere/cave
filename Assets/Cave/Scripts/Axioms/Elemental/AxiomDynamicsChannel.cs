@@ -1,4 +1,5 @@
 using System;
+using Cave.Axioms;
 
 namespace Cave.Axioms.Elemental
 {
@@ -46,6 +47,7 @@ namespace Cave.Axioms.Elemental
     {
         private readonly AxiomKind kind;
         private readonly AxiomDynamicsParameters parameters;
+        private readonly ScalarTrajectoryTracker desiredTrajectory = new ScalarTrajectoryTracker();
         private float stack;
         private float desirable;
         private float counter;
@@ -88,6 +90,7 @@ namespace Cave.Axioms.Elemental
             {
                 lastEvaluationTime = timestamp;
                 hasEvaluationTime = true;
+                RecordDesiredTrajectory(timestamp);
                 return Snapshot(timestamp);
             }
 
@@ -145,7 +148,21 @@ namespace Cave.Axioms.Elemental
             }
 
             lastEvaluationTime = timestamp;
+            RecordDesiredTrajectory(timestamp);
             return Snapshot(timestamp);
+        }
+
+        /// <summary>
+        /// The bounded B response is this actor/phenomenon's desired trajectory.
+        /// Its finite differences use the shared scalar tracker so control never
+        /// invents an independent physical reference.
+        /// </summary>
+        public AxiomTrajectoryState GetDesiredTrajectory(
+            float timestamp,
+            AxiomTrajectoryThresholds thresholds)
+        {
+            AdvanceTo(timestamp);
+            return AxiomTrajectoryClassifier.Classify(kind, desiredTrajectory, thresholds);
         }
 
         public AxiomDynamicResponse Snapshot(float timestamp)
@@ -170,6 +187,7 @@ namespace Cave.Axioms.Elemental
             AdvanceTo(timestamp);
             desirable = ClampFinite(desirable + NonNegativeFinite(desirableDelta), parameters.MaximumResponse);
             counter = ClampFinite(counter - NonNegativeFinite(counterReduction), parameters.MaximumResponse);
+            RecordDesiredTrajectory(lastEvaluationTime);
             return Snapshot(timestamp);
         }
 
@@ -225,6 +243,14 @@ namespace Cave.Axioms.Elemental
             if (!IsFinite(value)) return 1f;
             // Keep a positive inefficiency floor even if a future mastery source is malformed.
             return value < .05f ? .05f : value > 1f ? 1f : value;
+        }
+
+        private void RecordDesiredTrajectory(float timestamp)
+        {
+            if (IsFinite(timestamp))
+            {
+                desiredTrajectory.RecordValue(timestamp, desirable);
+            }
         }
     }
 }

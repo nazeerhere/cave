@@ -1,4 +1,5 @@
 using UnityEngine;
+using Cave.Diagnostics;
 
 namespace Cave.Axioms.Vfx
 {
@@ -21,6 +22,17 @@ namespace Cave.Axioms.Vfx
         private int displayedFrame = -1;
         private bool persistent;
         private Color initialColor;
+        private bool telemetryRegistered;
+
+        private void OnEnable()
+        {
+            if (!telemetryRegistered) { telemetryRegistered = true; RuntimeTelemetry.Acquired(RuntimeWorkCategory.Vfx); }
+        }
+
+        private void OnDisable()
+        {
+            if (telemetryRegistered) { telemetryRegistered = false; RuntimeTelemetry.Returned(RuntimeWorkCategory.Vfx); }
+        }
 
         public void Play(Transform target, Vector3 offset, float resolvedLifetime, float scale, bool shouldPersist)
         {

@@ -1,5 +1,7 @@
 using Cave.Axioms.Mastery;
 using Cave.Domain;
+using Cave.Enemies;
+using Cave.InputSystem;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,16 +32,19 @@ namespace Cave.UI
         [SerializeField] private Text complexityTierText;
         [SerializeField] private Text complexityNextTierText;
         [SerializeField] private Image complexityFill;
+        [SerializeField] private Text reserveStatusText;
+        [SerializeField] private Text reserveDetailText;
+        [SerializeField] private Image reserveFill;
         [SerializeField] private Text ownedLawsStatusText;
+        [SerializeField] private DomainOwnedLawList ownedLawList;
         [SerializeField] private Button projectileButton;
         [SerializeField] private Button frenzyButton;
         [SerializeField] private Button trapButton;
         [SerializeField] private Button[] phenomenonButtons;
         [SerializeField] private Button[] territoryButtons;
         [SerializeField] private Text selectionStatusText;
-        [SerializeField] private Text[] masteryLabels;
-        [SerializeField] private Text[] masteryPercentages;
-        [SerializeField] private Image[] masteryFills;
+        [SerializeField] private Text contextTitleText;
+        [SerializeField] private Text contextBodyText;
         [SerializeField] private Text authoringStatusText;
         [SerializeField] private Button createLawButton;
 
@@ -49,6 +54,11 @@ namespace Cave.UI
         private AxiomMasteryState mastery;
         private PlayerMasteryEvidenceRuntime productionEvidence;
         private PlayerDomainLawCollection ownedLaws;
+        private PlayerDomainReserve domainReserve;
+        private PlayerDomainManifestation manifestation;
+        private bool reserveSubscribed;
+        private bool manifestationSubscribed;
+        private DomainContextFocus contextFocus = DomainContextFocus.Phenomenon;
 
         public void Configure(
             Text seedStatus,
@@ -56,16 +66,19 @@ namespace Cave.UI
             Text complexityTier,
             Text complexityNextTier,
             Image complexityProgressFill,
+            Text reserveStatus,
+            Text reserveDetail,
+            Image reserveProgressFill,
             Text ownedLawsStatus,
+            DomainOwnedLawList ownedLawsList,
             Button projectile,
             Button frenzy,
             Button trap,
             Button[] phenomena,
             Button[] territories,
             Text selectionStatus,
-            Text[] masteryRowLabels,
-            Text[] masteryRowPercentages,
-            Image[] masteryRowFills,
+            Text contextTitle,
+            Text contextBody,
             Text authoringStatus,
             Button createLaw)
         {
@@ -74,16 +87,19 @@ namespace Cave.UI
             complexityTierText = complexityTier;
             complexityNextTierText = complexityNextTier;
             complexityFill = complexityProgressFill;
+            reserveStatusText = reserveStatus;
+            reserveDetailText = reserveDetail;
+            reserveFill = reserveProgressFill;
             ownedLawsStatusText = ownedLawsStatus;
+            ownedLawList = ownedLawsList;
             projectileButton = projectile;
             frenzyButton = frenzy;
             trapButton = trap;
             phenomenonButtons = phenomena;
             territoryButtons = territories;
             selectionStatusText = selectionStatus;
-            masteryLabels = masteryRowLabels;
-            masteryPercentages = masteryRowPercentages;
-            masteryFills = masteryRowFills;
+            contextTitleText = contextTitle;
+            contextBodyText = contextBody;
             authoringStatusText = authoringStatus;
             createLawButton = createLaw;
 
@@ -95,6 +111,11 @@ namespace Cave.UI
             if (frenzyButton != null)
             {
                 frenzyButton.onClick.AddListener(() => SelectExpression(LawExpression.Frenzy));
+            }
+
+            if (trapButton != null)
+            {
+                trapButton.onClick.AddListener(() => SelectExpression(LawExpression.Trap));
             }
 
             for (int index = 0; phenomenonButtons != null && index < phenomenonButtons.Length && index < Phenomena.Length; index++)
@@ -109,11 +130,24 @@ namespace Cave.UI
                 territoryButtons[index].onClick.AddListener(() => SelectTerritory(territory));
             }
 
-            // Trap has no production LawExpression; it remains visibly reserved
-            // and cannot imply that a Law was created.
-            if (trapButton != null) trapButton.interactable = false;
-            if (createLawButton != null) createLawButton.interactable = false;
+            ApplyCanonicalPhenomenonIcons();
+
             Refresh(null);
+        }
+
+        /// <summary>Receives the established player-owned Reserve authority.
+        /// The view never creates it and only observes its existing ledger.</summary>
+        public void BindReserve(PlayerDomainReserve reserve)
+        {
+            UnsubscribeReserve();
+            UnsubscribeManifestation();
+            domainReserve = reserve;
+            manifestation = domainReserve != null
+                ? domainReserve.GetComponent<PlayerDomainManifestation>()
+                : null;
+            SubscribeReserve();
+            SubscribeManifestation();
+            Refresh(mastery);
         }
 
         public void BindProduction(PlayerMasteryEvidenceRuntime evidence, PlayerDomainLawCollection laws)
@@ -135,23 +169,24 @@ namespace Cave.UI
         public void Refresh(AxiomMasteryState currentMastery)
         {
             mastery = currentMastery;
-            bool hasSeed = DomainProgression.HasDomainSeed;
+            bool testOverride = DomainTestOverride.Enabled;
+            bool hasSeed = DomainTestOverride.HasDomainAccess;
             DomainComposition currentComposition = ownedLaws != null ? ownedLaws.Composition : DomainComposition.Empty;
-            DomainLaw candidate;
-            LawValidationResult validation;
-            bool candidateIsValid = DomainLaw.TryCreate(
-                selectedExpression, selectedPhenomenon, selectedTerritory, out candidate, out validation);
-            DomainAuthoringEligibilityResult eligibility = candidateIsValid
-                ? DomainAuthoringEligibility.Evaluate(currentComposition, candidate,
-                    productionEvidence != null
-                        ? DomainProgression.CreateAuthoringContext(productionEvidence.Snapshot,
-                            PlayerMasteryPolicy.Default, DomainComplexityPolicy.Default)
-                        : null)
-                : null;
+            PlayerMasteryEvidenceState realEvidence = productionEvidence != null
+                ? productionEvidence.Snapshot : PlayerMasteryEvidenceState.Empty;
+            PlayerMasteryEvidenceState evidence = DomainTestOverride.ResolveEvidence(
+                realEvidence, PlayerMasteryPolicy.Default);
+            float capacityValue = DomainTestOverride.ResolveCapacity(DomainComplexityPolicy.Default);
+            DomainContextualUiModel model = DomainContextualUiPresenter.Build(
+                contextFocus, selectedExpression, selectedPhenomenon, selectedTerritory,
+                currentComposition, evidence, PlayerMasteryPolicy.Default,
+                DomainComplexityPolicy.Default, hasSeed, capacityValue);
 
             if (seedStatusText != null)
             {
-                seedStatusText.text = hasSeed
+                seedStatusText.text = testOverride
+                    ? "TEST OVERRIDE\nProgression gates bypassed for this session."
+                    : hasSeed
                     ? "AWAKENED\nDomain foundation established."
                     : "LOCKED\nA Domain Seed is required.";
             }
@@ -159,30 +194,36 @@ namespace Cave.UI
             if (complexityStatusText != null)
             {
                 DomainComplexityCapacityEvaluation capacity = DomainProgression.EvaluateComplexityCapacity(
-                    PlayerMasteryEvidenceState.Empty,
+                    evidence,
                     PlayerMasteryPolicy.Default);
-                float committedComplexity = DomainComplexityCalculator.Calculate(
-                    currentComposition,
-                    DomainComplexityPolicy.Default).TotalComplexity;
-                complexityStatusText.text = hasSeed
-                    ? committedComplexity.ToString("0.##") + " / " + capacity.Capacity.ToString("0.##")
+                float previewComplexity = model.Complexity;
+                complexityStatusText.text = testOverride
+                    ? "TEST OVERRIDE\nUNBOUNDED TEST CAPACITY"
+                    : hasSeed
+                    ? model.HasComplexity
+                        ? previewComplexity.ToString("0.##") + " / " + capacity.Capacity.ToString("0.##")
+                        : "— / " + capacity.Capacity.ToString("0.##")
                     : "LOCKED";
 
                 if (complexityTierText != null)
                 {
-                    complexityTierText.text = hasSeed
+                    complexityTierText.text = testOverride
+                        ? "TEST OVERRIDE"
+                        : hasSeed
                         ? DomainComplexityCapacityProgression.GetDisplayName(capacity.CurrentTier)
                         : "DOMAIN SEED REQUIRED";
                 }
 
                 if (complexityNextTierText != null)
                 {
-                    complexityNextTierText.text = BuildNextTierText(capacity);
+                    complexityNextTierText.text = testOverride
+                        ? "Session-only: real Seed, mastery, and capacity are unchanged."
+                        : BuildNextTierText(capacity);
                 }
 
                 if (complexityFill != null)
                 {
-                    float progress = capacity.Capacity <= 0f ? 0f : committedComplexity / capacity.Capacity;
+                    float progress = !model.HasComplexity || capacity.Capacity <= 0f ? 0f : previewComplexity / capacity.Capacity;
                     complexityFill.rectTransform.sizeDelta = new Vector2(260f * Mathf.Clamp01(progress), 7f);
                 }
             }
@@ -195,131 +236,125 @@ namespace Cave.UI
                     ? "NO LAWS AUTHORED"
                     : "Awaken a Domain Seed to begin preparation.";
             }
+            if (ownedLawList != null) ownedLawList.Refresh(ownedLaws, hasSeed);
+
+            RefreshReserve();
 
             SetOptionState(projectileButton, hasSeed, selectedExpression == LawExpression.Projectile);
             SetOptionState(frenzyButton, hasSeed, selectedExpression == LawExpression.Frenzy);
-            SetOptionState(trapButton, false, false);
-            ApplyReservedState(trapButton);
+            SetOptionState(trapButton, hasSeed, selectedExpression == LawExpression.Trap);
             SetOptionStates(phenomenonButtons, Phenomena, selectedPhenomenon, hasSeed);
             SetOptionStates(territoryButtons, TerritoryPrinciples, selectedTerritory, hasSeed);
 
             if (selectionStatusText != null)
             {
                 selectionStatusText.text = hasSeed
-                    ? BuildSelectionStatus()
+                    ? "LAW PREVIEW  •  " + model.LawPreview
                     : "DOMAIN SEED REQUIRED";
             }
 
-            RefreshMasteryRows();
+            if (contextTitleText != null) contextTitleText.text = model.ContextTitle;
+            if (contextBodyText != null) contextBodyText.text = hasSeed
+                ? model.ContextBody
+                : "A Domain Seed is required before Laws can be authored.";
 
             if (authoringStatusText != null)
             {
-                authoringStatusText.text = BuildAuthoringStatus(eligibility);
+                authoringStatusText.text = (testOverride ? "TEST OVERRIDE ACTIVE\n" : string.Empty)
+                    + BuildAuthoringStatus(model);
             }
 
             if (createLawButton != null)
             {
-                bool authoringReady = eligibility != null && eligibility.IsEligible && ownedLaws != null;
+                bool authoringReady = model.CanAuthor && ownedLaws != null;
                 createLawButton.interactable = authoringReady;
-                ApplyCreateLawPresentation(createLawButton, BuildCreateLawLabel(eligibility, authoringReady));
+                ApplyCreateLawPresentation(createLawButton, BuildCreateLawLabel(model.Eligibility, authoringReady));
             }
         }
 
         private void SelectExpression(LawExpression expression)
         {
-            if (!DomainProgression.HasDomainSeed) return;
+            if (!DomainTestOverride.HasDomainAccess) return;
             selectedExpression = expression;
+            contextFocus = DomainContextFocus.Expression;
             Refresh(mastery);
+        }
+
+        private void ApplyCanonicalPhenomenonIcons()
+        {
+            MobStatusIconRegistry registry = Resources.Load<MobStatusIconRegistry>("MobStatusIconRegistry");
+            if (registry == null || phenomenonButtons == null) return;
+            for (int index = 0; index < phenomenonButtons.Length && index < Phenomena.Length; index++)
+            {
+                Button button = phenomenonButtons[index];
+                if (button == null) continue;
+                Sprite icon = registry.GetIcon(IconFor(Phenomena[index]));
+                if (icon == null) continue;
+                Transform existing = button.transform.Find("Phenomenon Icon");
+                Image image = existing != null ? existing.GetComponent<Image>() : null;
+                if (image == null)
+                {
+                    GameObject child = new GameObject("Phenomenon Icon", typeof(RectTransform), typeof(Image));
+                    child.transform.SetParent(button.transform, false);
+                    image = child.GetComponent<Image>();
+                    RectTransform rect = image.rectTransform;
+                    rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+                    rect.anchoredPosition = new Vector2(-42f, 0f);
+                    rect.sizeDelta = new Vector2(24f, 24f);
+                    image.raycastTarget = false;
+                    Text label = button.GetComponentInChildren<Text>();
+                    if (label != null) label.rectTransform.anchoredPosition = new Vector2(12f, 0f);
+                }
+                image.sprite = icon;
+                image.preserveAspect = true;
+                image.color = Color.white;
+            }
+        }
+
+        private static MobStatusIconKind IconFor(LawPhenomenon value)
+        {
+            if (value == LawPhenomenon.Heat) return MobStatusIconKind.AxiomHeat;
+            if (value == LawPhenomenon.Flow) return MobStatusIconKind.AxiomFlow;
+            if (value == LawPhenomenon.Mass) return MobStatusIconKind.AxiomMass;
+            if (value == LawPhenomenon.Compression) return MobStatusIconKind.AxiomCompression;
+            if (value == LawPhenomenon.Potential) return MobStatusIconKind.AxiomPotential;
+            if (value == LawPhenomenon.Resonance) return MobStatusIconKind.AxiomResonance;
+            if (value == LawPhenomenon.Phase) return MobStatusIconKind.AxiomPhase;
+            return MobStatusIconKind.AxiomOrder;
         }
 
         private void SelectPhenomenon(LawPhenomenon phenomenon)
         {
-            if (!DomainProgression.HasDomainSeed) return;
+            if (!DomainTestOverride.HasDomainAccess) return;
             selectedPhenomenon = phenomenon;
+            contextFocus = DomainContextFocus.Phenomenon;
             Refresh(mastery);
         }
 
         private void SelectTerritory(LawTerritoryPrinciple territory)
         {
-            if (!DomainProgression.HasDomainSeed) return;
+            if (!DomainTestOverride.HasDomainAccess) return;
             selectedTerritory = territory;
+            contextFocus = DomainContextFocus.Territory;
             Refresh(mastery);
         }
 
-        private void RefreshMasteryRows()
+        private static string BuildAuthoringStatus(DomainContextualUiModel model)
         {
-            for (int index = 0; index < DomainMasteryQuery.PhenomenonCount; index++)
-            {
-                MasteryDomain phenomenon = DomainMasteryQuery.GetPhenomenon(index);
-                float value = DomainMasteryQuery.GetMastery(mastery, phenomenon);
-                bool eligible = DomainMasteryQuery.IsEligible(mastery, phenomenon);
-
-                if (masteryLabels != null && index < masteryLabels.Length && masteryLabels[index] != null)
-                {
-                    masteryLabels[index].text = DomainMasteryQuery.GetDisplayName(phenomenon);
-                    masteryLabels[index].color = eligible ? CaveUiTheme.PrimaryText : CaveUiTheme.SecondaryText;
-                }
-
-                if (masteryPercentages != null && index < masteryPercentages.Length && masteryPercentages[index] != null)
-                {
-                    masteryPercentages[index].text = Mathf.RoundToInt(value * 100f) + "%";
-                    masteryPercentages[index].color = eligible ? CaveUiTheme.Gold : CaveUiTheme.SecondaryText;
-                }
-
-                if (masteryFills != null && index < masteryFills.Length && masteryFills[index] != null)
-                {
-                    masteryFills[index].rectTransform.sizeDelta = new Vector2(260f * Mathf.Clamp01(value), 8f);
-                    masteryFills[index].color = eligible ? CaveUiTheme.Gold : CaveUiTheme.BorderBright;
-                }
-            }
-        }
-
-        private static string BuildAuthoringStatus(DomainAuthoringEligibilityResult eligibility)
-        {
-            if (eligibility == null)
-            {
-                return "AUTHORING CONTEXT REQUIRED\nPlayer authoring state is not bound.";
-            }
-
-            if (eligibility.IsEligible)
+            if (model != null && model.CanAuthor)
             {
                 return "AUTHORING READY\nCreate this Law with the current Domain composition.";
             }
-
-            switch (eligibility.RejectionReason)
+            if (model == null || model.Blockers == null || model.Blockers.Count == 0)
             {
-                case DomainAuthoringRejectionReason.InvalidContext:
-                    return "AUTHORING CONTEXT REQUIRED\nMastery and complexity capacity are not available.";
-                case DomainAuthoringRejectionReason.DomainSeedRequired:
-                    return "DOMAIN SEED REQUIRED\nAwaken the Domain Seed before authoring Laws.";
-                case DomainAuthoringRejectionReason.PhenomenonMasteryIncomplete:
-                    return "PHENOMENON MASTERY REQUIRED\nMaster the selected phenomenon before authoring this Law.";
-                case DomainAuthoringRejectionReason.ExpressionMasteryIncomplete:
-                    return "EXPRESSION MASTERY REQUIRED\nMaster the selected expression before authoring this Law.";
-                case DomainAuthoringRejectionReason.ComplexityCapacityExceeded:
-                    return "COMPLEXITY CAPACITY EXCEEDED\nIncrease Domain capacity or reduce the authored composition.";
-                case DomainAuthoringRejectionReason.DuplicateLaw:
-                    return "LAW ALREADY AUTHORED\nThis exact Expression, Phenomenon, and Territory combination already exists.";
-                case DomainAuthoringRejectionReason.InvalidComplexityCapacity:
-                    return "AUTHORING UNAVAILABLE\nThe current complexity capacity is invalid.";
-                default:
-                    return "AUTHORING UNAVAILABLE\nThe selected Law is structurally invalid.";
+                return "AUTHORING UNAVAILABLE";
             }
-        }
-
-        private string BuildSelectionStatus()
-        {
-            string status = "PREVIEWED LAW  •  " + selectedExpression.ToString().ToUpperInvariant()
-                + " / " + selectedPhenomenon.ToString().ToUpperInvariant()
-                + " / " + selectedTerritory.ToString().ToUpperInvariant();
-            if (selectedExpression == LawExpression.Frenzy && productionEvidence != null)
+            string text = "CANNOT AUTHOR:";
+            for (int index = 0; index < model.Blockers.Count; index++)
             {
-                status += "\nFRENZY EVIDENCE  •  "
-                    + productionEvidence.Snapshot.FrenzyEvidence.ToString("0.##")
-                    + " / " + PlayerMasteryPolicy.Default.FrenzyThreshold.ToString("0.##");
+                text += "\n• " + model.Blockers[index].Detail;
             }
-
-            return status;
+            return text;
         }
 
         private static string BuildCreateLawLabel(
@@ -358,16 +393,64 @@ namespace Cave.UI
 
         private void HandleProductionChanged(PlayerMasteryEvidenceState _) { Refresh(mastery); }
         private void HandleProductionChanged() { Refresh(mastery); }
+        private void HandleReserveChanged() { Refresh(mastery); }
 
         private void TryCreateLaw()
         {
-            if (ownedLaws == null || productionEvidence == null) return;
+            if (ownedLaws == null) return;
             DomainLaw candidate; LawValidationResult validation;
             if (!DomainLaw.TryCreate(selectedExpression, selectedPhenomenon, selectedTerritory, out candidate, out validation)) return;
-            ownedLaws.TryAuthor(candidate, DomainProgression.CreateAuthoringContext(
-                productionEvidence.Snapshot, PlayerMasteryPolicy.Default, DomainComplexityPolicy.Default));
+            ownedLaws.TryAuthor(candidate, DomainTestOverride.CreateAuthoringContext(
+                productionEvidence != null ? productionEvidence.Snapshot : PlayerMasteryEvidenceState.Empty,
+                PlayerMasteryPolicy.Default,
+                DomainComplexityPolicy.Default));
             Refresh(mastery);
         }
+
+        private void OnEnable()
+        {
+            DomainTestOverride.Changed += HandleDomainTestOverrideChanged;
+            SubscribeReserve();
+            SubscribeManifestation();
+        }
+
+        private void OnDisable()
+        {
+            DomainTestOverride.Changed -= HandleDomainTestOverrideChanged;
+            UnsubscribeReserve();
+            UnsubscribeManifestation();
+        }
+
+        private void SubscribeReserve()
+        {
+            if (reserveSubscribed || domainReserve == null || !isActiveAndEnabled) return;
+            domainReserve.ReserveChanged += HandleReserveChanged;
+            reserveSubscribed = true;
+        }
+
+        private void UnsubscribeReserve()
+        {
+            if (!reserveSubscribed || domainReserve == null) return;
+            domainReserve.ReserveChanged -= HandleReserveChanged;
+            reserveSubscribed = false;
+        }
+
+        private void SubscribeManifestation()
+        {
+            if (manifestationSubscribed || manifestation == null || !isActiveAndEnabled) return;
+            manifestation.StateChanged += HandleManifestationStateChanged;
+            manifestationSubscribed = true;
+        }
+
+        private void UnsubscribeManifestation()
+        {
+            if (!manifestationSubscribed || manifestation == null) return;
+            manifestation.StateChanged -= HandleManifestationStateChanged;
+            manifestationSubscribed = false;
+        }
+
+        private void HandleManifestationStateChanged(DomainManifestationState _) { Refresh(mastery); }
+        private void HandleDomainTestOverrideChanged() { Refresh(mastery); }
 
         private static string BuildOwnedLawText(PlayerDomainLawCollection laws)
         {
@@ -381,6 +464,40 @@ namespace Cave.UI
                     + law.TerritoryPrinciple.ToString().ToUpperInvariant();
             }
             return text;
+        }
+
+        private void RefreshReserve()
+        {
+            if (domainReserve == null)
+            {
+                if (reserveStatusText != null) reserveStatusText.text = "RESERVE UNAVAILABLE";
+                if (reserveDetailText != null) reserveDetailText.text = "No player Domain Reserve authority is installed.";
+                if (reserveFill != null) reserveFill.rectTransform.sizeDelta = new Vector2(0f, reserveFill.rectTransform.sizeDelta.y);
+                return;
+            }
+
+            float maximum = domainReserve.MaximumAvailableCharge;
+            float current = domainReserve.CurrentCharge;
+            float committed = domainReserve.CommittedReserve;
+            if (reserveStatusText != null) reserveStatusText.text = current.ToString("0.##") + " / " + maximum.ToString("0.##");
+            if (reserveDetailText != null)
+            {
+                bool canManifest = manifestation != null
+                    && (manifestation.IsActive || current + .0001f >= manifestation.MinimumActivationCharge)
+                    && DomainTestOverride.HasDomainAccess;
+                string hint = canManifest
+                    ? "HOLD " + SettingsMenuController.FormatBinding(GameAction.SummonCurseAltar).ToUpperInvariant()
+                        + " — " + (manifestation.IsActive ? "DISMISS" : "MANIFEST") + "\n"
+                    : string.Empty;
+                reserveDetailText.text = hint
+                    + "UNCHARGED CAPACITY • " + domainReserve.AvailableReserve.ToString("0.##")
+                    + "\nALLOCATED RESERVE • " + committed.ToString("0.##") + " / " + domainReserve.BaseMaximumEnergy.ToString("0.##");
+            }
+            if (reserveFill != null)
+            {
+                float ratio = maximum <= 0f ? 0f : current / maximum;
+                reserveFill.rectTransform.sizeDelta = new Vector2(260f * Mathf.Clamp01(ratio), reserveFill.rectTransform.sizeDelta.y);
+            }
         }
 
         private static string BuildNextTierText(DomainComplexityCapacityEvaluation capacity)
@@ -430,6 +547,8 @@ namespace Cave.UI
                 image.color = selected && interactable ? new Color(0.17f, 0.115f, 0.045f, 1f)
                     : interactable ? CaveUiTheme.SurfaceRaised : CaveUiTheme.IronDark;
             }
+
+            DomainUiSkin.ApplyOption(button, selected, interactable);
 
             Outline outline = button.GetComponent<Outline>();
             if (outline != null)
@@ -499,6 +618,7 @@ namespace Cave.UI
                 label.color = CaveUiTheme.PrimaryText;
                 label.fontStyle = FontStyle.Bold;
             }
+            DomainUiSkin.ApplyOption(button, button.interactable, button.interactable, true);
 
             ColorBlock colors = button.colors;
             colors.disabledColor = Color.white;

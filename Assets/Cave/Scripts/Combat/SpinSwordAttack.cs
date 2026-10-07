@@ -4,6 +4,7 @@ using Cave.Axioms.Elemental;
 using Cave.Axioms.Phase;
 using Cave.Axioms.Vfx;
 using Cave.Audio;
+using Cave.Enemies;
 using Cave.InputSystem;
 using Cave.Player;
 using Cave.Progression;
@@ -18,9 +19,10 @@ namespace Cave.Combat
         [SerializeField, Min(1)] private int damage = 1;
 
         [Header("Stamina")]
-        [SerializeField, Min(0.01f)] private float maximumStamina = 300f;
+        [SerializeField, Min(0.01f)] private float maximumStamina = 800f;
         [SerializeField, Min(0f)] private float staminaDrainPerSecond = 35f;
-        [SerializeField, Min(0f)] private float staminaRegenerationPerSecond = 25f;
+        [SerializeField, Range(0f, 1f)] private float outOfCombatStaminaRegenerationFraction = .08f;
+        [SerializeField, Range(0f, 1f)] private float inCombatStaminaRegenerationFraction = .02f;
         [SerializeField, Min(0f)] private float regenerationDelay = 0.4f;
         [SerializeField, Min(0.01f)] private float minimumStaminaToBegin = 10f;
 
@@ -64,6 +66,9 @@ namespace Cave.Combat
         private AxiomVfxPresenter axiomVfxPresenter;
 
         public event Action<float, float> StaminaChanged;
+        /// <summary>Resolved ordinary melee contact for optional observers such
+        /// as the player-owned Domain Charge ledger. It does not alter combat.</summary>
+        public event Action<Damageable, bool, bool> OrdinaryTargetHit;
 
         public float CurrentStamina => currentStamina;
         public float MaximumStamina => maximumStamina;
@@ -92,6 +97,11 @@ namespace Cave.Combat
 
         private void Awake()
         {
+            // Existing player prefabs serialized the superseded 1000-point
+            // baseline. Preserve real progression above it, but migrate that
+            // authored baseline to the locked 800-point live value.
+            if (Mathf.Approximately(maximumStamina, 1000f) || maximumStamina < 800f)
+                maximumStamina = 800f;
             damageBoost = GetComponent<PlayerDamageBoost>();
             resourceMastery = GetComponent<PlayerResourceMastery>();
             guardBreak = GetComponent<PlayerGuardBreak>();
@@ -443,9 +453,11 @@ namespace Cave.Combat
             float regenerationMultiplier = recoveryModifiers != null
                 ? recoveryModifiers.StaminaRegenerationMultiplier
                 : 1f;
-            SetStamina(
-                currentStamina
-                + staminaRegenerationPerSecond * regenerationMultiplier * Time.deltaTime);
+            if (combatFlow == null) combatFlow = GetComponent<PlayerCombatFlow>();
+            float fraction = combatFlow != null && combatFlow.IsCombatActive
+                ? inCombatStaminaRegenerationFraction : outOfCombatStaminaRegenerationFraction;
+            SetStamina(currentStamina + maximumStamina * fraction
+                * regenerationMultiplier * Time.deltaTime);
         }
 
         private void SetStamina(float value)
@@ -632,18 +644,23 @@ namespace Cave.Combat
 
             bool imaginaryWasActive = HasActiveImaginaryState();
             Vector3 hitPosition = other.ClosestPoint(transform.position);
+            bool wasHostile = HostileMobQuery.IsRealHostile(damageable);
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
+            if (appliedDamage > 0)
+            {
+                OrdinaryTargetHit?.Invoke(damageable, damageable.CurrentHealth <= 0, wasHostile);
+            }
+            bool frenzyAxiomVariant = frenzyActivation != null;
             ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
                 gameObject,
                 damageable,
                 appliedDamage,
-                isFrenzyCritical,
+                frenzyAxiomVariant,
                 damageContext,
                 Time.time,
                 axiomApplicationReceipt);
             Vector2 hitDirection = damageable.transform.position - transform.position;
-            if (frenzyActivation != null
-                && (frenzyActivation.ManaInfused || isFrenzyCritical))
+            if (frenzyActivation != null)
             {
                 frenzyActivation.ApplyImpact(
                     damageable,
@@ -697,7 +714,7 @@ namespace Cave.Combat
                 phaseCombatState = GetComponent<PhaseCombatState>();
             }
 
-            return phaseCombatState != null && phaseCombatState.HasOpening;
+            return phaseCombatState != null && phaseCombatState.HasImaginaryActive;
         }
 
         private void PlayImaginaryImpact(Vector3 hitPosition)

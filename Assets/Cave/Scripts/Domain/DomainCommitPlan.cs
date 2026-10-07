@@ -36,5 +36,5 @@ namespace Cave.Domain
         private static DomainCommitPlan Rejected(DomainBoundedOrchestrationResult source,DomainCommitPlanRejectionReason reason){return new DomainCommitPlan(source,new List<DomainCommitEntry>().AsReadOnly(),reason);}
     }
     internal static class DomainCommitSnapshot
-    { internal static bool Equal(PhenomenonSemanticSnapshot left,PhenomenonSemanticSnapshot right){return left!=null&&right!=null&&left.Phenomenon==right.Phenomenon&&left.SemanticValue==right.SemanticValue&&left.Region==right.Region;} }
+    { internal static bool Equal(PhenomenonSemanticSnapshot left,PhenomenonSemanticSnapshot right){return left!=null&&right!=null&&left.Phenomenon==right.Phenomenon&&left.SemanticValue==right.SemanticValue&&left.Region==right.Region&&left.PatternContext.Equals(right.PatternContext);} }
 }

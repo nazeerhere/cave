@@ -4,6 +4,7 @@ using Cave.Audio;
 using Cave.Axioms.Phase;
 using Cave.Enemies;
 using Cave.Player;
+using Cave.Gambit;
 using UnityEngine;
 
 namespace Cave.Combat
@@ -91,6 +92,12 @@ namespace Cave.Combat
             }
 
             damageContext = CurseAltarZone.BindPlayerDamageZone(damageContext);
+            SovereignStrategicProtection gambitProtection = GetComponent<SovereignStrategicProtection>();
+            if (gambitProtection != null && !gambitProtection.CanReceiveCombatDamageFromPlayer(damageContext))
+            {
+                DamageResolved?.Invoke(damageContext, true, 0);
+                return 0;
+            }
             amount = CurseAltarZone.ResolvePlayerAttackDamage(
                 damageContext,
                 this,
@@ -132,12 +139,6 @@ namespace Cave.Combat
             int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
             int appliedDamage = healthBeforeDamage - CurrentHealth;
-            PhaseCombatState.TryConsumeOpeningOnSuccessfulHit(
-                damageContext.Source,
-                gameObject,
-                appliedDamage,
-                damageContext,
-                Time.time);
             DamageResolved?.Invoke(
                 damageContext,
                 false,

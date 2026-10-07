@@ -52,6 +52,7 @@ namespace Cave.Progression
         private float healthRegenAccumulator;
         private float nextRegenerationTickTime;
         private PlayerRecoveryModifiers recoveryModifiers;
+        private PlayerBrace brace;
 
         public event Action<int, int> GeneralShardsChanged;
         public event Action UpgradesChanged;
@@ -95,6 +96,7 @@ namespace Cave.Progression
             playerController = GetComponent<PlayerController>();
             defense = GetComponent<SidewaysParryAttack>();
             recoveryModifiers = GetComponent<PlayerRecoveryModifiers>();
+            brace = GetComponent<PlayerBrace>();
             MigrateLegacyUpgradeFlags();
             ScheduleNextRegenerationTick();
         }
@@ -152,6 +154,14 @@ namespace Cave.Progression
 
         private void ApplyRegenerationTick()
         {
+            if (brace == null) brace = GetComponent<PlayerBrace>();
+            // Purchased regeneration keeps its owned ranks and magnitude, but
+            // applies only while the authoritative Deep Brace stage is active.
+            if (brace == null || !brace.IsDeepBrace)
+            {
+                healthRegenAccumulator = 0f;
+                return;
+            }
             float healthRecoveryMultiplier = recoveryModifiers != null
                 ? recoveryModifiers.HealthRegenerationMultiplier
                 : 1f;

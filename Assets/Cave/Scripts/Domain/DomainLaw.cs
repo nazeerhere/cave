@@ -10,7 +10,8 @@ namespace Cave.Domain
     public enum LawExpression
     {
         Projectile = 1,
-        Frenzy = 2
+        Frenzy = 2,
+        Trap = 3
     }
 
     /// <summary>

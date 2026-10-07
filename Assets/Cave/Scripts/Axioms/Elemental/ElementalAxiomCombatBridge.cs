@@ -108,13 +108,12 @@ namespace Cave.Axioms.Elemental
 
             AxiomDynamicsState dynamics = AxiomDynamicsState.EnsureOn(receiver);
             AxiomControlState control = AxiomControlState.EnsureOn(receiver);
-            control.ResolveExpired(runtime, timestamp);
             // A new positive application is only a correction when it opposes an
             // opportunity's signed error. It never supplies a stack by itself.
             AxiomControlOpportunity opportunity;
             if (control.TryGetActiveOpportunity(kind, timestamp, out opportunity))
             {
-                bool intervened = control.TryIntervene(
+                control.TryIntervene(
                     runtime,
                     dynamics,
                     kind,
@@ -122,28 +121,13 @@ namespace Cave.Axioms.Elemental
                     1f,
                     timestamp,
                     source,
-                    target.gameObject);
-                if (intervened && source != null)
-                {
-                    LawPhenomenon phenomenon;
-                    MasteryEvidenceDimension dimension;
-                    if (TryMapEvidence(kind, opportunity.Error.ErrorKind, out phenomenon, out dimension))
-                    {
-                        PlayerMasteryEvidenceRuntime owner = source.GetComponent<PlayerMasteryEvidenceRuntime>();
-                        owner?.Submit(new PhenomenonMasteryEvidenceSubmission(
-                            phenomenon, dimension, Mathf.Max(.1f, opportunity.Error.Magnitude), true,
-                            context.HasTrait(DamageTrait.Projectile) ? LawExpression.Projectile : (LawExpression?)null),
-                            PlayerMasteryPolicy.Default);
-                    }
-                }
+                    target.gameObject,
+                    context.HasTrait(DamageTrait.Projectile) ? LawExpression.Projectile : (LawExpression?)null);
             }
 
             runtime.ApplyDelta(kind, amount, source, target.gameObject, timestamp);
-            // S remains the discrete Axiom stack state. Temporal control samples
-            // only this confirmed application as an excitation of A(t).
-            control.RecordSuccessfulApplication(kind, amount, timestamp);
             AxiomTrajectoryState trajectory;
-            if (!runtime.TryGetTrajectory(kind, out trajectory))
+            if (!runtime.TryGetTrajectory(kind, timestamp, out trajectory))
             {
                 return;
             }
@@ -160,7 +144,12 @@ namespace Cave.Axioms.Elemental
                 amount,
                 timestamp,
                 counterFactor);
-            control.EvaluateAndRefresh(runtime, kind, timestamp, source, target.gameObject);
+            // Dynamics is advanced before any temporal telemetry or opportunity
+            // check so every control reference comes from this receiver's own
+            // current response profile rather than a generic target.
+            control.RecordSuccessfulApplication(dynamics, kind, amount, timestamp);
+            control.EvaluateAndRefresh(runtime, dynamics, kind,
+                AxiomOpportunityCandidateSource.PlayerDisturbance, timestamp, source, target.gameObject);
             MasteryDomain domain;
             if (source != null && AxiomMasteryState.TryDomain(kind, out domain))
             {
@@ -168,26 +157,5 @@ namespace Cave.Axioms.Elemental
             }
         }
 
-        private static bool TryMapEvidence(AxiomKind kind, AxiomErrorKind error,
-            out LawPhenomenon phenomenon, out MasteryEvidenceDimension dimension)
-        {
-            phenomenon = LawPhenomenon.Heat;
-            switch (kind)
-            {
-                case AxiomKind.Heat: phenomenon = LawPhenomenon.Heat; break;
-                case AxiomKind.Flow: phenomenon = LawPhenomenon.Flow; break;
-                case AxiomKind.Mass: phenomenon = LawPhenomenon.Mass; break;
-                case AxiomKind.Phase: phenomenon = LawPhenomenon.Phase; break;
-                case AxiomKind.Order: phenomenon = LawPhenomenon.Order; break;
-                default: dimension = default(MasteryEvidenceDimension); return false;
-            }
-            switch (error)
-            {
-                case AxiomErrorKind.State: dimension = MasteryEvidenceDimension.State; return true;
-                case AxiomErrorKind.Rate: dimension = MasteryEvidenceDimension.Rate; return true;
-                case AxiomErrorKind.Acceleration: dimension = MasteryEvidenceDimension.Acceleration; return true;
-                default: dimension = default(MasteryEvidenceDimension); return false;
-            }
-        }
     }
 }

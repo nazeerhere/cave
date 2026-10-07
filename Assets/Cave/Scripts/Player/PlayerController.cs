@@ -3,6 +3,7 @@ using Cave.Axioms.Control;
 using Cave.Combat;
 using Cave.Enemies;
 using Cave.InputSystem;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cave.Player
@@ -41,6 +42,9 @@ namespace Cave.Player
         private bool jumpConsumedForAirborneCycle;
         private float jumpRequestExpiresAt = float.NegativeInfinity;
         private float externalMovementLockUntil;
+        // Pin ownership is explicit so interrupting one Brute cannot release an
+        // unrelated stun/knockback lock or another Brute's active pin.
+        private readonly HashSet<int> pinMovementLockOwners = new HashSet<int>();
         private float statusMovementMultiplier = 1f;
         private float curseMovementMultiplier = 1f;
         private float braceMovementMultiplier = 1f;
@@ -54,7 +58,7 @@ namespace Cave.Player
         private readonly Collider2D[] groundCheckResults = new Collider2D[8];
 
         public bool IsGrounded { get; private set; }
-        public bool IsExternallyMovementLocked => Time.time < externalMovementLockUntil;
+        public bool IsExternallyMovementLocked => Time.time < externalMovementLockUntil || pinMovementLockOwners.Count > 0;
         public float StatusMovementMultiplier => statusMovementMultiplier;
 
         private void Awake()
@@ -212,6 +216,29 @@ namespace Cave.Player
             if (body != null)
             {
                 body.velocity = new Vector2(0f, body.velocity.y);
+            }
+        }
+
+        /// <summary>Scoped movement lock used only by an active Brute pin. The caller must release its own token.</summary>
+        public void SetBrutePinMovementLock(Object owner, bool locked)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            int id = owner.GetInstanceID();
+            if (locked)
+            {
+                pinMovementLockOwners.Add(id);
+                if (body != null)
+                {
+                    body.velocity = new Vector2(0f, body.velocity.y);
+                }
+            }
+            else
+            {
+                pinMovementLockOwners.Remove(id);
             }
         }
 

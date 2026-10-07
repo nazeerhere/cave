@@ -1,4 +1,5 @@
 using Cave.Combat;
+using Cave.Diagnostics;
 using Cave.Enemies;
 using Cave.World;
 using UnityEngine;
@@ -27,7 +28,6 @@ namespace Cave.Player
 
         [Header("Test / Appearance")]
         [SerializeField] private SwordCosmeticSelection selectedAppearance;
-        [SerializeField] private bool allowLockedDebugSelection = true;
         [SerializeField] private bool enableDebugCycleKey = true;
         [SerializeField] private KeyCode debugCycleKey = KeyCode.F8;
 
@@ -129,6 +129,11 @@ namespace Cave.Player
                 PlayerPrefs.GetInt(SelectionKey, (int)selectedAppearance),
                 0,
                 3);
+            if (!IsAvailable(selectedAppearance))
+            {
+                selectedAppearance = SwordCosmeticSelection.Default;
+                SaveSelection(selectedAppearance);
+            }
             ApplySelection(selectedAppearance, false);
         }
 
@@ -140,6 +145,9 @@ namespace Cave.Player
                 health.Died -= ResetRunArchetypes;
                 health.Died += ResetRunArchetypes;
             }
+            DeveloperDiagnosticsSettings.Changed -= HandleDeveloperSettingsChanged;
+            DeveloperDiagnosticsSettings.Changed += HandleDeveloperSettingsChanged;
+            RevertUnavailableSelectionIfNeeded();
         }
 
         private void Start()
@@ -157,18 +165,13 @@ namespace Cave.Player
         {
             if (enableDebugCycleKey && Input.GetKeyDown(debugCycleKey))
             {
-                Select((SwordCosmeticSelection)(((int)selectedAppearance + 1) % 4), true);
+                Select((SwordCosmeticSelection)(((int)selectedAppearance + 1) % 4));
             }
         }
 
-        public bool Select(SwordCosmeticSelection selection, bool debugOverride = false)
+        public bool Select(SwordCosmeticSelection selection)
         {
-            if (!debugOverride && !IsUnlocked(selection))
-            {
-                return false;
-            }
-
-            if (debugOverride && !allowLockedDebugSelection && !IsUnlocked(selection))
+            if (!IsAvailable(selection))
             {
                 return false;
             }
@@ -282,7 +285,7 @@ namespace Cave.Player
             PlayerPrefs.Save();
         }
 
-        private bool IsUnlocked(SwordCosmeticSelection selection)
+        public bool IsUnlocked(SwordCosmeticSelection selection)
         {
             switch (selection)
             {
@@ -295,6 +298,11 @@ namespace Cave.Player
                 default:
                     return true;
             }
+        }
+
+        public bool IsAvailable(SwordCosmeticSelection selection)
+        {
+            return CosmeticAvailability.IsAvailable(IsUnlocked(selection));
         }
 
         private void CheckWorldLevelUnlock()
@@ -363,6 +371,18 @@ namespace Cave.Player
             {
                 difficulty.DifficultyChanged -= CheckWorldLevelUnlock;
             }
+            DeveloperDiagnosticsSettings.Changed -= HandleDeveloperSettingsChanged;
+        }
+
+        private void HandleDeveloperSettingsChanged()
+        {
+            RevertUnavailableSelectionIfNeeded();
+        }
+
+        private void RevertUnavailableSelectionIfNeeded()
+        {
+            if (IsAvailable(selectedAppearance) || selectedAppearance == SwordCosmeticSelection.Default) return;
+            ApplySelection(SwordCosmeticSelection.Default, true);
         }
     }
 }

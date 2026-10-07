@@ -253,7 +253,7 @@ namespace Cave.UI
                 case GameAction.Interact:
                     return "Interact";
                 case GameAction.SummonCurseAltar:
-                    return "Summon Curse Altar";
+                    return "Curse Altar / Domain (Tap / Hold)";
                 default:
                     return InsertSpaces(action.ToString());
             }

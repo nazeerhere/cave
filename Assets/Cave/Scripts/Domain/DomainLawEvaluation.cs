@@ -316,10 +316,7 @@ namespace Cave.Domain
             return true;
         }
 
-        private static bool IsDefinedExpression(LawExpression expression)
-        {
-            return expression == LawExpression.Projectile || expression == LawExpression.Frenzy;
-        }
+        private static bool IsDefinedExpression(LawExpression expression) => System.Enum.IsDefined(typeof(LawExpression),expression);
 
         /// <summary>Shared pure Reversal transform seam; no base semantic resolution occurs here.</summary>
         internal static bool TryGetReversedOperation(

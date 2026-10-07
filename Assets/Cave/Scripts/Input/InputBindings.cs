@@ -148,7 +148,7 @@ namespace Cave.InputSystem
             placeLandmine = new KeyBinding(KeyCode.Q, KeyCode.None);
             useDistraction = new KeyBinding(KeyCode.R, KeyCode.None);
             interact = new KeyBinding(KeyCode.F, KeyCode.None);
-            summonCurseAltar = new KeyBinding(KeyCode.None, KeyCode.None);
+            summonCurseAltar = new KeyBinding(KeyCode.RightShift, KeyCode.None);
             dash = new KeyBinding(KeyCode.LeftShift, KeyCode.None);
             pause = new KeyBinding(KeyCode.Escape, KeyCode.None);
         }

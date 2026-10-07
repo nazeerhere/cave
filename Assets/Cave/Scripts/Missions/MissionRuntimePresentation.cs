@@ -94,9 +94,13 @@ namespace Cave.Missions
             CaveMapDefinition[] maps = catalog.Maps;
             int count = maps != null ? maps.Length : 0;
             mapCards = new MapCardView[count];
+            // Keep every registered destination reachable in the existing
+            // keyboard/card selector rather than placing later cards outside
+            // the fixed expedition frame.
+            float spacing = count > 5 ? 180f : 278f;
             for (int index = 0; index < count; index++)
             {
-                float x = GetRowPosition(index, count, 278f);
+                float x = GetRowPosition(index, count, spacing);
                 mapCards[index] = new MapCardView(this, parent, maps[index], index, new Vector2(x, 3f));
             }
         }

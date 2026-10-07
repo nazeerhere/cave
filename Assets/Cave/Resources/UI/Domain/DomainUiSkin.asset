@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f433c180363b7494f87ac781d6ce2884, type: 3}
+  m_Name: DomainUiSkin
+  m_EditorClassIdentifier: 
+  largePanel: {fileID: 21300000, guid: 5755661c1760e47c6b26310be5d8ce0d, type: 3}
+  mediumPanel: {fileID: 21300000, guid: 1d3027540b7e34f84ba67be626df7aa0, type: 3}
+  smallPanel: {fileID: 21300000, guid: 06cfaaa28c2e6459f9c0565af63f7500, type: 3}
+  navigation: {fileID: 21300000, guid: 664a2e8885c944f62939daaf02185315, type: 3}
+  navigationSelected: {fileID: 21300000, guid: 164b2a28870e145288c745158c4b7966, type: 3}
+  card: {fileID: 21300000, guid: 1309d6be9e49b4fbd94ec222395225d3, type: 3}
+  cardSelected: {fileID: 21300000, guid: 60df02056508f4325b90e5526e902d31, type: 3}
+  cardDisabled: {fileID: 21300000, guid: 55b385a51db104c1ca2e1c20bb02482c, type: 3}
+  actionButton: {fileID: 21300000, guid: fb9d0aef946be46bc9af8a43d6768193, type: 3}
+  progressBar: {fileID: 21300000, guid: e282a610958a04b939627947bf42104e, type: 3}
+  reserveBar: {fileID: 21300000, guid: 3aa783c120616463198482930888295f, type: 3}
+  divider: {fileID: 21300000, guid: be270f52e1b844050a01c00a49888ff3, type: 3}
+  reserveIcon: {fileID: 21300000, guid: 1ca37723ae9ce4a57ae06e931027602b, type: 3}

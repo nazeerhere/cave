@@ -54,6 +54,7 @@ namespace Cave.Axioms.Mastery
 
         public MasteryChannelReport GetPhenomenonReport(LawPhenomenon phenomenon, PlayerMasteryPolicy policy) => Report("p:" + (int)phenomenon, policy);
         public MasteryChannelReport GetProjectileReport(PlayerMasteryPolicy policy) => Report("x:projectile", policy);
+        public MasteryChannelReport GetExpressionReport(LawExpression expression, PlayerMasteryPolicy policy) => Report("x:"+(int)expression,policy);
         public float FrenzyEvidence => frenzyEvidence;
         public bool IsFrenzyMastered(PlayerMasteryPolicy policy) => frenzyEvidence >= policy.FrenzyThreshold;
         public float GetFailurePressure(LawPhenomenon phenomenon, MasteryEvidenceDimension dimension) => Get(pressure, Key("p:" + (int)phenomenon, dimension));
@@ -65,8 +66,18 @@ namespace Cave.Axioms.Mastery
             if (!submission.Succeeded) { nextPressure[key] = Math.Min(policy.MaximumFailurePressure, Get(nextPressure,key) + policy.FailurePressureGain); return new PlayerMasteryEvidenceState(nextEvidence,nextPressure,frenzyEvidence); }
             if (submission.Amount <= 0f || float.IsNaN(submission.Amount) || float.IsInfinity(submission.Amount)) return new PlayerMasteryEvidenceState(nextEvidence,nextPressure,frenzyEvidence);
             float efficiency = Math.Max(policy.MinimumEvidenceEfficiency, 1f - Get(nextPressure,key)); float gained = submission.Amount * efficiency;
-            nextEvidence[key] = Get(nextEvidence,key) + gained;
-            if (submission.Expression.HasValue && submission.Expression.Value == LawExpression.Projectile) { string projectileKey = Key("x:projectile", submission.Dimension); nextEvidence[projectileKey] = Get(nextEvidence,projectileKey) + gained; }
+            float maximum = Threshold(submission.Dimension, policy);
+            nextEvidence[key] = Math.Min(maximum, Get(nextEvidence,key) + gained);
+            if (submission.Expression.HasValue && submission.Expression.Value != LawExpression.Frenzy && Enum.IsDefined(typeof(LawExpression),submission.Expression.Value))
+            {
+                string expressionKey=Key("x:"+(int)submission.Expression.Value,submission.Dimension);
+                nextEvidence[expressionKey]=Math.Min(maximum,Get(nextEvidence,expressionKey)+gained);
+                if(submission.Expression.Value==LawExpression.Projectile)
+                {
+                    string projectileKey=Key("x:projectile",submission.Dimension);
+                    nextEvidence[projectileKey]=Math.Min(maximum,Get(nextEvidence,projectileKey)+gained);
+                }
+            }
             return new PlayerMasteryEvidenceState(nextEvidence,nextPressure,frenzyEvidence);
         }
 
@@ -75,6 +86,13 @@ namespace Cave.Axioms.Mastery
         public PlayerMasteryEvidenceState Decay(float deltaTime, PlayerMasteryPolicy policy)
         { Dictionary<string,float> next = new Dictionary<string,float>(pressure); foreach (string key in new List<string>(next.Keys)) next[key] = Math.Max(0f,next[key] - Math.Max(0f,deltaTime) * policy.PressureRecoveryPerSecond); return new PlayerMasteryEvidenceState(new Dictionary<string,float>(evidence),next,frenzyEvidence); }
         private MasteryChannelReport Report(string scope, PlayerMasteryPolicy policy) => new MasteryChannelReport(Get(evidence,Key(scope,MasteryEvidenceDimension.State)),Get(evidence,Key(scope,MasteryEvidenceDimension.Rate)),Get(evidence,Key(scope,MasteryEvidenceDimension.Acceleration)),policy);
+        private static float Threshold(MasteryEvidenceDimension dimension, PlayerMasteryPolicy policy)
+        {
+            float value = dimension == MasteryEvidenceDimension.State ? policy.StateThreshold
+                : dimension == MasteryEvidenceDimension.Rate ? policy.RateThreshold
+                : policy.AccelerationThreshold;
+            return Math.Max(0f, value);
+        }
         private static string Key(string scope, MasteryEvidenceDimension dim) => scope + ":" + (int)dim;
         private static float Get(Dictionary<string,float> values, string key) { float value; return values.TryGetValue(key,out value) ? value : 0f; }
     }
@@ -87,8 +105,39 @@ namespace Cave.Axioms.Mastery
         {
             if (law == null || !DomainLaw.Validate(law.Expression,law.Phenomenon,law.TerritoryPrinciple).IsValid) return new DomainMasteryEligibilityResult(false,DomainMasteryEligibilityReason.InvalidLaw);
             PlayerMasteryEvidenceState mastery = state ?? PlayerMasteryEvidenceState.Empty; if (!mastery.GetPhenomenonReport(law.Phenomenon,policy).IsMastered) return new DomainMasteryEligibilityResult(false,DomainMasteryEligibilityReason.PhenomenonMasteryIncomplete);
-            bool expression = law.Expression == LawExpression.Projectile ? mastery.GetProjectileReport(policy).IsMastered : mastery.IsFrenzyMastered(policy);
+            bool expression = law.Expression == LawExpression.Frenzy ? mastery.IsFrenzyMastered(policy) : mastery.GetExpressionReport(law.Expression,policy).IsMastered;
             return new DomainMasteryEligibilityResult(expression, expression ? DomainMasteryEligibilityReason.Eligible : DomainMasteryEligibilityReason.ExpressionMasteryIncomplete);
+        }
+    }
+
+    /// <summary>Read-only Domain-control progress for authoring blockers and later UI.</summary>
+    public sealed class DomainPhenomenonMasteryProgress
+    {
+        internal DomainPhenomenonMasteryProgress(LawPhenomenon phenomenon, MasteryChannelReport report, PlayerMasteryPolicy policy)
+        {
+            Phenomenon = phenomenon;
+            StateEvidence = report.StateEvidence; StateRequired = policy.StateThreshold; StateMastered = report.StateLock;
+            RateEvidence = report.RateEvidence; RateRequired = policy.RateThreshold; RateMastered = report.RateLock;
+            AccelerationEvidence = report.AccelerationEvidence; AccelerationRequired = policy.AccelerationThreshold; AccelerationMastered = report.AccelerationLock;
+            IsDomainControlMastered = report.IsMastered;
+        }
+        public LawPhenomenon Phenomenon { get; }
+        public float StateEvidence { get; } public float StateRequired { get; } public bool StateMastered { get; }
+        public float RateEvidence { get; } public float RateRequired { get; } public bool RateMastered { get; }
+        public float AccelerationEvidence { get; } public float AccelerationRequired { get; } public bool AccelerationMastered { get; }
+        public bool IsDomainControlMastered { get; }
+    }
+
+    /// <summary>Single read-only authority for phenomenon Domain-control mastery.</summary>
+    public static class DomainControlMasteryQuery
+    {
+        public static DomainPhenomenonMasteryProgress GetPhenomenon(PlayerMasteryEvidenceState state,
+            LawPhenomenon phenomenon, PlayerMasteryPolicy policy)
+        {
+            PlayerMasteryPolicy activePolicy = policy ?? PlayerMasteryPolicy.Default;
+            MasteryChannelReport report = (state ?? PlayerMasteryEvidenceState.Empty)
+                .GetPhenomenonReport(phenomenon, activePolicy);
+            return new DomainPhenomenonMasteryProgress(phenomenon, report, activePolicy);
         }
     }
 }

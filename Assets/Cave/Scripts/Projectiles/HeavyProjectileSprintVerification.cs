@@ -9,6 +9,7 @@ namespace Cave.Projectiles
         public static bool TryRunAll(out string failure)
         {
             if (!VerifyChargeThresholds(out failure)
+                || !VerifyHeavyProgression(out failure)
                 || !VerifyHeavyNeverPierces(out failure)
                 || !VerifyMergeGeometryAndCap(out failure)
                 || !VerifyHeavyFollowUpEntries(out failure)
@@ -36,6 +37,27 @@ namespace Cave.Projectiles
         {
             bool valid = ChargedProjectilePolicy.HeavyMaximumEnemyHits == 1;
             failure = valid ? null : "Heavy projectile could inherit rapid-fire pierce.";
+            return valid;
+        }
+
+        private static bool VerifyHeavyProgression(out string failure)
+        {
+            float minimum = ChargedProjectilePolicy.HeavyChargeNormalized(.35f, .35f, 1.2f);
+            float middle = ChargedProjectilePolicy.HeavyChargeNormalized(.775f, .35f, 1.2f);
+            float full = ChargedProjectilePolicy.HeavyChargeNormalized(1.2f, .35f, 1.2f);
+            float overcharge = ChargedProjectilePolicy.HeavyChargeNormalized(9f, .35f, 1.2f);
+            float minimumScale = ChargedProjectilePolicy.HeavyVisualScale(minimum, 1.4f, 2.2f);
+            float middleScale = ChargedProjectilePolicy.HeavyVisualScale(middle, 1.4f, 2.2f);
+            float fullScale = ChargedProjectilePolicy.HeavyVisualScale(full, 1.4f, 2.2f);
+            bool valid = Mathf.Approximately(minimumScale, 1.4f)
+                && Mathf.Approximately(middleScale, 1.8f)
+                && Mathf.Approximately(fullScale, 2.2f)
+                && Mathf.Approximately(overcharge, 1f)
+                && ChargedProjectilePolicy.ResolveHeavyDamage(7, minimumScale, 1.4f, 3f) == 21
+                && ChargedProjectilePolicy.ResolveHeavyDamage(7, middleScale, 1.4f, 3f) == 27
+                && ChargedProjectilePolicy.ResolveHeavyDamage(7, fullScale, 1.4f, 3f) == 33
+                && Mathf.Approximately(ChargedProjectilePolicy.DefaultHeavyExplosionRadius, 3.5f);
+            failure = valid ? null : "Heavy visual progression, capped size-derived damage, or explosion radius was incorrect.";
             return valid;
         }
 

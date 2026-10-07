@@ -42,6 +42,8 @@ namespace Cave.FieldControl
         public float EnergyFraction => maximumEnergy > 0f ? currentEnergy / maximumEnergy : 0f;
         public float SurvivabilityFraction => Mathf.Min(HealthFraction, EnergyFraction);
         public ulong CreationOrder => creationOrder;
+        /// <summary>Owning physical topology authority. Read-only for adapters.</summary>
+        public FieldNetwork Network => network;
         public bool CanContribute => configured && isActiveAndEnabled && CurrentHealth > 0 && currentEnergy > 0.001f;
 
         public void Configure(FieldNetwork ownerNetwork, FieldOwnerTeam team, int health, float energy, float duration, ulong order)
@@ -146,9 +148,49 @@ namespace Cave.FieldControl
         private bool topologyDirty;
         private float nextEnergyTick;
 
+        /// <summary>Raised after the authoritative disk-link set has been rebuilt.</summary>
+        public event Action TopologyChanged;
         public int ActiveNodeCount => nodes.Count;
         public int ActiveLinkCount => links.Count;
+        /// <summary>Monotonic only for this live network instance.  Consumers use it
+        /// to invalidate topology projections; it is not a gameplay priority.</summary>
+        public uint TopologyVersion { get; private set; }
         public FieldOwnerTeam OwnerTeam => ownerTeam;
+        public float MaximumLinkDistance => maximumLinkDistance;
+
+        /// <summary>Read-only gameplay-link query for adapters. FieldNetwork remains the owner of link creation and force behavior.</summary>
+        public bool AreLinked(FieldNode first,FieldNode second)
+        {
+            if(first==null||second==null)return false;
+            for(int index=0;index<links.Count;index++)if(links[index]!=null&&links[index].Connects(first,second))return true;
+            return false;
+        }
+
+        /// <summary>Returns the current physical nodes in deterministic placement
+        /// order.  It deliberately exposes neither mutable topology nor links.</summary>
+        public IReadOnlyList<FieldNode> SnapshotNodes()
+        {
+            RebuildIfNeeded();
+            List<FieldNode> result = new List<FieldNode>(nodes);
+            result.Sort((left, right) => left.CreationOrder.CompareTo(right.CreationOrder));
+            return result.AsReadOnly();
+        }
+
+        /// <summary>Returns only directly linked physical neighbours.  Domain
+        /// adapters must map these nodes to live carriers separately.</summary>
+        public IReadOnlyList<FieldNode> SnapshotLinkedNodes(FieldNode node)
+        {
+            RebuildIfNeeded();
+            List<FieldNode> result = new List<FieldNode>();
+            if (node == null) return result.AsReadOnly();
+            for (int index = 0; index < nodes.Count; index++)
+            {
+                FieldNode candidate = nodes[index];
+                if (candidate != null && !ReferenceEquals(candidate, node) && AreLinked(node, candidate)) result.Add(candidate);
+            }
+            result.Sort((left, right) => left.CreationOrder.CompareTo(right.CreationOrder));
+            return result.AsReadOnly();
+        }
 
         public void Configure(FieldOwnerTeam team, LayerMask targetLayers, int nodeCap, float maxDistance, float strength, float offset, float exponent)
         {
@@ -211,6 +253,8 @@ namespace Cave.FieldControl
             ClearLinks();
             if (nodes.Count == 2) AddLink(nodes[0], nodes[1]);
             else if (nodes.Count == 3) BuildThreeNodeTopology();
+            TopologyVersion++;
+            TopologyChanged?.Invoke();
         }
 
         private void BuildThreeNodeTopology()
@@ -294,6 +338,7 @@ namespace Cave.FieldControl
         private float strength;
 
         public float Strength => strength;
+        public bool Connects(FieldNode a,FieldNode b) => (ReferenceEquals(first,a)&&ReferenceEquals(second,b))||(ReferenceEquals(first,b)&&ReferenceEquals(second,a));
 
         public void Configure(FieldNode a, FieldNode b, FieldOwnerTeam team, LayerMask layers, float baseForce, float offset, float exponent, float fieldWidth, Color strong, Color weak, GameObject visualPrefab = null)
         {

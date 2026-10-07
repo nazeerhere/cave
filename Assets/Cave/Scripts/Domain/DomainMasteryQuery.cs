@@ -4,13 +4,14 @@ using UnityEngine;
 namespace Cave.Domain
 {
     /// <summary>
-    /// Read-only bridge from current-run Axiom mastery into future Domain UI and
-    /// construction. It does not change the existing evidence model or persist
-    /// its values.
+    /// Read-only familiarity bridge for legacy Axiom presentation. It is not
+    /// Domain authoring authority; that belongs to DomainControlMasteryQuery.
     /// </summary>
     public static class DomainMasteryQuery
     {
-        public const float DefaultEligibilityThreshold = 0.65f;
+        public const float DefaultFamiliarityHighlightThreshold = 0.65f;
+        /// <summary>Legacy compatibility alias; this is not authoring eligibility.</summary>
+        public const float DefaultEligibilityThreshold = DefaultFamiliarityHighlightThreshold;
 
         private static readonly MasteryDomain[] DomainPhenomena =
         {
@@ -23,13 +24,14 @@ namespace Cave.Domain
             MasteryDomain.StoneglassPrecision
         };
 
-        private static float eligibilityThreshold = DefaultEligibilityThreshold;
+        private static float familiarityHighlightThreshold = DefaultFamiliarityHighlightThreshold;
 
         /// <summary>
-        /// Centralized threshold for Domain-potential presentation. A future
-        /// balance/config asset may set this once; it is never stored as mastery.
+        /// Centralized legacy-presentation threshold. It has no authoring role.
         /// </summary>
-        public static float EligibilityThreshold => eligibilityThreshold;
+        public static float FamiliarityHighlightThreshold => familiarityHighlightThreshold;
+        /// <summary>Legacy compatibility alias; this is not authoring eligibility.</summary>
+        public static float EligibilityThreshold => FamiliarityHighlightThreshold;
         public static int PhenomenonCount => DomainPhenomena.Length;
 
         public static MasteryDomain GetPhenomenon(int index)
@@ -37,19 +39,37 @@ namespace Cave.Domain
             return DomainPhenomena[index];
         }
 
-        public static void SetEligibilityThreshold(float threshold)
+        public static void SetFamiliarityHighlightThreshold(float threshold)
         {
-            eligibilityThreshold = Mathf.Clamp01(threshold);
+            familiarityHighlightThreshold = Mathf.Clamp01(threshold);
         }
 
-        public static float GetMastery(AxiomMasteryState mastery, MasteryDomain phenomenon)
+        /// <summary>Legacy compatibility alias; this is not authoring eligibility.</summary>
+        public static void SetEligibilityThreshold(float threshold)
+        {
+            SetFamiliarityHighlightThreshold(threshold);
+        }
+
+        public static float GetFamiliarity(AxiomMasteryState mastery, MasteryDomain phenomenon)
         {
             return mastery != null ? mastery.Get(phenomenon) : 0f;
         }
 
+        /// <summary>Legacy compatibility alias for ordinary-use familiarity.</summary>
+        public static float GetMastery(AxiomMasteryState mastery, MasteryDomain phenomenon)
+        {
+            return GetFamiliarity(mastery, phenomenon);
+        }
+
+        public static bool IsFamiliarityHighlighted(AxiomMasteryState mastery, MasteryDomain phenomenon)
+        {
+            return GetFamiliarity(mastery, phenomenon) >= familiarityHighlightThreshold;
+        }
+
+        /// <summary>Legacy compatibility alias; this is not authoring eligibility.</summary>
         public static bool IsEligible(AxiomMasteryState mastery, MasteryDomain phenomenon)
         {
-            return GetMastery(mastery, phenomenon) >= eligibilityThreshold;
+            return IsFamiliarityHighlighted(mastery, phenomenon);
         }
 
         public static string GetDisplayName(MasteryDomain phenomenon)

@@ -511,7 +511,10 @@ namespace Cave.Player
             bool caughtWindup = melee != null && melee.IsAttacking && !melee.IsAttackCommitted;
             bool damagedMeleeShield = meleeShield != null
                 && meleeShield.TryReceiveGuardBreak();
-            if (!brokePosture && !caughtWindup && !damagedMeleeShield)
+            BruteControlAbilities bruteControl = closest.GetComponent<BruteControlAbilities>();
+            bool brokeBrutePin = bruteControl != null
+                && bruteControl.TryBreakPinFromGuardBreak(GetComponent<PlayerHealth>());
+            if (!brokePosture && !caughtWindup && !damagedMeleeShield && !brokeBrutePin)
             {
                 return;
             }
@@ -529,7 +532,7 @@ namespace Cave.Player
 
             SpawnGuardBreakVfx(guardBreakImpactPosition);
 
-            if (brokePosture || caughtWindup)
+            if (brokePosture || caughtWindup || brokeBrutePin)
             {
                 EnemyStagger stagger = closest.GetComponent<EnemyStagger>();
                 stagger?.TryGuardBreakStagger(

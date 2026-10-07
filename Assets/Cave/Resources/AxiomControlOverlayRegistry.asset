@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8226e3d7b842f403f9cc944728e540b5, type: 3}
+  m_Name: AxiomControlOverlayRegistry
+  m_EditorClassIdentifier: 
+  stateFrame: {fileID: 21300000, guid: 8b563cc65399a4aa3956956f2c1f8213, type: 3}
+  rateFrame: {fileID: 21300000, guid: 9468f753b121b43868ecb3d72e9f7a73, type: 3}
+  accelerationFrame: {fileID: 21300000, guid: 2793d924e0e7c4d0d901f44da86d5e77, type: 3}
+  stateBadge: {fileID: 21300000, guid: 0f4258416a97e4632960bf5b00fdecd5, type: 3}
+  rateBadge: {fileID: 21300000, guid: a1edbba6a2bab483aab38087e2f4acc5, type: 3}
+  accelerationBadge: {fileID: 21300000, guid: a5b1fc8636d874d47b7819057c74a3fe, type: 3}
+  upArrow: {fileID: 21300000, guid: b597499323e2b4eee8baa8a45afbb563, type: 3}
+  downArrow: {fileID: 21300000, guid: 93c0a739ab9674935947526c27792cf0, type: 3}
+  successMarker: {fileID: 21300000, guid: 226f4a8a715e5420fa2ab14c37d48566, type: 3}
+  failureMarker: {fileID: 21300000, guid: ae69dfdceed194d918c750b6eea1b29f, type: 3}

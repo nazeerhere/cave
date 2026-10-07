@@ -4,7 +4,16 @@ using UnityEngine;
 
 namespace Cave.Missions
 {
-    public enum CaveGameMode { ClassicSweep, CorruptionPurge, CorruptBounty, Containment }
+    public enum CaveGameMode
+    {
+        // Retains the serialized ClassicSweep value used by existing content.
+        ClassicSweep = 0,
+        Hunt = ClassicSweep,
+        CorruptionPurge = 1,
+        CorruptBounty = 2,
+        Containment = 3,
+        SovereignGambit = 4
+    }
     public enum MissionLifecycleState { None, Setup, Active, PrimaryObjectiveComplete, Extraction, Success, Failure }
 
     [Serializable]

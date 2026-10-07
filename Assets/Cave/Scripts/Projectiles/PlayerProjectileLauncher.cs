@@ -15,6 +15,8 @@ namespace Cave.Projectiles
     {
         [Header("Projectile")]
         [SerializeField] private PlayerProjectile projectilePrefab;
+        [Tooltip("Optional Inspector-editable heavy/explosive variant. Falls back to the standard projectile while an existing scene override has not assigned it.")]
+        [SerializeField] private PlayerProjectile heavyProjectilePrefab;
         [SerializeField] private Transform spawnPoint;
         [SerializeField] private Vector2 spawnOffset = new Vector2(0.8f, 0.1f);
         [FormerlySerializedAs("fireCooldown")]
@@ -24,10 +26,15 @@ namespace Cave.Projectiles
         [Header("Heavy Projectile")]
         [SerializeField, Min(0.01f)] private float heavyMinimumChargeTime = 0.35f;
         [SerializeField, Min(0.01f)] private float heavyMaximumChargeTime = 1.2f;
-        [SerializeField, Min(0f)] private float heavyManaCost = 25f;
-        [SerializeField, Min(1f)] private float heavyDamageMultiplier = 3f;
-        [SerializeField, Min(1f)] private float heavyProjectileScale = 2.2f;
-        [SerializeField, Min(0.1f)] private float heavyExplosionRadius = 2.25f;
+        [FormerlySerializedAs("heavyManaCost")]
+        [FormerlySerializedAs("tierOneHeavyStaminaCost")]
+        [SerializeField, Min(0f)] private float heavyManaCost = ChargedProjectilePolicy.DefaultHeavyManaCost;
+        [FormerlySerializedAs("heavyDamageMultiplier")]
+        [SerializeField, Min(1f)] private float heavyMinimumDamageMultiplier = ChargedProjectilePolicy.DefaultHeavyMinimumDamageMultiplier;
+        [SerializeField, Min(1f)] private float heavyMinimumVisualScale = ChargedProjectilePolicy.DefaultHeavyMinimumVisualScale;
+        [FormerlySerializedAs("heavyProjectileScale")]
+        [SerializeField, Min(1f)] private float heavyMaximumVisualScale = ChargedProjectilePolicy.DefaultHeavyMaximumVisualScale;
+        [SerializeField, Min(0.1f)] private float heavyExplosionRadius = ChargedProjectilePolicy.DefaultHeavyExplosionRadius;
         [SerializeField, Min(0f)] private float heavyRecovery = 0.18f;
 
         private PlayerMana playerMana;
@@ -54,7 +61,10 @@ namespace Cave.Projectiles
         public bool IsHeavyCharging => heavyCharging;
         public bool IsHeavyReady => heavyCharging && heavyManaCommitted;
         public float HeavyChargeNormalized => heavyCharging
-            ? ChargedProjectilePolicy.NormalizedCharge(Time.time - heavyChargeStartedAt, heavyMaximumChargeTime)
+            ? ChargedProjectilePolicy.HeavyChargeNormalized(
+                Time.time - heavyChargeStartedAt,
+                heavyMinimumChargeTime,
+                heavyMaximumChargeTime)
             : 0f;
 
         internal void UseProjectilePrefabIfMissing(PlayerProjectile defaultPrefab)
@@ -62,6 +72,14 @@ namespace Cave.Projectiles
             if (projectilePrefab == null)
             {
                 projectilePrefab = defaultPrefab;
+            }
+        }
+
+        internal void UseHeavyProjectilePrefabIfMissing(PlayerProjectile defaultPrefab)
+        {
+            if (heavyProjectilePrefab == null)
+            {
+                heavyProjectilePrefab = defaultPrefab;
             }
         }
 
@@ -268,7 +286,7 @@ namespace Cave.Projectiles
             if (!heavyManaCommitted
                 && ChargedProjectilePolicy.IsReady(elapsed, heavyMinimumChargeTime))
             {
-                if (!playerMana.TrySpendMana(heavyManaCost, heavyChargeTier))
+                if (playerMana == null || !playerMana.TrySpendMana(heavyManaCost, heavyChargeTier))
                 {
                     FeedbackRequested?.Invoke("Not enough mana for Heavy Projectile.");
                     CancelHeavyCharge();
@@ -302,7 +320,7 @@ namespace Cave.Projectiles
 
             PlayerGuardBreak guardBreak = GetComponent<PlayerGuardBreak>();
             return (guardBreak == null || guardBreak.CanUseCombatActions)
-                && projectilePrefab != null;
+                && (heavyProjectilePrefab != null || projectilePrefab != null);
         }
 
         private void FireHeavyProjectile()
@@ -322,22 +340,31 @@ namespace Cave.Projectiles
             Vector2 localSpawnPosition = direction * Mathf.Abs(spawnOffset.x) + Vector2.up * spawnOffset.y;
             spawnPoint.localPosition = new Vector3(localSpawnPosition.x, localSpawnPosition.y, 0f);
             float projectileAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            PlayerProjectile heavyPrefab = heavyProjectilePrefab != null ? heavyProjectilePrefab : projectilePrefab;
             PlayerProjectile projectile = Instantiate(
-                projectilePrefab,
+                heavyPrefab,
                 spawnPoint.position,
                 Quaternion.Euler(0f, 0f, projectileAngle));
-            int projectileDamage = Mathf.Max(
-                1,
-                Mathf.CeilToInt(damageBoost.ResolveProjectileDamage(projectile.BaseDamage) * heavyDamageMultiplier));
-            DamageContext damageContext = resourceMastery != null
-                ? resourceMastery.CreateManaDamageContext()
-                : default;
+            int equivalentRegularDamage = damageBoost.ResolveProjectileDamage(projectile.BaseDamage);
             if (upgradeState != null && upgradeState.Settings != null)
             {
-                projectileDamage += upgradeState.Settings.GetProjectileDamageBonus(
+                equivalentRegularDamage += upgradeState.Settings.GetProjectileDamageBonus(
                     specialMode.CurrentMode,
                     heavyChargeTier);
             }
+
+            float committedVisualScale = ChargedProjectilePolicy.HeavyVisualScale(
+                HeavyChargeNormalized,
+                heavyMinimumVisualScale,
+                heavyMaximumVisualScale);
+            int projectileDamage = ChargedProjectilePolicy.ResolveHeavyDamage(
+                equivalentRegularDamage,
+                committedVisualScale,
+                heavyMinimumVisualScale,
+                heavyMinimumDamageMultiplier);
+            DamageContext damageContext = resourceMastery != null
+                ? resourceMastery.CreateManaDamageContext()
+                : default;
 
             FrenzyBreakActivation frenzyActivation = null;
             combatFlow?.TryCommitFrenzyBreak(FrenzyBreakAttackKind.Projectile, out frenzyActivation);
@@ -351,7 +378,7 @@ namespace Cave.Projectiles
                 1,
                 heavyChargeTier,
                 upgradeState != null ? upgradeState.Settings : null);
-            projectile.ConfigureHeavyProjectile(heavyProjectileScale, heavyExplosionRadius);
+            projectile.ConfigureHeavyProjectile(committedVisualScale, heavyExplosionRadius);
 
             CaveSfx.Play(CaveSfxCue.Shot, 0.95f);
             nextFireTime = Time.time + Mathf.Max(EffectiveFireInterval, heavyRecovery);
@@ -411,7 +438,14 @@ namespace Cave.Projectiles
             }
 
             float progress = HeavyChargeNormalized;
-            float scale = Mathf.Lerp(0.45f, heavyProjectileScale, progress);
+            float scale = Mathf.Lerp(0.45f,
+                ChargedProjectilePolicy.HeavyVisualScale(
+                    progress,
+                    heavyMinimumVisualScale,
+                    heavyMaximumVisualScale),
+                ChargedProjectilePolicy.NormalizedCharge(
+                    Time.time - heavyChargeStartedAt,
+                    heavyMinimumChargeTime));
             heavyChargeVisual.transform.localScale = new Vector3(scale, scale, 1f);
             if (heavyChargeRenderer != null)
             {
@@ -479,6 +513,12 @@ namespace Cave.Projectiles
     /// <summary>Small pure charge seam used by the projectile action and its verifier.</summary>
     public static class ChargedProjectilePolicy
     {
+        public const float DefaultHeavyManaCost = 25f;
+        public const float DefaultHeavyMinimumDamageMultiplier = 3f;
+        public const float DefaultHeavyMinimumVisualScale = 1.4f;
+        public const float DefaultHeavyMaximumVisualScale = 2.2f;
+        public const float DefaultHeavyExplosionRadius = 3.5f;
+
         public static float NormalizedCharge(float elapsed, float maximumDuration)
         {
             return Mathf.Clamp01(Mathf.Max(0f, elapsed) / Mathf.Max(0.01f, maximumDuration));
@@ -487,6 +527,36 @@ namespace Cave.Projectiles
         public static bool IsReady(float elapsed, float minimumDuration)
         {
             return elapsed >= Mathf.Max(0f, minimumDuration);
+        }
+
+        /// <summary>Charge starts progressing Heavy size only after commitment.</summary>
+        public static float HeavyChargeNormalized(float elapsed, float minimumDuration, float maximumDuration)
+        {
+            float minimum = Mathf.Max(0f, minimumDuration);
+            float maximum = Mathf.Max(minimum + .0001f, maximumDuration);
+            return Mathf.Clamp01((Mathf.Max(0f, elapsed) - minimum) / (maximum - minimum));
+        }
+
+        public static float HeavyVisualScale(float normalizedCharge, float minimumScale, float maximumScale)
+        {
+            float minimum = Mathf.Max(.01f, minimumScale);
+            return Mathf.Lerp(minimum, Mathf.Max(minimum, maximumScale), Mathf.Clamp01(normalizedCharge));
+        }
+
+        /// <summary>
+        /// One final nearest-integer rounding boundary: regular upgrades are
+        /// already present in equivalentRegularDamage, and Frenzy remains a
+        /// downstream impact rule.
+        /// </summary>
+        public static int ResolveHeavyDamage(
+            int equivalentRegularDamage,
+            float visualScale,
+            float minimumVisualScale,
+            float minimumDamageMultiplier)
+        {
+            float baseline = Mathf.Max(1, equivalentRegularDamage);
+            float sizeRatio = Mathf.Max(.01f, visualScale) / Mathf.Max(.01f, minimumVisualScale);
+            return Mathf.Max(1, Mathf.RoundToInt(baseline * Mathf.Max(1f, minimumDamageMultiplier) * sizeRatio));
         }
 
         public static int HeavyMaximumEnemyHits => 1;

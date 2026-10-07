@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Cave.Domain
 {
-    public enum DomainRuntimeTargetRejectionReason { None = 0, UnsupportedPhenomenon = 1, MissingNaturalMassBaseline = 2, InvalidFinalState = 3 }
+    public enum DomainRuntimeTargetRejectionReason { None = 0, UnsupportedPhenomenon = 1, MissingNaturalMassBaseline = 2, InvalidFinalState = 3, MissingPatternContext = 4 }
     public enum DomainCommitRejectionReason { None = 0, PlanNotCommittable = 1, PlanAlreadyCommitted = 2, MissingRuntimeTarget = 3, UnsupportedPhenomenon = 4, RuntimeStateUnavailable = 5, RuntimeStateStale = 6, FinalStateNotWritable = 7 }
     public interface IDomainPhenomenonRuntimeAccessor { bool TryResolve(PhenomenonCarrierId carrierId,LawPhenomenon phenomenon,out IDomainPhenomenonRuntimeTarget target); }
     /// <summary>A bound runtime target; Apply is a validated in-memory assignment with no gameplay side effects or failure mode.</summary>

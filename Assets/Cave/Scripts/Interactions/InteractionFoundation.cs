@@ -119,8 +119,11 @@ namespace Cave.Interactions
         private static readonly List<IInteractionResponder> Responders = new List<IInteractionResponder>(8);
         private static ulong nextSequence;
         private static int dispatchDepth;
+        [ThreadStatic] private static ulong currentDispatchSequence;
 
         public static event Action<InteractionEvent> EventEmitted;
+        /// <summary>Read-only causal context for observers invoked by this dispatch; zero means no interaction is active.</summary>
+        public static ulong CurrentDispatchSequence => currentDispatchSequence;
 
         public static void Register(IInteractionResponder responder)
         {
@@ -149,6 +152,8 @@ namespace Cave.Interactions
             }
 
             InteractionEvent resolvedEvent = interactionEvent.WithSequence(++nextSequence);
+            ulong previousSequence = currentDispatchSequence;
+            currentDispatchSequence = resolvedEvent.Sequence;
             dispatchDepth++;
             try
             {
@@ -164,6 +169,7 @@ namespace Cave.Interactions
             finally
             {
                 dispatchDepth--;
+                currentDispatchSequence = previousSequence;
             }
         }
     }

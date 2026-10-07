@@ -297,7 +297,22 @@ namespace Cave.Enemies
                 KnowledgeFact existing = facts[index];
                 if (existing.Type == fact.Type && existing.Subject == fact.Subject)
                 {
-                    facts[index] = fact;
+                    // Re-observing the same live fact refreshes its freshness; it
+                    // is not a new psychology event. Preserve provenance while
+                    // source and channel remain unchanged so consumers can
+                    // distinguish refresh from genuinely new evidence.
+                    if (existing.Channel == fact.Channel
+                        && existing.OriginalObserverId == fact.OriginalObserverId)
+                    {
+                        facts[index] = new KnowledgeFact(
+                            fact.Type, fact.Subject, fact.Position, fact.TacticalIntent,
+                            fact.Channel, fact.OriginalObserverId, existing.ProvenanceId,
+                            fact.ObservedAt, fact.ReceivedAt, fact.Confidence, fact.ExpiresAt);
+                    }
+                    else
+                    {
+                        facts[index] = fact;
+                    }
                     return;
                 }
             }

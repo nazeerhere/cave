@@ -74,10 +74,14 @@ namespace Cave.Domain
     public sealed class DomainConflictParticipant
     {
         public DomainConflictParticipant(string participantId, DomainCommitPlan commitPlan, DomainComposition composition, DomainComplexityPolicy complexityPolicy, DomainConflictEvidenceSet evidence, string provenance)
+            : this(participantId, commitPlan, composition, complexityPolicy, evidence, provenance, null)
+        {
+        }
+        public DomainConflictParticipant(string participantId, DomainCommitPlan commitPlan, DomainComposition composition, DomainComplexityPolicy complexityPolicy, DomainConflictEvidenceSet evidence, string provenance, DomainExecutionProvenance executionProvenance)
         {
             ParticipantId = participantId; CommitPlan = commitPlan; Composition = composition;
             ComplexityReport = composition != null ? DomainComplexityCalculator.Calculate(composition, complexityPolicy) : null;
-            Evidence = evidence ?? DomainConflictEvidenceSet.Empty; Provenance = provenance;
+            Evidence = evidence ?? DomainConflictEvidenceSet.Empty; Provenance = provenance; ExecutionProvenance = executionProvenance;
         }
         public string ParticipantId { get; }
         public DomainCommitPlan CommitPlan { get; }
@@ -85,6 +89,7 @@ namespace Cave.Domain
         public DomainComplexityReport ComplexityReport { get; }
         public DomainConflictEvidenceSet Evidence { get; }
         public string Provenance { get; }
+        public DomainExecutionProvenance ExecutionProvenance { get; }
         public float CommittedComplexity => ComplexityReport != null ? ComplexityReport.TotalComplexity : float.NaN;
     }
 }

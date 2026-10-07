@@ -48,7 +48,11 @@ namespace Cave.Player
             AxiomMasteryState.EnsureOn(gameObject);
             PlayerMasteryEvidenceRuntime.EnsureOn(gameObject);
             PlayerDomainLawCollection.EnsureOn(gameObject);
+            PlayerDomainReserve.EnsureOn(gameObject);
+            PlayerDomainManifestation.EnsureOn(gameObject);
+            PlayerSharedDomainActivationInput.EnsureOn(gameObject);
             AxiomControlState control = AxiomControlState.EnsureOn(gameObject);
+            PlayerDomainChargeRewards.EnsureOn(gameObject);
             control.InterventionSucceeded -= HandleAxiomCorrection;
             control.InterventionSucceeded += HandleAxiomCorrection;
             control.TemporalStageChanged -= HandleTemporalStageChanged;

@@ -41,6 +41,18 @@ namespace Cave.Axioms.Elemental
             {
                 kind = AxiomKind.Mass;
             }
+            else if (isFrenzyBreak && activeMode == SpecialMode.BurnShot)
+            {
+                // Direct Frenzy actions preserve Burn's target-owned Heat.
+                kind = AxiomKind.Heat;
+                receiverIsTarget = true;
+            }
+            else if (isFrenzyBreak && activeMode == SpecialMode.SlowShot)
+            {
+                // Direct Frenzy actions preserve Slow's target-owned Order.
+                kind = AxiomKind.Order;
+                receiverIsTarget = true;
+            }
             else
             {
                 return false;

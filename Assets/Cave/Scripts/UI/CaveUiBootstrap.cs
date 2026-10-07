@@ -1,4 +1,5 @@
 using Cave.Combat;
+using Cave.Diagnostics;
 using Cave.Domain;
 using Cave.Enemies;
 using Cave.InputSystem;
@@ -262,7 +263,7 @@ namespace Cave.UI
                 font,
                 "ESC  •  RESUME",
                 13,
-                new Vector2(0f, -226f));
+                new Vector2(0f, -232f));
             pauseHint.color = CaveUiTheme.SecondaryText;
 
             // The camera row extends the existing Settings menu without reducing
@@ -286,6 +287,13 @@ namespace Cave.UI
                 new Vector2(0f, 302f));
             settingsTitle.fontStyle = FontStyle.Bold;
             settingsTitle.color = CaveUiTheme.Gold;
+            Button developerSettingsButton = CreateButton(
+                "DEV",
+                settingsPanel.transform,
+                font,
+                new Vector2(278f, 302f),
+                new Vector2(100f, 34f));
+            developerSettingsButton.GetComponentInChildren<Text>().fontSize = 14;
             CreateCardSurface("Controls Surface", settingsPanel.transform, new Vector2(0f, 102f), new Vector2(710f, 364f));
             CreateCardSurface("Audio Surface", settingsPanel.transform, new Vector2(0f, -168f), new Vector2(710f, 132f));
             Text controlsHeader = CreateCenteredText(
@@ -417,6 +425,27 @@ namespace Cave.UI
                 cameraZoomValue,
                 restoreDefaultsButton,
                 cancelButton);
+
+            GameObject developerSettingsPanel = CreateMenuPanel("Developer Settings Panel", menus, new Vector2(680f, 600f));
+            Text developerTitle = CreateCenteredText("Developer Settings Title", developerSettingsPanel.transform, font, "DEVELOPER SETTINGS", 26, new Vector2(0f, 246f));
+            developerTitle.fontStyle = FontStyle.Bold;
+            developerTitle.color = CaveUiTheme.Gold;
+            Text developerHint = CreateCenteredText("Developer Settings Hint", developerSettingsPanel.transform, font, "Development-only controls. Runtime systems remain authoritative.", 13, new Vector2(0f, 212f), new Vector2(600f, 30f));
+            developerHint.color = CaveUiTheme.SecondaryText;
+            CreateCardSurface("Developer Settings Surface", developerSettingsPanel.transform, new Vector2(0f, 12f), new Vector2(620f, 372f));
+            Button diagnosticsAvailability = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, 112f), new Vector2(278f, 66f));
+            Button inspectorDetail = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, 112f), new Vector2(278f, 66f));
+            Button traceMode = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, 34f), new Vector2(278f, 66f));
+            Button ctcToggle = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, 34f), new Vector2(278f, 66f));
+            Button jevToggle = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, -44f), new Vector2(278f, 66f));
+            Button governorControl = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, -44f), new Vector2(278f, 66f));
+            Button domainTestOverride = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, -122f), new Vector2(278f, 66f));
+            Button unlockAllCosmetics = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, -122f), new Vector2(278f, 66f));
+            Button developerBackButton = CreateButton("BACK", developerSettingsPanel.transform, font, new Vector2(0f, -194f), new Vector2(230f, 42f));
+            DeveloperDiagnosticsSettingsPanel developerSettings = developerSettingsPanel.AddComponent<DeveloperDiagnosticsSettingsPanel>();
+            developerSettings.Configure(settingsPanel, settingsController, diagnosticsAvailability, inspectorDetail, traceMode, ctcToggle, jevToggle, governorControl, domainTestOverride, unlockAllCosmetics, developerBackButton);
+            developerSettingsButton.onClick.AddListener(() => { settingsPanel.SetActive(false); developerSettingsPanel.SetActive(true); });
+            developerSettingsPanel.SetActive(false);
 
             GameObject movesPanel = CreateMenuPanel("Moves List Panel", menus, new Vector2(940f, 690f));
             Text movesCrest = CreateCenteredText(
@@ -556,7 +585,9 @@ namespace Cave.UI
                 movesChainRightText,
                 movesPageText,
                 movesPageButton,
-                movesPresentation);
+                movesPresentation,
+                null);
+            pauseController.ConfigureDeveloperSettingsPanel(developerSettingsPanel);
 
             CaveUiArt.ApplyOnce(gameplayHud, menus);
 
@@ -1055,33 +1086,48 @@ namespace Cave.UI
                 "Special Mode Crest",
                 selectionPanel,
                 font,
-                "◆",
-                22,
+                "NEXUS STAGING",
+                24,
                 new Vector2(0f, 330f),
-                new Vector2(80f, 28f));
-            panelCrest.color = CaveUiTheme.BorderBright;
+                new Vector2(420f, 32f));
+            panelCrest.fontStyle = FontStyle.Bold;
+            panelCrest.color = CaveUiTheme.Gold;
 
             Button modesTabButton = CreateButton(
                 "MODES",
                 selectionPanel,
                 font,
-                new Vector2(-280f, 296f),
-                new Vector2(246f, 44f));
+                new Vector2(-408f, 296f),
+                new Vector2(190f, 44f));
             Button shopTabButton = CreateButton(
                 "SHOP",
                 selectionPanel,
                 font,
-                new Vector2(0f, 296f),
-                new Vector2(246f, 44f));
+                new Vector2(-204f, 296f),
+                new Vector2(190f, 44f));
             Button domainTabButton = CreateButton(
                 "DOMAIN",
                 selectionPanel,
                 font,
-                new Vector2(280f, 296f),
-                new Vector2(246f, 44f));
+                new Vector2(0f, 296f),
+                new Vector2(190f, 44f));
+            Button masteryTabButton = CreateButton(
+                "MASTERY",
+                selectionPanel,
+                font,
+                new Vector2(204f, 296f),
+                new Vector2(190f, 44f));
+            Button cosmeticsTabButton = CreateButton(
+                "COSMETICS",
+                selectionPanel,
+                font,
+                new Vector2(408f, 296f),
+                new Vector2(190f, 44f));
             modesTabButton.GetComponentInChildren<Text>().fontSize = 18;
             shopTabButton.GetComponentInChildren<Text>().fontSize = 18;
             domainTabButton.GetComponentInChildren<Text>().fontSize = 16;
+            masteryTabButton.GetComponentInChildren<Text>().fontSize = 16;
+            cosmeticsTabButton.GetComponentInChildren<Text>().fontSize = 16;
             modesTabButton.GetComponentInChildren<Text>().text = "SKILL PATH";
             Button closeModalButton = CreateButton(
                 "CLOSE  [TAB]", selectionPanel, font, new Vector2(570f, 330f), new Vector2(146f, 30f));
@@ -1177,6 +1223,28 @@ namespace Cave.UI
                 new Vector2(0f, -24f),
                 new Vector2(1260f, 630f));
             DomainPageView domainPage = BuildDomainPage(domainContent, font);
+
+            RectTransform masteryContent = CreateRect(
+                "Mastery Content",
+                selectionPanel,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -24f),
+                new Vector2(1260f, 630f));
+            NexusMasteryPage masteryPage = masteryContent.gameObject.AddComponent<NexusMasteryPage>();
+
+            RectTransform cosmeticsContent = CreateRect(
+                "Cosmetics Content",
+                selectionPanel,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -24f),
+                new Vector2(1260f, 630f));
+            PlayerSwordCosmetics.EnsureInstalled(specialMode.gameObject);
+            PlayerSkinCosmetics skins = PlayerSkinCosmetics.EnsureInstalled(specialMode.gameObject);
+            NexusCosmeticsPage cosmeticsPage = cosmeticsContent.gameObject.AddComponent<NexusCosmeticsPage>();
 
             Text consumablesHeading = CreateCenteredText("Consumables Header", shopContent, font,
                 "◆  CONSUMABLES  ◆", 16, new Vector2(0f, 208f), new Vector2(520f, 26f));
@@ -1309,9 +1377,13 @@ namespace Cave.UI
                 domainPage);
             closeModalButton.onClick.AddListener(modeHud.ToggleSelectionPanelFromUi);
             modeHud.Bind(specialMode, playerCurrency);
-            PlayerSwordCosmetics.EnsureInstalled(specialMode.gameObject);
-            PlayerSwordCosmeticHud swordHud = modesContent.gameObject.AddComponent<PlayerSwordCosmeticHud>();
-            swordHud.Configure(specialMode.GetComponent<PlayerSwordCosmetics>(), font);
+            masteryPage.Configure(specialMode.gameObject, font);
+            cosmeticsPage.Configure(skins, specialMode.GetComponent<PlayerSwordCosmetics>(), font);
+            modeHud.ConfigureNexusTabs(
+                masteryContent.gameObject,
+                masteryTabButton,
+                cosmeticsContent.gameObject,
+                cosmeticsTabButton);
         }
 
         private static void EnsureShieldHud(Transform gameplayHud)
@@ -1586,17 +1658,15 @@ namespace Cave.UI
                 Vector2.zero,
                 Vector2.zero,
                 new Vector2(24f, 22f),
-                new Vector2(378f, 82f));
+                new Vector2(226f, 82f));
 
-            string[] slotNames = { "HEALTH", "MANA", "MINE", "RESERVED", "RESERVED" };
-            string[] symbols = { "+", "✦", "◎", "·", "·" };
+            string[] slotNames = { "HEALTH", "MANA", "MINE" };
+            string[] symbols = { "+", "✦", "◎" };
             Color[] accents =
             {
                 CaveUiTheme.Health,
                 CaveUiTheme.Mana,
-                CaveUiTheme.Gold,
-                CaveUiTheme.Iron,
-                CaveUiTheme.Iron
+                CaveUiTheme.Gold
             };
             GameAction[] actions =
             {
@@ -1632,9 +1702,7 @@ namespace Cave.UI
                     9,
                     new Vector2(0f, 27f),
                     new Vector2(60f, 16f));
-                itemName.color = index < actions.Length
-                    ? CaveUiTheme.PrimaryText
-                    : CaveUiTheme.SecondaryText;
+                itemName.color = CaveUiTheme.PrimaryText;
                 itemName.raycastTarget = false;
 
                 Text symbol = CreateCenteredText(
@@ -1652,9 +1720,7 @@ namespace Cave.UI
                     slotNames[index] + " Key",
                     slot,
                     font,
-                    index < actions.Length
-                        ? GameInput.Bindings.GetBinding(actions[index]).Primary.ToString()
-                        : string.Empty,
+                    GameInput.Bindings.GetBinding(actions[index]).Primary.ToString(),
                     12,
                     new Vector2(-19f, -25f),
                     new Vector2(28f, 20f));
@@ -1665,7 +1731,7 @@ namespace Cave.UI
                     slotNames[index] + " Owned Count",
                     slot,
                     font,
-                    index < actions.Length ? "x0" : string.Empty,
+                    "x0",
                     12,
                     new Vector2(18f, -25f),
                     new Vector2(30f, 20f));
@@ -2606,8 +2672,7 @@ namespace Cave.UI
                 {
                     "HEALTH Slot",
                     "MANA Slot",
-                    "MINE Slot",
-                    "RESERVED Slot"
+                    "MINE Slot"
                 };
 
                 foreach (string slotName in slotNames)
@@ -2844,52 +2909,107 @@ namespace Cave.UI
             const float centerX = 0f;
             const float rightX = 440f;
 
-            CreateDomainSection("Domain Seed Card", content, new Vector2(leftX, 122f), new Vector2(330f, 152f));
+            CreateDomainSection("Domain Seed Card", content, new Vector2(leftX, 160f), new Vector2(330f, 118f));
             Text seedHeading = CreateCenteredText("Domain Seed Heading", content, font, "DOMAIN SEED", 17,
-                new Vector2(leftX, 172f), new Vector2(290f, 28f));
+                new Vector2(leftX, 196f), new Vector2(290f, 28f));
             seedHeading.fontStyle = FontStyle.Bold;
             seedHeading.color = CaveUiTheme.Gold;
             Text seedStatus = CreateCenteredText("Domain Seed Status", content, font, "AWAKENED", 14,
-                new Vector2(leftX, 112f), new Vector2(274f, 68f));
+                new Vector2(leftX, 146f), new Vector2(274f, 54f));
             seedStatus.color = CaveUiTheme.PrimaryText;
 
-            CreateDomainSection("Domain Complexity Card", content, new Vector2(leftX, -34f), new Vector2(330f, 132f));
+            CreateDomainSection("Domain Complexity Card", content, new Vector2(leftX, 42f), new Vector2(330f, 100f));
             Text complexityHeading = CreateCenteredText("Domain Complexity Heading", content, font, "COMPLEXITY", 17,
-                new Vector2(leftX, 11f), new Vector2(290f, 26f));
+                new Vector2(leftX, 76f), new Vector2(290f, 26f));
             complexityHeading.fontStyle = FontStyle.Bold;
             complexityHeading.color = CaveUiTheme.Gold;
             Text complexityStatus = CreateCenteredText("Domain Complexity Status", content, font,
-                "0 / 0", 14, new Vector2(leftX, -30f), new Vector2(274f, 18f));
+                "0 / 0", 14, new Vector2(leftX, 40f), new Vector2(274f, 18f));
             complexityStatus.fontStyle = FontStyle.Bold;
             complexityStatus.color = CaveUiTheme.PrimaryText;
             Text complexityTier = CreateCenteredText("Domain Complexity Tier", content, font,
-                "CAPACITY LOCKED", 10, new Vector2(leftX, -47f), new Vector2(274f, 14f));
+                "CAPACITY LOCKED", 10, new Vector2(leftX, 23f), new Vector2(274f, 14f));
             complexityTier.color = CaveUiTheme.Gold;
             RectTransform complexityTrack = CreateRect("Domain Complexity Track", content,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(leftX, -59f), new Vector2(260f, 7f));
+                new Vector2(leftX, 10f), new Vector2(260f, 7f));
             Image complexityTrackImage = complexityTrack.gameObject.AddComponent<Image>();
             complexityTrackImage.color = CaveUiTheme.IronDark;
             complexityTrackImage.raycastTarget = false;
+            DomainUiSkin.ApplyProgress(complexityTrackImage, false);
             RectTransform complexityFill = CreateRect("Domain Complexity Fill", content,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(leftX - 130f, -59f), new Vector2(0f, 7f));
+                new Vector2(leftX - 130f, 10f), new Vector2(0f, 7f));
             Image complexityFillImage = complexityFill.gameObject.AddComponent<Image>();
             complexityFillImage.color = CaveUiTheme.Gold;
             complexityFillImage.raycastTarget = false;
             Text complexityNextTier = CreateCenteredText("Domain Complexity Next Tier", content, font,
-                string.Empty, 9, new Vector2(leftX, -81f), new Vector2(274f, 24f));
+                string.Empty, 9, new Vector2(leftX, -12f), new Vector2(274f, 20f));
             complexityNextTier.color = CaveUiTheme.SecondaryText;
 
-            CreateDomainSection("Owned Laws Card", content, new Vector2(leftX, -198f), new Vector2(330f, 174f));
+            CreateDomainSection("Domain Reserve Card", content, new Vector2(leftX, -72f), new Vector2(330f, 100f));
+            Text reserveHeading = CreateCenteredText("Domain Reserve Heading", content, font, "DOMAIN CHARGE", 17,
+                new Vector2(leftX, -38f), new Vector2(290f, 26f));
+            reserveHeading.fontStyle = FontStyle.Bold;
+            reserveHeading.color = CaveUiTheme.Gold;
+            Text reserveStatus = CreateCenteredText("Domain Reserve Status", content, font, "CHARGE UNAVAILABLE", 14,
+                new Vector2(leftX, -72f), new Vector2(274f, 18f));
+            reserveStatus.fontStyle = FontStyle.Bold;
+            reserveStatus.color = CaveUiTheme.PrimaryText;
+            RectTransform reserveIcon = CreateRect("Domain Reserve Icon", content,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(leftX - 123f, -69f), new Vector2(26f, 26f));
+            Image reserveIconImage = reserveIcon.gameObject.AddComponent<Image>();
+            reserveIconImage.sprite = DomainUiSkin.Current != null ? DomainUiSkin.Current.ReserveIcon : null;
+            reserveIconImage.color = reserveIconImage.sprite != null ? Color.white : Color.clear;
+            reserveIconImage.preserveAspect = true;
+            reserveIconImage.raycastTarget = false;
+            RectTransform reserveTrack = CreateRect("Domain Reserve Track", content,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(leftX, -88f), new Vector2(260f, 7f));
+            Image reserveTrackImage = reserveTrack.gameObject.AddComponent<Image>();
+            reserveTrackImage.color = CaveUiTheme.IronDark;
+            reserveTrackImage.raycastTarget = false;
+            DomainUiSkin.ApplyProgress(reserveTrackImage, true);
+            RectTransform reserveFill = CreateRect("Domain Reserve Fill", content,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(leftX - 130f, -88f), new Vector2(0f, 7f));
+            Image reserveFillImage = reserveFill.gameObject.AddComponent<Image>();
+            reserveFillImage.color = CaveUiTheme.Gold;
+            reserveFillImage.raycastTarget = false;
+            Text reserveDetail = CreateCenteredText("Domain Reserve Detail", content, font, "Uncharged capacity and allocated Reserve share one pool.", 9,
+                new Vector2(leftX, -108f), new Vector2(274f, 30f));
+            reserveDetail.color = CaveUiTheme.SecondaryText;
+
+            CreateDomainSection("Owned Laws Card", content, new Vector2(leftX, -220f), new Vector2(330f, 150f));
             Text lawsHeading = CreateCenteredText("Owned Laws Heading", content, font, "OWNED LAWS", 17,
-                new Vector2(leftX, -138f), new Vector2(290f, 26f));
+                new Vector2(leftX, -166f), new Vector2(290f, 26f));
             lawsHeading.fontStyle = FontStyle.Bold;
             lawsHeading.color = CaveUiTheme.Gold;
             Text ownedLawsStatus = CreateCenteredText("Owned Laws Status", content, font,
                 "NO LAWS AUTHORED", 13,
-                new Vector2(leftX, -207f), new Vector2(274f, 70f));
+                new Vector2(leftX, -229f), new Vector2(274f, 78f));
             ownedLawsStatus.color = CaveUiTheme.SecondaryText;
+            RectTransform ownedLawsViewport = CreateRect("Owned Laws Viewport", content,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(leftX, -229f), new Vector2(286f, 82f));
+            Image ownedLawsViewportImage = ownedLawsViewport.gameObject.AddComponent<Image>();
+            ownedLawsViewportImage.color = new Color(0f, 0f, 0f, 0f);
+            ownedLawsViewportImage.raycastTarget = true;
+            ownedLawsViewport.gameObject.AddComponent<RectMask2D>();
+            ScrollRect ownedLawsScroll = ownedLawsViewport.gameObject.AddComponent<ScrollRect>();
+            ownedLawsScroll.horizontal = false;
+            ownedLawsScroll.vertical = true;
+            ownedLawsScroll.movementType = ScrollRect.MovementType.Clamped;
+            RectTransform ownedLawsContent = CreateRect("Owned Laws List Content", ownedLawsViewport,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(.5f, 1f), Vector2.zero, new Vector2(0f, 1f));
+            ownedLawsScroll.viewport = ownedLawsViewport;
+            ownedLawsScroll.content = ownedLawsContent;
+            ownedLawsStatus.rectTransform.SetParent(ownedLawsViewport, false);
+            ownedLawsStatus.rectTransform.anchoredPosition = Vector2.zero;
+            ownedLawsStatus.rectTransform.sizeDelta = new Vector2(274f, 78f);
+            DomainOwnedLawList ownedLawList = ownedLawsContent.gameObject.AddComponent<DomainOwnedLawList>();
+            ownedLawList.Configure(ownedLawsContent, ownedLawsStatus, font);
 
             CreateDomainSection("Domain Expression Section", content, new Vector2(centerX, 115f), new Vector2(570f, 178f));
             Text expressionHeading = CreateCenteredText("Expression Heading", content, font, "EXPRESSION", 17,
@@ -2904,7 +3024,7 @@ namespace Cave.UI
                 new Vector2(-190f, 100f), new Vector2(172f, 86f));
             Button frenzy = CreateButton("✦\nFRENZY\nEmbodied authority", content, font,
                 new Vector2(0f, 100f), new Vector2(172f, 86f));
-            Button trap = CreateButton("◎\nTRAP\nRESERVED", content, font,
+            Button trap = CreateButton("◎\nTRAP\nPrepared authority", content, font,
                 new Vector2(190f, 100f), new Vector2(172f, 86f));
             projectile.GetComponentInChildren<Text>().fontSize = 13;
             frenzy.GetComponentInChildren<Text>().fontSize = 13;
@@ -2954,49 +3074,20 @@ namespace Cave.UI
                 "PREVIEW", 10, new Vector2(centerX, -289f), new Vector2(530f, 16f));
             selectionStatus.color = CaveUiTheme.SecondaryText;
 
-            CreateDomainSection("Domain Mastery Card", content, new Vector2(rightX, 16f), new Vector2(330f, 432f));
-            Text masteryHeading = CreateCenteredText("Domain Mastery Heading", content, font, "DOMAIN MASTERY", 17,
+            CreateDomainSection("Domain Context Card", content, new Vector2(rightX, 16f), new Vector2(330f, 432f));
+            Text contextHeading = CreateCenteredText("Domain Context Heading", content, font, "DOMAIN MASTERY", 17,
                 new Vector2(rightX, 204f), new Vector2(292f, 26f));
-            masteryHeading.fontStyle = FontStyle.Bold;
-            masteryHeading.color = CaveUiTheme.Gold;
-            Text masteryCaption = CreateCenteredText("Domain Mastery Caption", content, font,
-                "CURRENT-RUN AXIOM MASTERY", 11, new Vector2(rightX, 178f), new Vector2(292f, 18f));
-            masteryCaption.color = CaveUiTheme.SecondaryText;
-            int masteryCount = DomainMasteryQuery.PhenomenonCount;
-            Text[] masteryLabels = new Text[masteryCount];
-            Text[] masteryPercentages = new Text[masteryCount];
-            Image[] masteryFills = new Image[masteryCount];
-            for (int index = 0; index < masteryCount; index++)
-            {
-                float rowY = 135f - index * 52f;
-                CreateDomainSection("Domain Mastery Row " + index, content, new Vector2(rightX, rowY), new Vector2(292f, 44f));
-
-                masteryLabels[index] = CreateCenteredText("Domain Mastery Label " + index, content, font,
-                    string.Empty, 12, new Vector2(rightX - 48f, rowY + 8f), new Vector2(184f, 16f));
-                masteryLabels[index].alignment = TextAnchor.MiddleLeft;
-                masteryLabels[index].color = CaveUiTheme.SecondaryText;
-
-                masteryPercentages[index] = CreateCenteredText("Domain Mastery Percent " + index, content, font,
-                    "0%", 12, new Vector2(rightX + 108f, rowY + 8f), new Vector2(42f, 16f));
-                masteryPercentages[index].alignment = TextAnchor.MiddleRight;
-                masteryPercentages[index].color = CaveUiTheme.SecondaryText;
-
-                RectTransform track = CreateRect("Domain Mastery Track " + index, content,
-                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(rightX, rowY - 9f), new Vector2(260f, 8f));
-                Image trackImage = track.gameObject.AddComponent<Image>();
-                trackImage.color = CaveUiTheme.IronDark;
-                trackImage.raycastTarget = false;
-
-                RectTransform fill = CreateRect("Domain Mastery Fill " + index, content,
-                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f),
-                    new Vector2(rightX - 130f, rowY - 9f), new Vector2(0f, 8f));
-                masteryFills[index] = fill.gameObject.AddComponent<Image>();
-                masteryFills[index].color = CaveUiTheme.BorderBright;
-                masteryFills[index].raycastTarget = false;
-            }
+            contextHeading.fontStyle = FontStyle.Bold;
+            contextHeading.color = CaveUiTheme.Gold;
+            Text contextBody = CreateCenteredText("Domain Context Body", content, font,
+                "Select an Expression, Phenomenon, or Territory Principle.", 10,
+                new Vector2(rightX, 8f), new Vector2(282f, 360f));
+            contextBody.alignment = TextAnchor.UpperLeft;
+            contextBody.color = CaveUiTheme.PrimaryText;
+            contextBody.horizontalOverflow = HorizontalWrapMode.Wrap;
+            contextBody.verticalOverflow = VerticalWrapMode.Truncate;
             Text authoringStatus = CreateCenteredText("Domain Authoring Status", content, font,
-                "PROFILE REQUIRED", 11, new Vector2(rightX, -218f), new Vector2(292f, 22f));
+                "PROFILE REQUIRED", 10, new Vector2(rightX, -224f), new Vector2(292f, 52f));
             authoringStatus.color = CaveUiTheme.SecondaryText;
             Button createLaw = CreateButton("CREATE LAW\nPROFILE REQUIRED", content, font,
                 new Vector2(rightX, -266f), new Vector2(330f, 66f));
@@ -3004,8 +3095,9 @@ namespace Cave.UI
 
             DomainPageView view = content.gameObject.AddComponent<DomainPageView>();
             view.Configure(seedStatus, complexityStatus, complexityTier, complexityNextTier, complexityFillImage,
-                ownedLawsStatus, projectile, frenzy, trap,
-                phenomena, territories, selectionStatus, masteryLabels, masteryPercentages, masteryFills,
+                reserveStatus, reserveDetail, reserveFillImage,
+                ownedLawsStatus, ownedLawList, projectile, frenzy, trap,
+                phenomena, territories, selectionStatus, contextHeading, contextBody,
                 authoringStatus, createLaw);
             return view;
         }
@@ -3027,8 +3119,14 @@ namespace Cave.UI
             Image image = section.gameObject.AddComponent<Image>();
             image.color = CaveUiTheme.SurfaceInset;
             image.raycastTarget = false;
-            AddPanelFrame(section, CaveUiTheme.BronzeLight, 1.5f);
-            AddCornerOrnaments(section, CaveUiTheme.BronzeLight, 6f);
+            DomainUiPanel panel = section.gameObject.AddComponent<DomainUiPanel>();
+            panel.Configure(size.x >= 500f ? DomainUiPanelKind.Large
+                : size.y >= 180f ? DomainUiPanelKind.Medium : DomainUiPanelKind.Small);
+            if (DomainUiSkin.Current == null)
+            {
+                AddPanelFrame(section, CaveUiTheme.BronzeLight, 1.5f);
+                AddCornerOrnaments(section, CaveUiTheme.BronzeLight, 6f);
+            }
             return section;
         }
 

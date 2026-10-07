@@ -48,7 +48,7 @@ namespace Cave.Player
         [Header("Field Node Tuning")]
         [SerializeField, Min(1)] private int mineHealth = 8;
         [SerializeField, Min(0.1f)] private float mineEnergy = 8f;
-        [SerializeField, Min(0f)] private float mineLifetime = 36f;
+        [SerializeField, Min(0f)] private float mineLifetime = 72f;
         [SerializeField, Min(0.1f)] private float maximumLinkDistance = 9f;
         [SerializeField, Min(0.01f)] private float fieldBaseStrength = 12f;
         [SerializeField, Min(0.01f)] private float fieldDistanceOffset = 1f;
@@ -80,6 +80,8 @@ namespace Cave.Player
         public event Action<int> InventoryChanged;
         public event Action<PlayerConsumableType, int> ConsumableQuantityChanged;
         public event Action DiskChargeStateChanged;
+        /// <summary>Emitted after an ordinary disk has been fully configured and registered with its real FieldNetwork.</summary>
+        public event Action<PlayerLandmine> LandminePlaced;
 
         public int CurrencyCost => NextDiskCapacityCost;
         public int OwnedHealthPotions => ownedHealthPotions;
@@ -93,6 +95,9 @@ namespace Cave.Player
         public float RechargeSecondsPerCharge => rechargeSecondsPerCharge;
         public bool IsDiskUnlocked => diskCapacity > 0;
         public bool IsDiskRecharging => diskCapacity > 0 && storedDiskCharges < diskCapacity;
+        public float FieldLinkDistance => maximumLinkDistance;
+        public FieldNetwork FieldNetwork => fieldNetwork;
+        public IReadOnlyList<PlayerLandmine> ActiveMines => activeMines.AsReadOnly();
         public float DiskRechargeProgress => !IsDiskRecharging
             ? 1f
             : Mathf.Clamp01(1f - (nextDiskChargeAt - Time.time) / Mathf.Max(.1f, rechargeSecondsPerCharge));
@@ -311,6 +316,7 @@ namespace Cave.Player
             mine.Removed -= HandleMineRemoved;
             mine.Removed += HandleMineRemoved;
             activeMines.Add(mine);
+            LandminePlaced?.Invoke(mine);
             storedDiskCharges--;
             if (storedDiskCharges < diskCapacity && nextDiskChargeAt <= 0f)
             {

@@ -1,12 +1,26 @@
 using System;
 using System.Collections.Generic;
 using Cave.Combat;
+using Cave.Axioms;
+using Cave.Axioms.Elemental;
 using Cave.Enemies;
 using Cave.FieldControl;
 using UnityEngine;
 
 namespace Cave.Player
 {
+    /// <summary>Immutable observation of one ordinary disk pulse; it does not alter pulse targeting or damage.</summary>
+    public sealed class PlayerLandminePulseContext
+    {
+        public PlayerLandminePulseContext(GameObject triggeringTarget, IReadOnlyList<GameObject> affectedTargets)
+        {
+            TriggeringTarget = triggeringTarget;
+            AffectedTargets = affectedTargets;
+        }
+        public GameObject TriggeringTarget { get; }
+        public IReadOnlyList<GameObject> AffectedTargets { get; }
+    }
+
     [DisallowMultipleComponent]
     public sealed class PlayerLandmine : MonoBehaviour
     {
@@ -16,6 +30,13 @@ namespace Cave.Player
         [SerializeField, Min(0f)] private float localPulseForce = 7f;
         [SerializeField, Min(0.05f)] private float localPulseCooldown = 0.9f;
         [SerializeField, Min(0f)] private float localPulseEnergyCost = 0.8f;
+        [Header("Axiom Potential (provisional tuning)")]
+        [SerializeField, Min(0f)] private float localPulsePotentialInput = 1f;
+        [SerializeField, Min(0f)] private float detonationPotentialInput = 2f;
+        [Header("Player-to-Disk Pull Corridor (provisional tuning)")]
+        [SerializeField, Min(0f)] private float corridorHalfWidth = 0.55f;
+        [SerializeField, Min(0f)] private float corridorPullRange = 1.2f;
+        [SerializeField, Min(0f)] private float corridorPullForce = 7f;
         [SerializeField, Min(0.1f)] private float blastRadius = 2.2f;
         [SerializeField, Min(0)] private int damage = 2;
         [SerializeField, Min(0f)] private float knockback = 11f;
@@ -44,9 +65,23 @@ namespace Cave.Player
         private float nextLocalPulseAt;
 
         public event Action<PlayerLandmine> Removed;
+        /// <summary>Raised once an armed ordinary disk has affected at least one valid enemy through its existing pulse path.</summary>
+        public event Action<PlayerLandmine> MeaningfulPulse;
+        /// <summary>Optional typed observation of the actual collider-triggered focal target and affected set.</summary>
+        public event Action<PlayerLandmine, PlayerLandminePulseContext> MeaningfulPulseResolved;
+        /// <summary>Lifecycle observation only; consumers must not alter ordinary disk behavior.</summary>
+        public event Action<PlayerLandmine> StateChanged;
         public bool IsActiveFieldNode => fieldNode != null && fieldNode.CanContribute;
+        public bool IsArmed => isArmed;
+        public bool HasDetonated => hasDetonated;
+        public bool IsOperational => isArmed && !hasDetonated && !sacrificePending && IsActiveFieldNode;
+        public float LocalPulseRadius => localPulseRadius;
+        public float TriggerRadius => triggerRadius;
+        public FieldNode FieldNode => fieldNode;
         public float SurvivabilityFraction => fieldNode != null ? fieldNode.SurvivabilityFraction : 1f;
         public ulong CreationOrder => fieldNode != null ? fieldNode.CreationOrder : 0UL;
+        /// <summary>Observation seam for additive runtime state; it never changes disk combat behavior.</summary>
+        public void NotifyObservedStateChanged() { StateChanged?.Invoke(this); }
 
         public void ConfigureFallback(
             float delay,
@@ -87,13 +122,17 @@ namespace Cave.Player
             diskVisual?.SetArming();
             armedAt = Time.time + armingDelay;
             isArmed = false;
+            StateChanged?.Invoke(this);
         }
 
         public void ConfigureFieldNode(FieldNetwork network, FieldOwnerTeam team, int health, float energy, float lifetime, ulong placementOrder)
         {
+            if (fieldNode != null) fieldNode.StateChanged -= HandleFieldNodeStateChanged;
             if (fieldNode == null) fieldNode = GetComponent<FieldNode>();
             if (fieldNode == null) fieldNode = gameObject.AddComponent<FieldNode>();
             fieldNode.Configure(network, team, health, energy, lifetime, placementOrder);
+            fieldNode.StateChanged -= HandleFieldNodeStateChanged;
+            fieldNode.StateChanged += HandleFieldNodeStateChanged;
             diskVisual?.Configure(fieldNode);
         }
 
@@ -123,6 +162,7 @@ namespace Cave.Player
                     ring.endColor = armedColor;
                 }
                 diskVisual?.SetActive();
+                StateChanged?.Invoke(this);
             }
         }
 
@@ -136,7 +176,7 @@ namespace Cave.Player
             Damageable damageable = other.GetComponentInParent<Damageable>();
             if (IsValidEnemy(damageable) && Time.time >= nextLocalPulseAt)
             {
-                PulseLocalField();
+                PulseLocalField(damageable.gameObject);
             }
         }
 
@@ -144,10 +184,10 @@ namespace Cave.Player
         {
             if (!isArmed || hasDetonated || sacrificePending || Time.time < nextLocalPulseAt) return;
             Damageable damageable = other.GetComponentInParent<Damageable>();
-            if (IsValidEnemy(damageable)) PulseLocalField();
+            if (IsValidEnemy(damageable)) PulseLocalField(damageable.gameObject);
         }
 
-        private void PulseLocalField()
+        private void PulseLocalField(GameObject triggeringTarget)
         {
             nextLocalPulseAt = Time.time + localPulseCooldown;
             affected.Clear();
@@ -158,13 +198,38 @@ namespace Cave.Player
                     ? pulseHits[index].GetComponentInParent<Damageable>()
                     : null;
                 if (!IsValidEnemy(target) || !affected.Add(target)) continue;
+                AxiomPhenomenonApplicationBridge.Apply(
+                    target.gameObject,
+                    AxiomKind.Potential,
+                    localPulsePotentialInput,
+                    owner != null ? owner : gameObject,
+                    target.gameObject,
+                    Time.time);
                 KnockbackReceiver receiver = target.GetComponent<KnockbackReceiver>();
                 if (receiver == null) continue;
                 Vector2 away = (Vector2)target.transform.position - (Vector2)transform.position;
                 if (away.sqrMagnitude <= 0.001f) away = Vector2.right;
-                receiver.ApplyKnockback((away.normalized + Vector2.up * 0.12f).normalized * localPulseForce);
+                bool inPullCorridor = owner != null && OblivionTrapPullGeometry.IsWithinCorridor(
+                    owner.transform.position,
+                    target.transform.position,
+                    transform.position,
+                    corridorHalfWidth,
+                    corridorPullRange);
+                Vector2 force = inPullCorridor
+                    ? ((Vector2)transform.position - (Vector2)target.transform.position).normalized * corridorPullForce
+                    : (away.normalized + Vector2.up * 0.12f).normalized * localPulseForce;
+                receiver.ApplyKnockback(force);
             }
             fieldNode?.DrainEnergy(localPulseEnergyCost);
+            if (affected.Count > 0)
+            {
+                MeaningfulPulse?.Invoke(this);
+                List<GameObject> targets = new List<GameObject>(affected.Count);
+                foreach (Damageable target in affected) if (target != null) targets.Add(target.gameObject);
+                targets.Sort((left, right) => left.GetInstanceID().CompareTo(right.GetInstanceID()));
+                MeaningfulPulseResolved?.Invoke(this, new PlayerLandminePulseContext(
+                    triggeringTarget, targets.AsReadOnly()));
+            }
             SpawnPresentation(localPulseVisualPrefab, 0.35f);
             AreaPulseEffect.Create(transform.position, localPulseRadius, armedColor, 0.2f);
         }
@@ -178,6 +243,7 @@ namespace Cave.Player
 
             hasDetonated = true;
             isArmed = false;
+            StateChanged?.Invoke(this);
             trigger.enabled = false;
             diskVisual?.PlayExplosion();
             SpawnPresentation(sacrificeExplosionVisualPrefab, 0.5f);
@@ -193,10 +259,21 @@ namespace Cave.Player
                     continue;
                 }
 
-                target.TakeDamage(damage, damageContext);
+                int appliedDamage = target.TakeDamageResolved(damage, damageContext);
                 if (!target.gameObject.activeInHierarchy)
                 {
                     continue;
+                }
+
+                if (appliedDamage > 0)
+                {
+                    AxiomPhenomenonApplicationBridge.Apply(
+                        target.gameObject,
+                        AxiomKind.Potential,
+                        detonationPotentialInput,
+                        owner != null ? owner : gameObject,
+                        target.gameObject,
+                        Time.time);
                 }
 
                 target.GetComponent<EnemyStagger>()?.TryStagger(StaggerStrength.Heavy);
@@ -289,6 +366,7 @@ namespace Cave.Player
         private void OnDestroy()
         {
             NotifyRemoved();
+            if (fieldNode != null) fieldNode.StateChanged -= HandleFieldNodeStateChanged;
             if (ringMaterial != null)
             {
                 Destroy(ringMaterial);
@@ -301,7 +379,13 @@ namespace Cave.Player
         {
             if (removalNotified) return;
             removalNotified = true;
+            StateChanged?.Invoke(this);
             Removed?.Invoke(this);
+        }
+
+        private void HandleFieldNodeStateChanged(FieldNode _)
+        {
+            StateChanged?.Invoke(this);
         }
     }
 

@@ -1,16 +1,18 @@
 using System;
+using Cave.Axioms.Elemental;
+using Cave.Domain;
 using UnityEngine;
 
 namespace Cave.Axioms
 {
     /// <summary>
-    /// Actor-local owner for future Axiom channels. It has no Update loop: channels
-    /// advance only when a caller supplies an input sample.
+    /// Actor-local read/feedback facade over AxiomDynamicsState's authoritative
+    /// continuous S/R/A channels. It owns no separate physical stack state.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AxiomRuntimeState : MonoBehaviour
     {
-        [Header("Trajectory Sampling")]
+        [Header("Legacy Trajectory Sampling")]
         [SerializeField, Min(4)] private int historyCapacity = 64;
         [SerializeField, Min(0.01f)] private float shortWindowSeconds = 0.25f;
         [SerializeField, Min(0.01f)] private float longWindowSeconds = 1f;
@@ -21,10 +23,10 @@ namespace Cave.Axioms
         [SerializeField, Min(0f)] private float fastRateThreshold = 1f;
         [SerializeField, Min(0f)] private float stableAccelerationThreshold = 0.05f;
 
-        private AxiomObservationChannel[] channels;
         private AxiomTrajectoryState[] lastTrajectories;
         private AxiomErrorKind[] lastErrorKinds;
         private PlayerMovementTelemetry playerMovementTelemetry;
+        private AxiomDynamicsState dynamics;
 
         public event Action<AxiomFeedbackEvent> FeedbackRaised;
 
@@ -35,7 +37,10 @@ namespace Cave.Axioms
 
         private void Awake()
         {
-            BuildChannels();
+            InitializeState();
+            dynamics = AxiomDynamicsState.EnsureOn(gameObject);
+            Elemental.AxiomMassStateModel.EnsureOn(gameObject);
+            DomainRuntimeCarrierIdentity.EnsureOn(gameObject);
             playerMovementTelemetry = GetComponent<PlayerMovementTelemetry>();
             // Local presentation observer only; it subscribes to this actor's events
             // and performs no scene scan or gameplay mutation.
@@ -45,11 +50,27 @@ namespace Cave.Axioms
             }
         }
 
+        private void OnEnable()
+        {
+            // A component added while this authority is awakening can receive
+            // its OnEnable before this component is itself live. Re-register
+            // here so the explicit world bridge observes the final live state.
+            DomainRuntimeCarrierIdentity identity = DomainRuntimeCarrierIdentity.EnsureOn(gameObject);
+            if (identity != null) DomainRuntimeCarrierRegistry.Register(identity);
+        }
+
         public void ApplyInput(AxiomInput input)
         {
-            AxiomObservationChannel channel = GetChannel(input.Kind);
-            channel.ApplyDelta(input.Amount, input.Timestamp);
-            AxiomTrajectoryState trajectory = channel.GetTrajectory(Thresholds);
+            if (lastTrajectories == null || lastErrorKinds == null)
+            {
+                InitializeState();
+            }
+
+            AxiomDynamicsState activeDynamics = GetDynamics();
+            if (activeDynamics == null) return;
+            activeDynamics.ApplyInput(input.Kind, input.Amount, input.Timestamp);
+            AxiomTrajectoryState trajectory;
+            if (!activeDynamics.TryGetActualTrajectory(input.Kind, input.Timestamp, Thresholds, out trajectory)) return;
             int index = (int)input.Kind;
             AxiomTrajectoryState previous = lastTrajectories[index];
             lastTrajectories[index] = trajectory;
@@ -87,14 +108,87 @@ namespace Cave.Axioms
 
         public bool TryGetTrajectory(AxiomKind kind, out AxiomTrajectoryState trajectory)
         {
-            if (channels == null || (int)kind < 0 || (int)kind >= channels.Length)
+            return TryGetTrajectory(kind, Time.time, out trajectory);
+        }
+
+        /// <summary>Timestamp-explicit read used by deterministic event paths.</summary>
+        public bool TryGetTrajectory(AxiomKind kind, float timestamp, out AxiomTrajectoryState trajectory)
+        {
+            if ((int)kind < 0 || (int)kind >= Enum.GetValues(typeof(AxiomKind)).Length)
             {
                 trajectory = default(AxiomTrajectoryState);
                 return false;
             }
 
-            trajectory = channels[(int)kind].GetTrajectory(Thresholds);
-            return true;
+            AxiomDynamicsState activeDynamics = GetDynamics();
+            if (activeDynamics == null)
+            {
+                trajectory = default(AxiomTrajectoryState);
+                return false;
+            }
+
+            return activeDynamics.TryGetActualTrajectory(kind, timestamp, Thresholds, out trajectory);
+        }
+
+        /// <summary>Domain-facing projection. Only phenomena with an established semantic adapter are exposed.</summary>
+        public bool TryReadDomainSemantic(LawPhenomenon phenomenon,float timestamp,out PhenomenonSemanticSnapshot snapshot)
+        {
+            AxiomDomainSemanticCodecRejection rejection;
+            return AxiomDomainSemanticCodec.TryProject(this,phenomenon,timestamp,out snapshot,out rejection);
+        }
+        /// <summary>Applies an approved semantic S value directly while preserving the live channel's R/A trajectory.</summary>
+        public bool TryCommitDomainSemantic(PhenomenonSemanticSnapshot approved,float timestamp)
+        {
+            if(approved==null)return false;float state;AxiomDomainSemanticCodecRejection rejection;AxiomKind kind;
+            return AxiomDomainSemanticCodec.TryMapPhenomenon(approved.Phenomenon,out kind)
+                && AxiomDomainSemanticCodec.TryResolveCommittedState(this,approved.Phenomenon,approved.SemanticValue,out state,out rejection)
+                && GetDynamics()!=null&&GetDynamics().TrySetDomainState(kind,state,timestamp);
+        }
+
+        /// <summary>Read-only S bounds for the codec; this exposes no mutable channel API.</summary>
+        public bool TryGetDomainStateBounds(AxiomKind kind, out float minimum, out float maximum)
+        {
+            AxiomDynamicsState activeDynamics = GetDynamics();
+            if (activeDynamics != null)
+            {
+                return activeDynamics.TryGetDomainStateBounds(kind, out minimum, out maximum);
+            }
+
+            minimum = 0f;
+            maximum = 0f;
+            return false;
+        }
+
+        public bool HasNaturalMassBaseline()
+        {
+            Elemental.AxiomMassStateModel mass = GetComponent<Elemental.AxiomMassStateModel>();
+            return mass != null && mass.HasValidNaturalMassBaseline;
+        }
+
+        /// <summary>Reads a typed Pattern relationship without exposing Unity references to Domain snapshots.</summary>
+        public bool TryReadPatternContext(AxiomKind kind, out string identity, out uint revision)
+        {
+            AxiomPatternContextState context = GetComponent<AxiomPatternContextState>();
+            if (context != null)
+                return context.TryRead(kind, out identity, out revision);
+            identity = null;
+            revision = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Gameplay pattern sources update only S after establishing a real
+        /// relationship context. This does not use ordinary input integration
+        /// and preserves the live R/A trajectory.
+        /// </summary>
+        public bool TrySetPatternStrength(AxiomKind kind, float strength, float timestamp)
+        {
+            string identity;
+            uint revision;
+            return (kind == AxiomKind.Resonance || kind == AxiomKind.Phase)
+                && TryReadPatternContext(kind, out identity, out revision)
+                && GetDynamics() != null
+                && GetDynamics().TrySetDomainState(kind, strength, timestamp);
         }
 
         public AxiomErrorState EvaluateError(
@@ -104,8 +198,13 @@ namespace Cave.Axioms
             GameObject source = null,
             GameObject target = null)
         {
+            if (lastTrajectories == null || lastErrorKinds == null)
+            {
+                InitializeState();
+            }
+
             AxiomTrajectoryState trajectory;
-            if (!TryGetTrajectory(kind, out trajectory))
+            if (!TryGetTrajectory(kind, timestamp, out trajectory))
             {
                 return new AxiomErrorState(kind, AxiomErrorKind.None, 0f, timestamp);
             }
@@ -151,35 +250,21 @@ namespace Cave.Axioms
             FeedbackRaised?.Invoke(feedback);
         }
 
-        private void BuildChannels()
+        private void InitializeState()
         {
             int count = Enum.GetValues(typeof(AxiomKind)).Length;
-            channels = new AxiomObservationChannel[count];
             lastTrajectories = new AxiomTrajectoryState[count];
             lastErrorKinds = new AxiomErrorKind[count];
-            int resolvedCapacity = Mathf.Max(4, historyCapacity);
-            float resolvedShortWindow = Mathf.Max(0.01f, shortWindowSeconds);
-            float resolvedLongWindow = Mathf.Max(resolvedShortWindow, longWindowSeconds);
-            float resolvedMinimumDelta = Mathf.Max(0.00001f, minimumDeltaTime);
-            for (int index = 0; index < count; index++)
-            {
-                channels[index] = new AxiomObservationChannel(
-                    (AxiomKind)index,
-                    resolvedCapacity,
-                    resolvedShortWindow,
-                    resolvedLongWindow,
-                    resolvedMinimumDelta);
-            }
         }
 
-        private AxiomObservationChannel GetChannel(AxiomKind kind)
+        private AxiomDynamicsState GetDynamics()
         {
-            if (channels == null)
+            if (dynamics == null)
             {
-                BuildChannels();
+                dynamics = AxiomDynamicsState.EnsureOn(gameObject);
             }
 
-            return channels[(int)kind];
+            return dynamics;
         }
 
         private static float Abs(float value) => value < 0f ? -value : value;

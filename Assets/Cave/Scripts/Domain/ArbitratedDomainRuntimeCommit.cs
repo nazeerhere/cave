@@ -134,6 +134,7 @@ namespace Cave.Domain
         public ArbitratedDomainRuntimeCommitResult Commit(ArbitratedDomainCommitPlan plan,IDomainPhenomenonRuntimeAccessor accessor)
         {
             if(plan==null||!plan.IsCommittable||plan.RuntimePlan==null)return new ArbitratedDomainRuntimeCommitResult(plan,null,ArbitratedRuntimeCommitRejectionReason.ArbitratedPlanNotCommittable);
+            Cave.Diagnostics.ResolverTraceService.RecordArbitration(plan.Arbitration);
             return new ArbitratedDomainRuntimeCommitResult(plan,committer.Commit(plan.RuntimePlan,accessor),ArbitratedRuntimeCommitRejectionReason.None);
         }
     }

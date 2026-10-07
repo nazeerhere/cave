@@ -8,9 +8,11 @@ namespace Cave.Axioms.Elemental
         public static bool VerifyAll()
         {
             return VerifyFireHit()
-                && VerifyFireBlockedAndBurnExcluded()
+                && VerifyFireBlocked()
                 && VerifyIceHitAndInvalid()
                 && VerifyWindAndStrength()
+                && VerifyDirectFrenzyUnderlyingPhenomena()
+                && VerifyPersistentFrenzyMappings()
                 && VerifyWrongMode()
                 && VerifyFrenzyAmount()
                 && VerifyDuplicateReceipt();
@@ -25,13 +27,13 @@ namespace Cave.Axioms.Elemental
                 && kind == AxiomKind.Heat && target && Approximately(amount, 1f);
         }
 
-        public static bool VerifyFireBlockedAndBurnExcluded()
+        public static bool VerifyFireBlocked()
         {
             AxiomKind kind;
             bool target;
             float amount;
             return !ElementalAxiomApplicationRules.TryResolveProjectile(SpecialMode.BurnShot, false, false, out kind, out target, out amount)
-                && !ElementalAxiomApplicationRules.TryResolveDirectPlayerHit(SpecialMode.BurnShot, true, false, out kind, out target, out amount);
+                && !ElementalAxiomApplicationRules.TryResolveDirectPlayerHit(SpecialMode.BurnShot, false, false, out kind, out target, out amount);
         }
 
         public static bool VerifyIceHitAndInvalid()
@@ -55,13 +57,39 @@ namespace Cave.Axioms.Elemental
                 && kind == AxiomKind.Mass && !target && Approximately(amount, 1f);
         }
 
+        public static bool VerifyDirectFrenzyUnderlyingPhenomena()
+        {
+            AxiomKind kind;
+            bool target;
+            float amount;
+            return ElementalAxiomApplicationRules.TryResolveDirectPlayerHit(SpecialMode.BurnShot, true, true, out kind, out target, out amount)
+                && kind == AxiomKind.Heat && target && Approximately(amount, 2f)
+                && ElementalAxiomApplicationRules.TryResolveDirectPlayerHit(SpecialMode.SlowShot, true, true, out kind, out target, out amount)
+                && kind == AxiomKind.Order && target && Approximately(amount, 2f);
+        }
+
+        public static bool VerifyPersistentFrenzyMappings()
+        {
+            AxiomKind kind;
+            bool target;
+            float amount;
+            return ElementalAxiomApplicationRules.TryResolveProjectile(SpecialMode.BurnShot, true, true, out kind, out target, out amount)
+                && kind == AxiomKind.Heat && target && Approximately(amount, 2f)
+                && ElementalAxiomApplicationRules.TryResolveProjectile(SpecialMode.SlowShot, true, true, out kind, out target, out amount)
+                && kind == AxiomKind.Order && target && Approximately(amount, 2f)
+                && ElementalAxiomApplicationRules.TryResolveProjectile(SpecialMode.Flight, true, true, out kind, out target, out amount)
+                && kind == AxiomKind.Flow && !target && Approximately(amount, 2f)
+                && ElementalAxiomApplicationRules.TryResolveProjectile(SpecialMode.DamageBoost, true, true, out kind, out target, out amount)
+                && kind == AxiomKind.Mass && !target && Approximately(amount, 2f)
+                && !ElementalAxiomApplicationRules.TryResolveProjectile((SpecialMode)(-1), true, true, out kind, out target, out amount);
+        }
+
         public static bool VerifyWrongMode()
         {
             AxiomKind kind;
             bool target;
             float amount;
-            return !ElementalAxiomApplicationRules.TryResolveDirectPlayerHit(SpecialMode.BurnShot, true, false, out kind, out target, out amount)
-                && !ElementalAxiomApplicationRules.TryResolveDirectPlayerHit(SpecialMode.SlowShot, true, false, out kind, out target, out amount);
+            return !ElementalAxiomApplicationRules.TryResolveDirectPlayerHit((SpecialMode)(-1), true, false, out kind, out target, out amount);
         }
 
         public static bool VerifyFrenzyAmount()

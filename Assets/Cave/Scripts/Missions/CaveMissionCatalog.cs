@@ -42,10 +42,10 @@ namespace Cave.Missions
             CaveMissionCatalog catalog = CreateInstance<CaveMissionCatalog>();
             catalog.modes = new[]
             {
-                Mode(CaveGameMode.ClassicSweep, "CLASSIC SWEEP", "Fight through the map's normal rounds and clear the final encounter.", false),
+                Mode(CaveGameMode.Hunt, "HUNT", "Push through the expedition while hunting priority threats and corrupted targets.", false),
                 Mode(CaveGameMode.CorruptionPurge, "CORRUPTION PURGE", "Locate and destroy spreading corruption sources before time expires.", true),
-                Mode(CaveGameMode.CorruptBounty, "CORRUPT BOUNTY", "Hunt a heavily empowered corrupted target, claim its bounty, and escape.", true),
-                Mode(CaveGameMode.Containment, "CONTAINMENT", "Defend a designated location against escalating enemy pressure.", false)
+                Mode(CaveGameMode.Containment, "CONTAINMENT", "Hold a designated location against escalating enemy pressure.", false),
+                Mode(CaveGameMode.SovereignGambit, "SOVEREIGN GAMBIT", "Establish a Sovereign Anchor, build a strategic network, breach the enemy Sovereign's protection, and achieve Checkmate.", false)
             };
             catalog.maps = new[]
             {
@@ -53,7 +53,9 @@ namespace Cave.Missions
                 Map("stronghold", "STRONGHOLD", "02_Stronghold", false, 1),
                 Map("hollow_districts", "HOLLOW DISTRICTS", "03_HollowDistricts", false, 2),
                 Map("deep_veins", "DEEP VEINS", "04_DeepVeins", false, 3),
-                Map("heart_chamber", "HEART CHAMBER", "05_HeartChamber", false, 4)
+                Map("heart_chamber", "HEART CHAMBER", "05_HeartChamber", false, 4),
+                Map("test_map", "TEST MAP", "FalseGod_Playtest", "Development playtest map.", true, 5),
+                Map("sprint5_hazards", "SPRINT5 HAZARDS", "Sprint5_Hazards", "Development hazards test map.", true, 6)
             };
             return catalog;
         }

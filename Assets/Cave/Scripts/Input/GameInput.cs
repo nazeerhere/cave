@@ -81,6 +81,10 @@ namespace Cave.InputSystem
         public static bool InteractReleased => GameplayInputEnabled && WasReleased(GameAction.Interact);
         public static bool SummonCurseAltarPressed => GameplayInputEnabled
             && WasPressed(GameAction.SummonCurseAltar);
+        public static bool SummonCurseAltarHeld => GameplayInputEnabled
+            && IsHeld(GameAction.SummonCurseAltar);
+        public static bool SummonCurseAltarReleased => GameplayInputEnabled
+            && WasReleased(GameAction.SummonCurseAltar);
         public static bool DashPressed => GameplayInputEnabled && WasPressed(GameAction.Dash);
         public static bool PausePressed => !WasInputConsumedThisFrame && WasPressed(GameAction.Pause);
         public static bool MenuCancelPressed => !WasInputConsumedThisFrame && WasKeyPressed(KeyCode.Escape);

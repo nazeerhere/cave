@@ -99,6 +99,39 @@ namespace Cave.Enemies
         public float HookRange => hookRange;
         public float ChainHookRange => chainHookRange;
         public float PinRange => pinRange;
+        /// <summary>True only while this Brute owns the current player's live pin/control window.</summary>
+        public bool IsPinning(PlayerHealth target) => actionRoutine != null
+            && activeTarget == target
+            && currentAction != null
+            && (currentAction == "Pin" || currentAction == "Wall Pin");
+
+        /// <summary>
+        /// Called only after PlayerGuardBreak has already resolved a successful
+        /// offensive break against this Brute. It releases the existing pin
+        /// action rather than inventing a second player-control system.
+        /// </summary>
+        public bool TryBreakPinFromGuardBreak(PlayerHealth target)
+        {
+            if (!IsPinning(target))
+            {
+                return false;
+            }
+
+            if (actionRoutine != null)
+            {
+                StopCoroutine(actionRoutine);
+                actionRoutine = null;
+            }
+
+            nextPinTime = Time.time + pinCooldown;
+            SetPinMovementLock(target, false);
+            isControllingPlayer = false;
+            currentAction = string.Empty;
+            ClearTether();
+            StopPinPresentation(true);
+            StopObservingTarget();
+            return true;
+        }
 
         private void Awake()
         {
@@ -214,6 +247,7 @@ namespace Cave.Enemies
                 actionRoutine = null;
             }
 
+            SetPinMovementLock(activeTarget, false);
             isControllingPlayer = false;
             currentAction = string.Empty;
             ClearTether();
@@ -274,7 +308,7 @@ namespace Cave.Enemies
                 // Pin is a movement-control state, not a stun. Keep combat input
                 // (Basic, Heavy, Guard, Parry, GB, projectile) available while
                 // PlayerController prevents ordinary locomotion and neutral Dash.
-                target.GetComponent<PlayerController>()?.ApplyExternalControlLock(pinDuration);
+                SetPinMovementLock(target, true);
                 Spawn(pinVfx, target.transform.position);
                 BeginPinPresentation(target);
                 CaveSfx.PlayClip(grabClip, 0.8f);
@@ -518,10 +552,19 @@ namespace Cave.Enemies
         private void EndAction(ref float cooldown, float duration)
         {
             cooldown = Time.time + duration;
+            SetPinMovementLock(activeTarget, false);
             isControllingPlayer = false;
             currentAction = string.Empty;
             actionRoutine = null;
             StopObservingTarget();
+        }
+
+        private void SetPinMovementLock(PlayerHealth target, bool locked)
+        {
+            if (target != null)
+            {
+                target.GetComponent<PlayerController>()?.SetBrutePinMovementLock(this, locked);
+            }
         }
 
         private void CachePickaxePresentation()

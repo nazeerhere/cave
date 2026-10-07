@@ -17,14 +17,25 @@ namespace Cave.Player
             bool upgradedVariants = PlayerSwordCosmetics.IsUpgraded(SwordCosmeticSelection.Sword1)
                 && PlayerSwordCosmetics.IsUpgraded(SwordCosmeticSelection.Sword2)
                 && PlayerSwordCosmetics.IsUpgraded(SwordCosmeticSelection.Sword3);
+            bool allSwordsAvailableWithOverride = true;
+            for (int index = (int)SwordCosmeticSelection.Default;
+                index <= (int)SwordCosmeticSelection.Sword3;
+                index++)
+            {
+                allSwordsAvailableWithOverride &= CosmeticAvailability.IsAvailable(false, true);
+            }
             bool valid = upgradedVariants
+                && !CosmeticAvailability.IsAvailable(false, false)
+                && CosmeticAvailability.IsAvailable(false, true)
+                && CosmeticAvailability.IsAvailable(true, false)
+                && allSwordsAvailableWithOverride
                 && Mathf.Approximately(upgradedVisual, 0.864f)
                 && Mathf.Approximately(upgradedReach, 1.32f)
                 && Mathf.Approximately(baseReach, currentUpgradedReach)
                 && Mathf.Approximately(
                     PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.Sword1),
                     PlayerSwordCosmetics.UpgradedSwordMultiplier);
-            failure = valid ? null : "Sword upgrade multiplier was not exactly non-compounding 1.20.";
+            failure = valid ? null : "Sword upgrade or cosmetic availability policy was invalid.";
             return valid;
         }
     }

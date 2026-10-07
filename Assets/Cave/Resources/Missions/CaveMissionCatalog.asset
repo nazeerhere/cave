@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp:Cave.Missions:CaveMissionCatalog
   modes:
   - mode: 0
-    displayName: CLASSIC SWEEP
-    description: Fight through the map's normal rounds and clear the final encounter.
-    objectiveSummary: Fight through the map's normal rounds and clear the final encounter.
+    displayName: HUNT
+    description: Push through the expedition while hunting priority threats and corrupted targets.
+    objectiveSummary: Push through the expedition while hunting priority threats and corrupted targets.
     icon: {fileID: 0}
     expectsExtraction: 0
   - mode: 1
@@ -26,18 +26,16 @@ MonoBehaviour:
       expires.
     icon: {fileID: 0}
     expectsExtraction: 1
-  - mode: 2
-    displayName: CORRUPT BOUNTY
-    description: Hunt a heavily empowered corrupted target, claim its bounty, and
-      escape.
-    objectiveSummary: Hunt a heavily empowered corrupted target, claim its bounty,
-      and escape.
-    icon: {fileID: 0}
-    expectsExtraction: 1
   - mode: 3
     displayName: CONTAINMENT
-    description: Defend a designated location against escalating enemy pressure.
-    objectiveSummary: Defend a designated location against escalating enemy pressure.
+    description: Hold a designated location against escalating enemy pressure.
+    objectiveSummary: Hold a designated location against escalating enemy pressure.
+    icon: {fileID: 0}
+    expectsExtraction: 0
+  - mode: 4
+    displayName: SOVEREIGN GAMBIT
+    description: Establish a Sovereign Anchor, build a strategic network, breach the enemy Sovereign's protection, and achieve Checkmate.
+    objectiveSummary: Establish a Sovereign Anchor, build a strategic network, breach the enemy Sovereign's protection, and achieve Checkmate.
     icon: {fileID: 0}
     expectsExtraction: 0
   maps:
@@ -84,5 +82,23 @@ MonoBehaviour:
     thumbnail: {fileID: 0}
     displayOrder: 4
     initiallyUnlocked: 0
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 
+  - mapId: test_map
+    displayName: TEST MAP
+    sceneName: FalseGod_Playtest
+    description: Development playtest map.
+    thumbnail: {fileID: 0}
+    displayOrder: 5
+    initiallyUnlocked: 1
+    requiredWorldLevel: 0
+    requiredProgressionFlag: 
+  - mapId: sprint5_hazards
+    displayName: SPRINT5 HAZARDS
+    sceneName: Sprint5_Hazards
+    description: Development hazards test map.
+    thumbnail: {fileID: 0}
+    displayOrder: 6
+    initiallyUnlocked: 1
     requiredWorldLevel: 0
     requiredProgressionFlag: 

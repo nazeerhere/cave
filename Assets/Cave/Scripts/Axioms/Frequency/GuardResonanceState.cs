@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cave.Combat;
 using Cave.Enemies;
 using Cave.Axioms.Mastery;
+using Cave.Axioms.Elemental;
 using Cave.World;
 using UnityEngine;
 
@@ -99,6 +100,7 @@ namespace Cave.Axioms.Frequency
 
             bool filteringEligible = WorldDifficultyManager.CurrentDifficultyTier >= frequencyFilterMinimumWorldTier;
             GuardResonanceContactResult result = tracker.RegisterContact(timestamp, Settings, filteringEligible);
+            SynchronizeResonancePattern(attacker, result, timestamp);
             ContactResolved?.Invoke(attacker, result);
             if (result.Outcome == GuardResonanceContactOutcome.Filtered)
             {
@@ -197,6 +199,36 @@ namespace Cave.Axioms.Frequency
                 attacker,
                 gameObject,
                 timestamp));
+        }
+
+        /// <summary>
+        /// Guard cadence still determines whether a pattern exists. Once it
+        /// does, its numeric progress is mirrored into authoritative Resonance
+        /// S; the tracker is never offered as a Domain mutation target.
+        /// </summary>
+        private void SynchronizeResonancePattern(GameObject attacker, GuardResonanceContactResult result, float timestamp)
+        {
+            AxiomRuntimeState runtime = GetComponent<AxiomRuntimeState>() ?? gameObject.AddComponent<AxiomRuntimeState>();
+            AxiomPatternContextState context = AxiomPatternContextState.EnsureOn(gameObject);
+            if (result.Broke)
+            {
+                context.Establish(AxiomKind.Resonance, "guard-cadence:" + attacker.GetInstanceID());
+                runtime.TrySetPatternStrength(AxiomKind.Resonance, 0f, timestamp);
+                context.Clear(AxiomKind.Resonance);
+                return;
+            }
+
+            if (result.Outcome == GuardResonanceContactOutcome.Advanced
+                || (result.Outcome == GuardResonanceContactOutcome.Reduced && result.Progress > 0))
+            {
+                context.Establish(AxiomKind.Resonance, "guard-cadence:" + attacker.GetInstanceID());
+                runtime.TrySetPatternStrength(AxiomKind.Resonance, result.Progress, timestamp);
+            }
+            else if (result.Outcome == GuardResonanceContactOutcome.StaleReference || result.Progress <= 0)
+            {
+                runtime.TrySetPatternStrength(AxiomKind.Resonance, 0f, timestamp);
+                context.Clear(AxiomKind.Resonance);
+            }
         }
 
         private void RecordResonanceEvidence(

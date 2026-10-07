@@ -302,6 +302,7 @@ namespace Cave.Pickups
                 if (combatSettings != null)
                 {
                     launcher.UseProjectilePrefabIfMissing(combatSettings.ProjectilePrefab);
+                    launcher.UseHeavyProjectilePrefabIfMissing(combatSettings.HeavyProjectilePrefab);
                 }
 
                 if (!playerHealth.TryGetComponent(out PlayerActionObserver _))

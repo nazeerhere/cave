@@ -22,11 +22,12 @@ namespace Cave.Domain
         private static bool VerifyExpressionVocabulary(out string failure)
         {
             Array values = Enum.GetValues(typeof(LawExpression));
-            bool recognized = values.Length == 2
+            bool recognized = values.Length == 3
                 && Enum.IsDefined(typeof(LawExpression), LawExpression.Projectile)
-                && Enum.IsDefined(typeof(LawExpression), LawExpression.Frenzy);
+                && Enum.IsDefined(typeof(LawExpression), LawExpression.Frenzy)
+                && Enum.IsDefined(typeof(LawExpression), LawExpression.Trap);
             return Expect(recognized && !Contains(Enum.GetNames(typeof(LawExpression)), "Hybrid"),
-                "Authoritative Law expressions did not contain exactly Projectile and Frenzy.", out failure);
+                "Authoritative Law expressions did not contain exactly Projectile, Frenzy, and Trap.", out failure);
         }
 
         private static bool VerifyPhenomenonVocabulary(out string failure)

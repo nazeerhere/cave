@@ -12,6 +12,7 @@ namespace Cave.Enemies
                 && VerifyPerceptionAndSharing(out failure)
                 && VerifyOneHopAndFormationBoundary(out failure)
                 && VerifyFreshnessAndConfidence(out failure)
+                && VerifyRefreshIsNotNewEvidence(out failure)
                 && VerifyCommandSeparation(out failure);
         }
 
@@ -100,6 +101,19 @@ namespace Cave.Enemies
                 && command.TacticalIntent == CombatTacticalIntent.Pressure
                 && !command.CanShareOnce;
             failure = valid ? null : "CTC command was represented as shareable factual knowledge.";
+            return valid;
+        }
+
+        private static bool VerifyRefreshIsNotNewEvidence(out string failure)
+        {
+            KnowledgeStore observer = new KnowledgeStore("eye");
+            KnowledgeFact first = observer.Observe(KnowledgeFactType.PlayerLowStamina, KnowledgeSubject.Player, default, 1f);
+            KnowledgeFact refreshed = observer.Observe(KnowledgeFactType.PlayerLowStamina, KnowledgeSubject.Player, default, 1.1f);
+            KnowledgeFact stored = observer.CreateSnapshot(1.1f).Facts[0];
+            bool valid = first.ProvenanceId != refreshed.ProvenanceId
+                && stored.ProvenanceId == first.ProvenanceId
+                && Mathf.Approximately(stored.ObservedAt, 1.1f);
+            failure = valid ? null : "A refreshed observation was treated as new evidence instead of preserving its live provenance.";
             return valid;
         }
     }

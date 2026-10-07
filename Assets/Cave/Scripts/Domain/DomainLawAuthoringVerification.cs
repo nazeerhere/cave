@@ -18,7 +18,7 @@ namespace Cave.Domain
                 || !VerifyLiveMasteryAndCapacityGates(out failure)
                 || !VerifyPersistenceAndIdentity(out failure)
                 || !VerifyFailedAndDuplicateAuthoringDoNotMutate(out failure)
-                || !VerifyReservedExpressionRemainsUnsupported(out failure))
+                || !VerifyTrapExpressionRoundTrips(out failure))
             {
                 return false;
             }
@@ -158,18 +158,18 @@ namespace Cave.Domain
             return valid;
         }
 
-        private static bool VerifyReservedExpressionRemainsUnsupported(out string failure)
+        private static bool VerifyTrapExpressionRoundTrips(out string failure)
         {
             DomainLaw ignored;
             LawValidationResult validation;
             bool trapAccepted = DomainLaw.TryCreate(
-                (LawExpression)3,
+                LawExpression.Trap,
                 LawPhenomenon.Heat,
                 LawTerritoryPrinciple.Propagation,
                 out ignored,
                 out validation);
-            bool valid = !trapAccepted && !validation.IsValid;
-            failure = valid ? null : "Reserved Trap expression became an unsupported authoring path.";
+            bool valid = trapAccepted && validation.IsValid && ignored.Expression==LawExpression.Trap;
+            failure = valid ? null : "Trap expression did not construct as a normal authored Law.";
             return valid;
         }
 

@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using Cave.Audio;
+using Cave.Axioms;
+using Cave.Axioms.Elemental;
 using Cave.Axioms.Frequency;
 using Cave.Axioms.Phase;
 using Cave.Enemies;
@@ -559,6 +561,7 @@ namespace Cave.Combat
         {
             bool isPerfect = phase == ParryPhase.Perfect;
             RestoreParryResources(isPerfect);
+            AxiomPhenomenonApplicationBridge.Apply(gameObject, AxiomKind.Resonance, 1f, gameObject, opponent, Time.time);
             if (isPerfect)
             {
                 if (perfectParryVfxPrefab != null)
@@ -590,7 +593,6 @@ namespace Cave.Combat
             PlaySuccessfulParryFeedback(phase);
             if (isPerfect && opponent != null)
             {
-                PhaseCombatState.GrantOpening(gameObject, opponent, PhaseOpeningSource.PerfectParry);
                 PlayerCombatFlow frenzy = GetComponent<PlayerCombatFlow>();
                 if (frenzy != null && (frenzy.IsFrenzyArmed || frenzy.IsFrenzyBound))
                 {

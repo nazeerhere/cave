@@ -46,16 +46,28 @@ namespace Cave.Enemies
             string memberId,
             CombatTacticalRole role,
             KnowledgeSnapshot knowledge)
+            : this(memberId, role, knowledge, default)
+        {
+        }
+
+        public CombatTacticalMemberDescriptor(
+            string memberId,
+            CombatTacticalRole role,
+            KnowledgeSnapshot knowledge,
+            MobPsychologySnapshot psychology)
         {
             MemberId = memberId;
             Role = role;
             Knowledge = knowledge;
+            Psychology = psychology;
         }
 
         public string MemberId { get; }
         public CombatTacticalRole Role { get; }
         /// <summary>Legitimate per-member input; never a world-state query.</summary>
         public KnowledgeSnapshot Knowledge { get; }
+        /// <summary>Persistent per-mob interpretation state, not a CTC-owned value.</summary>
+        public MobPsychologySnapshot Psychology { get; }
     }
 
     public readonly struct CombatTacticalAssignment
@@ -102,7 +114,7 @@ namespace Cave.Enemies
                 CombatTacticalMemberDescriptor member = ordered[index];
                 assignments.Add(new CombatTacticalAssignment(
                     member.MemberId,
-                    ResolveIntent(member.Role, hasFrontline)));
+                    ResolveIntent(member.Role, hasFrontline, member.Psychology)));
             }
 
             return assignments.AsReadOnly();
@@ -132,25 +144,52 @@ namespace Cave.Enemies
 
         private static CombatTacticalIntent ResolveIntent(
             CombatTacticalRole role,
-            bool hasFrontline)
+            bool hasFrontline,
+            MobPsychologySnapshot psychology)
         {
+            CombatTacticalIntent baseline;
             switch (role)
             {
                 case CombatTacticalRole.Frontline:
-                    return CombatTacticalIntent.Pressure;
+                    baseline = CombatTacticalIntent.Pressure; break;
                 case CombatTacticalRole.Skirmisher:
-                    return hasFrontline
+                    baseline = hasFrontline
                         ? CombatTacticalIntent.Flank
-                        : CombatTacticalIntent.Pressure;
+                        : CombatTacticalIntent.Pressure; break;
                 case CombatTacticalRole.Support:
-                    return CombatTacticalIntent.Support;
+                    baseline = CombatTacticalIntent.Support; break;
                 case CombatTacticalRole.Controller:
-                    return CombatTacticalIntent.Protect;
+                    baseline = CombatTacticalIntent.Protect; break;
                 case CombatTacticalRole.Ranged:
-                    return CombatTacticalIntent.Hold;
+                    baseline = CombatTacticalIntent.Hold; break;
                 default:
                     return CombatTacticalIntent.None;
             }
+
+            // Psychology is influence, never an ability instruction or a global
+            // override. A default/missing state preserves the authored role plan.
+            if (psychology.MobId == null || psychology.Aggression == 0f && psychology.Confidence == 0f
+                && psychology.Fear == 0f && psychology.Cooperation == 0f)
+            {
+                return baseline;
+            }
+
+            float pressureReadiness = psychology.Aggression * 0.45f
+                + psychology.Confidence * 0.30f - psychology.Fear * 0.45f;
+            if (psychology.Fear - psychology.Confidence > 0.45f && baseline != CombatTacticalIntent.Support)
+            {
+                return CombatTacticalIntent.Reposition;
+            }
+            if (psychology.Cooperation - psychology.Aggression > 0.38f
+                && (role == CombatTacticalRole.Frontline || role == CombatTacticalRole.Controller))
+            {
+                return CombatTacticalIntent.Protect;
+            }
+            if (pressureReadiness > 0.38f && baseline == CombatTacticalIntent.Hold)
+            {
+                return CombatTacticalIntent.Pressure;
+            }
+            return baseline;
         }
     }
 
@@ -168,6 +207,8 @@ namespace Cave.Enemies
             new Dictionary<string, CombatTacticalIntent>(StringComparer.Ordinal);
         private readonly Dictionary<string, KnowledgeSnapshot> knowledgeByMember =
             new Dictionary<string, KnowledgeSnapshot>(StringComparer.Ordinal);
+        private readonly Dictionary<string, MobPsychologySnapshot> psychologyByMember =
+            new Dictionary<string, MobPsychologySnapshot>(StringComparer.Ordinal);
         private bool enabled;
 
         public CombatTacticalFormationState(string formationId)
@@ -202,6 +243,7 @@ namespace Cave.Enemies
 
             assignments.Remove(memberId);
             knowledgeByMember.Remove(memberId);
+            psychologyByMember.Remove(memberId);
             return members.Remove(memberId);
         }
 
@@ -215,6 +257,11 @@ namespace Cave.Enemies
             {
                 knowledgeByMember[memberId] = snapshot;
             }
+        }
+
+        public void SetPsychologySnapshot(string memberId, MobPsychologySnapshot snapshot)
+        {
+            if (!string.IsNullOrEmpty(memberId) && members.ContainsKey(memberId)) psychologyByMember[memberId] = snapshot;
         }
 
         public void SetEnabled(bool value)
@@ -240,8 +287,10 @@ namespace Cave.Enemies
             {
                 KnowledgeSnapshot knowledge;
                 knowledgeByMember.TryGetValue(member.Key, out knowledge);
+                MobPsychologySnapshot psychology;
+                psychologyByMember.TryGetValue(member.Key, out psychology);
                 LastKnowledgeFactCount += knowledge.Count;
-                input.Add(new CombatTacticalMemberDescriptor(member.Key, member.Value, knowledge));
+                input.Add(new CombatTacticalMemberDescriptor(member.Key, member.Value, knowledge, psychology));
             }
 
             IReadOnlyList<CombatTacticalAssignment> result = CombatTacticalCoordinator.Evaluate(input);

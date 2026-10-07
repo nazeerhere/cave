@@ -7,6 +7,7 @@ using Cave.Enemies;
 using Cave.Interactions;
 using Cave.Player;
 using Cave.Progression;
+using Cave.Diagnostics;
 using UnityEngine;
 
 namespace Cave.Projectiles
@@ -49,6 +50,7 @@ namespace Cave.Projectiles
         private Vector2[] baseVisualSizes;
         private Vector3 baseScale;
         private float tierScale = 1f;
+        private float heavyVisualScale = 1f;
         private Transform[] scalableVisualTransforms;
         private Vector3[] baseVisualScales;
         private TrailRenderer tierTrail;
@@ -72,6 +74,7 @@ namespace Cave.Projectiles
         private bool firstContactTraced;
         private bool firstTerminalTraced;
         private bool firstMovementTraced;
+        private bool telemetryRegistered;
 
         public int BaseDamage => baseDamage;
         public int SkillTier => firedTier;
@@ -104,8 +107,8 @@ namespace Cave.Projectiles
         /// <summary>
         /// Configures the launched instance as the terminal Heavy expression of
         /// the current projectile path. Heavy never inherits rapid pierce.
-        /// Root scale is intentional here: it defines both the visible and
-        /// collision footprint, unlike cosmetic tier scaling on child visuals.
+        /// The heavy silhouette scales only a visual child. The root owns the
+        /// Rigidbody2D and Collider2D, so its physical footprint stays stable.
         /// </summary>
         public void ConfigureHeavyProjectile(float scaleMultiplier, float explosionRadius)
         {
@@ -113,7 +116,8 @@ namespace Cave.Projectiles
             heavyExplosionRadius = Mathf.Max(0.1f, explosionRadius);
             remainingEnemyHits = ChargedProjectilePolicy.HeavyMaximumEnemyHits;
             damageContext = damageContext.WithTraits(DamageTrait.Heavy | DamageTrait.AreaOfEffect);
-            transform.localScale = baseScale * Mathf.Max(1f, scaleMultiplier);
+            heavyVisualScale = Mathf.Max(1f, scaleMultiplier);
+            ApplyVisualScale(tierScale * heavyVisualScale);
         }
 
         private void Awake()
@@ -137,6 +141,7 @@ namespace Cave.Projectiles
             }
 
             projectileCollider.isTrigger = true;
+            EnsureVisualChildForRootRenderer();
             visualRenderers = GetComponentsInChildren<SpriteRenderer>(true);
             baseVisualColors = new Color[visualRenderers.Length];
             baseVisualSprites = new Sprite[visualRenderers.Length];
@@ -198,12 +203,14 @@ namespace Cave.Projectiles
             tier3Settings = specialModeSettings;
             isHeavyProjectile = false;
             heavyExplosionRadius = 0f;
+            heavyVisualScale = 1f;
             transform.localScale = baseScale;
             hitTargets.Clear();
             axiomApplicationReceipt.Clear();
             reflectedByEnemy = false;
             enemyParryOwner = null;
             hasLaunched = true;
+            if (!telemetryRegistered) { telemetryRegistered = true; RuntimeTelemetry.Acquired(RuntimeWorkCategory.Projectile); }
             claimSuspended = false;
             interactionDestroyedReported = false;
             launchedAt = Time.time;
@@ -388,16 +395,16 @@ namespace Cave.Projectiles
                 interactionIdentity,
                 damageable.gameObject,
                 appliedDamage);
+            bool frenzyAxiomVariant = frenzyActivation != null;
             ElementalAxiomCombatBridge.TryApplyProjectileHit(
                 damageable,
                 firedMode,
                 appliedDamage,
-                isFrenzyCritical,
+                frenzyAxiomVariant,
                 damageContext,
                 Time.time,
                 axiomApplicationReceipt);
-            if (frenzyActivation != null
-                && (frenzyActivation.ManaInfused || isFrenzyCritical))
+            if (frenzyActivation != null)
             {
                 frenzyActivation.ApplyImpact(
                     damageable,
@@ -581,14 +588,14 @@ namespace Cave.Projectiles
             if (hasLaunched && firedTier >= 3 && !hasImpacted)
             {
                 float pulse = 1f + Mathf.Sin(Time.time * 14f) * 0.07f;
-                ApplyVisualScale(tierScale * pulse);
+                ApplyVisualScale(tierScale * heavyVisualScale * pulse);
             }
         }
 
         private void ConfigureTierVisuals()
         {
             usesImaginaryPresentation = launchOwner != null
-                && launchOwner.GetComponent<PhaseCombatState>()?.HasOpening == true;
+                && launchOwner.GetComponent<PhaseCombatState>()?.HasImaginaryActive == true;
             usesProvidedPresentation = ApplyProvidedPresentation();
 
             if (tier3Settings == null)
@@ -610,7 +617,7 @@ namespace Cave.Projectiles
                     : firedTier >= 2
                         ? tier3Settings.Tier2ProjectileScale
                         : 1f;
-                ApplyVisualScale(tierScale);
+                ApplyVisualScale(tierScale * heavyVisualScale);
             }
             else
             {
@@ -667,6 +674,42 @@ namespace Cave.Projectiles
             {
                 baseVisualScales[index] = scalableVisualTransforms[index].localScale;
             }
+        }
+
+        /// <summary>
+        /// The shipped projectile prefab historically placed its renderer on
+        /// the physical root. Preserve that serialized source while moving its
+        /// live presentation to a child, so visual scaling cannot resize the
+        /// Rigidbody2D or Collider2D.
+        /// </summary>
+        private void EnsureVisualChildForRootRenderer()
+        {
+            SpriteRenderer rootRenderer = GetComponent<SpriteRenderer>();
+            if (rootRenderer == null || !rootRenderer.enabled)
+            {
+                return;
+            }
+
+            Transform existing = transform.Find("Projectile Visual");
+            if (existing != null)
+            {
+                rootRenderer.enabled = false;
+                return;
+            }
+
+            GameObject visualObject = new GameObject("Projectile Visual");
+            visualObject.transform.SetParent(transform, false);
+            SpriteRenderer visual = visualObject.AddComponent<SpriteRenderer>();
+            visual.sprite = rootRenderer.sprite;
+            visual.color = rootRenderer.color;
+            visual.flipX = rootRenderer.flipX;
+            visual.flipY = rootRenderer.flipY;
+            visual.drawMode = rootRenderer.drawMode;
+            visual.size = rootRenderer.size;
+            visual.sortingLayerID = rootRenderer.sortingLayerID;
+            visual.sortingOrder = rootRenderer.sortingOrder;
+            visual.sharedMaterial = rootRenderer.sharedMaterial;
+            rootRenderer.enabled = false;
         }
 
         private void ApplyVisualScale(float scaleMultiplier)
@@ -790,6 +833,7 @@ namespace Cave.Projectiles
 
         private void OnDisable()
         {
+            if (telemetryRegistered) { telemetryRegistered = false; RuntimeTelemetry.Returned(RuntimeWorkCategory.Projectile); }
             if (hasLaunched && !hasImpacted)
             {
                 TraceFirstTerminal("disabled-without-impact", null);
@@ -804,6 +848,7 @@ namespace Cave.Projectiles
 
             hitTargets.Clear();
             ApplyVisualScale(1f);
+            heavyVisualScale = 1f;
             transform.localScale = baseScale;
             RestoreBasePresentation();
             ResetOwnerCollisionFiltering();

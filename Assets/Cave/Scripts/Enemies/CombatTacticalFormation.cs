@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Cave.Diagnostics;
 using UnityEngine;
 
 namespace Cave.Enemies
@@ -16,26 +17,40 @@ namespace Cave.Enemies
         [Header("Formation Identity")]
         [SerializeField] private string formationId;
         [SerializeField] private bool coordinatorEnabled = true;
+        [SerializeField] private bool jevEnabled;
         [SerializeField, Min(0.05f)] private float evaluationInterval = 0.25f;
 
         [Header("Diagnostics (Read Only)")]
         [SerializeField] private int activeMemberCount;
         [SerializeField] private int evaluationCount;
         [SerializeField] private float lastEvaluationMilliseconds;
+        [SerializeField] private bool psychologyDirty;
+        [SerializeField] private float lastPsychologyInterpretationTime;
+        [SerializeField] private bool psychologyRequestInFlight;
+        [SerializeField] private int pendingPsychologyEvidence;
 
         private readonly List<CombatTacticalMember> members =
             new List<CombatTacticalMember>();
         private CombatTacticalFormationState state;
+        private readonly PsychologyGroupScheduler psychologyScheduler = new PsychologyGroupScheduler();
+        private readonly DeterministicPsychologyInterpreter deterministicPsychology = new DeterministicPsychologyInterpreter();
+        private IPsychologyInterpreter jevInterpreter;
         private float nextEvaluationAt;
 
         /// <summary>Developer-wide switch; per-formation state remains intact.</summary>
         public static bool GloballyEnabled { get; set; } = true;
+        public static bool GloballyJevEnabled { get; set; } = true;
 
         public string FormationId => state != null ? state.FormationId : formationId;
         public bool IsCoordinatorEnabled => coordinatorEnabled && GloballyEnabled;
         public int ActiveMemberCount => activeMemberCount;
         public int EvaluationCount => evaluationCount;
         public float LastEvaluationMilliseconds => lastEvaluationMilliseconds;
+        public bool IsJevEnabled => jevEnabled && GloballyJevEnabled;
+        public bool IsPsychologyDirty => psychologyScheduler.IsDirty;
+        public bool IsPsychologyRequestInFlight => psychologyScheduler.RequestInFlight;
+        public float LastPsychologyInterpretationTime => psychologyScheduler.LastInterpretedAt;
+        public int PendingPsychologyEvidenceCount => psychologyScheduler.PendingEvidenceCount;
 
         private void Awake()
         {
@@ -44,6 +59,7 @@ namespace Cave.Enemies
 
         private void OnEnable()
         {
+            RuntimeTelemetry.RegisterFormation(true);
             EnsureState();
             SyncEnabledState();
             nextEvaluationAt = 0f;
@@ -53,14 +69,18 @@ namespace Cave.Enemies
         {
             PruneInactiveMembers();
             SyncEnabledState();
-            if (!IsCoordinatorEnabled || state == null || !state.IsValid
-                || Time.time < nextEvaluationAt)
+            if (state == null || !state.IsValid || Time.time < nextEvaluationAt)
             {
                 return;
             }
 
-            nextEvaluationAt = Time.time + Mathf.Max(0.05f, evaluationInterval);
+            nextEvaluationAt = Time.time + Mathf.Max(0.05f, evaluationInterval * ResourceGovernor.CurrentNonUrgentCtcIntervalMultiplier);
             SyncMemberKnowledgeSnapshots();
+            ProcessPsychology();
+            if (!IsCoordinatorEnabled)
+            {
+                return;
+            }
             Stopwatch stopwatch = Stopwatch.StartNew();
             if (state.Evaluate())
             {
@@ -70,20 +90,34 @@ namespace Cave.Enemies
 
             stopwatch.Stop();
             lastEvaluationMilliseconds = (float)stopwatch.Elapsed.TotalMilliseconds;
+            RuntimeTelemetry.RecordCtcEvaluation(lastEvaluationMilliseconds);
         }
 
         private void OnDisable()
         {
+            RuntimeTelemetry.RegisterFormation(false);
             if (state != null)
             {
                 state.SetEnabled(false);
             }
         }
 
+
         public void SetCoordinatorEnabled(bool value)
         {
             coordinatorEnabled = value;
             SyncEnabledState();
+        }
+
+        /// <summary>Optional Jev seam. Null/unavailable providers always fall back to deterministic C# interpretation.</summary>
+        public void SetJevInterpreter(IPsychologyInterpreter value)
+        {
+            jevInterpreter = value;
+        }
+
+        public void SetJevEnabled(bool value)
+        {
+            jevEnabled = value;
         }
 
         internal bool Register(CombatTacticalMember member)
@@ -251,9 +285,46 @@ namespace Cave.Enemies
                 CombatTacticalMember member = members[index];
                 if (member != null)
                 {
-                    state.SetKnowledgeSnapshot(member.MemberId, member.CreateKnowledgeSnapshot());
+                    KnowledgeSnapshot knowledge = member.CreateKnowledgeSnapshot();
+                    state.SetKnowledgeSnapshot(member.MemberId, knowledge);
+                    member.CollectPsychologyEvidence(knowledge, psychologyScheduler);
+                    state.SetPsychologySnapshot(member.MemberId, member.CreatePsychologySnapshot());
                 }
             }
+        }
+
+        private void ProcessPsychology()
+        {
+            psychologyScheduler.JevEnabled = IsJevEnabled;
+            List<MobPsychologySnapshot> snapshots = new List<MobPsychologySnapshot>(members.Count);
+            for (int index=0;index<members.Count;index++) if(members[index]!=null) snapshots.Add(members[index].CreatePsychologySnapshot());
+            IReadOnlyList<MobPsychologyDelta> deltas; bool usedJev;
+            if (psychologyScheduler.TryInterpret(Time.time, FormationId, snapshots.AsReadOnly(), jevInterpreter, deterministicPsychology, out deltas, out usedJev))
+            {
+                if (ValidatePsychologyDeltas(deltas))
+                {
+                    for(int deltaIndex=0;deltaIndex<deltas.Count;deltaIndex++)
+                        for(int memberIndex=0;memberIndex<members.Count;memberIndex++)
+                            if(members[memberIndex]!=null&&members[memberIndex].MemberId==deltas[deltaIndex].MobId)
+                                members[memberIndex].ApplyPsychology(deltas[deltaIndex]);
+                }
+            }
+            psychologyDirty=psychologyScheduler.IsDirty;
+            lastPsychologyInterpretationTime=psychologyScheduler.LastInterpretedAt;
+            psychologyRequestInFlight=psychologyScheduler.RequestInFlight;
+            pendingPsychologyEvidence=psychologyScheduler.PendingEvidenceCount;
+        }
+
+        private bool ValidatePsychologyDeltas(IReadOnlyList<MobPsychologyDelta> deltas)
+        {
+            if(deltas==null)return false; HashSet<string> ids=new HashSet<string>();
+            for(int index=0;index<deltas.Count;index++)
+            {
+                MobPsychologyDelta delta=deltas[index]; bool known=false;
+                for(int memberIndex=0;memberIndex<members.Count;memberIndex++) if(members[memberIndex]!=null&&members[memberIndex].MemberId==delta.MobId){known=true;break;}
+                if(!known||!ids.Add(delta.MobId)||!delta.IsFinite||Mathf.Abs(delta.Aggression)>MobPsychologyState.MaximumInterpreterDelta||Mathf.Abs(delta.Confidence)>MobPsychologyState.MaximumInterpreterDelta||Mathf.Abs(delta.Fear)>MobPsychologyState.MaximumInterpreterDelta||Mathf.Abs(delta.Cooperation)>MobPsychologyState.MaximumInterpreterDelta)return false;
+            }
+            return true;
         }
     }
 
@@ -272,16 +343,24 @@ namespace Cave.Enemies
         [SerializeField] private CombatTacticalIntent currentIntent;
 
         private KnowledgeActor knowledge;
+        private MobPsychologyState psychology;
+        private readonly Dictionary<KnowledgeFactType,long> psychologyProvenanceByType = new Dictionary<KnowledgeFactType,long>();
 
         public string MemberId => memberId;
         public CombatTacticalRole ResolvedRole => role;
         public CombatTacticalFormation Formation => formation;
         public CombatTacticalIntent CurrentIntent => currentIntent;
+        public KnowledgeSnapshot KnowledgeSnapshot => CreateKnowledgeSnapshot();
+        public MobPsychologySnapshot PsychologySnapshot => CreatePsychologySnapshot();
         internal KnowledgeActor Knowledge => knowledge;
+        internal MobPsychologyState Psychology => psychology;
 
         private void OnEnable()
         {
+            RuntimeTelemetry.RegisterMob(true);
             knowledge = KnowledgeActor.EnsureOn(gameObject);
+            psychology = GetComponent<MobPsychologyState>();
+            if (psychology == null) psychology = gameObject.AddComponent<MobPsychologyState>();
             Register();
         }
 
@@ -292,6 +371,7 @@ namespace Cave.Enemies
 
         private void OnDisable()
         {
+            RuntimeTelemetry.RegisterMob(false);
             formation?.Unregister(this);
             currentIntent = CombatTacticalIntent.None;
         }
@@ -336,6 +416,34 @@ namespace Cave.Enemies
         public int ShareKnowledge(KnowledgeFact fact)
         {
             return formation != null ? formation.ShareKnowledge(this, fact) : 0;
+        }
+
+        internal MobPsychologySnapshot CreatePsychologySnapshot()
+        {
+            if (psychology == null) psychology=GetComponent<MobPsychologyState>();
+            return psychology!=null?psychology.Snapshot(memberId):default;
+        }
+
+        internal void ApplyPsychology(MobPsychologyDelta delta)
+        {
+            if(psychology==null) psychology=GetComponent<MobPsychologyState>();
+            psychology?.TryApply(delta,memberId);
+        }
+
+        internal void CollectPsychologyEvidence(KnowledgeSnapshot snapshot, PsychologyGroupScheduler scheduler)
+        {
+            if(scheduler==null)return;
+            for(int index=0;index<snapshot.Facts.Count;index++)
+            {
+                KnowledgeFact fact=snapshot.Facts[index]; long seen;
+                if(psychologyProvenanceByType.TryGetValue(fact.Type,out seen)&&seen==fact.ProvenanceId)continue;
+                psychologyProvenanceByType[fact.Type]=fact.ProvenanceId;
+                PsychologyEvidenceKind kind=PsychologyEvidenceKind.None;
+                if(fact.Type==KnowledgeFactType.PlayerLowStamina)kind=PsychologyEvidenceKind.PlayerVulnerability;
+                else if(fact.Type==KnowledgeFactType.PlayerRetreating)kind=PsychologyEvidenceKind.PlayerRetreat;
+                else if(fact.Type==KnowledgeFactType.PlayerPressuringAlly)kind=PsychologyEvidenceKind.SuccessfulPressure;
+                if(kind!=PsychologyEvidenceKind.None)scheduler.MarkDirty(new PsychologyEvidence(kind,fact.OriginalObserverId,fact.ProvenanceId,Time.time));
+            }
         }
 
         private void Register()

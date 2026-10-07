@@ -121,11 +121,6 @@ namespace Cave.Combat
 
             bool criticalCommitted = wasCriticalCandidate
                 && owner.TryConsumeFrenzyCriticalAfterAcceptedDamage();
-            if (!ManaInfused && !criticalCommitted)
-            {
-                return false;
-            }
-
             bool allowWindBurst = Infusion != FrenzyBreakInfusion.Wind || !windBurstApplied;
             owner.ApplyFrenzyImpact(
                 target,
@@ -143,7 +138,7 @@ namespace Cave.Combat
                 windBurstApplied = true;
             }
 
-            return criticalCommitted;
+            return true;
         }
 
         public void Complete()
@@ -299,6 +294,19 @@ namespace Cave.Combat
         public int ChargedStartingTier => HasFollowUpToken ? chargedStartingTier : 0;
         public bool CanChainSpinToBash => spinBashAvailable
             && Time.time <= spinBashExpiresAt;
+        /// <summary>The single player combat-context signal used by stamina
+        /// regeneration; it has no separate timeout or state machine.</summary>
+        public bool IsCombatActive
+        {
+            get
+            {
+                RefreshHostileContext();
+                return hostileNearby || formalChainInProgress || CanChainSpinToBash
+                    || HasFollowUpToken || (attackState != null && attackState.IsActivelyAttacking)
+                    || (chargedAttack != null && chargedAttack.IsCharging)
+                    || (guardBreak != null && guardBreak.IsGuardBreaking);
+            }
+        }
 
         private bool HasFollowUpToken => followUpSource != FormalFollowUpSource.None
             && Time.time <= followUpExpiresAt;
@@ -364,11 +372,7 @@ namespace Cave.Combat
 
         public bool ShouldPrioritizeFrenzyBreak(bool interactableAvailable)
         {
-            if (Time.time >= nextHostileRefreshTime)
-            {
-                hostileNearby = HostileMobQuery.CountRealHostiles(transform.position, combatContextRadius) > 0;
-                nextHostileRefreshTime = Time.time + 0.15f;
-            }
+            RefreshHostileContext();
 
             bool combatContext = hostileNearby
                 || formalChainInProgress
@@ -378,6 +382,13 @@ namespace Cave.Combat
                 || (chargedAttack != null && chargedAttack.IsCharging)
                 || (guardBreak != null && guardBreak.IsGuardBreaking);
             return combatContext || !interactableAvailable;
+        }
+
+        private void RefreshHostileContext()
+        {
+            if (Time.time < nextHostileRefreshTime) return;
+            hostileNearby = HostileMobQuery.CountRealHostiles(transform.position, combatContextRadius) > 0;
+            nextHostileRefreshTime = Time.time + 0.15f;
         }
 
         public int ConsumeChargedStartingTier()

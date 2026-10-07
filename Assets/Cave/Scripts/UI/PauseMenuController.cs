@@ -1,6 +1,7 @@
 using Cave.InputSystem;
 using Cave.Player;
 using Cave.Enemies;
+using Cave.Domain;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -23,6 +24,8 @@ namespace Cave.UI
         private Button movesPageButton;
         private MovesListPresentation movesPresentation;
         private SettingsMenuController settingsController;
+        private GameObject developerSettingsPanel;
+        private Button domainTestOverrideButton;
         private bool isPaused;
         private float previousTimeScale = 1f;
         private int movesPageIndex;
@@ -48,7 +51,8 @@ namespace Cave.UI
             Text configuredMovesChainRightText,
             Text configuredMovesPageText,
             Button configuredMovesPageButton,
-            MovesListPresentation configuredMovesPresentation)
+            MovesListPresentation configuredMovesPresentation,
+            Button configuredDomainTestOverrideButton)
         {
             pauseMenu = pauseMenuObject;
             settingsPanel = settingsPanelObject;
@@ -64,6 +68,7 @@ namespace Cave.UI
             movesPageText = configuredMovesPageText;
             movesPageButton = configuredMovesPageButton;
             movesPresentation = configuredMovesPresentation;
+            domainTestOverrideButton = configuredDomainTestOverrideButton;
 
             resumeButton.onClick.AddListener(Resume);
             resetLevelButton.onClick.AddListener(ResetCurrentLevel);
@@ -74,11 +79,24 @@ namespace Cave.UI
             ledgerButton.onClick.AddListener(ShowLedger);
             ledgerBackButton.onClick.AddListener(ShowPauseMenu);
             movesPageButton.onClick.AddListener(ToggleMovesPage);
+            if (domainTestOverrideButton != null)
+            {
+                domainTestOverrideButton.onClick.AddListener(ToggleDomainTestOverride);
+            }
+            DomainTestOverride.Changed += RefreshDomainTestOverridePresentation;
+            RefreshDomainTestOverridePresentation();
 
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             ledgerPanel.SetActive(false);
+        }
+
+        /// <summary>Optional child page of the existing Settings menu.</summary>
+        public void ConfigureDeveloperSettingsPanel(GameObject panel)
+        {
+            developerSettingsPanel = panel;
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
         }
 
         private void Update()
@@ -105,7 +123,8 @@ namespace Cave.UI
             {
                 if ((settingsPanel != null && settingsPanel.activeSelf)
                     || (movesListPanel != null && movesListPanel.activeSelf)
-                    || (ledgerPanel != null && ledgerPanel.activeSelf))
+                    || (ledgerPanel != null && ledgerPanel.activeSelf)
+                    || (developerSettingsPanel != null && developerSettingsPanel.activeSelf))
                 {
                     ShowPauseMenu();
                 }
@@ -130,7 +149,9 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             pauseMenu.SetActive(true);
+            RefreshDomainTestOverridePresentation();
         }
 
         public void Resume()
@@ -146,6 +167,7 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             Time.timeScale = previousTimeScale;
             GameInput.EnableGameplayAfterInputRelease();
         }
@@ -174,6 +196,11 @@ namespace Cave.UI
                 ledgerPanel.SetActive(false);
             }
 
+            if (developerSettingsPanel != null)
+            {
+                developerSettingsPanel.SetActive(false);
+            }
+
             Time.timeScale = 1f;
             GameInput.EnableGameplayAfterInputRelease();
             Scene activeScene = SceneManager.GetActiveScene();
@@ -190,6 +217,7 @@ namespace Cave.UI
             pauseMenu.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             settingsPanel.SetActive(true);
             settingsController?.PrepareToShow();
         }
@@ -204,6 +232,7 @@ namespace Cave.UI
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             movesListPanel.SetActive(true);
             movesPageIndex = 0;
             RefreshMovesList();
@@ -219,6 +248,7 @@ namespace Cave.UI
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             ledgerPanel.SetActive(true);
             if (ledgerPages != null)
             {
@@ -240,8 +270,36 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             settingsController?.CancelRebind();
             pauseMenu.SetActive(true);
+            RefreshDomainTestOverridePresentation();
+        }
+
+        private void ToggleDomainTestOverride()
+        {
+            DomainTestOverride.Enabled = !DomainTestOverride.Enabled;
+        }
+
+        private void RefreshDomainTestOverridePresentation()
+        {
+            if (domainTestOverrideButton == null) return;
+            bool active = DomainTestOverride.Enabled;
+            Text label = domainTestOverrideButton.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                label.text = "DOMAIN TEST OVERRIDE\n" + (active ? "ON — PROGRESSION BYPASSED" : "OFF");
+                label.fontSize = 13;
+                label.color = active ? CaveUiTheme.Gold : CaveUiTheme.PrimaryText;
+            }
+
+            Image image = domainTestOverrideButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = active
+                    ? new Color(0.24f, 0.18f, 0.05f, 1f)
+                    : CaveUiTheme.SurfaceRaised;
+            }
         }
 
         private void RefreshMovesList()
@@ -280,7 +338,8 @@ namespace Cave.UI
                     + Key(GameAction.UseDistraction) + "  Use Distraction\n\n"
                     + "WORLD\n"
                     + Key(GameAction.Interact) + "  Interact when no combat priority\n"
-                    + Key(GameAction.SummonCurseAltar) + "  Summon Curse Altar";
+                    + Key(GameAction.SummonCurseAltar) + "  Tap — Summon Curse Altar\n"
+                    + Key(GameAction.SummonCurseAltar) + "  Hold 0.6s — Manifest / Dismiss Domain";
             }
 
             RefreshMovesPage();
@@ -410,7 +469,7 @@ namespace Cave.UI
                     + "FRENZY BREAK\n"
                     + Key(GameAction.Interact) + " tap prepares Physical; hold infuses Mana. The next new qualifying attack claims it.\n\n"
                     + "RESOURCES\n"
-                    + "Mana powers projectiles and skills. Stamina powers Spin, Heavy actions, movement, and Ground Smash.\n\n"
+                    + "Mana powers standard projectiles and skills. Stamina powers Spin, Heavy actions, movement, and Ground Smash.\n\n"
                     + "UNBLOCKABLE ≠ UNPARRYABLE\n"
                     + "Some attacks bypass Guard but can still be perfectly parried.";
             }
@@ -423,6 +482,7 @@ namespace Cave.UI
 
         private void OnDestroy()
         {
+            DomainTestOverride.Changed -= RefreshDomainTestOverridePresentation;
             if (isPaused)
             {
                 Time.timeScale = previousTimeScale;

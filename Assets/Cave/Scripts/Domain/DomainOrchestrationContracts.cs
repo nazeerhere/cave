@@ -20,6 +20,7 @@ namespace Cave.Domain
         SemanticSnapshotUnavailable = 11,
         SemanticSnapshotMismatch = 12,
         InvalidSemanticSnapshot = 13
+        , OperationUnsupportedForPhenomenonStateModel = 14
     }
 
     public struct DomainOrchestrationRequestValidation
@@ -98,6 +99,8 @@ namespace Cave.Domain
             if (!common.IsValid) return common;
             if (request.Operation != PhenomenonOperationKind.Add && request.Operation != PhenomenonOperationKind.Remove)
                 return DomainOrchestrationRequestValidation.Rejected(DomainOrchestrationRequestRejectionReason.InvalidOperation);
+            if (!PhenomenonSemanticClassifier.SupportsOperation(request.Phenomenon, request.Operation))
+                return DomainOrchestrationRequestValidation.Rejected(DomainOrchestrationRequestRejectionReason.OperationUnsupportedForPhenomenonStateModel);
             return ValidateCarrier(request.FocalCarrier, request.Phenomenon, DomainOrchestrationRequestRejectionReason.FocalCarrierUnavailable);
         }
 
@@ -106,6 +109,8 @@ namespace Cave.Domain
             if (request == null) return DomainOrchestrationRequestValidation.Rejected(DomainOrchestrationRequestRejectionReason.CompositionUnavailable);
             DomainOrchestrationRequestValidation common = ValidateCommon(request.Composition, request.ExpressionContext, request.Phenomenon, request.Magnitude);
             if (!common.IsValid) return common;
+            if (!PhenomenonSemanticClassifier.SupportsOperation(request.Phenomenon, PhenomenonOperationKind.Transfer))
+                return DomainOrchestrationRequestValidation.Rejected(DomainOrchestrationRequestRejectionReason.OperationUnsupportedForPhenomenonStateModel);
             DomainOrchestrationRequestValidation source = ValidateCarrier(request.SourceCarrier, request.Phenomenon, DomainOrchestrationRequestRejectionReason.SourceCarrierUnavailable);
             return source.IsValid ? ValidateCarrier(request.FocalTargetCarrier, request.Phenomenon, DomainOrchestrationRequestRejectionReason.FocalCarrierUnavailable) : source;
         }
@@ -143,7 +148,12 @@ namespace Cave.Domain
             return DomainOrchestrationRequestValidation.Valid();
         }
 
-        private static bool IsDefinedExpression(LawExpression expression) { return expression == LawExpression.Projectile || expression == LawExpression.Frenzy; }
+        private static bool IsDefinedExpression(LawExpression expression)
+        {
+            return expression == LawExpression.Projectile
+                || expression == LawExpression.Frenzy
+                || expression == LawExpression.Trap;
+        }
         private static bool IsFinite(float value) { return !float.IsNaN(value) && !float.IsInfinity(value); }
     }
 

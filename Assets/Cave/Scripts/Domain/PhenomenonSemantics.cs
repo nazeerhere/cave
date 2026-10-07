@@ -15,6 +15,31 @@ namespace Cave.Domain
         High = 3
     }
 
+    /// <summary>The meaning of a phenomenon's continuous semantic coordinate, never a UI/status-stack category.</summary>
+    public enum PhenomenonStateModelKind
+    {
+        Undetermined = 0,
+        Additive = 1,
+        Relative = 2,
+        Pattern = 3
+    }
+
+    /// <summary>Operation eligibility in semantic-coordinate space, not physical-unit arithmetic.</summary>
+    public struct PhenomenonOperationCapabilities
+    {
+        public PhenomenonOperationCapabilities(bool supportsAdd, bool supportsRemove, bool supportsTransfer)
+        { SupportsAdd = supportsAdd; SupportsRemove = supportsRemove; SupportsTransfer = supportsTransfer; }
+        public bool SupportsAdd { get; }
+        public bool SupportsRemove { get; }
+        public bool SupportsTransfer { get; }
+        public bool Supports(PhenomenonOperationKind operation)
+        {
+            return operation == PhenomenonOperationKind.Add ? SupportsAdd
+                : operation == PhenomenonOperationKind.Remove ? SupportsRemove
+                : operation == PhenomenonOperationKind.Transfer && SupportsTransfer;
+        }
+    }
+
     /// <summary>Deterministic reasons a semantic snapshot cannot be produced.</summary>
     public enum PhenomenonSemanticRejectionReason
     {
@@ -52,6 +77,30 @@ namespace Cave.Domain
     }
 
     /// <summary>
+    /// Immutable, Unity-reference-free identity of the qualifying relationship
+    /// behind a Pattern phenomenon. Revision changes invalidate snapshots even
+    /// when their scalar S happens to be numerically unchanged.
+    /// </summary>
+    public struct PhenomenonPatternContext : IEquatable<PhenomenonPatternContext>
+    {
+        public PhenomenonPatternContext(string identity, uint revision)
+        {
+            Identity = identity;
+            Revision = revision;
+        }
+
+        public string Identity { get; }
+        public uint Revision { get; }
+        public bool IsValid => !string.IsNullOrWhiteSpace(Identity);
+        public bool Equals(PhenomenonPatternContext other)
+        {
+            return Revision == other.Revision && string.Equals(Identity, other.Identity, StringComparison.Ordinal);
+        }
+        public override bool Equals(object other) => other is PhenomenonPatternContext && Equals((PhenomenonPatternContext)other);
+        public override int GetHashCode() => (Identity == null ? 0 : Identity.GetHashCode()) ^ (int)Revision;
+    }
+
+    /// <summary>
     /// Immutable scalar snapshot for future pure Law resolution. Its value is a
     /// semantic value: Mass uses a natural-baseline ratio; every other current
     /// phenomenon uses its documented scalar axis. It owns no history or rate.
@@ -61,6 +110,7 @@ namespace Cave.Domain
         private readonly LawPhenomenon phenomenon;
         private readonly float semanticValue;
         private readonly PhenomenonSemanticRegion region;
+        private readonly PhenomenonPatternContext patternContext;
 
         internal PhenomenonSemanticSnapshot(
             LawPhenomenon phenomenon,
@@ -70,11 +120,25 @@ namespace Cave.Domain
             this.phenomenon = phenomenon;
             this.semanticValue = semanticValue;
             this.region = region;
+            patternContext = default(PhenomenonPatternContext);
+        }
+
+        internal PhenomenonSemanticSnapshot(
+            LawPhenomenon phenomenon,
+            float semanticValue,
+            PhenomenonSemanticRegion region,
+            PhenomenonPatternContext patternContext)
+        {
+            this.phenomenon = phenomenon;
+            this.semanticValue = semanticValue;
+            this.region = region;
+            this.patternContext = patternContext;
         }
 
         public LawPhenomenon Phenomenon => phenomenon;
         public float SemanticValue => semanticValue;
         public PhenomenonSemanticRegion Region => region;
+        public PhenomenonPatternContext PatternContext => patternContext;
     }
 
     /// <summary>
@@ -84,14 +148,24 @@ namespace Cave.Domain
     /// </summary>
     public struct PhenomenonSemanticProfile
     {
-        public PhenomenonSemanticProfile(float lowMaximum, float highMinimum)
+        public PhenomenonSemanticProfile(float lowMaximum, float highMinimum,
+            PhenomenonStateModelKind stateModelKind, float neutralSemanticValue,
+            PhenomenonOperationCapabilities operations, bool requiresCarrierBaseline = false)
         {
             LowMaximum = lowMaximum;
             HighMinimum = highMinimum;
+            StateModelKind = stateModelKind;
+            NeutralSemanticValue = neutralSemanticValue;
+            Operations = operations;
+            RequiresCarrierBaseline = requiresCarrierBaseline;
         }
 
         public float LowMaximum { get; }
         public float HighMinimum { get; }
+        public PhenomenonStateModelKind StateModelKind { get; }
+        public float NeutralSemanticValue { get; }
+        public PhenomenonOperationCapabilities Operations { get; }
+        public bool RequiresCarrierBaseline { get; }
     }
 
     /// <summary>
@@ -105,29 +179,51 @@ namespace Cave.Domain
             switch (phenomenon)
             {
                 case LawPhenomenon.Heat:
-                case LawPhenomenon.Compression:
-                case LawPhenomenon.Potential:
-                case LawPhenomenon.Order:
-                    profile = new PhenomenonSemanticProfile(-2f, 2f);
+                    profile = new PhenomenonSemanticProfile(-2f, 2f, PhenomenonStateModelKind.Additive, 0f,
+                        new PhenomenonOperationCapabilities(true, true, true));
                     return true;
 
                 case LawPhenomenon.Flow:
-                case LawPhenomenon.Resonance:
-                    profile = new PhenomenonSemanticProfile(1f, 3f);
-                    return true;
-
-                case LawPhenomenon.Phase:
-                    profile = new PhenomenonSemanticProfile(1f, 4f);
+                    profile = new PhenomenonSemanticProfile(1f, 3f, PhenomenonStateModelKind.Additive, 0f,
+                        new PhenomenonOperationCapabilities(true, true, false));
                     return true;
 
                 case LawPhenomenon.Mass:
-                    profile = new PhenomenonSemanticProfile(.75f, 1.25f);
+                    profile = new PhenomenonSemanticProfile(.75f, 1.25f, PhenomenonStateModelKind.Relative, 1f,
+                        new PhenomenonOperationCapabilities(true, true, false), true);
+                    return true;
+
+                case LawPhenomenon.Compression:
+                case LawPhenomenon.Potential:
+                    profile = new PhenomenonSemanticProfile(-2f, 2f, PhenomenonStateModelKind.Additive, 0f,
+                        new PhenomenonOperationCapabilities(true, true, false));
+                    return true;
+
+                case LawPhenomenon.Resonance:
+                    profile = new PhenomenonSemanticProfile(1f, 3f, PhenomenonStateModelKind.Pattern, 0f,
+                        new PhenomenonOperationCapabilities(true, true, false));
+                    return true;
+
+                case LawPhenomenon.Phase:
+                    profile = new PhenomenonSemanticProfile(1f, 4f, PhenomenonStateModelKind.Pattern, 0f,
+                        new PhenomenonOperationCapabilities(true, true, false));
+                    return true;
+
+                case LawPhenomenon.Order:
+                    profile = new PhenomenonSemanticProfile(-2f, 2f, PhenomenonStateModelKind.Additive, 0f,
+                        new PhenomenonOperationCapabilities(true, true, false));
                     return true;
 
                 default:
                     profile = default(PhenomenonSemanticProfile);
                     return false;
             }
+        }
+
+        public static bool SupportsOperation(LawPhenomenon phenomenon, PhenomenonOperationKind operation)
+        {
+            PhenomenonSemanticProfile profile;
+            return TryGetProfile(phenomenon, out profile) && profile.Operations.Supports(operation);
         }
 
         public static bool TryClassify(
@@ -190,10 +286,9 @@ namespace Cave.Domain
     public static class PhenomenonSemanticAdapters
     {
         /// <summary>
-        /// Heat and Flow currently expose scalar Axiom trajectories whose raw
-        /// values can be classified directly. Order is intentionally excluded:
-        /// existing Order application is nonnegative and has no instability side.
-        /// Mass is intentionally excluded because it requires baseline ratio.
+        /// Axiom trajectories provide the semantic scalar for all established
+        /// state models. Pattern identities and Mass's physical baseline are
+        /// validated by the codec, not fabricated by this scalar adapter.
         /// </summary>
         public static bool TryFromAxiomTrajectory(
             AxiomTrajectoryState trajectory,
@@ -208,6 +303,24 @@ namespace Cave.Domain
                     break;
                 case AxiomKind.Flow:
                     phenomenon = LawPhenomenon.Flow;
+                    break;
+                case AxiomKind.Compression:
+                    phenomenon = LawPhenomenon.Compression;
+                    break;
+                case AxiomKind.Potential:
+                    phenomenon = LawPhenomenon.Potential;
+                    break;
+                case AxiomKind.Mass:
+                    phenomenon = LawPhenomenon.Mass;
+                    break;
+                case AxiomKind.Order:
+                    phenomenon = LawPhenomenon.Order;
+                    break;
+                case AxiomKind.Resonance:
+                    phenomenon = LawPhenomenon.Resonance;
+                    break;
+                case AxiomKind.Phase:
+                    phenomenon = LawPhenomenon.Phase;
                     break;
                 default:
                     snapshot = null;

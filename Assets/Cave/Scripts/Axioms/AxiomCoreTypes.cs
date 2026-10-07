@@ -7,7 +7,11 @@ namespace Cave.Axioms
         Flow,
         Mass,
         Phase,
-        StoneglassPrecision
+        StoneglassPrecision,
+        // Appended to preserve serialized values of the pre-existing kinds.
+        Compression,
+        Potential,
+        Resonance
     }
 
     public enum AxiomTrajectoryDirection

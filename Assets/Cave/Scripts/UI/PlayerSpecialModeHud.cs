@@ -8,6 +8,7 @@ using Cave.InputSystem;
 using Cave.Player;
 using Cave.Projectiles;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Cave.UI
@@ -18,7 +19,9 @@ namespace Cave.UI
         {
             Modes,
             Shop,
-            Domain
+            Domain,
+            Mastery,
+            Cosmetics
         }
 
         [SerializeField] private Text currentModeText;
@@ -54,6 +57,13 @@ namespace Cave.UI
         [SerializeField] private Button domainTabButton;
         [SerializeField] private DomainPageView domainPage;
 
+        [Header("Nexus Tabs")]
+        [SerializeField] private GameObject masteryContent;
+        [SerializeField] private Button masteryTabButton;
+        [SerializeField] private GameObject cosmeticsContent;
+        [SerializeField] private Button cosmeticsTabButton;
+        private SelectionTab activeTab;
+
         private static readonly SpecialMode[] Modes =
         {
             SpecialMode.SlowShot,
@@ -73,6 +83,8 @@ namespace Cave.UI
         private AxiomMasteryState domainMastery;
         private PlayerMasteryEvidenceRuntime domainEvidence;
         private PlayerDomainLawCollection domainLaws;
+        private PlayerDomainReserve domainReserve;
+        private PlayerDomainManifestation domainManifestation;
         private bool domainSeedSubscribed;
         private readonly Dictionary<CanvasGroup, HudGroupState> suppressedHudGroups = new Dictionary<CanvasGroup, HudGroupState>();
 
@@ -165,6 +177,28 @@ namespace Cave.UI
             SetModalVisible(true);
         }
 
+        /// <summary>Extends the established three-tab selection modal without changing its owners.</summary>
+        public void ConfigureNexusTabs(
+            GameObject masteryTabContent,
+            Button masteryTab,
+            GameObject cosmeticsTabContent,
+            Button cosmeticsTab)
+        {
+            masteryContent = masteryTabContent;
+            masteryTabButton = masteryTab;
+            cosmeticsContent = cosmeticsTabContent;
+            cosmeticsTabButton = cosmeticsTab;
+            if (masteryTabButton != null)
+            {
+                masteryTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Mastery));
+            }
+            if (cosmeticsTabButton != null)
+            {
+                cosmeticsTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Cosmetics));
+            }
+            ShowTab(activeTab);
+        }
+
         public void Bind(PlayerSpecialMode modeState, PlayerCurrency currency)
         {
             if (specialMode != modeState)
@@ -178,7 +212,8 @@ namespace Cave.UI
                     : null);
                 BindDomainProduction(specialMode != null
                     ? PlayerMasteryEvidenceRuntime.EnsureOn(specialMode.gameObject) : null,
-                    specialMode != null ? PlayerDomainLawCollection.EnsureOn(specialMode.gameObject) : null);
+                    specialMode != null ? PlayerDomainLawCollection.EnsureOn(specialMode.gameObject) : null,
+                    specialMode != null ? PlayerDomainReserve.EnsureOn(specialMode.gameObject) : null);
             }
 
             if (playerCurrency != currency)
@@ -230,9 +265,24 @@ namespace Cave.UI
 
         private void Update()
         {
-            if (GameInput.GameplayInputEnabled && UnityEngine.Input.GetKeyDown(KeyCode.Tab))
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Tab))
             {
                 ToggleSelectionPanel();
+                GameInput.ConsumeMenuInputForCurrentFrame();
+            }
+
+            if (selectionPanel != null && selectionPanel.activeSelf)
+            {
+                if (UnityEngine.Input.GetKeyDown(KeyCode.Q))
+                {
+                    ShowTab((SelectionTab)(((int)activeTab + 4) % 5));
+                    GameInput.ConsumeMenuInputForCurrentFrame();
+                }
+                else if (UnityEngine.Input.GetKeyDown(KeyCode.E))
+                {
+                    ShowTab((SelectionTab)(((int)activeTab + 1) % 5));
+                    GameInput.ConsumeMenuInputForCurrentFrame();
+                }
             }
         }
 
@@ -373,6 +423,14 @@ namespace Cave.UI
 
         private void SetModalVisible(bool visible)
         {
+            if (visible)
+            {
+                GameInput.SetGameplayInputEnabled(false);
+            }
+            else
+            {
+                GameInput.EnableGameplayAfterInputRelease();
+            }
             SetUnderlyingHudVisible(!visible);
 
             if (modalBackdrop != null)
@@ -395,9 +453,12 @@ namespace Cave.UI
 
         private void ShowTab(SelectionTab tab)
         {
+            activeTab = tab;
             bool showModes = tab == SelectionTab.Modes;
             bool showShop = tab == SelectionTab.Shop;
             bool showDomain = tab == SelectionTab.Domain;
+            bool showMastery = tab == SelectionTab.Mastery;
+            bool showCosmetics = tab == SelectionTab.Cosmetics;
             if (modesContent != null)
             {
                 modesContent.SetActive(showModes);
@@ -413,20 +474,58 @@ namespace Cave.UI
                 domainContent.SetActive(showDomain);
             }
 
-            SetModeHeaderVisible(!showDomain);
-            SetDomainFooterVisible(!showDomain);
+            if (masteryContent != null)
+            {
+                masteryContent.SetActive(showMastery);
+            }
+
+            if (cosmeticsContent != null)
+            {
+                cosmeticsContent.SetActive(showCosmetics);
+            }
+
+            SetModeHeaderVisible(!showDomain && !showMastery && !showCosmetics);
+            SetDomainFooterVisible(!showDomain && !showMastery && !showCosmetics);
 
             SetTabVisual(modesTabButton, showModes);
             SetTabVisual(shopTabButton, showShop);
             SetTabVisual(domainTabButton, showDomain);
+            SetTabVisual(masteryTabButton, showMastery);
+            SetTabVisual(cosmeticsTabButton, showCosmetics);
             CaveUiArt.ApplySkillTab(modesTabButton, showModes, false);
             CaveUiArt.ApplySkillTab(shopTabButton, showShop, true);
             CaveUiArt.ApplySkillTab(domainTabButton, showDomain, false);
+            // This only skins the established tabs. ShowTab remains the sole
+            // tab-selection authority.
+            DomainUiSkin.ApplyNavigation(modesTabButton, showModes);
+            DomainUiSkin.ApplyNavigation(shopTabButton, showShop);
+            DomainUiSkin.ApplyNavigation(domainTabButton, showDomain);
+            DomainUiSkin.ApplyNavigation(masteryTabButton, showMastery);
+            DomainUiSkin.ApplyNavigation(cosmeticsTabButton, showCosmetics);
             ApplyDomainTabAccent(showDomain);
             if (showDomain)
             {
                 RefreshDomain();
             }
+
+            Button activeButton = showModes ? modesTabButton
+                : showShop ? shopTabButton
+                : showDomain ? domainTabButton
+                : showMastery ? masteryTabButton
+                : cosmeticsTabButton;
+            if (EventSystem.current != null && activeButton != null)
+            {
+                EventSystem.current.SetSelectedGameObject(activeButton.gameObject);
+            }
+        }
+
+        public void ShowNexusTab(int tabIndex)
+        {
+            if (tabIndex < (int)SelectionTab.Modes || tabIndex > (int)SelectionTab.Cosmetics)
+            {
+                return;
+            }
+            ShowTab((SelectionTab)tabIndex);
         }
 
         private static void SetTabVisual(Button button, bool selected)
@@ -593,9 +692,10 @@ namespace Cave.UI
             {
                 PlayerMasteryEvidenceRuntime evidence = PlayerMasteryEvidenceRuntime.EnsureOn(specialMode.gameObject);
                 PlayerDomainLawCollection laws = PlayerDomainLawCollection.EnsureOn(specialMode.gameObject);
-                if (domainEvidence != evidence || domainLaws != laws)
+                PlayerDomainReserve reserve = PlayerDomainReserve.EnsureOn(specialMode.gameObject);
+                if (domainEvidence != evidence || domainLaws != laws || domainReserve != reserve)
                 {
-                    BindDomainProduction(evidence, laws);
+                    BindDomainProduction(evidence, laws, reserve);
                 }
             }
 
@@ -742,11 +842,33 @@ namespace Cave.UI
             RefreshDomain();
         }
 
-        private void BindDomainProduction(PlayerMasteryEvidenceRuntime evidence, PlayerDomainLawCollection laws)
+        private void BindDomainProduction(PlayerMasteryEvidenceRuntime evidence, PlayerDomainLawCollection laws, PlayerDomainReserve reserve)
         {
             domainEvidence = evidence;
             domainLaws = laws;
-            if (domainPage != null) domainPage.BindProduction(domainEvidence, domainLaws);
+            domainReserve = reserve;
+            BindDomainManifestation(specialMode != null
+                ? specialMode.GetComponent<PlayerDomainManifestation>() : null);
+            if (domainPage != null)
+            {
+                domainPage.BindProduction(domainEvidence, domainLaws);
+                domainPage.BindReserve(domainReserve);
+            }
+        }
+
+        private void BindDomainManifestation(PlayerDomainManifestation manifestation)
+        {
+            if (domainManifestation == manifestation) return;
+            if (domainManifestation != null)
+            {
+                domainManifestation.FeedbackRequested -= SetFeedback;
+            }
+
+            domainManifestation = manifestation;
+            if (domainManifestation != null)
+            {
+                domainManifestation.FeedbackRequested += SetFeedback;
+            }
         }
 
         private void SubscribeDomainSeed()
@@ -937,11 +1059,18 @@ namespace Cave.UI
 
         private void OnDestroy()
         {
+            // The staging object is runtime-built. Do not leave a scene transition
+            // with gameplay input suppressed if Unity destroys it while open.
+            if (selectionPanel != null && selectionPanel.activeSelf)
+            {
+                GameInput.EnableGameplayAfterInputRelease();
+            }
             SetUnderlyingHudVisible(true);
             UnsubscribeMode();
             UnsubscribeCurrency();
             UnsubscribeProgression();
             BindDomainMastery(null);
+            BindDomainManifestation(null);
             UnsubscribeDomainSeed();
             BindLauncher(null);
         }

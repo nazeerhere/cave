@@ -2,6 +2,7 @@ using System;
 using Cave.Axioms.Phase;
 using Cave.Combat;
 using Cave.Enemies;
+using Cave.Missions;
 using Cave.World;
 using UnityEngine;
 
@@ -118,12 +119,6 @@ namespace Cave.Player
             int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
             int appliedDamage = healthBeforeDamage - CurrentHealth;
-            PhaseCombatState.TryConsumeOpeningOnSuccessfulHit(
-                damageContext.Source,
-                gameObject,
-                appliedDamage,
-                damageContext,
-                Time.time);
             invulnerableUntil = Time.time + postHitInvulnerability;
             HealthChanged?.Invoke(CurrentHealth, maxHealth);
             DamageTaken?.Invoke();
@@ -138,12 +133,7 @@ namespace Cave.Player
             if (CurrentHealth == 0)
             {
                 curses?.NotifyPlayerDeath(damageContext.Source);
-                Died?.Invoke();
-                CurrentHealth = maxHealth;
-                playerRespawn.Respawn();
-                HealthChanged?.Invoke(CurrentHealth, maxHealth);
-                Respawned?.Invoke();
-                Debug.Log("Player respawned with full health.", this);
+                ReturnToStartingRoomAfterDeath();
             }
 
             return true;
@@ -192,11 +182,27 @@ namespace Cave.Player
             }
 
             curses?.NotifyPlayerDeath(source);
+            ReturnToStartingRoomAfterDeath();
+        }
+
+        private void ReturnToStartingRoomAfterDeath()
+        {
             Died?.Invoke();
             CurrentHealth = maxHealth;
-            playerRespawn.Respawn();
             HealthChanged?.Invoke(CurrentHealth, maxHealth);
+
+            MissionRunContext context = MissionRunContext.Current;
+            if (context != null && gameObject.scene.name != MissionRunContext.HubScene)
+            {
+                context.ReturnToHub();
+            }
+            else
+            {
+                playerRespawn.Respawn();
+            }
+
             Respawned?.Invoke();
+            Debug.Log("Player death resolved to the starting room.", this);
         }
 
         public bool IncreaseMaxHealth(int amount, bool addIncreaseToCurrentHealth = true)

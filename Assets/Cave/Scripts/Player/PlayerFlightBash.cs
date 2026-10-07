@@ -351,16 +351,16 @@ namespace Cave.Player
                 int appliedDamage = damageable.TakeDamageResolved(
                     impactDamage,
                     impactContext);
+                bool frenzyAxiomVariant = frenzyActivation != null;
                 ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
                     gameObject,
                     damageable,
                     appliedDamage,
-                    isFrenzyCritical,
+                    frenzyAxiomVariant,
                     impactContext,
                     Time.time,
                     axiomApplicationReceipt);
-                if (frenzyActivation != null
-                    && (frenzyActivation.ManaInfused || isFrenzyCritical))
+                if (frenzyActivation != null)
                 {
                     Vector2 criticalDirection = (Vector2)damageable.transform.position - impactPoint;
                     frenzyActivation.ApplyImpact(

@@ -1,5 +1,7 @@
 using System;
 using Cave.Audio;
+using Cave.Axioms;
+using Cave.Axioms.Elemental;
 using Cave.Combat;
 using Cave.InputSystem;
 using UnityEngine;
@@ -137,7 +139,11 @@ namespace Cave.Player
         public bool LeaveForSpin()
         {
             if (!BeginActionExit()) return false;
-            if (stamina != null && stamina.TryBeginBraceExitAttack()) return true;
+            if (stamina != null && stamina.TryBeginBraceExitAttack())
+            {
+                AxiomPhenomenonApplicationBridge.Apply(gameObject, AxiomKind.Potential, 1f, gameObject, null, Time.time);
+                return true;
+            }
             exitDiscountPending = false;
             return false;
         }
@@ -145,7 +151,11 @@ namespace Cave.Player
         public bool LeaveForHeavy()
         {
             if (!BeginActionExit()) return false;
-            if (chargedAttack != null && chargedAttack.TryBeginBraceExitCharge()) return true;
+            if (chargedAttack != null && chargedAttack.TryBeginBraceExitCharge())
+            {
+                AxiomPhenomenonApplicationBridge.Apply(gameObject, AxiomKind.Potential, 1f, gameObject, null, Time.time);
+                return true;
+            }
             exitDiscountPending = false;
             return false;
         }
