@@ -8,6 +8,7 @@ using Cave.Audio;
 using Cave.Axioms.Phase;
 using Cave.Axioms.Vfx;
 using Cave.Enemies;
+using Cave.Environmental;
 using Cave.InputSystem;
 using Cave.Player;
 using Cave.Progression;
@@ -22,6 +23,11 @@ namespace Cave.Combat
         /// <summary>Resolved heavy contact, including whether that exact hit
         /// ended the target. This is an observation seam only.</summary>
         public event Action<Damageable, bool, bool> HeavyTargetResolved;
+        /// <summary>Observation-only heavy lifecycle seams for presentation.</summary>
+        public event Action HeavyChargeStarted;
+        public event Action<int> HeavyChargeTierChanged;
+        public event Action<int> HeavyReleased;
+        public event Action<int, Vector3> HeavyImpactResolved;
 
         [Header("Charge Timing")]
         [SerializeField, Min(0.01f)] private float minimumChargeTime = 0.25f;
@@ -75,6 +81,9 @@ namespace Cave.Combat
         private int currentChargeTier;
         private float nextAttackTime;
         private int currentAttackSequence;
+        private int chargePreviewTier;
+        private bool terminalImpactResolved;
+        private CaveLoopHandle heavyChargeLoop;
         private bool isCharging;
         private bool isAttacking;
         // Explicit Tier-1 state: 0..4 maps to H1 Breaker through H5 Judgment.
@@ -102,6 +111,7 @@ namespace Cave.Combat
         private AxiomVfxPresenter axiomVfxPresenter;
         private PlayerHealth playerHealth;
         private PlayerSwordCosmetics swordCosmetics;
+        private SpriteRenderer legacyHeavyAttackRenderer;
 
         public bool IsCharging => isCharging;
         public bool IsAttacking => isAttacking;
@@ -132,6 +142,12 @@ namespace Cave.Combat
                 : attackVisual != null
                     ? attackVisual.transform
                     : null;
+            if (ShouldSuppressLegacyAttackPreview(
+                attackVisual != null && attackCollider != null && attackVisual == attackCollider.gameObject,
+                attackVisual != null && attackVisual.GetComponent<SpriteRenderer>() != null))
+            {
+                legacyHeavyAttackRenderer = attackVisual.GetComponent<SpriteRenderer>();
+            }
             if (attackTransform != null)
             {
                 restingAttackPosition = attackTransform.localPosition;
@@ -240,6 +256,14 @@ namespace Cave.Combat
             }
 
             PlayerBrace brace = GetComponent<PlayerBrace>();
+            if (!isCharging && !isAttacking && brace != null && brace.IsDeepBrace
+                && GameInput.ChargePressed)
+            {
+                // Deep Brace owns this press even when validation fails. It may
+                // never fall through into the ordinary Heavy charge path.
+                brace.TryUseResonantRestorationBurst();
+                return;
+            }
             if (brace != null && brace.IsActionLocked)
             {
                 groundSlam?.CancelAerialHeavyPreparation();
@@ -285,6 +309,7 @@ namespace Cave.Combat
                 && !isAttacking
                 && Time.time >= nextAttackTime
                 && !projectileChannelHeld
+                && !PlayerDash.IsContextualDashChordActive
                 && (GameInput.ChargePressed || heldFormalFollowUp))
             {
                 BeginCharge();
@@ -305,10 +330,30 @@ namespace Cave.Combat
 
         public void HandleHit(Collider2D other)
         {
-            if (!isAttacking || (damageableLayers.value & (1 << other.gameObject.layer)) == 0)
+            if (!isAttacking)
             {
                 return;
             }
+
+            if (FrenzyGeometryStructure.TryStrikeCollider(
+                other,
+                gameObject,
+                currentAttackDirection,
+                currentChargeTier >= 2))
+            {
+                return;
+            }
+
+            DamageTrait structuralTraits = DamageTrait.Melee | (currentChargeTier >= 3 ? DamageTrait.Heavy : DamageTrait.Direct);
+            if (StructuralImpactRouter.Apply(other, new StructuralImpactContext(
+                gameObject, other.ClosestPoint(transform.position), transform.right, currentDamage,
+                new DamageContext(gameObject, structuralTraits), false, false,
+                GetInstanceID() ^ Time.frameCount)))
+            {
+                return;
+            }
+
+            if ((damageableLayers.value & (1 << other.gameObject.layer)) == 0) return;
 
             Damageable damageable = other.GetComponentInParent<Damageable>();
             if (damageable == null || !hitTargets.Add(damageable))
@@ -364,6 +409,7 @@ namespace Cave.Combat
             bool imaginaryWasActive = HasActiveImaginaryState();
             Vector3 hitPosition = other.ClosestPoint(transform.position);
             bool wasHostile = HostileMobQuery.IsRealHostile(damageable);
+            damageContext = damageContext.WithTraits(DamageTrait.SignatureImpactAudio);
             int appliedDamage = damageable.TakeDamageResolved(resolvedDamage, damageContext);
             bool frenzyAxiomVariant = frenzyActivation != null;
             ElementalAxiomCombatBridge.TryApplyPlayerModeDirectHit(
@@ -374,14 +420,12 @@ namespace Cave.Combat
                 damageContext,
                 Time.time,
                 axiomApplicationReceipt);
-            if (appliedDamage > 0 && hadLatentPhaseBeforeHit)
-            {
-                PhaseCombatState.TryCollapseFromChargedHit(
+            bool phaseCollapseResolved = appliedDamage > 0 && hadLatentPhaseBeforeHit
+                && PhaseCombatState.TryCollapseFromChargedHit(
                     damageable.gameObject,
                     currentChargeTier,
                     gameObject,
                     Time.time);
-            }
             if (imaginaryWasActive && appliedDamage > 0)
             {
                 PlayImaginaryImpact(hitPosition);
@@ -403,6 +447,18 @@ namespace Cave.Combat
             if (appliedDamage > 0)
             {
                 HeavyTargetResolved?.Invoke(damageable, damageable.CurrentHealth <= 0, wasHostile);
+                if (!terminalImpactResolved)
+                {
+                    terminalImpactResolved = true;
+                    HeavyImpactResolved?.Invoke(currentChargeTier, hitPosition);
+                    // A resolved Phase Collapse is the terminal signature and
+                    // owns this impact. Ordinary Heavy impact remains for all
+                    // non-collapse hits.
+                    if (!phaseCollapseResolved)
+                    {
+                        CaveSfx.PlayAt(CaveSfxCue.HeavyImpact, hitPosition, 0.9f);
+                    }
+                }
             }
             if (frenzyActivation != null)
             {
@@ -433,9 +489,11 @@ namespace Cave.Combat
             // Heavy owns the shared sword immediately; Spin cannot keep draining
             // Stamina or leave its collider/rotation active beneath the windup.
             spinSwordAttack?.StopForCommittedFollowUp();
+            spinSwordAttack?.EnsureSwordPresentationVisible();
             chainWindowOpen = false;
             chainWindowEndsAt = 0f;
             isCharging = true;
+            terminalImpactResolved = false;
             activeHeavyIndex = Mathf.Clamp(heavyChainIndex, 0, 4);
             heavyVisualRevision++;
             if (combatFlow == null)
@@ -453,7 +511,10 @@ namespace Cave.Combat
             chargeStartedAt = Time.time;
             SetChargeIndicatorActive(true);
             PrepareHeavyPresentation();
+            chargePreviewTier = CalculateChargeTier(CurrentChargeDuration);
             UpdateChargeIndicator();
+            HeavyChargeStarted?.Invoke();
+            StartHeavyChargeLoop();
         }
 
         private bool HasActiveImaginaryState()
@@ -492,6 +553,7 @@ namespace Cave.Combat
             float heldDuration = CurrentChargeDuration;
             isCharging = false;
             SetChargeIndicatorActive(false);
+            StopHeavyChargeLoop();
 
             float chargeAmount = Mathf.InverseLerp(minimumChargeTime, maximumChargeTime, heldDuration);
             currentKnockback = Mathf.Lerp(baseKnockback, maximumKnockback, chargeAmount);
@@ -515,7 +577,8 @@ namespace Cave.Combat
                 : Vector2.right;
             currentAttackDirection = ResolveHeavyDirection(currentAttackDirection, activeHeavyIndex);
             heavyVisualRevision++;
-            CaveSfx.Play(CaveSfxCue.Whoosh, 0.9f);
+            HeavyReleased?.Invoke(currentChargeTier);
+            CaveSfx.Play(CaveSfxCue.HeavyRelease, 0.9f);
             StartCoroutine(PerformAttack());
             if (currentChargeTier >= 3)
             {
@@ -581,11 +644,24 @@ namespace Cave.Combat
         private void CancelCharge()
         {
             isCharging = false;
+            StopHeavyChargeLoop();
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
             ResetChain();
             RestoreAttackOrientation();
             combatFlow?.NotifyChargedCancelled();
+        }
+
+        /// <summary>
+        /// The Heavy+Dash chord may consume an unpaid windup, but never an
+        /// already committed strike or its recovery.
+        /// </summary>
+        public void CancelUncommittedChargeForPhaseDash()
+        {
+            if (isCharging && !isAttacking)
+            {
+                CancelCharge();
+            }
         }
 
         private IEnumerator PerformAttack()
@@ -712,6 +788,7 @@ namespace Cave.Combat
         {
             StopAllCoroutines();
             isCharging = false;
+            StopHeavyChargeLoop();
             isAttacking = false;
             SetChargeIndicatorActive(false);
             SetAttackActive(false);
@@ -789,6 +866,17 @@ namespace Cave.Combat
 
         private void UpdateChargeIndicator()
         {
+            if (isCharging)
+            {
+                int tier = CalculateChargeTier(CurrentChargeDuration);
+                if (tier != chargePreviewTier)
+                {
+                    chargePreviewTier = tier;
+                    HeavyChargeTierChanged?.Invoke(tier);
+                    CaveSfx.Play(CaveSfxCue.HeavyChargeStage, 0.65f);
+                }
+            }
+
             if (chargeIndicator == null)
             {
                 return;
@@ -797,6 +885,20 @@ namespace Cave.Combat
             float chargeAmount = Mathf.Clamp01(CurrentChargeDuration / maximumChargeTime);
             float scale = Mathf.Lerp(0.4f, 1.1f, chargeAmount);
             chargeIndicator.transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private void StartHeavyChargeLoop()
+        {
+            // No temporary one-shot is substituted for the final loop. Until
+            // a profile supplies a loop-safe clip, StartLoop returns an invalid
+            // handle and the ownership path remains harmlessly silent.
+            heavyChargeLoop = CaveSfx.StartLoop(CaveSfxCue.HeavyCharge, 0.45f, this);
+        }
+
+        private void StopHeavyChargeLoop()
+        {
+            CaveSfx.StopLoop(heavyChargeLoop);
+            heavyChargeLoop = default(CaveLoopHandle);
         }
 
         private void SetChargeIndicatorActive(bool active)
@@ -811,9 +913,20 @@ namespace Cave.Combat
         {
             if (attackVisual != null)
             {
+                bool isLegacyDefaultSword = ShouldSuppressLegacyAttackPreview(
+                    attackCollider != null && attackVisual == attackCollider.gameObject,
+                    legacyHeavyAttackRenderer != null);
                 bool isPersistentSword = spinSwordAttack != null
                     && attackVisual == spinSwordAttack.SwordVisualObject;
-                if (!isPersistentSword)
+                if (isLegacyDefaultSword)
+                {
+                    // The authored hitbox uses the old Brackeys Sword.png as a
+                    // collider preview. Keep the object/collider alive but never
+                    // draw that default sword over the equipped cosmetic.
+                    attackVisual.SetActive(active);
+                    legacyHeavyAttackRenderer.enabled = false;
+                }
+                else if (!isPersistentSword)
                 {
                     attackVisual.SetActive(active);
                 }
@@ -827,6 +940,13 @@ namespace Cave.Combat
             {
                 attackCollider.enabled = active;
             }
+        }
+
+        internal static bool ShouldSuppressLegacyAttackPreview(
+            bool sharesColliderObject,
+            bool hasSpriteRenderer)
+        {
+            return sharesColliderObject && hasSpriteRenderer;
         }
 
         private void OnDisable()

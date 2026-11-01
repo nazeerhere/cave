@@ -24,9 +24,11 @@ namespace Cave.Player
     [DisallowMultipleComponent]
     public sealed class PlayerLandmine : MonoBehaviour
     {
+        internal const int OverlapQueryCapacity = 64;
+
         [SerializeField, Min(0f)] private float armingDelay = 0.65f;
-        [SerializeField, Min(0.1f)] private float triggerRadius = 0.65f;
-        [SerializeField, Min(0.1f)] private float localPulseRadius = 1.2f;
+        [SerializeField, Min(0.1f)] private float triggerRadius = 1.95f;
+        [SerializeField, Min(0.1f)] private float localPulseRadius = 3.6f;
         [SerializeField, Min(0f)] private float localPulseForce = 7f;
         [SerializeField, Min(0.05f)] private float localPulseCooldown = 0.9f;
         [SerializeField, Min(0f)] private float localPulseEnergyCost = 0.8f;
@@ -36,8 +38,8 @@ namespace Cave.Player
         [Header("Player-to-Disk Pull Corridor (provisional tuning)")]
         [SerializeField, Min(0f)] private float corridorHalfWidth = 0.55f;
         [SerializeField, Min(0f)] private float corridorPullRange = 1.2f;
-        [SerializeField, Min(0f)] private float corridorPullForce = 7f;
-        [SerializeField, Min(0.1f)] private float blastRadius = 2.2f;
+        [SerializeField, Min(0f)] private float corridorPullForce = 10.5f;
+        [SerializeField, Min(0.1f)] private float blastRadius = 6.6f;
         [SerializeField, Min(0)] private int damage = 2;
         [SerializeField, Min(0f)] private float knockback = 11f;
         [SerializeField] private LayerMask enemyLayers = ~0;
@@ -49,7 +51,10 @@ namespace Cave.Player
         [SerializeField] private GameObject sacrificeExplosionVisualPrefab;
 
         private readonly HashSet<Damageable> affected = new HashSet<Damageable>();
-        private readonly Collider2D[] pulseHits = new Collider2D[16];
+        // The balanced radii cover nine times the former area. Keep the query
+        // non-allocating while raising its headroom so dense encounters do not
+        // silently truncate pulse or detonation targets.
+        private readonly Collider2D[] pulseHits = new Collider2D[OverlapQueryCapacity];
         private CircleCollider2D trigger;
         private LineRenderer ring;
         private Material ringMaterial;
@@ -63,6 +68,12 @@ namespace Cave.Player
         private bool sacrificePending;
         private bool removalNotified;
         private float nextLocalPulseAt;
+        private int progressionDamageBonus;
+        private float progressionAreaMultiplier = 1f;
+        private float progressionPullStrengthMultiplier = 1f;
+        private float tacticalGuardUntil;
+        private float tacticalSurgeUntil;
+        private bool tacticalSelected;
 
         public event Action<PlayerLandmine> Removed;
         /// <summary>Raised once an armed ordinary disk has affected at least one valid enemy through its existing pulse path.</summary>
@@ -75,28 +86,91 @@ namespace Cave.Player
         public bool IsArmed => isArmed;
         public bool HasDetonated => hasDetonated;
         public bool IsOperational => isArmed && !hasDetonated && !sacrificePending && IsActiveFieldNode;
-        public float LocalPulseRadius => localPulseRadius;
+        public float LocalPulseRadius => localPulseRadius * progressionAreaMultiplier;
         public float TriggerRadius => triggerRadius;
+        public float BlastRadius => blastRadius * progressionAreaMultiplier;
         public FieldNode FieldNode => fieldNode;
         public float SurvivabilityFraction => fieldNode != null ? fieldNode.SurvivabilityFraction : 1f;
         public ulong CreationOrder => fieldNode != null ? fieldNode.CreationOrder : 0UL;
+        public bool TacticalGuardActive => Time.time < tacticalGuardUntil;
+        public bool TacticalSurgeActive => Time.time < tacticalSurgeUntil;
+        public float EffectiveLocalPulseForce => ResolveTacticalPulseForce(
+            localPulseForce, TacticalGuardActive, TacticalSurgeActive);
+        public float EffectiveLocalPulseCooldown => ResolveTacticalPulseCooldown(
+            localPulseCooldown, TacticalSurgeActive);
         /// <summary>Observation seam for additive runtime state; it never changes disk combat behavior.</summary>
         public void NotifyObservedStateChanged() { StateChanged?.Invoke(this); }
+
+        public void ApplyTacticalGuard(float duration)
+        {
+            tacticalGuardUntil = Mathf.Max(tacticalGuardUntil, Time.time + Mathf.Max(0f, duration));
+            fieldNode?.ApplyTacticalGuard(duration, 0.6f);
+            StateChanged?.Invoke(this);
+        }
+
+        public void ApplyTacticalSurge(float duration)
+        {
+            tacticalSurgeUntil = Mathf.Max(tacticalSurgeUntil, Time.time + Mathf.Max(0f, duration));
+            StateChanged?.Invoke(this);
+        }
+
+        public void ClearTacticalModifiers()
+        {
+            tacticalGuardUntil = 0f;
+            tacticalSurgeUntil = 0f;
+            fieldNode?.ClearTacticalGuard();
+            SetTacticalSelected(false);
+            StateChanged?.Invoke(this);
+        }
+
+        public void SetTacticalSelected(bool selected)
+        {
+            tacticalSelected = selected;
+            RefreshRingColor();
+        }
+
+        internal static float ResolveTacticalPulseForce(float baseline, bool guard, bool surge)
+        {
+            float multiplier = (guard ? 1.4f : 1f) * (surge ? 1.5f : 1f);
+            return Mathf.Max(0f, baseline) * multiplier;
+        }
+
+        internal static float ResolveTacticalPulseCooldown(float baseline, bool surge)
+        {
+            return Mathf.Max(0.05f, baseline * (surge ? 0.5f : 1f));
+        }
 
         public void ConfigureFallback(
             float delay,
             float triggerDistance,
+            float pulseRadius,
             float explosionRadius,
             int explosionDamage,
             float explosionKnockback,
             LayerMask targets)
         {
             armingDelay = Mathf.Max(0f, delay);
-            triggerRadius = Mathf.Max(0.1f, triggerDistance);
-            blastRadius = Mathf.Max(triggerRadius, explosionRadius);
+            ConfigureEffectiveRanges(triggerDistance, pulseRadius, explosionRadius, targets);
             damage = Mathf.Max(0, explosionDamage);
             knockback = Mathf.Max(0f, explosionKnockback);
+        }
+
+        /// <summary>
+        /// Applies the authoritative authored radii as absolute values. Calling
+        /// this more than once cannot compound the balance multipliers, and it
+        /// keeps prefab-backed and fallback disks on the same effective values.
+        /// </summary>
+        public void ConfigureEffectiveRanges(
+            float triggerDistance,
+            float pulseRadius,
+            float explosionRadius,
+            LayerMask targets)
+        {
+            triggerRadius = Mathf.Max(0.1f, triggerDistance);
+            localPulseRadius = Mathf.Max(0.1f, pulseRadius);
+            blastRadius = Mathf.Max(triggerRadius, explosionRadius);
             enemyLayers = targets;
+            EnsureRuntimePresentation();
         }
 
         public void ConfigurePresentation(GameObject disk, GameObject pulse, GameObject overload, GameObject explosion)
@@ -112,6 +186,19 @@ namespace Cave.Player
                 if (diskVisual == null) diskVisual = GetComponent<OblivionDiskVisual>();
                 diskVisual?.UseRenderer(instance.GetComponentInChildren<SpriteRenderer>(true));
             }
+        }
+
+        /// <summary>
+        /// Snapshot permanent disk upgrades when the disk is placed. Existing
+        /// nodes retain their authored runtime shape; new ranks affect later
+        /// placements without changing the field-network authority.
+        /// </summary>
+        public void ConfigureProgressionUpgrades(int damageBonus, float areaMultiplier, float pullStrengthMultiplier)
+        {
+            progressionDamageBonus = Mathf.Max(0, damageBonus);
+            progressionAreaMultiplier = Mathf.Max(1f, areaMultiplier);
+            progressionPullStrengthMultiplier = Mathf.Max(1f, pullStrengthMultiplier);
+            EnsureRuntimePresentation();
         }
 
         public void Arm(GameObject mineOwner, DamageContext context)
@@ -162,6 +249,7 @@ namespace Cave.Player
                     ring.endColor = armedColor;
                 }
                 diskVisual?.SetActive();
+                RefreshRingColor();
                 StateChanged?.Invoke(this);
             }
         }
@@ -189,9 +277,10 @@ namespace Cave.Player
 
         private void PulseLocalField(GameObject triggeringTarget)
         {
-            nextLocalPulseAt = Time.time + localPulseCooldown;
+            nextLocalPulseAt = Time.time + EffectiveLocalPulseCooldown;
             affected.Clear();
-            int count = Physics2D.OverlapCircleNonAlloc(transform.position, localPulseRadius, pulseHits, enemyLayers);
+            float pulseRadius = LocalPulseRadius;
+            int count = Physics2D.OverlapCircleNonAlloc(transform.position, pulseRadius, pulseHits, enemyLayers);
             for (int index = 0; index < count; index++)
             {
                 Damageable target = pulseHits[index] != null
@@ -216,8 +305,9 @@ namespace Cave.Player
                     corridorHalfWidth,
                     corridorPullRange);
                 Vector2 force = inPullCorridor
-                    ? ((Vector2)transform.position - (Vector2)target.transform.position).normalized * corridorPullForce
-                    : (away.normalized + Vector2.up * 0.12f).normalized * localPulseForce;
+                    ? ((Vector2)transform.position - (Vector2)target.transform.position).normalized
+                        * corridorPullForce * progressionPullStrengthMultiplier
+                    : (away.normalized + Vector2.up * 0.12f).normalized * EffectiveLocalPulseForce;
                 receiver.ApplyKnockback(force);
             }
             fieldNode?.DrainEnergy(localPulseEnergyCost);
@@ -231,7 +321,7 @@ namespace Cave.Player
                     triggeringTarget, targets.AsReadOnly()));
             }
             SpawnPresentation(localPulseVisualPrefab, 0.35f);
-            AreaPulseEffect.Create(transform.position, localPulseRadius, armedColor, 0.2f);
+            AreaPulseEffect.Create(transform.position, pulseRadius, armedColor, 0.2f);
         }
 
         private void Detonate()
@@ -248,7 +338,8 @@ namespace Cave.Player
             diskVisual?.PlayExplosion();
             SpawnPresentation(sacrificeExplosionVisualPrefab, 0.5f);
             affected.Clear();
-            int overlapCount = Physics2D.OverlapCircleNonAlloc(transform.position, blastRadius, pulseHits, enemyLayers);
+            float resolvedBlastRadius = BlastRadius;
+            int overlapCount = Physics2D.OverlapCircleNonAlloc(transform.position, resolvedBlastRadius, pulseHits, enemyLayers);
             for (int index = 0; index < overlapCount; index++)
             {
                 Collider2D overlap = pulseHits[index];
@@ -259,7 +350,7 @@ namespace Cave.Player
                     continue;
                 }
 
-                int appliedDamage = target.TakeDamageResolved(damage, damageContext);
+                int appliedDamage = target.TakeDamageResolved(damage + progressionDamageBonus, damageContext);
                 if (!target.gameObject.activeInHierarchy)
                 {
                     continue;
@@ -290,7 +381,7 @@ namespace Cave.Player
                 }
             }
 
-            AreaPulseEffect.Create(transform.position, blastRadius, armedColor, 0.32f);
+            AreaPulseEffect.Create(transform.position, resolvedBlastRadius, armedColor, 0.32f);
             Destroy(gameObject, 0.35f);
         }
 
@@ -318,7 +409,9 @@ namespace Cave.Player
             }
 
             trigger.isTrigger = true;
-            trigger.radius = Mathf.Max(triggerRadius, localPulseRadius);
+            // Enter/Stay is the arming trigger. The wider local pulse is an
+            // explicit overlap query and must not silently broaden this collider.
+            trigger.radius = TriggerRadius;
 
             Rigidbody2D body = GetComponent<Rigidbody2D>();
             if (body == null)
@@ -349,11 +442,22 @@ namespace Cave.Player
             for (int index = 0; index < ring.positionCount; index++)
             {
                 float angle = index / (float)ring.positionCount * Mathf.PI * 2f;
-                ring.SetPosition(index, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * localPulseRadius);
+                ring.SetPosition(index, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * LocalPulseRadius);
             }
 
             diskVisual = GetComponent<OblivionDiskVisual>();
             if (diskVisual == null) diskVisual = gameObject.AddComponent<OblivionDiskVisual>();
+            RefreshRingColor();
+        }
+
+        private void RefreshRingColor()
+        {
+            if (ring == null) return;
+            Color color = tacticalSelected
+                ? new Color(0.2f, 0.95f, 1f, 1f)
+                : isArmed ? armedColor : new Color(0.5f, 0.5f, 0.55f, 0.75f);
+            ring.startColor = color;
+            ring.endColor = color;
         }
 
         private void SpawnPresentation(GameObject prefab, float lifetime)

@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7056306482094184621
 Transform:
   m_ObjectHideFlags: 0
@@ -310,6 +310,7 @@ MonoBehaviour:
   feintChance: 0.15
   feintDelay: 0.3
   guardBreakChance: 0.15
+  bruteGuardBreakAttemptChance: 0.72
   guardBreakDamage: 2
   guardBreakRange: 1.35
   guardBreakWindup: 0.65
@@ -337,6 +338,7 @@ MonoBehaviour:
   trollChargedRecovery: 0.85
   trollChargedCooldown: 1.45
   trollChargedFeintChance: 0.33
+  trollHeavyToGuardBreakSoftFeintChance: 0.25
   trollChargedCommitPoint: 0.7
   trollChargedKnockback: 12
   trollKnockbackControlLock: 0.2
@@ -418,6 +420,10 @@ MonoBehaviour:
   impactVfxScale: 0.42
   statusVfxLocalOffset: {x: 0, y: 0.04, z: 0.01}
   statusVfxScale: 0.38
+  visualScaleBaseMultiplier: 1
+  minimumVisualScaleMultiplier: 0.55
+  maximumVisualScaleMultiplier: 1.75
+  visualScaleOverride: 0
   sortingOrderOffset: 3
   minorStaggerVfxPrefab: {fileID: 8525990746615576120, guid: b85d21f3b8fed714bacf0c4fd50fa512, type: 3}
   normalStaggerVfxPrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
@@ -440,6 +446,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   movementLockDuration: 0.25
+  maximumKnockbackSpeed: 25
 --- !u!114 &5657567811465515714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -490,6 +497,9 @@ MonoBehaviour:
   returnToPatrolDelay: 2
   combatLeashRadius: 12
   decisionInterval: 0.12
+  respondsToDistractions: 1
+  distractionMoveSpeed: 2
+  distractionStoppingDistance: 0.8
   drawDetectionRange: 1
   drawPatrolRadius: 1
   showCurrentState: 1
@@ -569,7 +579,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8490192045767738830}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: aeb36cacb143f494287b68e2e225367a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   archetypes: 1

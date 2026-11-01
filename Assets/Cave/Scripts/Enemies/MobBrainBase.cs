@@ -4,6 +4,13 @@ using UnityEngine;
 
 namespace Cave.Enemies
 {
+    /// <summary>Optional match-scoped target override. Ordinary actors never
+    /// receive one, so their existing brain decisions remain unchanged.</summary>
+    public interface IMobStrategicOverride
+    {
+        bool IsDrivingStrategicTarget { get; }
+    }
+
     public enum MobBrainState
     {
         Patrol,
@@ -58,6 +65,7 @@ namespace Cave.Enemies
         private float nextTargetSearchTime;
         private float outsideLoseRangeSince = -1f;
         private bool engaged;
+        private IMobStrategicOverride strategicOverride;
 
         public MobBrainState CurrentState => currentState;
         public string CurrentDecision => currentDecision;
@@ -145,6 +153,11 @@ namespace Cave.Enemies
 
             nextDecisionTime = Time.time + decisionInterval;
 
+            if (strategicOverride != null && strategicOverride.IsDrivingStrategicTarget)
+            {
+                return;
+            }
+
             if (defense != null
                 && (defense.CurrentState == EnemyDefenseState.Blocking
                     || defense.CurrentState == EnemyDefenseState.Parrying
@@ -230,6 +243,10 @@ namespace Cave.Enemies
         }
 
         protected abstract void ConfigureCapabilities();
+        public void SetModeScopedStrategicOverride(IMobStrategicOverride value)
+        {
+            strategicOverride = value;
+        }
         protected virtual void SetCapabilityBrainControl(bool controlled)
         {
         }

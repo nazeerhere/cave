@@ -608,7 +608,7 @@ MonoBehaviour:
   healTickInterval: 1
   maximumHealChannel: 4
   healRange: 8
-  healCooldown: 2
+  healCooldown: 4
   allyLayers:
     serializedVersion: 2
     m_Bits: 4294967295

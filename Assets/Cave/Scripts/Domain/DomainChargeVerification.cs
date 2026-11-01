@@ -22,6 +22,12 @@ namespace Cave.Domain
             Require(ledger.TrySpend(5f) && Near(ledger.CurrentCharge, 83f), "drain");
             ledger.ResetCharge();
             Require(Near(ledger.CurrentCharge, 0f), "death reset");
+
+            Require(Near(PlayerDomainManifestation.DefaultChargeDrainPerSecond, 2f),
+                "active manifestation uses the forty-percent charge drain");
+            Require(Near(PlayerDomainManifestation.RequestedDrainForDelta(
+                    PlayerDomainManifestation.DefaultChargeDrainPerSecond, 1.25f), 2.5f),
+                "active manifestation drain is frame-rate independent");
         }
 
         private static bool Near(float left, float right) { return Math.Abs(left - right) < .001f; }

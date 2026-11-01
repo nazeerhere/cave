@@ -14,6 +14,7 @@ namespace Cave.UI
         private GameObject settingsPanel;
         private GameObject movesListPanel;
         private GameObject ledgerPanel;
+        private GameObject inventoryPanel;
         private Text ledgerBodyText;
         private EnemyLedgerPagesHud ledgerPages;
         private Text movesLeftText;
@@ -44,6 +45,9 @@ namespace Cave.UI
             GameObject ledgerPanelObject,
             Button ledgerButton,
             Button ledgerBackButton,
+            GameObject inventoryPanelObject,
+            Button inventoryButton,
+            Button inventoryBackButton,
             Text configuredLedgerBodyText,
             Text configuredMovesLeftText,
             Text configuredMovesRightText,
@@ -59,6 +63,7 @@ namespace Cave.UI
             settingsController = configuredSettingsController;
             movesListPanel = movesPanelObject;
             ledgerPanel = ledgerPanelObject;
+            inventoryPanel = inventoryPanelObject;
             ledgerBodyText = configuredLedgerBodyText;
             ledgerPages = ledgerPanel != null ? ledgerPanel.GetComponent<EnemyLedgerPagesHud>() : null;
             movesLeftText = configuredMovesLeftText;
@@ -78,6 +83,8 @@ namespace Cave.UI
             movesBackButton.onClick.AddListener(ShowPauseMenu);
             ledgerButton.onClick.AddListener(ShowLedger);
             ledgerBackButton.onClick.AddListener(ShowPauseMenu);
+            inventoryButton.onClick.AddListener(ShowInventory);
+            inventoryBackButton.onClick.AddListener(ShowPauseMenu);
             movesPageButton.onClick.AddListener(ToggleMovesPage);
             if (domainTestOverrideButton != null)
             {
@@ -90,6 +97,7 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             ledgerPanel.SetActive(false);
+            inventoryPanel.SetActive(false);
         }
 
         /// <summary>Optional child page of the existing Settings menu.</summary>
@@ -101,6 +109,16 @@ namespace Cave.UI
 
         private void Update()
         {
+            if (PlayerEquipmentController.AnyWheelOpen)
+            {
+                if (GameInput.PausePressed || GameInput.MenuCancelPressed)
+                {
+                    GameInput.ConsumeMenuInputForCurrentFrame();
+                    PlayerEquipmentController.CancelAnyOpenWheel();
+                }
+                return;
+            }
+
             if (PlayerCurseAltarController.AnySelectionOpen)
             {
                 return;
@@ -124,6 +142,7 @@ namespace Cave.UI
                 if ((settingsPanel != null && settingsPanel.activeSelf)
                     || (movesListPanel != null && movesListPanel.activeSelf)
                     || (ledgerPanel != null && ledgerPanel.activeSelf)
+                    || (inventoryPanel != null && inventoryPanel.activeSelf)
                     || (developerSettingsPanel != null && developerSettingsPanel.activeSelf))
                 {
                     ShowPauseMenu();
@@ -149,6 +168,7 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
             if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             pauseMenu.SetActive(true);
             RefreshDomainTestOverridePresentation();
@@ -167,6 +187,7 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
             if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             Time.timeScale = previousTimeScale;
             GameInput.EnableGameplayAfterInputRelease();
@@ -195,6 +216,7 @@ namespace Cave.UI
             {
                 ledgerPanel.SetActive(false);
             }
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
 
             if (developerSettingsPanel != null)
             {
@@ -217,6 +239,7 @@ namespace Cave.UI
             pauseMenu.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
             if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             settingsPanel.SetActive(true);
             settingsController?.PrepareToShow();
@@ -232,6 +255,7 @@ namespace Cave.UI
             pauseMenu.SetActive(false);
             settingsPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
             if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             movesListPanel.SetActive(true);
             movesPageIndex = 0;
@@ -249,6 +273,7 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
             ledgerPanel.SetActive(true);
             if (ledgerPages != null)
             {
@@ -258,6 +283,17 @@ namespace Cave.UI
             {
                 ledgerBodyText.text = EnemyLedger.BuildSummary();
             }
+        }
+
+        public void ShowInventory()
+        {
+            if (!isPaused || inventoryPanel == null) return;
+            pauseMenu.SetActive(false);
+            settingsPanel.SetActive(false);
+            movesListPanel.SetActive(false);
+            if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
+            inventoryPanel.SetActive(true);
         }
 
         public void ShowPauseMenu()
@@ -270,6 +306,7 @@ namespace Cave.UI
             settingsPanel.SetActive(false);
             movesListPanel.SetActive(false);
             if (ledgerPanel != null) ledgerPanel.SetActive(false);
+            if (inventoryPanel != null) inventoryPanel.SetActive(false);
             if (developerSettingsPanel != null) developerSettingsPanel.SetActive(false);
             settingsController?.CancelRebind();
             pauseMenu.SetActive(true);
@@ -326,16 +363,16 @@ namespace Cave.UI
             {
                 movesRightText.text =
                     "DEFENSE FOLLOW-UPS\n\n"
-                    + "Normal Parry → Heavy begins at Tier 1.\n"
-                    + "Perfect Parry → Heavy begins at Tier 2.\n"
-                    + "Successful Guard Break → Heavy begins at Tier 1.\n"
+                    + "Normal Parry → Heavy begins at Tier 2.\n"
+                    + "Perfect Parry → Heavy begins at Tier 3.\n"
+                    + "Successful Guard Break → Heavy begins at Tier 2.\n"
                     + "After Parry timing: Guard + GB enters Brace.\n\n"
                     + "PROJECTILES & ITEMS\n\n"
                     + Key(GameAction.FireProjectile) + "  Fire Current Mode Projectile\n"
                     + Key(GameAction.UseHealthPotion) + "  Health Potion\n"
                     + Key(GameAction.UseManaPotion) + "  Mana Potion\n"
-                    + Key(GameAction.PlaceLandmine) + "  Place Landmine\n"
-                    + Key(GameAction.UseDistraction) + "  Use Distraction\n\n"
+                    + Key(GameAction.SelectEquipment) + "  Hold — Equipment Wheel\n"
+                    + Key(GameAction.ActivateEquipment) + "  Tap / Hold — Use Equipment\n\n"
                     + "WORLD\n"
                     + Key(GameAction.Interact) + "  Interact when no combat priority\n"
                     + Key(GameAction.SummonCurseAltar) + "  Tap — Summon Curse Altar\n"
@@ -425,13 +462,13 @@ namespace Cave.UI
                 movesChainLeftText.text =
                     "2. FOLLOW-UPS / CHAINS\n\n"
                     + "Spin → GB = Bash.\n"
-                    + "Parry → Heavy starts at Tier 1.\n"
-                    + "Perfect Parry → Heavy starts at Tier 2.\n"
-                    + "Successful GB → Heavy starts at Tier 1.\n"
+                    + "Parry → Heavy starts at Tier 2.\n"
+                    + "Perfect Parry → Heavy starts at Tier 3.\n"
+                    + "Successful GB → Heavy starts at Tier 2.\n"
                     + "Heavy or GB → Dash = Cross Step.\n"
                     + "Successful defense → Dash = Slip.\n"
                     + "Successful defense → GB = Counter Push.\n\n"
-                    + "Brace exits through Spin or Heavy. Quick Brace makes that exit cheaper.";
+                    + "Brace exits through Spin or Heavy. Quick Brace makes that exit cost half Stamina.";
             }
 
             if (movesChainRightText != null)
@@ -439,9 +476,9 @@ namespace Cave.UI
                 movesChainRightText.text =
                     "BRACE STAGES\n\n"
                     + "QUICK BRACE\n"
-                    + "Guard + GB after the Parry timing window. Brief and mobile; its next Spin or Heavy costs less.\n\n"
+                    + "Guard + GB after the Parry timing window. Brief and mobile; its next Spin or Heavy costs half Stamina.\n\n"
                     + "FULL BRACE\n"
-                    + "BRACE I. Reached automatically from Quick Brace. Main defensive stance; restores 5% maximum Stamina per second and can Deflect.\n\n"
+                    + "BRACE I. Reached automatically from Quick Brace. Slowed; restores 5% maximum Stamina per second. A committed Spin or Heavy can Deflect eligible melee: cancel the hit, gain the Normal-Parry Stamina reward, and retain Brace.\n\n"
                     + "DEEP BRACE\n"
                     + "BRACE II. Press GB again from Full. Immobile and no Guard; restores 3% maximum Stamina and 5% maximum Mana per second while held.";
             }
@@ -459,7 +496,8 @@ namespace Cave.UI
                     + "Flight — Wind movement and Ground Smash.\n"
                     + "Strength — shield and physical pressure.\n\n"
                     + "Each mode and tier is shown in the Modes / Shop panel. Use the selected mode's projectile with "
-                    + Key(GameAction.FireProjectile) + ".";
+                    + Key(GameAction.FireProjectile) + ". Hold it with " + Key(GameAction.ChargedAttack)
+                    + " to charge and release a Heavy projectile.";
             }
 
             if (movesChainRightText != null)
@@ -470,6 +508,8 @@ namespace Cave.UI
                     + Key(GameAction.Interact) + " tap prepares Physical; hold infuses Mana. The next new qualifying attack claims it.\n\n"
                     + "RESOURCES\n"
                     + "Mana powers standard projectiles and skills. Stamina powers Spin, Heavy actions, movement, and Ground Smash.\n\n"
+                    + "DOMAIN / ALTAR\n"
+                    + Key(GameAction.SummonCurseAltar) + " tap places an Altar; hold 0.6s manifests or dismisses Domain.\n\n"
                     + "UNBLOCKABLE ≠ UNPARRYABLE\n"
                     + "Some attacks bypass Guard but can still be perfectly parried.";
             }

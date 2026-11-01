@@ -139,6 +139,30 @@ namespace Cave.Gambit
         public int RegisteredPieceCount => pieces.Count;
         public float ConnectionDistance => inventory!=null?inventory.FieldLinkDistance:0f;
 
+        public IReadOnlyList<SovereignGambitTrapPiece> SnapshotPieces()
+        {
+            return OrderedPieces().AsReadOnly();
+        }
+
+        public void CopyPieces(List<SovereignGambitTrapPiece> destination)
+        {
+            if(destination==null)return;destination.Clear();
+            foreach(KeyValuePair<PlayerLandmine,SovereignGambitTrapPiece> pair in pieces)
+                if(pair.Key!=null&&pair.Value!=null)destination.Add(pair.Value);
+            destination.Sort((left,right)=>left.PhysicalTrap.CreationOrder.CompareTo(right.PhysicalTrap.CreationOrder));
+        }
+
+        public bool TryGetPiece(ulong creationOrder,out SovereignGambitTrapPiece piece)
+        {
+            piece=null;
+            foreach(KeyValuePair<PlayerLandmine,SovereignGambitTrapPiece> pair in pieces)
+            {
+                if(pair.Key!=null&&pair.Key.CreationOrder==creationOrder&&pair.Value!=null)
+                { piece=pair.Value;return true; }
+            }
+            return false;
+        }
+
         /// <summary>Begins observing this player's actual disks for one already-created Gambit match.</summary>
         public bool Bind(SovereignGambitRuntime match)
         {
@@ -151,6 +175,9 @@ namespace Cave.Gambit
             IReadOnlyList<PlayerLandmine> existing=inventory.ActiveMines;
             for(int index=0;index<existing.Count;index++)Track(existing[index]);
             RebuildTopology();
+            SovereignGambitTacticalCommandController tactical=GetComponent<SovereignGambitTacticalCommandController>();
+            if(tactical==null)tactical=gameObject.AddComponent<SovereignGambitTacticalCommandController>();
+            tactical.Bind(this);
             return true;
         }
 
@@ -165,8 +192,20 @@ namespace Cave.Gambit
             RebuildTopology();
         }
 
+        /// <summary>Refreshes position-qualified influence targets without
+        /// rebuilding physical FieldNetwork edges. The Standard match host uses
+        /// this at a bounded cadence only while the Sovereign is moving.</summary>
+        public void RefreshStrategicInfluences()
+        {
+            if(runtime==null||runtime.Phase!=GambitMatchPhase.Active)return;
+            List<SovereignGambitTrapPiece> ordered=OrderedPieces();
+            for(int index=0;index<ordered.Count;index++)ordered[index].RefreshInfluence();
+            runtime.Evaluate(Time.time);
+        }
+
         public void Unbind()
         {
+            GetComponent<SovereignGambitTacticalCommandController>()?.Unbind(this);
             if(subscribed&&inventory!=null)inventory.LandminePlaced-=HandleLandminePlaced;
             if(subscribed&&inventory!=null&&inventory.FieldNetwork!=null)inventory.FieldNetwork.TopologyChanged-=HandleFieldTopologyChanged;
             if(subscribed&&runtime!=null)runtime.PhaseChanged-=HandlePhaseChanged;

@@ -1898,7 +1898,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   kind: 2
   identifier: ToHollowDistricts
-  destinationScene: Cave_Level01
+  destinationScene: 03_HollowDistricts
   boundsSize: {x: 1, y: 1}
 --- !u!1 &609997836
 GameObject:

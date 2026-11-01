@@ -182,3 +182,5 @@ MonoBehaviour:
   burnDamage: 1
   burnTickInterval: 1
   burnDuration: 3
+  heavyExplosionVisualPrefab: {fileID: 1301724593524786713, guid: b5466324f30914dcaa944d89c43dace7, type: 3}
+  heavyExplosionVisualLifetime: 0.8

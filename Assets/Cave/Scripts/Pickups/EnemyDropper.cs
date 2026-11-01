@@ -97,12 +97,11 @@ namespace Cave.Pickups
                 ? generalPrimaryChanceMultiplier
                     + witnessedDeaths * veteranPrimaryChanceBonusPerDeath
                 : 1f;
-            float towerDropMultiplier = DetectiveTower.GetOrdinaryDropRateMultiplier(
-                transform.position);
+            float ordinaryDropMultiplier = ResolveOrdinaryPrimaryChanceMultiplier(transform.position);
+            float towerDropMultiplier = DetectiveTower.GetOrdinaryDropRateMultiplier(transform.position);
             float insanityDropMultiplier = Cave.Player.PlayerCurseController.Active != null
-                ? Cave.Player.PlayerCurseController.Active.OrdinaryDropChanceMultiplier
-                : 1f;
-            primaryChanceMultiplier *= towerDropMultiplier * insanityDropMultiplier;
+                ? Cave.Player.PlayerCurseController.Active.OrdinaryDropChanceMultiplier : 1f;
+            primaryChanceMultiplier *= ordinaryDropMultiplier;
             DropEntry primary = ChoosePrimary(eligibleEntries, primaryChanceMultiplier);
             if (primary == null)
             {
@@ -157,24 +156,23 @@ namespace Cave.Pickups
 
         private static List<DropEntry> BuildEligibleEntries(DropEntry[] entries)
         {
-            List<DropEntry> eligible = new List<DropEntry>();
-            foreach (DropEntry entry in entries)
-            {
-                if (entry != null
-                    && entry.PickupPrefab != null
-                    && !(entry.PickupPrefab is StaminaPickup))
-                {
-                    eligible.Add(entry);
-                }
-            }
-
-            return eligible;
+            return BuildEligibleEntriesByMobRules(entries);
         }
 
-        private static DropEntry ChoosePrimary(
-            List<DropEntry> entries,
-            float chanceMultiplier)
+        /// <summary>
+        /// Shared primary-drop roll used by enemies and eligible environmental rewards.
+        /// This keeps crates and crystals on the same cumulative chance rule without
+        /// requiring them to impersonate combat enemies.
+        /// </summary>
+        public static DropEntry ChoosePrimaryByMobRules(
+            IList<DropEntry> entries,
+            float chanceMultiplier = 1f)
         {
+            if (entries == null)
+            {
+                return null;
+            }
+
             float roll = Random.value;
             float cumulativeChance = 0f;
             foreach (DropEntry entry in entries)
@@ -190,6 +188,34 @@ namespace Cave.Pickups
             }
 
             return null;
+        }
+
+        public static List<DropEntry> BuildEligibleEntriesByMobRules(IList<DropEntry> entries)
+        {
+            List<DropEntry> eligible = new List<DropEntry>();
+            if (entries == null) return eligible;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                DropEntry entry = entries[i];
+                if (entry != null && entry.PickupPrefab != null && !(entry.PickupPrefab is StaminaPickup))
+                    eligible.Add(entry);
+            }
+            return eligible;
+        }
+
+        public static float ResolveOrdinaryPrimaryChanceMultiplier(Vector2 position)
+        {
+            float tower = DetectiveTower.GetOrdinaryDropRateMultiplier(position);
+            float curse = Cave.Player.PlayerCurseController.Active != null
+                ? Cave.Player.PlayerCurseController.Active.OrdinaryDropChanceMultiplier : 1f;
+            return tower * curse;
+        }
+
+        private static DropEntry ChoosePrimary(
+            List<DropEntry> entries,
+            float chanceMultiplier)
+        {
+            return ChoosePrimaryByMobRules(entries, chanceMultiplier);
         }
 
         private static DropEntry ChooseAdditional(

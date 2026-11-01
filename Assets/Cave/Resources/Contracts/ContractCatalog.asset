@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a6f6ff28b60410fbf86e93e0d4d9ec1, type: 3}
+  m_Name: ContractCatalog
+  m_EditorClassIdentifier: Assembly-CSharp:Cave.Missions:ContractCatalog
+  contracts:
+  - id: herbalists_request
+    displayName: HERBALIST'S REQUEST
+    tier: 1
+    objective: Gather three contract-scoped flora samples.
+    trainingFocus: Exploration, interaction, and safe resource recovery.
+    coinReward: 10
+    objectiveType: 1
+    requiredCount: 3
+    proficientSeconds: 75
+    masteredSeconds: 40
+  - id: salvage_recovery
+    displayName: SALVAGE RECOVERY
+    tier: 1
+    objective: Retrieve three marked supply caches.
+    trainingFocus: Movement, route planning, and interaction.
+    coinReward: 13
+    objectiveType: 2
+    requiredCount: 3
+    proficientSeconds: 90
+    masteredSeconds: 45
+  - id: breakers_trial
+    displayName: BREAKER'S TRIAL
+    tier: 1
+    objective: Break marked environmental targets.
+    trainingFocus: Environmental destruction and impact timing.
+    coinReward: 15
+    objectiveType: 0
+    requiredCount: 1
+    proficientSeconds: 90
+    masteredSeconds: 45
+  - id: vermin_purge
+    displayName: VERMIN PURGE
+    tier: 1
+    objective: Clear a contained vermin infestation.
+    trainingFocus: Baseline combat and target prioritization.
+    coinReward: 18
+    objectiveType: 0
+    requiredCount: 1
+    proficientSeconds: 90
+    masteredSeconds: 45
+  - id: hazard_sweep
+    displayName: HAZARD SWEEP
+    tier: 2
+    objective: Traverse and neutralize a hazardous route.
+    trainingFocus: Hazard reading, movement, and mitigation.
+    coinReward: 40
+    objectiveType: 0
+    requiredCount: 1
+    proficientSeconds: 90
+    masteredSeconds: 45
+  - id: caravan_protection
+    displayName: CARAVAN PROTECTION
+    tier: 2
+    objective: Escort a vulnerable caravan through danger.
+    trainingFocus: Protection, positioning, and threat control.
+    coinReward: 49
+    objectiveType: 0
+    requiredCount: 1
+    proficientSeconds: 90
+    masteredSeconds: 45
+  - id: axiom_proving_ground
+    displayName: AXIOM PROVING GROUND
+    tier: 3
+    objective: Complete a controlled Axiom challenge.
+    trainingFocus: Axiom state, rate, acceleration, and intervention.
+    coinReward: 135
+    objectiveType: 0
+    requiredCount: 1
+    proficientSeconds: 90
+    masteredSeconds: 45
+  - id: sovereign_gauntlet
+    displayName: SOVEREIGN GAUNTLET
+    tier: 3
+    objective: Survive the Sovereign's advanced trial.
+    trainingFocus: Integrated mastery of Cave's combat systems.
+    coinReward: 180
+    objectiveType: 0
+    requiredCount: 1
+    proficientSeconds: 90
+    masteredSeconds: 45

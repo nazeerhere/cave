@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cave.Diagnostics;
 
 namespace Cave.Player
@@ -6,6 +7,17 @@ namespace Cave.Player
     /// <summary>Pure catalogue contracts for the presentation-only player skin system.</summary>
     public static class PlayerSkinCosmeticsVerification
     {
+        private static readonly Dictionary<string, int> ExpectedAnimationFrameCounts =
+            new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                { "Brace", 4 }, { "Cast", 4 }, { "Dash", 4 }, { "Death", 5 },
+                { "Guard", 4 }, { "GuardBreak", 4 }, { "Heavy_1", 5 },
+                { "Heavy_2", 5 }, { "Heavy_3", 5 }, { "Heavy_4", 5 },
+                { "Heavy_5", 5 }, { "Heavy_Charge", 4 }, { "Hit", 4 },
+                { "Idle", 4 }, { "Interact", 4 }, { "Jump", 5 }, { "Knockback", 5 },
+                { "Landing", 4 }, { "Parry", 4 }, { "Run", 6 }, { "Spin", 6 }
+            };
+
         public static bool TryRunAll(out string failure)
         {
             if (PlayerSkinLibrary.Count != 8)
@@ -25,6 +37,13 @@ namespace Cave.Player
                 }
             }
 
+            if (!PlayerSkinCosmetics.IsAvailableForPolicy(PlayerSkinSelection.DefaultMiner, true, false)
+                || PlayerSkinCosmetics.IsAvailableForPolicy(PlayerSkinSelection.DefaultMiner, false, false))
+            {
+                failure = "Default Miner availability must follow its real, always-unlocked state.";
+                return false;
+            }
+
             if (PlayerSkinLibrary.GetDefinition(PlayerSkinSelection.DefaultMiner).Policy
                 != PlayerSkinLibrary.UnlockPolicy.AlwaysAvailable
                 || PlayerSkinCosmetics.IvorySovereignRequiredPlayerLevel != 15)
@@ -38,6 +57,22 @@ namespace Cave.Player
             {
                 failure = "Crimson Exile must be gated by an authoritative Gambit victory.";
                 return false;
+            }
+
+            if (MinerPlayerVisualAnimator.AlternateHeavyAnimationNameFor(true, 4) != "Heavy_Charge")
+            {
+                failure = "Alternate skins must use Heavy_Charge while the charged attack is charging.";
+                return false;
+            }
+
+            for (int index = 0; index < 5; index++)
+            {
+                if (MinerPlayerVisualAnimator.AlternateHeavyAnimationNameFor(false, index)
+                    != "Heavy_" + (index + 1))
+                {
+                    failure = "Alternate heavy attack visual source mapping is invalid for index " + index + ".";
+                    return false;
+                }
             }
 
             if (CosmeticAvailability.IsAvailable(false, false)
@@ -74,20 +109,50 @@ namespace Cave.Player
                 return false;
             }
 
-            bool releaseValue = DeveloperDiagnosticsSettings.ResolveUnlockAllCosmeticsForLoad(
+            bool releaseStoredValue = DeveloperDiagnosticsSettings.ResolveUnlockAllCosmeticsForLoad(
                 false, false, true, out writeOverride, out writeMigration);
-            if (releaseValue || writeOverride || writeMigration)
+            if (!releaseStoredValue || writeOverride || writeMigration
+                || DeveloperDiagnosticsSettings.IsCosmeticsOverrideEffective(false, releaseStoredValue))
             {
-                failure = "The cosmetics override must remain unavailable outside editor/debug builds.";
+                failure = "A stored cosmetics override must remain inactive when development features are unavailable.";
+                return false;
+            }
+
+            if (!DeveloperDiagnosticsSettings.IsFeatureAvailable(true, false, false)
+                || !DeveloperDiagnosticsSettings.IsFeatureAvailable(false, true, false)
+                || !DeveloperDiagnosticsSettings.IsFeatureAvailable(false, false, true)
+                || DeveloperDiagnosticsSettings.IsFeatureAvailable(false, false, false)
+                || !DeveloperDiagnosticsSettings.IsUnbrandedLocalDevelopmentBuild("DefaultCompany", "New Unity Project")
+                || DeveloperDiagnosticsSettings.IsUnbrandedLocalDevelopmentBuild("Cave Studio", "Cave: Sovereign Depths"))
+            {
+                failure = "Developer feature policy does not distinguish editor, debug, local-development, and release environments.";
                 return false;
             }
 
             for (int index = 0; index < PlayerSkinLibrary.Count; index++)
             {
-                if (!CosmeticAvailability.IsAvailable(false, true))
+                PlayerSkinSelection selection = (PlayerSkinSelection)index;
+                PlayerSkinLibrary.Definition definition = PlayerSkinLibrary.GetDefinition(selection);
+                if (!PlayerSkinCosmetics.IsAvailableForPolicy(selection, false, true))
                 {
-                    failure = "Every registered skin must be effectively available under the developer override.";
+                    failure = selection + " must be effectively available through the live skin policy under the developer override.";
                     return false;
+                }
+
+                if (selection == PlayerSkinSelection.DefaultMiner) continue;
+                if (string.IsNullOrEmpty(definition.ResourceRoot))
+                {
+                    failure = selection + " does not provide a skin resource root.";
+                    return false;
+                }
+
+                foreach (KeyValuePair<string, int> expected in ExpectedAnimationFrameCounts)
+                {
+                    if (PlayerSkinLibrary.LoadFrames(selection, expected.Key).Length != expected.Value)
+                    {
+                        failure = selection + " has an invalid " + expected.Key + " resource sequence.";
+                        return false;
+                    }
                 }
             }
 

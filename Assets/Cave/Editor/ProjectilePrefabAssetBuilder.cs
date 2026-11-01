@@ -18,7 +18,10 @@ namespace Cave.EditorTools
         [InitializeOnLoadMethod]
         private static void EnsureHeavyPrefabAfterCompile()
         {
-            EnsureHeavyPrefab();
+            // InitializeOnLoad runs before Unity's first AssetDatabase refresh
+            // on project open. Resolve authored prefabs on the next editor
+            // update so a valid source is never misreported as missing.
+            EditorApplication.delayCall += EnsureHeavyPrefab;
         }
 
         [MenuItem("Tools/Cave/Assets/Ensure Heavy Projectile Prefab")]

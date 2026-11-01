@@ -172,7 +172,7 @@ namespace Cave.Editor.SceneBuilder
         {
             CaveSceneBuilderV1.PlacePlayerSpawn("Upper Cave Player Spawn", roots.PlayerSpawn, new Vector2(-18f, -4.25f), "UpperCaveEntrance");
             CaveSceneBuilderV1.PlaceInteractableMarker("Hidden Alcove Chest Marker", roots.Interactables, new Vector2(-18f, 4.6f), "HiddenAlcoveChest");
-            CaveSceneBuilderV1.PlaceRoomTransitionMarker("City Gate Transition Marker", roots.Transitions, new Vector2(23.35f, 0.4f), "KingdomGate", "Cave_Level01");
+            CaveSceneBuilderV1.PlaceRoomTransitionMarker("City Gate Transition Marker", roots.Transitions, new Vector2(23.35f, 0.4f), "KingdomGate", "02_Stronghold");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Brute Mining Spawn 01", roots.EnemySpawns, new Vector2(16f, -4.5f), "UpperCaveMiningBrute01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Brute Mining Spawn 02", roots.EnemySpawns, new Vector2(19f, -4.5f), "UpperCaveMiningBrute02");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Wizard Lead Spawn", roots.EnemySpawns, new Vector2(22f, -3.4f), "UpperCaveMiningWizard");

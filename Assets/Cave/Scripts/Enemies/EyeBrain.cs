@@ -143,6 +143,10 @@ namespace Cave.Enemies
 
             body.gravityScale = 0f;
             body.freezeRotation = true;
+            // Dive damage is trigger-based (see OnTriggerEnter2D).  Keep the
+            // physical body phased through characters in every Eye state so
+            // attacks retain their hit window without becoming solid shoves.
+            EyeCollisionPhasing.EnsureOn(gameObject);
             EnsureGazeLine();
             EnemyWorldStatusIndicators.EnsureOn(gameObject);
         }

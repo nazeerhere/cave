@@ -65,6 +65,23 @@ namespace Cave.Player
             return true;
         }
 
+        /// <summary>
+        /// Spends an exact absolute resource amount for mechanics defined as a
+        /// fraction of maximum Mana. Unlike skill costs, this is intentionally
+        /// not multiplied by tier or temporary cost modifiers.
+        /// </summary>
+        public bool TrySpendFixedMana(float amount)
+        {
+            float fixedCost = Mathf.Max(0f, amount);
+            if (fixedCost <= 0f || CurrentMana < fixedCost)
+            {
+                return false;
+            }
+
+            SetMana(CurrentMana - fixedCost);
+            return true;
+        }
+
         public bool TrySpendMana(float baseAmount, int skillTier)
         {
             return TrySpendMana(GetTierAdjustedBaseManaCost(baseAmount, skillTier));

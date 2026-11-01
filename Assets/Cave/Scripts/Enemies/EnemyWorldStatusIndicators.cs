@@ -66,6 +66,8 @@ namespace Cave.Enemies
         private int nextOptionalDependencyRefreshFrame;
         private int nextAxiomDependencyRefreshFrame;
         private bool rootVisible;
+        private bool indicatorsRevealed;
+        private bool subscribedToDamage;
         private bool subscribedToInterventionResults;
         private bool axiomPresentationDirty;
 
@@ -123,6 +125,8 @@ namespace Cave.Enemies
             appliedAxiomPresentationHash = int.MinValue;
             axiomPresentationDirty = true;
             SubscribeToInterventionResults();
+            SubscribeToDamage();
+            indicatorsRevealed = false;
             rootVisible = false;
             if (root != null)
             {
@@ -266,7 +270,7 @@ namespace Cave.Enemies
                 iconCells[index].gameObject.SetActive(false);
             }
 
-            rootVisible = visibleCount > 0;
+            rootVisible = indicatorsRevealed && visibleCount > 0;
             if (root != null) root.SetActive(rootVisible);
 
             for (int index = 0; index < visibleCount; index++)
@@ -504,6 +508,7 @@ namespace Cave.Enemies
             if (eye == null) eye = GetComponent<EyeBrain>();
             if (possessedHost == null) possessedHost = GetComponent<EyePossessedHost>();
             if (teamBuffState == null) teamBuffState = GetComponent<EnemyTeamBuffState>();
+            SubscribeToDamage();
         }
 
         private void RefreshAxiomDependenciesIfDue()
@@ -549,6 +554,61 @@ namespace Cave.Enemies
             }
 
             subscribedToInterventionResults = false;
+        }
+
+        private void SubscribeToDamage()
+        {
+            if (subscribedToDamage || damageable == null)
+            {
+                return;
+            }
+
+            damageable.DamageResolved += HandleDamageResolved;
+            damageable.Died += HandleDied;
+            subscribedToDamage = true;
+        }
+
+        private void UnsubscribeFromDamage()
+        {
+            if (!subscribedToDamage || damageable == null)
+            {
+                return;
+            }
+
+            damageable.DamageResolved -= HandleDamageResolved;
+            damageable.Died -= HandleDied;
+            subscribedToDamage = false;
+        }
+
+        private void HandleDamageResolved(DamageContext context, bool blocked, int appliedDamage)
+        {
+            // Damageable is the authoritative hit/contact seam. A blocked player
+            // contact still reveals; hostile and environmental damage does not.
+            if (!indicatorsRevealed && IsPlayerAttackContext(context))
+            {
+                indicatorsRevealed = true;
+                appliedStatusMask = int.MinValue;
+                appliedAxiomPresentationHash = int.MinValue;
+                axiomPresentationDirty = true;
+            }
+        }
+
+        private void HandleDied()
+        {
+            indicatorsRevealed = false;
+            rootVisible = false;
+            if (root != null) root.SetActive(false);
+        }
+
+        private static bool IsPlayerAttackContext(DamageContext context)
+        {
+            if (context.IsPlayerDamage)
+            {
+                return true;
+            }
+
+            GameObject source = context.Source;
+            return source != null && source.GetComponentInParent<Cave.Player.PlayerHealth>() != null;
         }
 
         private void HandleInterventionResolved(AxiomControlInterventionOutcome outcome)
@@ -671,6 +731,8 @@ namespace Cave.Enemies
         private void OnDisable()
         {
             UnsubscribeFromInterventionResults();
+            UnsubscribeFromDamage();
+            indicatorsRevealed = false;
             rootVisible = false;
             appliedStatusMask = int.MinValue;
             appliedImaginaryStacks = -1;
@@ -689,6 +751,7 @@ namespace Cave.Enemies
         private void OnDestroy()
         {
             UnsubscribeFromInterventionResults();
+            UnsubscribeFromDamage();
             if (root != null) Destroy(root);
         }
     }

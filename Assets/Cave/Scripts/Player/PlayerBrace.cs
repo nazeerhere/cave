@@ -30,6 +30,9 @@ namespace Cave.Player
         [SerializeField, Min(0f)] private float deepExitRecovery = 0.2f;
         [Header("Deflect / Exit")]
         [SerializeField, Min(0.05f)] private float deflectResponseWindow = 0.2f;
+        [SerializeField, Min(0f)] private float braceRetentionDuration = 1.5f;
+        [SerializeField, Min(0f)] private float quickFollowUpVulnerabilityDuration = 0.35f;
+        [SerializeField, Min(0f)] private float quickFollowUpInterruptDuration = 0.25f;
         [Header("Optional Feedback")]
         [SerializeField] private GameObject enterVfxPrefab;
         [SerializeField] private GameObject exitVfxPrefab;
@@ -39,6 +42,7 @@ namespace Cave.Player
         [SerializeField] private BraceStage stage;
         [SerializeField] private float braceElapsed;
         [SerializeField] private float deflectWindowRemaining;
+        [SerializeField] private float braceRetentionRemaining;
 
         private PlayerController controller;
         private SpinSwordAttack stamina;
@@ -52,7 +56,10 @@ namespace Cave.Player
         private float braceStartedAt;
         private float deepExitUntil;
         private float deflectExpiresAt;
+        private float braceRetentionExpiresAt;
+        private float quickFollowUpVulnerableUntil;
         private bool exitDiscountPending;
+        private bool quickFollowUpPunished;
 
         public event Action<BraceStage, BraceStage> BraceStageChanged;
         public BraceStage CurrentStage => stage;
@@ -61,7 +68,8 @@ namespace Cave.Player
         public bool IsFullBrace => stage == BraceStage.Full;
         public bool IsDeepBrace => stage == BraceStage.Deep;
         public bool IsActionLocked => stage == BraceStage.Deep || Time.time < deepExitUntil;
-        public bool IsDeflectWindowActive => stage == BraceStage.Full && Time.time <= deflectExpiresAt;
+        public bool IsDeflectWindowActive => Time.time <= deflectExpiresAt;
+        public bool HasBraceRetention => Time.time <= braceRetentionExpiresAt;
 
         private void Awake()
         {
@@ -89,6 +97,16 @@ namespace Cave.Player
 
         private void Update()
         {
+            if (HasBraceRetention
+                && ((guardBreak != null && !guardBreak.CanUseCombatActions)
+                    || (stun != null && stun.IsStunned)
+                    || (health != null && health.CurrentHealth <= 0f)))
+            {
+                braceRetentionExpiresAt = 0f;
+            }
+
+            braceRetentionRemaining = Mathf.Max(0f, braceRetentionExpiresAt - Time.time);
+
             if (stage == BraceStage.None)
             {
                 if (Time.time >= deepExitUntil) controller?.SetBraceMovementMultiplier(1f);
@@ -120,27 +138,68 @@ namespace Cave.Player
             deepExitUntil = 0f;
             deflectExpiresAt = 0f;
             exitDiscountPending = false;
+            if (HasBraceRetention)
+            {
+                braceRetentionExpiresAt = 0f;
+                SetStage(BraceStage.Full);
+                controller.SetBraceMovementMultiplier(fullMovementMultiplier);
+                Spawn(enterVfxPrefab);
+                return true;
+            }
+
             SetStage(BraceStage.Quick);
             controller.SetBraceMovementMultiplier(quickMovementMultiplier);
             Spawn(enterVfxPrefab);
-            CaveSfx.PlayClip(enterClip, 0.7f);
             return true;
         }
 
         public bool TryDeflectIncoming(DamageContext context)
         {
-            if (stage != BraceStage.Full || context.HasTrait(DamageTrait.Piercing)
-                || context.HasTrait(DamageTrait.AreaOfEffect) || context.HasTrait(DamageTrait.GuardBreak)) return false;
-            deflectExpiresAt = Time.time + deflectResponseWindow;
-            if (GameInput.BasicAttackPressed) return LeaveForSpin();
-            return GameInput.ChargePressed && LeaveForHeavy();
+            if (context.HasTrait(DamageTrait.Piercing)
+                || context.HasTrait(DamageTrait.AreaOfEffect)
+                || context.HasTrait(DamageTrait.GuardBreak)
+                || context.HasTrait(DamageTrait.Projectile)
+                || context.HasTrait(DamageTrait.Unblockable)
+                || !context.HasTrait(DamageTrait.Melee)
+                || Time.time > deflectExpiresAt)
+            {
+                return false;
+            }
+
+            // The window is armed when the valid Full-Brace offensive action starts,
+            // never by sampling fresh input at incoming-hit time.
+            deflectExpiresAt = 0f;
+            braceRetentionExpiresAt = Time.time + braceRetentionDuration;
+            return true;
+        }
+
+        /// <summary>One bounded recovery interruption for an unsafe Quick-Brace follow-up.</summary>
+        public bool TryPunishUnsafeQuickFollowUp(DamageContext context)
+        {
+            if (quickFollowUpPunished
+                || Time.time > quickFollowUpVulnerableUntil
+                || !context.HasTrait(DamageTrait.Melee)
+                || context.HasTrait(DamageTrait.Projectile)
+                || context.HasTrait(DamageTrait.AreaOfEffect))
+            {
+                return false;
+            }
+
+            quickFollowUpPunished = true;
+            quickFollowUpVulnerableUntil = 0f;
+            guardBreak?.ApplyExternalInterruption(quickFollowUpInterruptDuration);
+            controller?.ApplyExternalControlLock(quickFollowUpInterruptDuration);
+            return true;
         }
 
         public bool LeaveForSpin()
         {
+            bool wasQuick = stage == BraceStage.Quick;
+            bool wasFull = stage == BraceStage.Full;
             if (!BeginActionExit()) return false;
             if (stamina != null && stamina.TryBeginBraceExitAttack())
             {
+                ArmOffensiveCommitment(wasQuick, wasFull);
                 AxiomPhenomenonApplicationBridge.Apply(gameObject, AxiomKind.Potential, 1f, gameObject, null, Time.time);
                 return true;
             }
@@ -150,14 +209,30 @@ namespace Cave.Player
 
         public bool LeaveForHeavy()
         {
+            bool wasQuick = stage == BraceStage.Quick;
+            bool wasFull = stage == BraceStage.Full;
             if (!BeginActionExit()) return false;
             if (chargedAttack != null && chargedAttack.TryBeginBraceExitCharge())
             {
+                ArmOffensiveCommitment(wasQuick, wasFull);
                 AxiomPhenomenonApplicationBridge.Apply(gameObject, AxiomKind.Potential, 1f, gameObject, null, Time.time);
                 return true;
             }
             exitDiscountPending = false;
             return false;
+        }
+
+        /// <summary>Consumes no state transition; a successful Burst remains in Deep Brace.</summary>
+        public bool TryUseResonantRestorationBurst()
+        {
+            if (!IsDeepBrace || mana == null)
+            {
+                return false;
+            }
+
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            int restored;
+            return carapace != null && carapace.TryRestoreWithBurst(mana, out restored);
         }
 
         public float ConsumeExitActionStaminaMultiplier()
@@ -168,6 +243,29 @@ namespace Cave.Player
         }
 
         public void BreakForEnemyGuardBreak() { ClearBrace(); }
+
+        private void ArmOffensiveCommitment(bool wasQuick, bool wasFull)
+        {
+            // A Brace attack cannot retain ordinary sustained-Guard protection.
+            // This makes the Quick-Brace risk observable through the existing
+            // damage/interruption path instead of granting an accidental block.
+            guard?.CancelForBraceOffense();
+
+            if (wasQuick)
+            {
+                // Queue a normal Guard only after this attack has completed;
+                // the guard authority performs the held-input and prohibition
+                // checks, so Brace and Guard can never overlap defensively.
+                guard?.QueueGuardAfterBraceAttack();
+                quickFollowUpPunished = false;
+                quickFollowUpVulnerableUntil = Time.time + quickFollowUpVulnerabilityDuration;
+            }
+
+            if (wasFull)
+            {
+                deflectExpiresAt = Time.time + deflectResponseWindow;
+            }
+        }
 
         private bool TryEnterDeepBrace()
         {
@@ -208,7 +306,12 @@ namespace Cave.Player
             if (mana != null && recovery.Mana > 0f)
             {
                 float multiplier = recoveryModifiers != null ? recoveryModifiers.ManaRegenerationMultiplier : 1f;
-                mana.RestoreMana(recovery.Mana * multiplier);
+                float resolvedMana = recovery.Mana * multiplier;
+                PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+                float diverted = carapace != null && IsDeepBrace
+                    ? carapace.DivertDeepBraceMana(resolvedMana)
+                    : 0f;
+                mana.RestoreMana(Mathf.Max(0f, resolvedMana - diverted));
             }
         }
 
@@ -243,13 +346,17 @@ namespace Cave.Player
             deepExitUntil = Time.time + deepExitRecovery;
             controller?.SetBraceMovementMultiplier(0f);
             Spawn(exitVfxPrefab);
-            CaveSfx.PlayClip(exitClip, 0.6f);
         }
 
         private void ClearBrace()
         {
             exitDiscountPending = false;
             deepExitUntil = 0f;
+            deflectExpiresAt = 0f;
+            deflectWindowRemaining = 0f;
+            braceRetentionExpiresAt = 0f;
+            quickFollowUpVulnerableUntil = 0f;
+            quickFollowUpPunished = false;
             EndBrace();
         }
 
@@ -262,7 +369,6 @@ namespace Cave.Player
             deflectWindowRemaining = 0f;
             controller?.SetBraceMovementMultiplier(1f);
             Spawn(exitVfxPrefab);
-            CaveSfx.PlayClip(exitClip, 0.6f);
         }
 
         private void SetStage(BraceStage newStage)
@@ -271,6 +377,28 @@ namespace Cave.Player
             BraceStage previous = stage;
             stage = newStage;
             BraceStageChanged?.Invoke(previous, newStage);
+            PlayStageCue(newStage);
+        }
+
+        // Legacy inspector clips stay serialized for compatibility but no
+        // longer play alongside the semantic cue route.
+        private static void PlayStageCue(BraceStage next)
+        {
+            switch (next)
+            {
+                case BraceStage.Quick:
+                    CaveSfx.Play(CaveSfxCue.BraceQuick, .7f);
+                    break;
+                case BraceStage.Full:
+                    CaveSfx.Play(CaveSfxCue.BraceFull, .7f);
+                    break;
+                case BraceStage.Deep:
+                    CaveSfx.Play(CaveSfxCue.BraceDeep, .75f);
+                    break;
+                case BraceStage.None:
+                    CaveSfx.Play(CaveSfxCue.BraceExit, .6f);
+                    break;
+            }
         }
 
         private void Spawn(GameObject prefab)

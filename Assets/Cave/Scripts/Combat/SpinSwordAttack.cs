@@ -5,6 +5,7 @@ using Cave.Axioms.Phase;
 using Cave.Axioms.Vfx;
 using Cave.Audio;
 using Cave.Enemies;
+using Cave.Environmental;
 using Cave.InputSystem;
 using Cave.Player;
 using Cave.Progression;
@@ -205,7 +206,7 @@ namespace Cave.Combat
                 FrenzyBreakAttackKind.Spin,
                 out frenzyActivation);
             SetAttackColliderActive(true);
-            CaveSfx.Play(CaveSfxCue.Whoosh, 0.65f);
+            CaveSfx.Play(CaveSfxCue.SpinSwing, 0.65f);
         }
 
         private void UpdateAttack()
@@ -357,6 +358,12 @@ namespace Cave.Combat
             if (swordPivot == null) return;
             ApplySwordFacing(currentSwordFacing);
             swordPivot.localRotation = restingRotation;
+        }
+
+        /// <summary>Heavy presentation keeps the currently equipped cosmetic visible.</summary>
+        public void EnsureSwordPresentationVisible()
+        {
+            SetSwordVisible(true);
         }
 
         private float ResolveAuthoredSwordFacing()
@@ -589,10 +596,29 @@ namespace Cave.Combat
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (!isAttacking || (damageableLayers.value & (1 << other.gameObject.layer)) == 0)
+            if (!isAttacking)
             {
                 return;
             }
+
+            Vector2 geometricDirection = aimDirection != null
+                ? aimDirection.ReadDirection()
+                : Vector2.right;
+            if (FrenzyGeometryStructure.TryStrikeCollider(
+                other, gameObject, geometricDirection, false))
+            {
+                return;
+            }
+
+            if (StructuralImpactRouter.Apply(other, new StructuralImpactContext(
+                gameObject, other.ClosestPoint(transform.position), transform.right, damage,
+                new DamageContext(gameObject, DamageTrait.Melee), false, false,
+                GetInstanceID() ^ Time.frameCount)))
+            {
+                return;
+            }
+
+            if ((damageableLayers.value & (1 << other.gameObject.layer)) == 0) return;
 
             Damageable damageable = other.GetComponentInParent<Damageable>();
             if (damageable == null

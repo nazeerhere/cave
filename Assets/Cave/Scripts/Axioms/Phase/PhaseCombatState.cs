@@ -2,6 +2,7 @@ using System;
 using Cave.Combat;
 using Cave.Axioms.Elemental;
 using Cave.Axioms.Mastery;
+using Cave.Audio;
 using UnityEngine;
 
 namespace Cave.Axioms.Phase
@@ -14,7 +15,7 @@ namespace Cave.Axioms.Phase
     public sealed class PhaseCombatState : MonoBehaviour
     {
         [Header("Imaginary Mode")]
-        [SerializeField, Min(0.01f)] private float imaginaryBaseDuration = 4.2f;
+        [SerializeField, Min(0.01f)] private float imaginaryBaseDuration = 7.35f;
         [SerializeField, Min(0f)] private float imaginaryDurationBonusAtFullPhaseMastery = 0.8f;
 
         [Header("Collapse Exposure")]
@@ -133,12 +134,17 @@ namespace Cave.Axioms.Phase
 
         public void ActivateImaginary(float timestamp, int activatingAttackSequence = 0)
         {
+            bool wasActive = ResolveImaginaryActive(timestamp);
             float duration = ResolveImaginaryDuration();
             imaginaryExpiresAt = timestamp + duration;
             resistanceBreakAvailable = true;
             imaginaryActivationAttackSequence = activatingAttackSequence;
             EnsureCollisionPhase().SetImaginaryActive(true);
             OpeningArmed?.Invoke(duration);
+            if (!wasActive)
+            {
+                CaveSfx.PlayAt(CaveSfxCue.PhaseOpening, transform.position, .8f);
+            }
         }
 
         /// <summary>
@@ -221,6 +227,7 @@ namespace Cave.Axioms.Phase
             }
 
             Collapsed?.Invoke(source, stackCount, exposure);
+            CaveSfx.PlayAt(CaveSfxCue.PhaseCollapse, transform.position, .95f);
 
             return true;
         }
@@ -267,7 +274,7 @@ namespace Cave.Axioms.Phase
         {
             if (mastery == null) mastery = GetComponent<AxiomMasteryState>();
             float masteryValue = mastery != null ? mastery.Get(MasteryDomain.Phase) : 0f;
-            return Mathf.Max(4.2f, imaginaryBaseDuration)
+            return Mathf.Max(7.35f, imaginaryBaseDuration)
                 + Mathf.Clamp01(masteryValue) * Mathf.Max(0f, imaginaryDurationBonusAtFullPhaseMastery);
         }
 

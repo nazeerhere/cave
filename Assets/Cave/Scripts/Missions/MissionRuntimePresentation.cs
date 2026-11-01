@@ -452,12 +452,25 @@ namespace Cave.Missions
                 if (Object.FindObjectOfType<MissionTerminal>() != null)
                 {
                     Debug.Log("[Cave][Mission] Using authored expedition terminal.");
-                    return;
                 }
-                GameObject terminal = new GameObject("Mission Expedition Terminal"); terminal.transform.position = new Vector3(0f, -1.2f, 0f);
-                BoxCollider2D trigger = terminal.AddComponent<BoxCollider2D>(); trigger.size = new Vector2(2.2f, 2.4f); trigger.isTrigger = true;
-                terminal.AddComponent<MissionTerminal>();
-                Debug.LogWarning("[Cave][Mission] No authored expedition terminal was found; created the runtime fallback.");
+                else
+                {
+                    GameObject terminal = new GameObject("Mission Expedition Terminal"); terminal.transform.position = new Vector3(0f, -1.2f, 0f);
+                    BoxCollider2D trigger = terminal.AddComponent<BoxCollider2D>(); trigger.size = new Vector2(2.2f, 2.4f); trigger.isTrigger = true;
+                    terminal.AddComponent<MissionTerminal>();
+                    Debug.LogWarning("[Cave][Mission] No authored expedition terminal was found; created the runtime fallback.");
+                }
+
+                if (Object.FindObjectOfType<ContractBoardTerminal>() == null)
+                {
+                    GameObject board = new GameObject("Nexus Contract Board");
+                    board.transform.position = new Vector3(3.2f, -2.5f, 0f);
+                    BoxCollider2D boardTrigger = board.AddComponent<BoxCollider2D>();
+                    boardTrigger.size = new Vector2(2.2f, 3f);
+                    boardTrigger.isTrigger = true;
+                    board.AddComponent<ContractBoardTerminal>();
+                    Debug.Log("[Cave][Contracts] Created the Nexus Contract Board runtime host.");
+                }
                 return;
             }
             for (int i = 0; i < Maps.Length; i++)

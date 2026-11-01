@@ -66,8 +66,17 @@ namespace Cave.Player
 
         public bool IsAvailable(PlayerSkinSelection selection)
         {
+            return IsAvailableForPolicy(selection, IsUnlocked(selection),
+                DeveloperDiagnosticsSettings.EffectiveUnlockAllCosmetics);
+        }
+
+        /// <summary>Pure counterpart of the live availability decision for verification.
+        /// It deliberately receives real unlock state rather than reading PlayerPrefs.</summary>
+        internal static bool IsAvailableForPolicy(PlayerSkinSelection selection,
+            bool actuallyUnlocked, bool developerUnlockAllCosmetics)
+        {
             return PlayerSkinLibrary.IsRegistered(selection)
-                && CosmeticAvailability.IsAvailable(IsUnlocked(selection));
+                && CosmeticAvailability.IsAvailable(actuallyUnlocked, developerUnlockAllCosmetics);
         }
 
         public bool Select(PlayerSkinSelection selection)

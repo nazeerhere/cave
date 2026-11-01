@@ -1,4 +1,6 @@
 using System;
+using Cave.Audio;
+using Cave.Player;
 using UnityEngine;
 
 namespace Cave.Axioms.Mastery
@@ -38,6 +40,8 @@ namespace Cave.Axioms.Mastery
         private readonly int[] lastContexts = new int[7];
         private readonly bool[] hasEvidence = new bool[7];
         public event Action<MasteryDomain,float> MasteryChanged;
+        /// <summary>Discrete full-mastery milestone; ordinary evidence gains stay silent.</summary>
+        public event Action<MasteryDomain> MasteryMilestoneReached;
         public static AxiomMasteryState EnsureOn(GameObject owner) => owner == null ? null : owner.GetComponent<AxiomMasteryState>() ?? owner.AddComponent<AxiomMasteryState>();
         public float Get(MasteryDomain domain) => values[(int)domain];
         public float GetCounterFactor(MasteryDomain domain) => Mathf.Lerp(1f, minimumCounterFactor, Get(domain));
@@ -55,6 +59,14 @@ namespace Cave.Axioms.Mastery
             hasEvidence[i] = true;
             float gain = CalculateEvidenceGain(evidence, repetition[i], repeated);
             float before=values[i]; values[i]=Mathf.Clamp01(before+gain); if(values[i]!=before) MasteryChanged?.Invoke(evidence.Domain,values[i]);
+            if (before < 1f && values[i] >= 1f)
+            {
+                MasteryMilestoneReached?.Invoke(evidence.Domain);
+                if (GetComponent<PlayerSpecialMode>() != null)
+                {
+                    CaveSfx.PlayAt(CaveSfxCue.MasteryMilestone, transform.position, .8f);
+                }
+            }
         }
 
         /// <summary>Pure deterministic evidence math shared by runtime and verification.</summary>

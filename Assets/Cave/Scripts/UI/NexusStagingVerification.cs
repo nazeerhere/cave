@@ -23,9 +23,21 @@ namespace Cave.UI
             if (Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.Default) - 1f) > .0001f
                 || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.Sword1) - 1.2f) > .0001f
                 || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.Sword2) - 1.2f) > .0001f
-                || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.Sword3) - 1.2f) > .0001f)
+                || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.Sword3) - 1.2f) > .0001f
+                || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.AstralNocturne) - 1f) > .0001f
+                || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.HeavensDefiance) - 1f) > .0001f
+                || Math.Abs(PlayerSwordCosmetics.ReachMultiplierFor(SwordCosmeticSelection.AbyssalOssuary) - 1f) > .0001f)
             {
-                failure = "Nexus must preserve the existing sword reach contract.";
+                failure = "Nexus must preserve legacy sword reach and legendary cosmetic-only reach contracts.";
+                return false;
+            }
+
+            if (PlayerSwordCosmetics.SelectionCount != 7
+                || !PlayerSwordCosmetics.IsTwoHandedWeapon(SwordCosmeticSelection.AstralNocturne)
+                || !PlayerSwordCosmetics.IsTwoHandedWeapon(SwordCosmeticSelection.HeavensDefiance)
+                || !PlayerSwordCosmetics.IsTwoHandedWeapon(SwordCosmeticSelection.AbyssalOssuary))
+            {
+                failure = "Nexus must expose all three legendary two-handed cosmetic weapons.";
                 return false;
             }
 

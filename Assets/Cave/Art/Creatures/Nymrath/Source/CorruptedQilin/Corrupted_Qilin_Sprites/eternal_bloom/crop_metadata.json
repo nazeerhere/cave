@@ -1,0 +1,180 @@
+{
+  "action": "eternal_bloom",
+  "frame_count": 12,
+  "source_sheet": "corrupted_qilin_eternal_bloom.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_eternal_bloom_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        13,
+        388,
+        411
+      ],
+      "size_pixels": [
+        388,
+        398
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        345,
+        9,
+        742,
+        407
+      ],
+      "size_pixels": [
+        397,
+        398
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        709,
+        9,
+        1108,
+        401
+      ],
+      "size_pixels": [
+        399,
+        392
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1071,
+        0,
+        1447,
+        411
+      ],
+      "size_pixels": [
+        376,
+        411
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        376,
+        382,
+        754
+      ],
+      "size_pixels": [
+        382,
+        378
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        358,
+        369,
+        738,
+        758
+      ],
+      "size_pixels": [
+        380,
+        389
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        715,
+        367,
+        1110,
+        762
+      ],
+      "size_pixels": [
+        395,
+        395
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1088,
+        363,
+        1448,
+        772
+      ],
+      "size_pixels": [
+        360,
+        409
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        0,
+        717,
+        384,
+        1086
+      ],
+      "size_pixels": [
+        384,
+        369
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        357,
+        721,
+        740,
+        1086
+      ],
+      "size_pixels": [
+        383,
+        365
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_10.png",
+      "index": 10,
+      "source_bbox_top_left": [
+        715,
+        729,
+        1096,
+        1086
+      ],
+      "size_pixels": [
+        381,
+        357
+      ]
+    },
+    {
+      "file": "CorruptedQilin_eternal_bloom_11.png",
+      "index": 11,
+      "source_bbox_top_left": [
+        1063,
+        738,
+        1448,
+        1086
+      ],
+      "size_pixels": [
+        385,
+        348
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

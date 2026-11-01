@@ -116,12 +116,23 @@ namespace Cave.Player
                 amount = phaseCombatState.ResolveIncomingDamage(amount);
             }
 
+            // Carapace is resolved after the established Guard, Strength Shield,
+            // Curse and Phase layers; it never owns or bypasses health damage.
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            if (carapace != null)
+            {
+                amount = carapace.ResolveIncomingDamage(amount, CurrentHealth, maxHealth);
+            }
+
             int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
             int appliedDamage = healthBeforeDamage - CurrentHealth;
             invulnerableUntil = Time.time + postHitInvulnerability;
             HealthChanged?.Invoke(CurrentHealth, maxHealth);
-            DamageTaken?.Invoke();
+            if (appliedDamage > 0)
+            {
+                DamageTaken?.Invoke();
+            }
             if (damageContext.Source != null)
             {
                 damageContext.Source
@@ -164,9 +175,21 @@ namespace Cave.Player
 
             PlayerCurseController curses = GetComponent<PlayerCurseController>();
             int resolvedDamage = curses != null ? curses.ResolveIncomingDamage(amount) : amount;
+            // Elemental reactions bypass Guard but are still accepted incoming
+            // damage, so they use the same Carapace share and emergency rule.
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            if (carapace != null)
+            {
+                resolvedDamage = carapace.ResolveIncomingDamage(resolvedDamage, CurrentHealth, maxHealth);
+            }
+            int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - resolvedDamage);
             HealthChanged?.Invoke(CurrentHealth, maxHealth);
-            DamageTaken?.Invoke();
+            int appliedDamage = healthBeforeDamage - CurrentHealth;
+            if (appliedDamage > 0)
+            {
+                DamageTaken?.Invoke();
+            }
             Vector2 direction = (Vector2)transform.position - explosionOrigin;
             if (direction.sqrMagnitude < 0.001f)
             {

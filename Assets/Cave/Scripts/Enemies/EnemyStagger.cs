@@ -1,4 +1,5 @@
 using System;
+using Cave.Audio;
 using UnityEngine;
 
 namespace Cave.Enemies
@@ -164,6 +165,7 @@ namespace Cave.Enemies
 
             visuals?.Show(strength, duration, wasResisted);
             Staggered?.Invoke(strength, duration);
+            CaveSfx.PlayAt(CaveSfxCue.EnemyStagger, transform.position, 0.75f);
             return true;
         }
 

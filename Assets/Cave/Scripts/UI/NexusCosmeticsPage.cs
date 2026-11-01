@@ -1,5 +1,8 @@
 using Cave.Diagnostics;
 using Cave.Player;
+using Cave.Inventory;
+using Cave.World;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,16 +18,27 @@ namespace Cave.UI
         private PlayerSkinSelection previewSkin;
         private SwordCosmeticSelection previewSword;
         private bool showSwords;
+        private bool showInventory;
+        private InventoryItemCategory inventoryCategory = InventoryItemCategory.Materials;
+        private readonly List<InventoryEntrySnapshot> inventoryEntries = new List<InventoryEntrySnapshot>();
+        private int inventoryIndex;
         private Button[] collectionButtons;
         private Text[] collectionLabels;
         private Text detailTitle;
         private Text detailBody;
         private Text status;
+        private Text previewTitle;
         private Text equipLabel;
         private Image previewBody;
         private Image previewSwordImage;
         private Sprite defaultBody;
         private Button equipButton;
+        private Button materialsInventoryButton;
+        private Button consumablesInventoryButton;
+        private Button equipmentInventoryButton;
+        private PlayerCollectedInventory observedCollected;
+        private PlayerLandmineInventory observedConsumables;
+        private PlayerResonantCarapace observedCarapace;
 
         public void Configure(PlayerSkinCosmetics skinCosmetics, PlayerSwordCosmetics swordCosmetics, Font uiFont)
         {
@@ -40,12 +54,14 @@ namespace Cave.UI
         private void OnEnable()
         {
             DeveloperDiagnosticsSettings.Changed += Refresh;
+            BindInventoryAuthorities();
             Refresh();
         }
 
         private void OnDisable()
         {
             DeveloperDiagnosticsSettings.Changed -= Refresh;
+            UnbindInventoryAuthorities();
         }
 
         private void Build()
@@ -56,27 +72,44 @@ namespace Cave.UI
             backdrop.color = CaveUiTheme.SurfaceInset;
 
             Button skinsTab = Button("SKINS", transform, new Vector2(-132f, 270f), new Vector2(212f, 36f));
-            Button swordsTab = Button("SWORDS", transform, new Vector2(92f, 270f), new Vector2(212f, 36f));
-            skinsTab.onClick.AddListener(() => { showSwords = false; Refresh(); });
-            swordsTab.onClick.AddListener(() => { showSwords = true; Refresh(); });
+            Button swordsTab = Button("WEAPONS", transform, new Vector2(92f, 270f), new Vector2(212f, 36f));
+            Button inventoryTab = Button("INVENTORY", transform, new Vector2(316f, 270f), new Vector2(180f, 36f));
+            skinsTab.onClick.AddListener(() => { showSwords = false; showInventory = false; Refresh(); });
+            swordsTab.onClick.AddListener(() => { showSwords = true; showInventory = false; Refresh(); });
+            inventoryTab.onClick.AddListener(() => { showInventory = true; Refresh(); });
+
+            materialsInventoryButton = Button("MATERIALS", transform, new Vector2(-188f, 235f), new Vector2(112f, 25f));
+            consumablesInventoryButton = Button("CONSUMABLES", transform, new Vector2(-65f, 235f), new Vector2(126f, 25f));
+            equipmentInventoryButton = Button("EQUIPMENT", transform, new Vector2(68f, 235f), new Vector2(112f, 25f));
+            materialsInventoryButton.onClick.AddListener(() => SelectInventoryCategory(InventoryItemCategory.Materials));
+            consumablesInventoryButton.onClick.AddListener(() => SelectInventoryCategory(InventoryItemCategory.Consumables));
+            equipmentInventoryButton.onClick.AddListener(() => SelectInventoryCategory(InventoryItemCategory.Equipment));
 
             Panel("Collection", transform, new Vector2(-435f, 5f), new Vector2(310f, 500f));
             Text heading = Label("Collection Header", transform, "SKIN COLLECTION", 16, new Vector2(-435f, 232f), new Vector2(280f, 28f), TextAnchor.MiddleCenter, CaveUiTheme.Gold);
             heading.fontStyle = FontStyle.Bold;
 
-            collectionButtons = new Button[PlayerSkinLibrary.Count];
-            collectionLabels = new Text[PlayerSkinLibrary.Count];
+            int collectionCapacity = Mathf.Max(PlayerSkinLibrary.Count, PlayerSwordCosmetics.SelectionCount);
+            collectionButtons = new Button[collectionCapacity];
+            collectionLabels = new Text[collectionCapacity];
             for (int i = 0; i < collectionButtons.Length; i++)
             {
                 int captured = i;
                 Button entry = Button("Collection Entry " + i, transform, new Vector2(-435f, 188f - i * 53f), new Vector2(280f, 47f));
                 entry.onClick.AddListener(() => SelectEntry(captured));
                 collectionButtons[i] = entry;
-                collectionLabels[i] = Label("Label", entry.transform, string.Empty, 10, Vector2.zero, new Vector2(258f, 40f), TextAnchor.MiddleLeft, CaveUiTheme.PrimaryText);
+                // Button already creates its single visible label. Reuse it so collection
+                // entries do not render a second overlapping "COLLECTION ENTRY X" label.
+                Text label = entry.GetComponentInChildren<Text>();
+                label.text = string.Empty;
+                label.fontSize = 10;
+                label.alignment = TextAnchor.MiddleLeft;
+                label.rectTransform.sizeDelta = new Vector2(258f, 40f);
+                collectionLabels[i] = label;
             }
 
             Panel("Preview", transform, new Vector2(0f, 5f), new Vector2(520f, 500f));
-            Text previewTitle = Label("Preview Header", transform, "CHARACTER PREVIEW", 16, new Vector2(0f, 232f), new Vector2(480f, 28f), TextAnchor.MiddleCenter, CaveUiTheme.Gold);
+            previewTitle = Label("Preview Header", transform, "CHARACTER PREVIEW", 16, new Vector2(0f, 232f), new Vector2(480f, 28f), TextAnchor.MiddleCenter, CaveUiTheme.Gold);
             previewTitle.fontStyle = FontStyle.Bold;
             defaultBody = FirstSprite("Player/MinerFullActionSheet", "Miner_Idle_01");
             previewBody = Image("Preview Body", transform, new Vector2(-28f, 30f), new Vector2(270f, 330f), defaultBody);
@@ -99,14 +132,22 @@ namespace Cave.UI
 
         private void SelectEntry(int index)
         {
+            if (showInventory) { inventoryIndex = index; Refresh(); return; }
             if (showSwords)
             {
-                previewSword = (SwordCosmeticSelection)Mathf.Clamp(index, 0, 3);
+                previewSword = (SwordCosmeticSelection)Mathf.Clamp(index, 0, PlayerSwordCosmetics.SelectionCount - 1);
             }
             else
             {
                 previewSkin = (PlayerSkinSelection)Mathf.Clamp(index, 0, PlayerSkinLibrary.Count - 1);
             }
+            Refresh();
+        }
+
+        private void SelectInventoryCategory(InventoryItemCategory category)
+        {
+            inventoryCategory = category;
+            inventoryIndex = 0;
             Refresh();
         }
 
@@ -126,11 +167,16 @@ namespace Cave.UI
         private void Refresh()
         {
             if (collectionButtons == null) return;
+            if (showInventory) { RefreshInventory(); return; }
+            SetInventoryCategoryButtons(false);
+            if (previewTitle != null) previewTitle.text = "CHARACTER PREVIEW";
+            previewBody.enabled = true;
+            equipButton.gameObject.SetActive(true);
             Text heading = transform.Find("Collection Header")?.GetComponent<Text>();
-            if (heading != null) heading.text = showSwords ? "SWORD COLLECTION" : "SKIN COLLECTION";
+            if (heading != null) heading.text = showSwords ? "WEAPON COLLECTION" : "SKIN COLLECTION";
             for (int i = 0; i < collectionButtons.Length; i++)
             {
-                bool used = showSwords ? i < 4 : true;
+                bool used = showSwords ? i < PlayerSwordCosmetics.SelectionCount : i < PlayerSkinLibrary.Count;
                 collectionButtons[i].gameObject.SetActive(used);
                 if (!used) continue;
                 bool actuallyUnlocked = showSwords ? SwordUnlocked((SwordCosmeticSelection)i) : SkinUnlocked((PlayerSkinSelection)i);
@@ -165,6 +211,96 @@ namespace Cave.UI
             previewSwordImage.enabled = previewSwordImage.sprite != null;
         }
 
+        private void RefreshInventory()
+        {
+            Text heading = transform.Find("Collection Header")?.GetComponent<Text>();
+            if (heading != null) heading.text = "INVENTORY — " + inventoryCategory.ToString().ToUpperInvariant();
+            if (previewTitle != null) previewTitle.text = "ITEM PREVIEW";
+            SetInventoryCategoryButtons(true);
+            inventoryEntries.Clear();
+            PlayerHealth player = PlayerRunPersistence.CurrentPlayerHealth ?? FindObjectOfType<PlayerHealth>();
+            PlayerCollectedInventory collected = player != null ? player.GetComponent<PlayerCollectedInventory>() : null;
+            collected?.CopyEntries(inventoryEntries, inventoryCategory);
+            PlayerLandmineInventory consumables = player != null ? player.GetComponent<PlayerLandmineInventory>() : null;
+            if (consumables != null && inventoryCategory == InventoryItemCategory.Consumables)
+            {
+                inventoryEntries.Add(new InventoryEntrySnapshot("HEALTH POTION", "Existing consumable authority.", consumables.OwnedHealthPotions, null));
+                inventoryEntries.Add(new InventoryEntrySnapshot("MANA POTION", "Existing consumable authority.", consumables.OwnedManaPotions, null));
+                inventoryEntries.Add(new InventoryEntrySnapshot("OBLIVION DISK", "Available charges; capacity " + consumables.DiskCapacity + ".", consumables.StoredDiskCharges, null));
+            }
+            IResonantCarapaceInventorySource carapace = null;
+            if (player != null) foreach (MonoBehaviour component in player.GetComponents<MonoBehaviour>()) { carapace = component as IResonantCarapaceInventorySource; if (carapace != null) break; }
+            if (carapace != null && inventoryCategory == InventoryItemCategory.Equipment)
+                inventoryEntries.Add(new InventoryEntrySnapshot("RESONANT CARAPACE", carapace.ConditionText, carapace.IsOwned ? 1 : 0, null));
+            inventoryIndex = Mathf.Clamp(inventoryIndex, 0, Mathf.Max(0, inventoryEntries.Count - 1));
+            for (int i = 0; i < collectionButtons.Length; i++)
+            {
+                bool used = i < inventoryEntries.Count;
+                collectionButtons[i].gameObject.SetActive(used);
+                if (!used) continue;
+                InventoryEntrySnapshot entry = inventoryEntries[i];
+                collectionLabels[i].text = entry.Name + "  x" + entry.Quantity;
+                collectionLabels[i].color = i == inventoryIndex ? CaveUiTheme.BorderBright : CaveUiTheme.PrimaryText;
+                CaveUiArt.ApplyButton(collectionButtons[i], i == inventoryIndex);
+            }
+            if (inventoryEntries.Count == 0)
+            {
+                detailTitle.text = "EMPTY INVENTORY";
+                detailBody.text = inventoryCategory == InventoryItemCategory.Materials
+                    ? "No collected materials. Future Flora materials will appear here when their collection authority is implemented."
+                    : "No " + inventoryCategory.ToString().ToLowerInvariant() + " are currently held.";
+            }
+            else
+            {
+                InventoryEntrySnapshot selected = inventoryEntries[inventoryIndex];
+                detailTitle.text = selected.Name;
+                detailBody.text = selected.Description + "\n\nQuantity: " + selected.Quantity;
+                previewBody.sprite = selected.Icon;
+                previewBody.enabled = selected.Icon != null;
+            }
+            if (inventoryEntries.Count == 0) previewBody.enabled = false;
+            previewSwordImage.enabled = false;
+            status.text = "INVENTORY — READ ONLY";
+            status.color = CaveUiTheme.SecondaryText;
+            equipButton.gameObject.SetActive(false);
+        }
+
+        private void BindInventoryAuthorities()
+        {
+            UnbindInventoryAuthorities();
+            PlayerHealth player = PlayerRunPersistence.CurrentPlayerHealth ?? FindObjectOfType<PlayerHealth>();
+            if (player == null) return;
+            observedCollected = player.GetComponent<PlayerCollectedInventory>();
+            observedConsumables = player.GetComponent<PlayerLandmineInventory>();
+            observedCarapace = player.GetComponent<PlayerResonantCarapace>();
+            if (observedCollected != null) observedCollected.Changed += Refresh;
+            if (observedConsumables != null) observedConsumables.ConsumableQuantityChanged += HandleConsumableChanged;
+            if (observedCarapace != null) observedCarapace.StateChanged += Refresh;
+        }
+
+        private void UnbindInventoryAuthorities()
+        {
+            if (observedCollected != null) observedCollected.Changed -= Refresh;
+            if (observedConsumables != null) observedConsumables.ConsumableQuantityChanged -= HandleConsumableChanged;
+            if (observedCarapace != null) observedCarapace.StateChanged -= Refresh;
+            observedCollected = null;
+            observedConsumables = null;
+            observedCarapace = null;
+        }
+
+        private void HandleConsumableChanged(PlayerConsumableType type, int quantity) { Refresh(); }
+
+        private void SetInventoryCategoryButtons(bool visible)
+        {
+            if (materialsInventoryButton == null) return;
+            materialsInventoryButton.gameObject.SetActive(visible);
+            consumablesInventoryButton.gameObject.SetActive(visible);
+            equipmentInventoryButton.gameObject.SetActive(visible);
+            CaveUiArt.ApplyButton(materialsInventoryButton, inventoryCategory == InventoryItemCategory.Materials);
+            CaveUiArt.ApplyButton(consumablesInventoryButton, inventoryCategory == InventoryItemCategory.Consumables);
+            CaveUiArt.ApplyButton(equipmentInventoryButton, inventoryCategory == InventoryItemCategory.Equipment);
+        }
+
         private bool SkinUnlocked(PlayerSkinSelection selection) => skins != null && skins.IsUnlocked(selection);
         private bool SkinAvailable(PlayerSkinSelection selection) => skins != null && skins.IsAvailable(selection);
         private bool SwordUnlocked(SwordCosmeticSelection selection)
@@ -178,6 +314,11 @@ namespace Cave.UI
         {
             if (showSwords)
             {
+                if (PlayerSwordCosmetics.IsLegendaryWeapon(previewSword))
+                {
+                    return "PRODUCTION REQUIREMENT TBD";
+                }
+
                 return previewSword == SwordCosmeticSelection.Sword1 ? "DEFEAT A GENERAL-RANK SKELETON"
                     : previewSword == SwordCosmeticSelection.Sword2 ? "DEFEAT ALL FIVE ARCHETYPES IN ONE RUN"
                     : previewSword == SwordCosmeticSelection.Sword3 ? "REACH WORLD LEVEL 10" : "LOCKED";
@@ -193,13 +334,11 @@ namespace Cave.UI
         }
         private static string SwordText(SwordCosmeticSelection sword, bool actuallyUnlocked, bool available) => SwordName(sword) + "\n"
             + (actuallyUnlocked ? "UNLOCKED" : available ? "DEV UNLOCK" : "LOCKED");
-        private static string SwordName(SwordCosmeticSelection sword) => sword == SwordCosmeticSelection.Default ? "DEFAULT SWORD" : "SWORD " + (int)sword;
+        private static string SwordName(SwordCosmeticSelection sword) => PlayerSwordCosmetics.DisplayNameFor(sword);
         private static string SkinDetails(PlayerSkinSelection skin) => PlayerSkinLibrary.GetDefinition(skin).Description
             + "\n\nCosmetic only — no gameplay stats or hitboxes change.";
-        private static string SwordDetails(SwordCosmeticSelection sword) => sword == SwordCosmeticSelection.Default ? "A reliable blade for the depths."
-            : "Existing sword cosmetic.\nReach multiplier: 1.20×.";
-        private static Sprite SwordSprite(SwordCosmeticSelection sword) => sword == SwordCosmeticSelection.Default ? null
-            : Resources.Load<Sprite>("Cosmetics/Swords/Sword0" + (int)sword);
+        private static string SwordDetails(SwordCosmeticSelection sword) => PlayerSwordCosmetics.DescriptionFor(sword);
+        private static Sprite SwordSprite(SwordCosmeticSelection sword) => PlayerSwordCosmetics.LoadSpriteFor(sword);
 
         private static Sprite FirstSprite(string resourcePath, string name)
         {

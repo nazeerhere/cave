@@ -1,4 +1,5 @@
 using System;
+using Cave.Audio;
 using Cave.Combat;
 using Cave.Progression;
 using UnityEngine;
@@ -131,6 +132,7 @@ namespace Cave.Player
             delayRemaining = rechargeDelay;
             SetState(StrengthShieldState.Broken, 0f);
             ShieldBroken?.Invoke();
+            CaveSfx.Play(CaveSfxCue.StrengthShieldBreak, .85f);
             return true;
         }
 
@@ -179,9 +181,18 @@ namespace Cave.Player
                 return;
             }
 
+            StrengthShieldState previous = currentState;
             currentState = state;
             rechargeProgress = clampedProgress;
             ShieldStateChanged?.Invoke(currentState, rechargeProgress);
+            if (currentState == StrengthShieldState.Ready && previous != StrengthShieldState.Ready)
+            {
+                CaveSfx.Play(CaveSfxCue.StrengthShieldReady, .75f);
+            }
+            else if (currentState == StrengthShieldState.Recharging && previous == StrengthShieldState.Broken)
+            {
+                CaveSfx.Play(CaveSfxCue.StrengthShieldRecharge, .55f);
+            }
         }
 
         private void OnDisable()

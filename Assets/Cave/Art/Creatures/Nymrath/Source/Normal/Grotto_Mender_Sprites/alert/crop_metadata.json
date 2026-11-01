@@ -1,0 +1,96 @@
+{
+  "action": "alert",
+  "frame_count": 6,
+  "source_sheet": "grotto_mender_alert.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_alert_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        79,
+        524,
+        516
+      ],
+      "size_pixels": [
+        524,
+        437
+      ]
+    },
+    {
+      "file": "GrottoMender_alert_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        469,
+        57,
+        1034,
+        552
+      ],
+      "size_pixels": [
+        565,
+        495
+      ]
+    },
+    {
+      "file": "GrottoMender_alert_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        1025,
+        39,
+        1536,
+        520
+      ],
+      "size_pixels": [
+        511,
+        481
+      ]
+    },
+    {
+      "file": "GrottoMender_alert_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        0,
+        547,
+        537,
+        1024
+      ],
+      "size_pixels": [
+        537,
+        477
+      ]
+    },
+    {
+      "file": "GrottoMender_alert_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        525,
+        559,
+        1051,
+        990
+      ],
+      "size_pixels": [
+        526,
+        431
+      ]
+    },
+    {
+      "file": "GrottoMender_alert_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        1027,
+        547,
+        1536,
+        1000
+      ],
+      "size_pixels": [
+        509,
+        453
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

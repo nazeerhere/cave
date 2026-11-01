@@ -1,4 +1,5 @@
 using System;
+using Cave.Audio;
 using Cave.Axioms.Control;
 using UnityEngine;
 
@@ -178,7 +179,10 @@ namespace Cave.Axioms.Thresholds
                 AxiomThresholdOpportunityContext candidate;
                 snapshots[index] = evaluators[index].Evaluate(trajectory, timestamp, out candidate, out request);
                 if (request.Manifestation != AxiomThresholdManifestation.None)
+                {
                     ManifestationRequested?.Invoke(request);
+                    CaveSfx.PlayAt(CaveSfxCue.ManifestationThreshold, transform.position, .75f);
+                }
                 if (candidate.IsActive && (!opportunity.IsActive || candidate.Source == AxiomOpportunityCandidateSource.ThresholdCrossing)) opportunity = candidate;
                 found = true;
             }

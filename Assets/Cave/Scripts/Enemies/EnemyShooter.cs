@@ -1,4 +1,5 @@
 using System.Collections;
+using Cave.Audio;
 using Cave.Combat;
 using Cave.Player;
 using Cave.Projectiles;
@@ -48,6 +49,8 @@ namespace Cave.Enemies
         public bool IsReady => !isWindingUp
             && projectilePrefab != null
             && Time.time >= nextFireTime;
+        /// <summary>Raised only after a projectile has been instantiated and initialized.</summary>
+        public event System.Action<Vector3, Vector2> ProjectileFired;
 
         private void Awake()
         {
@@ -196,6 +199,7 @@ namespace Cave.Enemies
                 Mathf.Max(1, Mathf.RoundToInt(damage * (requestedDamage / (float)Mathf.Max(1, runtimeProjectileDamage)))),
                 projectileLifetime,
                 difficultyManager);
+            NotifyProjectileFired(spawnPosition, direction.normalized);
             if (wizardEchoEnabled)
             {
                 StartCoroutine(FireEchoAfterDelay(
@@ -230,6 +234,7 @@ namespace Cave.Enemies
                 Mathf.Max(1, Mathf.RoundToInt(originalDamage * echoDamageMultiplier)),
                 projectileLifetime,
                 null);
+            NotifyProjectileFired(spawnPosition, direction);
             echo.ConfigureAsSecondaryEcho(echoTint, echoVisualScale);
             if (echoVfxPrefab != null)
             {
@@ -244,6 +249,12 @@ namespace Cave.Enemies
         public void EnableWizardEcho()
         {
             wizardEchoEnabled = true;
+        }
+
+        private void NotifyProjectileFired(Vector3 origin, Vector2 direction)
+        {
+            ProjectileFired?.Invoke(origin, direction);
+            CaveSfx.PlayAt(CaveSfxCue.EnemyProjectileLaunch, origin, 0.7f);
         }
 
         public void SetRuntimeDifficultyValues(int damage, float speed, float interval)

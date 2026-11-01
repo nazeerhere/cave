@@ -2,6 +2,13 @@ using UnityEngine;
 
 namespace Cave.Audio
 {
+    public enum CaveAudioChannel
+    {
+        Sfx,
+        Ui,
+        Ambience
+    }
+
     public static class CaveAudioSettings
     {
         public const string MasterVolumePlayerPrefsKey = "Cave.Settings.Audio.v1.Master";
@@ -23,6 +30,12 @@ namespace Cave.Audio
         public static float MusicVolume => musicVolume;
         public static float UiVolume => uiVolume;
         public static float AmbienceVolume => ambienceVolume;
+
+        /// <summary>
+        /// Raised after a persisted preference changes. Route owners use this
+        /// only to refresh already-active audio; it never changes gameplay.
+        /// </summary>
+        public static event System.Action VolumesChanged;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void LoadForPlaySession()
@@ -75,6 +88,20 @@ namespace Cave.Audio
             // Per-route sources apply their own channel gain. The listener remains
             // Master only, so manually authored AudioSources are not reconfigured.
             AudioListener.volume = masterVolume;
+            VolumesChanged?.Invoke();
+        }
+
+        public static float VolumeFor(CaveAudioChannel channel)
+        {
+            switch (channel)
+            {
+                case CaveAudioChannel.Ui:
+                    return uiVolume;
+                case CaveAudioChannel.Ambience:
+                    return ambienceVolume;
+                default:
+                    return sfxVolume;
+            }
         }
 
         private static float LoadVolume(string key)

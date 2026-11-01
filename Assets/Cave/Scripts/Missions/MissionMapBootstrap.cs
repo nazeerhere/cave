@@ -12,13 +12,8 @@ namespace Cave.Missions
             Debug.Log("[Cave][Mission] MissionMapBootstrap.Start entered for " + gameObject.scene.name + ".", this);
             MissionRunContext context = MissionRunContext.Current;
             if (context == null || !context.HasMission || context.SelectedScene != gameObject.scene.name) return;
-            switch (context.SelectedMode)
-            {
-                case CaveGameMode.CorruptionPurge: activeController = gameObject.AddComponent<CorruptionPurgeMissionController>(); break;
-                case CaveGameMode.CorruptBounty: activeController = gameObject.AddComponent<CorruptBountyMissionController>(); break;
-                case CaveGameMode.Containment: activeController = gameObject.AddComponent<ContainmentMissionController>(); break;
-                default: activeController = gameObject.AddComponent<ClassicSweepMissionController>(); break;
-            }
+            activeController = (MissionControllerBase)gameObject.AddComponent(
+                MissionControllerSelection.ResolveControllerType(context.SelectedMode));
 
             Debug.Log("[Cave][Mission] Mission controller created: " + activeController.GetType().Name + ".", this);
             MissionObjectiveHud hud = MissionObjectiveHud.Create();
@@ -32,6 +27,24 @@ namespace Cave.Missions
             spawnDirector.Initialize(context);
             activeController.Initialize(context);
             Debug.Log("[Cave][Mission] Mission controller initialized.", this);
+        }
+    }
+
+    /// <summary>Pure mode-to-controller routing used by both the production
+    /// bootstrap and deterministic verification. Unknown/legacy Hunt remains
+    /// Classic Sweep; Sovereign Gambit can never silently fall through.</summary>
+    public static class MissionControllerSelection
+    {
+        public static System.Type ResolveControllerType(CaveGameMode mode)
+        {
+            switch (mode)
+            {
+                case CaveGameMode.CorruptionPurge: return typeof(CorruptionPurgeMissionController);
+                case CaveGameMode.CorruptBounty: return typeof(CorruptBountyMissionController);
+                case CaveGameMode.Containment: return typeof(ContainmentMissionController);
+                case CaveGameMode.SovereignGambit: return typeof(SovereignGambitMissionController);
+                default: return typeof(ClassicSweepMissionController);
+            }
         }
     }
 }

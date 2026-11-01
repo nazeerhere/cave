@@ -1,0 +1,152 @@
+{
+  "action": "death",
+  "frame_count": 10,
+  "source_sheet": "grotto_mender_death.png",
+  "method": "Provisional minimum-alpha seams for touching sprites/glow. Review before Unity import.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_death_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        13,
+        417,
+        407
+      ],
+      "size_pixels": [
+        417,
+        394
+      ]
+    },
+    {
+      "file": "GrottoMender_death_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        397,
+        13,
+        811,
+        407
+      ],
+      "size_pixels": [
+        414,
+        394
+      ]
+    },
+    {
+      "file": "GrottoMender_death_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        793,
+        21,
+        1194,
+        411
+      ],
+      "size_pixels": [
+        401,
+        390
+      ]
+    },
+    {
+      "file": "GrottoMender_death_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1190,
+        13,
+        1588,
+        412
+      ],
+      "size_pixels": [
+        398,
+        399
+      ]
+    },
+    {
+      "file": "GrottoMender_death_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1586,
+        0,
+        1982,
+        411
+      ],
+      "size_pixels": [
+        396,
+        411
+      ]
+    },
+    {
+      "file": "GrottoMender_death_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        0,
+        396,
+        417,
+        793
+      ],
+      "size_pixels": [
+        417,
+        397
+      ]
+    },
+    {
+      "file": "GrottoMender_death_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        397,
+        397,
+        820,
+        793
+      ],
+      "size_pixels": [
+        423,
+        396
+      ]
+    },
+    {
+      "file": "GrottoMender_death_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        793,
+        398,
+        1208,
+        793
+      ],
+      "size_pixels": [
+        415,
+        395
+      ]
+    },
+    {
+      "file": "GrottoMender_death_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1190,
+        399,
+        1594,
+        793
+      ],
+      "size_pixels": [
+        404,
+        394
+      ]
+    },
+    {
+      "file": "GrottoMender_death_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1586,
+        398,
+        1974,
+        793
+      ],
+      "size_pixels": [
+        388,
+        395
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

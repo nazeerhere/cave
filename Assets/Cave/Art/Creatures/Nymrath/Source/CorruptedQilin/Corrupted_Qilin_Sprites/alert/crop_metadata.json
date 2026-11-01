@@ -1,0 +1,96 @@
+{
+  "action": "alert",
+  "frame_count": 6,
+  "source_sheet": "corrupted_qilin_alert.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_alert_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        17,
+        526,
+        570
+      ],
+      "size_pixels": [
+        526,
+        553
+      ]
+    },
+    {
+      "file": "CorruptedQilin_alert_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        503,
+        19,
+        1054,
+        578
+      ],
+      "size_pixels": [
+        551,
+        559
+      ]
+    },
+    {
+      "file": "CorruptedQilin_alert_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        1023,
+        14,
+        1535,
+        588
+      ],
+      "size_pixels": [
+        512,
+        574
+      ]
+    },
+    {
+      "file": "CorruptedQilin_alert_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        0,
+        517,
+        542,
+        1024
+      ],
+      "size_pixels": [
+        542,
+        507
+      ]
+    },
+    {
+      "file": "CorruptedQilin_alert_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        484,
+        511,
+        1042,
+        1024
+      ],
+      "size_pixels": [
+        558,
+        513
+      ]
+    },
+    {
+      "file": "CorruptedQilin_alert_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        1004,
+        527,
+        1535,
+        1024
+      ],
+      "size_pixels": [
+        531,
+        497
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

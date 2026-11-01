@@ -12,32 +12,40 @@ namespace Cave.UI
         {
             GameAction.UseHealthPotion,
             GameAction.UseManaPotion,
-            GameAction.PlaceLandmine
+            GameAction.ActivateEquipment
         };
 
         private static readonly PlayerConsumableType[] ConsumableTypes =
         {
             PlayerConsumableType.HealthPotion,
-            PlayerConsumableType.ManaPotion,
-            PlayerConsumableType.Landmine
+            PlayerConsumableType.ManaPotion
         };
 
         private Image[] slotBackgrounds;
         private Text[] keyLabels;
         private Text[] quantityLabels;
+        private Text[] nameLabels;
+        private Text[] symbolLabels;
         private PlayerLandmineInventory inventory;
+        private PlayerEquipmentController equipment;
         private int selectedIndex = -1;
 
         public void Configure(
             Image[] backgrounds,
             Text[] bindings,
             Text[] quantities,
-            PlayerLandmineInventory consumableInventory)
+            Text[] names,
+            Text[] symbols,
+            PlayerLandmineInventory consumableInventory,
+            PlayerEquipmentController equipmentController)
         {
             slotBackgrounds = backgrounds;
             keyLabels = bindings;
             quantityLabels = quantities;
+            nameLabels = names;
+            symbolLabels = symbols;
             BindInventory(consumableInventory);
+            BindEquipment(equipmentController);
             RefreshBindings();
             RefreshQuantities();
             RefreshSlotVisuals();
@@ -54,7 +62,7 @@ namespace Cave.UI
             {
                 nextSelection = 1;
             }
-            else if (GameInput.PlaceLandminePressed)
+            else if (GameInput.ActivateEquipmentPressed)
             {
                 nextSelection = 2;
             }
@@ -63,6 +71,22 @@ namespace Cave.UI
             {
                 selectedIndex = nextSelection;
                 RefreshSlotVisuals();
+            }
+        }
+
+        private void BindEquipment(PlayerEquipmentController controller)
+        {
+            if (equipment != null)
+            {
+                equipment.SelectionChanged -= HandleEquipmentChanged;
+                equipment.StateChanged -= HandleEquipmentChanged;
+            }
+
+            equipment = controller;
+            if (equipment != null)
+            {
+                equipment.SelectionChanged += HandleEquipmentChanged;
+                equipment.StateChanged += HandleEquipmentChanged;
             }
         }
 
@@ -118,6 +142,16 @@ namespace Cave.UI
 
                 quantityLabels[index].text = FormatQuantity(index);
             }
+
+            if (equipment != null
+                && nameLabels != null && nameLabels.Length > 2
+                && symbolLabels != null && symbolLabels.Length > 2)
+            {
+                PlayerEquipmentPresentation presentation = equipment.GetPresentation(
+                    equipment.SelectedEquipment);
+                nameLabels[2].text = presentation.Name;
+                symbolLabels[2].text = presentation.Symbol;
+            }
         }
 
         private void RefreshSlotVisuals()
@@ -135,15 +169,11 @@ namespace Cave.UI
                     continue;
                 }
 
-                if (index >= ConsumableTypes.Length)
-                {
-                    background.color = new Color(
-                        CaveUiTheme.SurfaceInset.r,
-                        CaveUiTheme.SurfaceInset.g,
-                        CaveUiTheme.SurfaceInset.b,
-                        0.45f);
-                }
-                else if (GetQuantity(index) <= 0)
+                bool available = index < 2
+                    ? GetQuantity(index) > 0
+                    : equipment != null
+                        && equipment.GetPresentation(equipment.SelectedEquipment).Available;
+                if (!available)
                 {
                     background.color = new Color(0.045f, 0.05f, 0.065f, 0.88f);
                 }
@@ -165,23 +195,21 @@ namespace Cave.UI
 
         private string FormatQuantity(int index)
         {
-            if (index != 2)
+            if (index == 0 || index == 1)
             {
-                return index < ConsumableTypes.Length ? "x" + GetQuantity(index) : string.Empty;
+                if (inventory == null) return "x0";
+                if (GetQuantity(index) <= 0) return "x0";
+                float potency = index == 0
+                    ? inventory.NextHealthPotionRestorePercent
+                    : inventory.NextManaPotionRestorePercent;
+                return "x" + GetQuantity(index) + "\n" + Mathf.RoundToInt(potency * 100f) + "%";
             }
 
-            if (inventory == null || inventory.DiskCapacity <= 0)
+            if (equipment == null)
             {
-                return "LOCKED";
+                return "—";
             }
-
-            string pips = string.Empty;
-            for (int pip = 0; pip < inventory.DiskCapacity; pip++)
-            {
-                if (pip > 0) pips += " ";
-                pips += pip < inventory.StoredDiskCharges ? "◆" : "◇";
-            }
-            return pips;
+            return equipment.GetPresentation(equipment.SelectedEquipment).Status;
         }
 
         private void HandleQuantityChanged(PlayerConsumableType type, int owned)
@@ -191,6 +219,12 @@ namespace Cave.UI
         }
 
         private void HandleDiskChargeStateChanged()
+        {
+            RefreshQuantities();
+            RefreshSlotVisuals();
+        }
+
+        private void HandleEquipmentChanged()
         {
             RefreshQuantities();
             RefreshSlotVisuals();
@@ -214,6 +248,9 @@ namespace Cave.UI
                 inventory.ConsumableQuantityChanged -= HandleQuantityChanged;
                 inventory.DiskChargeStateChanged -= HandleDiskChargeStateChanged;
             }
+
+
+            BindEquipment(null);
         }
     }
 }

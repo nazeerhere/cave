@@ -23,7 +23,11 @@ namespace Cave.Combat
         /// <summary>Committed heavy impact; Guard mitigates it but cannot fully negate it.</summary>
         Heavy = 1 << 10,
         /// <summary>Critical result granted by the active Detective altar zone.</summary>
-        AltarCritical = 1 << 11
+        AltarCritical = 1 << 11,
+        /// <summary>Periodic damage; generic direct-impact audio must not play for each tick.</summary>
+        Periodic = 1 << 12,
+        /// <summary>A once-per-action signature owns the terminal impact audio.</summary>
+        SignatureImpactAudio = 1 << 13
     }
 
     public interface IDeflectableDamageSource

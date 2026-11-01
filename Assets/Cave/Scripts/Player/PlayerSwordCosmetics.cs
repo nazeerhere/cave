@@ -11,7 +11,11 @@ namespace Cave.Player
         Default,
         Sword1,
         Sword2,
-        Sword3
+        Sword3,
+        // Appended so existing PlayerPrefs selections retain their numeric identity.
+        AstralNocturne,
+        HeavensDefiance,
+        AbyssalOssuary
     }
 
     /// <summary>Persistent, presentation-only cosmetic selection for the existing sword renderer.</summary>
@@ -19,6 +23,7 @@ namespace Cave.Player
     public sealed class PlayerSwordCosmetics : MonoBehaviour
     {
         public const float UpgradedSwordMultiplier = 1.2f;
+        public const int SelectionCount = (int)SwordCosmeticSelection.AbyssalOssuary + 1;
         private const string Unlock1Key = "Cave.CosmeticSword1.Unlocked";
         private const string Unlock2Key = "Cave.CosmeticSword2.Unlocked";
         private const string Unlock3Key = "Cave.CosmeticSword3.Unlocked";
@@ -79,6 +84,82 @@ namespace Cave.Player
             return IsUpgraded(selection) ? UpgradedSwordMultiplier : 1f;
         }
 
+        /// <summary>Legendary entries are visual-only two-handed replacements for the existing sword presentation.</summary>
+        public static bool IsLegendaryWeapon(SwordCosmeticSelection selection)
+        {
+            return selection == SwordCosmeticSelection.AstralNocturne
+                || selection == SwordCosmeticSelection.HeavensDefiance
+                || selection == SwordCosmeticSelection.AbyssalOssuary;
+        }
+
+        public static bool IsTwoHandedWeapon(SwordCosmeticSelection selection)
+        {
+            return IsLegendaryWeapon(selection);
+        }
+
+        public static string DisplayNameFor(SwordCosmeticSelection selection)
+        {
+            switch (selection)
+            {
+                case SwordCosmeticSelection.AstralNocturne:
+                    return "ASTRAL NOCTURNE";
+                case SwordCosmeticSelection.HeavensDefiance:
+                    return "HEAVEN'S DEFIANCE";
+                case SwordCosmeticSelection.AbyssalOssuary:
+                    return "ABYSSAL OSSUARY";
+                case SwordCosmeticSelection.Sword1:
+                case SwordCosmeticSelection.Sword2:
+                case SwordCosmeticSelection.Sword3:
+                    return "SWORD " + (int)selection;
+                default:
+                    return "DEFAULT SWORD";
+            }
+        }
+
+        public static string DescriptionFor(SwordCosmeticSelection selection)
+        {
+            switch (selection)
+            {
+                case SwordCosmeticSelection.AstralNocturne:
+                    return "Celestial Rose Scythe\nTwo-handed cosmetic weapon.\nNo gameplay stats, hitboxes, or timing change.";
+                case SwordCosmeticSelection.HeavensDefiance:
+                    return "Celestial Angel Poleaxe\nTwo-handed cosmetic weapon.\nNo gameplay stats, hitboxes, or timing change.";
+                case SwordCosmeticSelection.AbyssalOssuary:
+                    return "Leviathan Double Crescent Axe\nTwo-handed cosmetic weapon.\nNo gameplay stats, hitboxes, or timing change.";
+                case SwordCosmeticSelection.Default:
+                    return "A reliable blade for the depths.";
+                default:
+                    return "Existing sword cosmetic.\nReach multiplier: 1.20×.";
+            }
+        }
+
+        public static string ResourcePathFor(SwordCosmeticSelection selection)
+        {
+            switch (selection)
+            {
+                case SwordCosmeticSelection.Sword1:
+                    return "Cosmetics/Swords/Sword01";
+                case SwordCosmeticSelection.Sword2:
+                    return "Cosmetics/Swords/Sword02";
+                case SwordCosmeticSelection.Sword3:
+                    return "Cosmetics/Swords/Sword03";
+                case SwordCosmeticSelection.AstralNocturne:
+                    return "Cosmetics/Weapons/Astral_Nocturne";
+                case SwordCosmeticSelection.HeavensDefiance:
+                    return "Cosmetics/Weapons/Heavens_Defiance";
+                case SwordCosmeticSelection.AbyssalOssuary:
+                    return "Cosmetics/Weapons/Abyssal_Ossuary";
+                default:
+                    return null;
+            }
+        }
+
+        public static Sprite LoadSpriteFor(SwordCosmeticSelection selection)
+        {
+            string path = ResourcePathFor(selection);
+            return string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);
+        }
+
         public static void EnsureInstalled(GameObject player)
         {
             if (player != null && player.GetComponent<PlayerSwordCosmetics>() == null)
@@ -121,14 +202,17 @@ namespace Cave.Player
             cosmeticSprites = new[]
             {
                 null,
-                Resources.Load<Sprite>("Cosmetics/Swords/Sword01"),
-                Resources.Load<Sprite>("Cosmetics/Swords/Sword02"),
-                Resources.Load<Sprite>("Cosmetics/Swords/Sword03")
+                LoadSpriteFor(SwordCosmeticSelection.Sword1),
+                LoadSpriteFor(SwordCosmeticSelection.Sword2),
+                LoadSpriteFor(SwordCosmeticSelection.Sword3),
+                LoadSpriteFor(SwordCosmeticSelection.AstralNocturne),
+                LoadSpriteFor(SwordCosmeticSelection.HeavensDefiance),
+                LoadSpriteFor(SwordCosmeticSelection.AbyssalOssuary)
             };
             selectedAppearance = (SwordCosmeticSelection)Mathf.Clamp(
                 PlayerPrefs.GetInt(SelectionKey, (int)selectedAppearance),
                 0,
-                3);
+                SelectionCount - 1);
             if (!IsAvailable(selectedAppearance))
             {
                 selectedAppearance = SwordCosmeticSelection.Default;
@@ -165,7 +249,7 @@ namespace Cave.Player
         {
             if (enableDebugCycleKey && Input.GetKeyDown(debugCycleKey))
             {
-                Select((SwordCosmeticSelection)(((int)selectedAppearance + 1) % 4));
+                Select((SwordCosmeticSelection)(((int)selectedAppearance + 1) % SelectionCount));
             }
         }
 
@@ -295,14 +379,28 @@ namespace Cave.Player
                     return Sword2Unlocked;
                 case SwordCosmeticSelection.Sword3:
                     return Sword3Unlocked;
-                default:
+                case SwordCosmeticSelection.Default:
                     return true;
+                default:
+                    // Production unlock requirements are intentionally not invented.
+                    // The existing development cosmetics override exposes these entries.
+                    return false;
             }
         }
 
         public bool IsAvailable(SwordCosmeticSelection selection)
         {
-            return CosmeticAvailability.IsAvailable(IsUnlocked(selection));
+            return IsAvailableForPolicy(selection, IsUnlocked(selection),
+                DeveloperDiagnosticsSettings.EffectiveUnlockAllCosmetics);
+        }
+
+        /// <summary>Pure counterpart of the live availability decision for verification.</summary>
+        internal static bool IsAvailableForPolicy(SwordCosmeticSelection selection,
+            bool actuallyUnlocked, bool developerUnlockAllCosmetics)
+        {
+            return selection >= SwordCosmeticSelection.Default
+                && selection <= SwordCosmeticSelection.AbyssalOssuary
+                && CosmeticAvailability.IsAvailable(actuallyUnlocked, developerUnlockAllCosmetics);
         }
 
         private void CheckWorldLevelUnlock()
@@ -333,23 +431,34 @@ namespace Cave.Player
         {
             if (selection == SwordCosmeticSelection.Sword1) return sword1Offset;
             if (selection == SwordCosmeticSelection.Sword2) return sword2Offset;
-            return selection == SwordCosmeticSelection.Sword3 ? sword3Offset : Vector3.zero;
+            if (selection == SwordCosmeticSelection.Sword3) return sword3Offset;
+
+            // Their source pivots are authored at the two-handed grip. These offsets
+            // only make the existing sword hand anchor line up with that grip.
+            if (selection == SwordCosmeticSelection.AstralNocturne) return new Vector3(0f, -0.02f, 0f);
+            if (selection == SwordCosmeticSelection.HeavensDefiance) return new Vector3(0f, -0.04f, 0f);
+            return Vector3.zero;
         }
 
         private float RotationFor(SwordCosmeticSelection selection)
         {
             if (selection == SwordCosmeticSelection.Sword1) return sword1Rotation;
             if (selection == SwordCosmeticSelection.Sword2) return sword2Rotation;
-            return selection == SwordCosmeticSelection.Sword3 ? sword3Rotation : 0f;
+            if (selection == SwordCosmeticSelection.Sword3) return sword3Rotation;
+            return IsLegendaryWeapon(selection) ? -90f : 0f;
         }
 
         private float ScaleFor(SwordCosmeticSelection selection)
         {
             if (selection == SwordCosmeticSelection.Sword1) return sword1Scale * UpgradedSwordMultiplier;
             if (selection == SwordCosmeticSelection.Sword2) return sword2Scale * UpgradedSwordMultiplier;
-            return selection == SwordCosmeticSelection.Sword3
-                ? sword3Scale * UpgradedSwordMultiplier
-                : 1f;
+            if (selection == SwordCosmeticSelection.Sword3) return sword3Scale * UpgradedSwordMultiplier;
+
+            // Normalized, uniform visual calibration only. It affects neither the
+            // existing attack collider nor its reach multiplier.
+            if (selection == SwordCosmeticSelection.AstralNocturne) return .93f;
+            if (selection == SwordCosmeticSelection.HeavensDefiance) return .93f;
+            return selection == SwordCosmeticSelection.AbyssalOssuary ? 1.1f : 1f;
         }
 
         private GameObject VisualPrefabFor(SwordCosmeticSelection selection)

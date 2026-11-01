@@ -22,6 +22,7 @@ namespace Cave.Enemies
         [Header("Persistent Runtime Multipliers (Read Only)")]
         [SerializeField, Min(0f)] private float inheritanceDamageMultiplier = 1f;
         [SerializeField, Min(0f)] private float corruptionDamageMultiplier = 1f;
+        [SerializeField, Min(0f)] private float collectiveDamageMultiplier = 1f;
 
         private readonly Dictionary<ModifierKey, ModifierEntry> modifiers =
             new Dictionary<ModifierKey, ModifierEntry>();
@@ -95,6 +96,7 @@ namespace Cave.Enemies
                     : 1f;
                 return inheritanceDamageMultiplier
                     * corruptionDamageMultiplier
+                    * collectiveDamageMultiplier
                     * (1f + AdditiveBonus)
                     * avariceMultiplier;
             }
@@ -181,6 +183,15 @@ namespace Cave.Enemies
             ModifiersChanged?.Invoke();
         }
 
+        public void SetCollectiveDamageMultiplier(float multiplier)
+        {
+            float resolved = Mathf.Max(0f, multiplier);
+            if (Mathf.Approximately(collectiveDamageMultiplier, resolved)) return;
+            collectiveDamageMultiplier = resolved;
+            ResetFractionalCarry();
+            ModifiersChanged?.Invoke();
+        }
+
         public int ResolveDamage(int baseDamage)
         {
             int safeBaseDamage = Mathf.Max(1, baseDamage);
@@ -191,6 +202,7 @@ namespace Cave.Enemies
             if (additiveBonus <= 0f
                 && Mathf.Approximately(inheritanceDamageMultiplier, 1f)
                 && Mathf.Approximately(corruptionDamageMultiplier, 1f)
+                && Mathf.Approximately(collectiveDamageMultiplier, 1f)
                 && Mathf.Approximately(avariceMultiplier, 1f))
             {
                 fractionalDamageCarry = 0f;
@@ -200,6 +212,7 @@ namespace Cave.Enemies
             float exactDamage = safeBaseDamage
                 * inheritanceDamageMultiplier
                 * corruptionDamageMultiplier
+                * collectiveDamageMultiplier
                 * (1f + additiveBonus)
                 * avariceMultiplier
                 + fractionalDamageCarry;

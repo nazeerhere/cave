@@ -8,6 +8,8 @@ using UnityEngine;
 namespace Cave.FieldControl
 {
     public enum FieldOwnerTeam { Player, Enemy }
+    [Flags]
+    public enum FieldLinkTacticalEffect { None=0, Reinforced=1, Suppressed=2 }
 
     [DisallowMultipleComponent]
     public sealed class FieldResistance : MonoBehaviour
@@ -30,6 +32,8 @@ namespace Cave.FieldControl
         private bool depletionScheduled;
         private float currentEnergy;
         private ulong creationOrder;
+        private float tacticalGuardUntil;
+        private float tacticalGuardDamageMultiplier = 1f;
 
         public event Action<FieldNode> StateChanged;
         public event Action<FieldNode> EnergyChanged;
@@ -64,7 +68,20 @@ namespace Cave.FieldControl
 
         public void DrainEnergy(float amount)
         {
-            if (!CanContribute || amount <= 0f) return;
+            TryDrainEnergy(amount);
+        }
+
+        public bool CanSpendEnergy(float amount)
+        {
+            return CanContribute && amount >= 0f
+                && (amount <= 0f || currentEnergy - amount > 0.001f);
+        }
+
+        /// <summary>Atomic typed spend seam for match-scoped commands. It never regenerates energy.</summary>
+        public bool TryDrainEnergy(float amount)
+        {
+            if (!CanSpendEnergy(amount)) return false;
+            if (amount <= 0f) return true;
             float before = currentEnergy;
             currentEnergy = Mathf.Max(0f, currentEnergy - amount);
             if (!Mathf.Approximately(before, currentEnergy)) EnergyChanged?.Invoke(this);
@@ -77,6 +94,35 @@ namespace Cave.FieldControl
                     Invoke(nameof(Expire), 0f);
                 }
             }
+            return true;
+        }
+
+        public void ApplyTacticalGuard(float duration, float damageMultiplier)
+        {
+            tacticalGuardUntil = Mathf.Max(tacticalGuardUntil, Time.time + Mathf.Max(0f, duration));
+            tacticalGuardDamageMultiplier = Mathf.Clamp(damageMultiplier, 0.05f, 1f);
+            StateChanged?.Invoke(this);
+        }
+
+        public void ClearTacticalGuard()
+        {
+            tacticalGuardUntil = 0f;
+            tacticalGuardDamageMultiplier = 1f;
+            StateChanged?.Invoke(this);
+        }
+
+        public bool TacticalGuardActive => Time.time < tacticalGuardUntil;
+
+        public int ResolveIncomingPhysicalDamage(int amount, DamageContext context)
+        {
+            return ResolveGuardedDamage(amount, TacticalGuardActive, tacticalGuardDamageMultiplier,
+                context.HasTrait(DamageTrait.Periodic));
+        }
+
+        internal static int ResolveGuardedDamage(int amount, bool active, float multiplier, bool periodic)
+        {
+            if (amount <= 0 || !active || periodic) return Mathf.Max(0, amount);
+            return Mathf.Max(0, Mathf.CeilToInt(amount * Mathf.Clamp(multiplier, 0.05f, 1f)));
         }
 
         public void Sacrifice()
@@ -145,6 +191,10 @@ namespace Cave.FieldControl
 
         private readonly List<FieldNode> nodes = new List<FieldNode>(3);
         private readonly List<FieldLink> links = new List<FieldLink>(3);
+        private readonly Dictionary<FieldLinkIdentity, TemporaryLinkState> tacticalLinks =
+            new Dictionary<FieldLinkIdentity, TemporaryLinkState>(3);
+        private readonly List<FieldLinkIdentity> tacticalLinkKeys = new List<FieldLinkIdentity>(3);
+        private readonly List<FieldLinkIdentity> tacticalLinkRemovals = new List<FieldLinkIdentity>(3);
         private bool topologyDirty;
         private float nextEnergyTick;
 
@@ -158,12 +208,111 @@ namespace Cave.FieldControl
         public FieldOwnerTeam OwnerTeam => ownerTeam;
         public float MaximumLinkDistance => maximumLinkDistance;
 
+        public readonly struct FieldLinkIdentity : IEquatable<FieldLinkIdentity>
+        {
+            public FieldLinkIdentity(ulong first, ulong second)
+            {
+                if (first <= second) { First = first; Second = second; }
+                else { First = second; Second = first; }
+            }
+            public ulong First { get; }
+            public ulong Second { get; }
+            public bool IsValid => First > 0UL && Second > 0UL && First != Second;
+            public bool Equals(FieldLinkIdentity other) => First == other.First && Second == other.Second;
+            public override bool Equals(object obj) => obj is FieldLinkIdentity other && Equals(other);
+            public override int GetHashCode() => unchecked((First.GetHashCode() * 397) ^ Second.GetHashCode());
+        }
+
+        private struct TemporaryLinkState
+        {
+            public float SuppressedUntil;
+            public float ReinforcedUntil;
+            public float ForceMultiplier;
+            public float UpkeepMultiplier;
+        }
+
+        internal static bool IsWithinLinkDistance(Vector2 first, Vector2 second, float maximumDistance)
+        {
+            return Vector2.Distance(first, second) <= Mathf.Max(0.1f, maximumDistance);
+        }
+
+        internal static float ResolveEnergyDrain(float drainPerLinkedNode, float interval, int linkCount)
+        {
+            return Mathf.Max(0f, drainPerLinkedNode)
+                * Mathf.Max(0f, interval)
+                * Mathf.Max(0, linkCount);
+        }
+
         /// <summary>Read-only gameplay-link query for adapters. FieldNetwork remains the owner of link creation and force behavior.</summary>
         public bool AreLinked(FieldNode first,FieldNode second)
         {
             if(first==null||second==null)return false;
             for(int index=0;index<links.Count;index++)if(links[index]!=null&&links[index].Connects(first,second))return true;
             return false;
+        }
+
+        public bool TryReinforceLink(FieldNode first, FieldNode second, float duration,
+            float forceMultiplier, float upkeepMultiplier)
+        {
+            if (!AreLinked(first, second)) return false;
+            FieldLinkIdentity id = Identity(first, second);
+            if (!id.IsValid || IsSuppressed(id, Time.time)) return false;
+            TemporaryLinkState state;
+            tacticalLinks.TryGetValue(id, out state);
+            state.ReinforcedUntil = Mathf.Max(state.ReinforcedUntil, Time.time + Mathf.Max(0f, duration));
+            state.ForceMultiplier = Mathf.Max(1f, forceMultiplier);
+            state.UpkeepMultiplier = Mathf.Clamp(upkeepMultiplier, 0f, 1f);
+            tacticalLinks[id] = state;
+            RefreshLinkModifiers();
+            TopologyChanged?.Invoke();
+            return true;
+        }
+
+        public bool TrySuppressLink(FieldNode first, FieldNode second, float duration)
+        {
+            if (!AreLinked(first, second)) return false;
+            FieldLinkIdentity id = Identity(first, second);
+            if (!id.IsValid || IsSuppressed(id, Time.time)) return false;
+            TemporaryLinkState state;
+            tacticalLinks.TryGetValue(id, out state);
+            state.SuppressedUntil = Time.time + Mathf.Max(0f, duration);
+            tacticalLinks[id] = state;
+            topologyDirty = true;
+            RebuildIfNeeded();
+            return true;
+        }
+
+        public bool IsLinkSuppressed(FieldNode first, FieldNode second)
+        {
+            return IsSuppressed(Identity(first, second), Time.time);
+        }
+
+        public FieldLinkTacticalEffect GetTacticalEffects(FieldNode node)
+        {
+            if(node==null)return FieldLinkTacticalEffect.None;
+            FieldLinkTacticalEffect result=FieldLinkTacticalEffect.None;
+            foreach(KeyValuePair<FieldLinkIdentity,TemporaryLinkState> pair in tacticalLinks)
+            {
+                if(pair.Key.First!=node.CreationOrder&&pair.Key.Second!=node.CreationOrder)continue;
+                if(pair.Value.ReinforcedUntil>Time.time)result|=FieldLinkTacticalEffect.Reinforced;
+                if(pair.Value.SuppressedUntil>Time.time)result|=FieldLinkTacticalEffect.Suppressed;
+            }
+            return result;
+        }
+
+        public void NotifyNodeMoved(FieldNode node)
+        {
+            if (node == null || !nodes.Contains(node)) return;
+            topologyDirty = true;
+            RebuildIfNeeded();
+        }
+
+        public void ClearTemporaryTacticalState()
+        {
+            if (tacticalLinks.Count == 0) return;
+            tacticalLinks.Clear();
+            topologyDirty = true;
+            RebuildIfNeeded();
         }
 
         /// <summary>Returns the current physical nodes in deterministic placement
@@ -226,10 +375,15 @@ namespace Cave.FieldControl
 
         private void Update()
         {
+            ExpireTemporaryLinkStates();
             RebuildIfNeeded();
             if (links.Count == 0 || Time.time < nextEnergyTick) return;
             nextEnergyTick = Time.time + energyTickInterval;
-            float drain = energyDrainPerLinkedNode * energyTickInterval * links.Count;
+            float weightedLinks = 0f;
+            for (int index = 0; index < links.Count; index++)
+                if (links[index] != null) weightedLinks += links[index].UpkeepMultiplier;
+            float drain = Mathf.Max(0f, energyDrainPerLinkedNode)
+                * Mathf.Max(0f, energyTickInterval) * weightedLinks;
             for (int index = 0; index < nodes.Count; index++) nodes[index]?.DrainEnergy(drain);
             for (int index = 0; index < links.Count; index++) links[index]?.RefreshStrength();
         }
@@ -287,13 +441,81 @@ namespace Cave.FieldControl
 
         private void AddLink(FieldNode a, FieldNode b)
         {
-            if (a == null || b == null || Vector2.Distance(a.transform.position, b.transform.position) > maximumLinkDistance) return;
+            if (a == null || b == null || !IsWithinLinkDistance(
+                a.transform.position,
+                b.transform.position,
+                maximumLinkDistance)) return;
+            FieldLinkIdentity id = Identity(a, b);
+            if (IsSuppressed(id, Time.time)) return;
+            TemporaryLinkState state;
+            bool reinforced = tacticalLinks.TryGetValue(id, out state)
+                && state.ReinforcedUntil > Time.time;
             GameObject linkObject = new GameObject("Field Link");
             linkObject.transform.SetParent(transform, false);
             FieldLink link = linkObject.AddComponent<FieldLink>();
             link.Configure(a, b, ownerTeam, affectedLayers, baseStrength, distanceOffset, distanceExponent,
-                segmentWidth, strongColor, weakColor, linkVisualPrefab);
+                segmentWidth, strongColor, weakColor, linkVisualPrefab,
+                reinforced ? Mathf.Max(1f, state.ForceMultiplier) : 1f,
+                reinforced ? Mathf.Clamp(state.UpkeepMultiplier, 0f, 1f) : 1f);
             links.Add(link);
+        }
+
+        private static FieldLinkIdentity Identity(FieldNode first, FieldNode second)
+        {
+            return first == null || second == null
+                ? default
+                : new FieldLinkIdentity(first.CreationOrder, second.CreationOrder);
+        }
+
+        private bool IsSuppressed(FieldLinkIdentity id, float now)
+        {
+            TemporaryLinkState state;
+            return id.IsValid && tacticalLinks.TryGetValue(id, out state)
+                && state.SuppressedUntil > now;
+        }
+
+        private void ExpireTemporaryLinkStates()
+        {
+            if (tacticalLinks.Count == 0) return;
+            bool rebuild = false;
+            tacticalLinkKeys.Clear();tacticalLinkRemovals.Clear();
+            foreach(FieldLinkIdentity key in tacticalLinks.Keys)tacticalLinkKeys.Add(key);
+            for (int index = 0; index < tacticalLinkKeys.Count; index++)
+            {
+                FieldLinkIdentity key=tacticalLinkKeys[index];
+                TemporaryLinkState state = tacticalLinks[key];
+                if (state.SuppressedUntil > 0f && state.SuppressedUntil <= Time.time)
+                {
+                    state.SuppressedUntil = 0f;
+                    rebuild = true;
+                }
+                if (state.ReinforcedUntil > 0f && state.ReinforcedUntil <= Time.time)
+                {
+                    state.ReinforcedUntil = 0f;
+                    rebuild = true;
+                }
+                if (state.SuppressedUntil <= 0f && state.ReinforcedUntil <= 0f)
+                {
+                    tacticalLinkRemovals.Add(key);
+                }
+                else tacticalLinks[key] = state;
+            }
+            for (int index = 0; index < tacticalLinkRemovals.Count; index++) tacticalLinks.Remove(tacticalLinkRemovals[index]);
+            if (rebuild) { topologyDirty = true; RebuildIfNeeded(); }
+        }
+
+        private void RefreshLinkModifiers()
+        {
+            for (int index = 0; index < links.Count; index++)
+            {
+                FieldLink link = links[index];
+                if (link == null) continue;
+                TemporaryLinkState state;
+                bool active = tacticalLinks.TryGetValue(link.Identity, out state)
+                    && state.ReinforcedUntil > Time.time;
+                link.SetTemporaryModifiers(active ? state.ForceMultiplier : 1f,
+                    active ? state.UpkeepMultiplier : 1f);
+            }
         }
 
         private void ClearLinks()
@@ -336,15 +558,23 @@ namespace Cave.FieldControl
         private OblivionDiskFieldLinkVisual approvedDiskVisual;
         private Material material;
         private float strength;
+        private float forceMultiplier = 1f;
+        private float upkeepMultiplier = 1f;
 
         public float Strength => strength;
+        public float UpkeepMultiplier => upkeepMultiplier;
+        public FieldNetwork.FieldLinkIdentity Identity => new FieldNetwork.FieldLinkIdentity(
+            first != null ? first.CreationOrder : 0UL,
+            second != null ? second.CreationOrder : 0UL);
         public bool Connects(FieldNode a,FieldNode b) => (ReferenceEquals(first,a)&&ReferenceEquals(second,b))||(ReferenceEquals(first,b)&&ReferenceEquals(second,a));
 
-        public void Configure(FieldNode a, FieldNode b, FieldOwnerTeam team, LayerMask layers, float baseForce, float offset, float exponent, float fieldWidth, Color strong, Color weak, GameObject visualPrefab = null)
+        public void Configure(FieldNode a, FieldNode b, FieldOwnerTeam team, LayerMask layers, float baseForce, float offset, float exponent, float fieldWidth, Color strong, Color weak, GameObject visualPrefab = null, float temporaryForceMultiplier = 1f, float temporaryUpkeepMultiplier = 1f)
         {
             first = a; second = b; ownerTeam = team; affectedLayers = layers;
             baseStrength = baseForce; distanceOffset = offset; distanceExponent = exponent; width = fieldWidth;
             strongColor = strong; weakColor = weak;
+            forceMultiplier = Mathf.Max(0f, temporaryForceMultiplier);
+            upkeepMultiplier = Mathf.Max(0f, temporaryUpkeepMultiplier);
             EnsurePresentation(visualPrefab);
             RefreshStrength();
         }
@@ -360,6 +590,7 @@ namespace Cave.FieldControl
             float distance = delta.magnitude;
             strength = baseStrength / Mathf.Pow(distance + distanceOffset, distanceExponent);
             strength *= Mathf.Min(first.EnergyFraction, second.EnergyFraction);
+            strength *= forceMultiplier;
             transform.position = ((Vector2)first.transform.position + (Vector2)second.transform.position) * .5f;
             transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
             trigger.size = new Vector2(distance, width);
@@ -374,6 +605,13 @@ namespace Cave.FieldControl
             {
                 approvedDiskVisual.Refresh(distance, visual.startWidth, color);
             }
+        }
+
+        public void SetTemporaryModifiers(float force, float upkeep)
+        {
+            forceMultiplier = Mathf.Max(0f, force);
+            upkeepMultiplier = Mathf.Max(0f, upkeep);
+            RefreshStrength();
         }
 
         private void EnsurePresentation(GameObject visualPrefab)

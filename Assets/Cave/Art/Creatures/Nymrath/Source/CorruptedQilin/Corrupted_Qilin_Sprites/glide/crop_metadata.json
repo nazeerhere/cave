@@ -1,0 +1,124 @@
+{
+  "action": "glide",
+  "frame_count": 8,
+  "source_sheet": "corrupted_qilin_glide.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_glide_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        17,
+        427,
+        494
+      ],
+      "size_pixels": [
+        427,
+        477
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        396,
+        15,
+        905,
+        512
+      ],
+      "size_pixels": [
+        509,
+        497
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        880,
+        15,
+        1359,
+        510
+      ],
+      "size_pixels": [
+        479,
+        495
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1334,
+        13,
+        1774,
+        506
+      ],
+      "size_pixels": [
+        440,
+        493
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        9,
+        410,
+        466,
+        887
+      ],
+      "size_pixels": [
+        457,
+        477
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        436,
+        451,
+        909,
+        875
+      ],
+      "size_pixels": [
+        473,
+        424
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        864,
+        414,
+        1355,
+        887
+      ],
+      "size_pixels": [
+        491,
+        473
+      ]
+    },
+    {
+      "file": "CorruptedQilin_glide_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1317,
+        437,
+        1756,
+        887
+      ],
+      "size_pixels": [
+        439,
+        450
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

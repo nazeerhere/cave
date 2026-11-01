@@ -1,0 +1,152 @@
+{
+  "action": "living_bastion",
+  "frame_count": 10,
+  "source_sheet": "grotto_mender_living_bastion.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_living_bastion_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        23,
+        401,
+        453
+      ],
+      "size_pixels": [
+        401,
+        430
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        327,
+        27,
+        820,
+        469
+      ],
+      "size_pixels": [
+        493,
+        442
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        787,
+        39,
+        1205,
+        467
+      ],
+      "size_pixels": [
+        418,
+        428
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1204,
+        43,
+        1599,
+        405
+      ],
+      "size_pixels": [
+        395,
+        362
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1623,
+        32,
+        1979,
+        406
+      ],
+      "size_pixels": [
+        356,
+        374
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        16,
+        420,
+        405,
+        767
+      ],
+      "size_pixels": [
+        389,
+        347
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        400,
+        440,
+        820,
+        793
+      ],
+      "size_pixels": [
+        420,
+        353
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        805,
+        438,
+        1209,
+        766
+      ],
+      "size_pixels": [
+        404,
+        328
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1178,
+        462,
+        1600,
+        777
+      ],
+      "size_pixels": [
+        422,
+        315
+      ]
+    },
+    {
+      "file": "GrottoMender_living_bastion_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1595,
+        509,
+        1983,
+        777
+      ],
+      "size_pixels": [
+        388,
+        268
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

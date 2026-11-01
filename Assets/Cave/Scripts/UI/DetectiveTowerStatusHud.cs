@@ -114,7 +114,9 @@ namespace Cave.UI
             string stageMarker = FormatStage(visibleStage);
             if (titleText != null)
             {
-                titleText.text = "TOWER  •  STAGE " + stageMarker;
+                titleText.text = visibleStage >= DetectiveResearchRules.MaximumTowerStage
+                    ? "TOWER  •  MAX STAGE"
+                    : "TOWER  •  STAGE " + stageMarker;
                 titleText.color = stageColor;
             }
 

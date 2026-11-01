@@ -7,7 +7,7 @@ namespace Cave.Player
     {
         public static bool IsAvailable(bool actuallyUnlocked)
         {
-            return IsAvailable(actuallyUnlocked, DeveloperDiagnosticsSettings.UnlockAllCosmetics);
+            return IsAvailable(actuallyUnlocked, DeveloperDiagnosticsSettings.EffectiveUnlockAllCosmetics);
         }
 
         public static bool IsAvailable(bool actuallyUnlocked, bool developerUnlockAllCosmetics)

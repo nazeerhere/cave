@@ -150,7 +150,7 @@ namespace Cave.Editor.SceneBuilder
         {
             CaveSceneBuilderV1.PlacePlayerSpawn("Stronghold Player Spawn", roots.PlayerSpawn, new Vector2(-31.5f, -4.35f), "FromUpperCave");
             CaveSceneBuilderV1.PlaceInteractableMarker("Stronghold Fighting Pit Marker", roots.Interactables, new Vector2(25f, -6.85f), "StrongholdPitArena");
-            CaveSceneBuilderV1.PlaceRoomTransitionMarker("Stronghold Right Exit Marker", roots.Transitions, new Vector2(39.3f, -2.5f), "ToHollowDistricts", "Cave_Level01");
+            CaveSceneBuilderV1.PlaceRoomTransitionMarker("Stronghold Right Exit Marker", roots.Transitions, new Vector2(39.3f, -2.5f), "ToHollowDistricts", "03_HollowDistricts");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Barracks Encounter", roots.EnemySpawns, new Vector2(-22.5f, -4.3f), "StrongholdBarracks01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Slum Encounter", roots.EnemySpawns, new Vector2(-10.0f, -4.2f), "StrongholdSlums01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Market Encounter", roots.EnemySpawns, new Vector2(4.5f, -2.55f), "StrongholdMarket01");

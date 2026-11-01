@@ -31,8 +31,8 @@ namespace Cave.Progression
         [SerializeField, Min(0)] private int strengthTier3DamageBonus = 2;
 
         [Header("Flight Tier Efficiency")]
-        [SerializeField, Range(0f, 0.9f)] private float flightTier2EfficiencyBonus = 0.05f;
-        [SerializeField, Range(0f, 0.9f)] private float flightTier3EfficiencyBonus = 0.10f;
+        [SerializeField, Range(0f, 0.9f)] private float flightTier2EfficiencyBonus = 0.30f;
+        [SerializeField, Range(0f, 0.9f)] private float flightTier3EfficiencyBonus = 0.70f;
 
         [Header("Projectile Pierce")]
         [FormerlySerializedAs("slowShotPierceCount")]

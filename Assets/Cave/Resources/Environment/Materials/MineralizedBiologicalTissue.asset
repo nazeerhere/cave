@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6589ed37ba114ddea2ec2134174740e, type: 3}
+  m_Name: MineralizedBiologicalTissue
+  m_EditorClassIdentifier: Assembly-CSharp:Cave.Environmental:EnvironmentalMaterialProfile
+  family: 5
+  structuralResistance: 1
+  impactSensitivity: 1
+  heavyImpactMultiplier: 1.5
+  collisionBehavior: 0
+  supportsRegeneration: 1
+  defaultRegenerationDelay: 12
+  defaultRegenerationSeconds: 3
+  destructionPresentation: 0
+  maximumAuthoredDebrisPieces: 3
+  phenomenonResponses:
+  - phenomenon: 1
+    integrityMultiplier: 1
+    stabilityChange: 0.1
+    canTriggerStoredRelease: 0
+  - phenomenon: 2
+    integrityMultiplier: 1
+    stabilityChange: 0.1
+    canTriggerStoredRelease: 0
+  - phenomenon: 3
+    integrityMultiplier: 1
+    stabilityChange: 0.1
+    canTriggerStoredRelease: 0
+  - phenomenon: 4
+    integrityMultiplier: 1
+    stabilityChange: 0.25
+    canTriggerStoredRelease: 0
+  - phenomenon: 5
+    integrityMultiplier: 1
+    stabilityChange: 0.1
+    canTriggerStoredRelease: 0
+  - phenomenon: 6
+    integrityMultiplier: 1
+    stabilityChange: 0.25
+    canTriggerStoredRelease: 0
+  - phenomenon: 7
+    integrityMultiplier: 1
+    stabilityChange: 0.1
+    canTriggerStoredRelease: 0
+  - phenomenon: 8
+    integrityMultiplier: 0.5
+    stabilityChange: 0
+    canTriggerStoredRelease: 0

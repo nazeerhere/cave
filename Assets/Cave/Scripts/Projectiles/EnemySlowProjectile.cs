@@ -11,7 +11,9 @@ namespace Cave.Projectiles
     public sealed class EnemySlowProjectile : MonoBehaviour,
         IDeflectableDamageSource,
         IPlayerParryableProjectile,
-        IEnemyParryableProjectile
+        IEnemyParryableProjectile,
+        IGeometricAttackAuthority,
+        IGeometricRedirectableAttack
     {
         [SerializeField] private Color enemyProjectileColor = new Color(0.55f, 0.35f, 1f, 1f);
         [SerializeField] private Color reflectedProjectileColor = new Color(0.55f, 0.9f, 1f, 1f);
@@ -36,6 +38,8 @@ namespace Cave.Projectiles
             && currentTeam == ProjectileTeam.Enemy
             && !enemyParried;
         public bool CanBeEnemyParried => !impacted && currentTeam == ProjectileTeam.Player;
+        public bool IsGeometricAttackActive => !impacted && currentTeam == ProjectileTeam.Enemy;
+        public Vector2 GeometricVelocity => body != null ? body.velocity : movementDirection * speed;
 
         private void Awake()
         {
@@ -94,7 +98,39 @@ namespace Cave.Projectiles
             body.simulated = true;
             projectileCollider.enabled = true;
             body.velocity = movementDirection * speed;
+            FrenzyGeometryStructure geometry = GetComponent<FrenzyGeometryStructure>();
+            if (geometry == null) geometry = gameObject.AddComponent<FrenzyGeometryStructure>();
+            geometry.Configure(
+                GeometricStructureKind.ProjectileTrajectory,
+                PreGeometricPrinciple.SpatialProjection,
+                1,
+                0.5f,
+                true);
             Destroy(gameObject, Mathf.Max(0.1f, lifetime));
+        }
+
+        public bool TryInterruptGeometricAttack(GameObject interrupter)
+        {
+            if (!IsGeometricAttackActive) return false;
+            Impact();
+            return true;
+        }
+
+        public bool TryRedirectGeometricAttack(GameObject newOwner, Vector2 direction)
+        {
+            if (!IsGeometricAttackActive || newOwner == null) return false;
+            currentOwner = newOwner;
+            currentTeam = ProjectileTeam.Player;
+            movementDirection = direction.sqrMagnitude > 0.001f
+                ? direction.normalized
+                : -movementDirection;
+            PlayerResourceMastery mastery = newOwner.GetComponentInParent<PlayerResourceMastery>();
+            reflectedDamageContext = mastery != null
+                ? mastery.CreatePlayerDamageContext().WithTraits(DamageTrait.Projectile)
+                : new DamageContext(newOwner, DamageTrait.Projectile);
+            SetVisualColor(reflectedProjectileColor);
+            body.velocity = movementDirection * speed;
+            return true;
         }
 
         public bool Parry(

@@ -17,7 +17,16 @@ namespace Cave.InputSystem
         Interact,
         SummonCurseAltar,
         Dash,
-        Pause
+        Pause,
+        // Appended to preserve the serialized values of every established action.
+        Nexus,
+        // Dedicated manifestation recall. Appended so every established serialized
+        // action keeps its original numeric value.
+        RecallManifestation,
+        // Unified equipment controls. These remain appended so older serialized
+        // action values and PlayerPrefs keys never shift.
+        SelectEquipment,
+        ActivateEquipment
     }
 
     public enum BindingSlot

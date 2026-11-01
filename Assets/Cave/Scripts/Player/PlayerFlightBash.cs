@@ -3,6 +3,7 @@ using Cave.Axioms.Elemental;
 using Cave.Audio;
 using Cave.Combat;
 using Cave.Enemies;
+using Cave.Environmental;
 using Cave.InputSystem;
 using Cave.Progression;
 using UnityEngine;
@@ -16,6 +17,8 @@ namespace Cave.Player
     [RequireComponent(typeof(PlayerSpecialModeUpgradeState))]
     public sealed class PlayerFlightBash : MonoBehaviour
     {
+        /// <summary>Raised once when an already-committed Ground Smash resolves on ground.</summary>
+        public event System.Action<Vector2> GroundSmashImpacted;
         [Header("Aerial Heavy Ground Slam")]
         [SerializeField, Min(0.05f)] private float aerialHeavyHoldThreshold = 0.25f;
         [SerializeField, Range(5f, 85f)] private float diagonalDiveAngle = 40f;
@@ -219,8 +222,8 @@ namespace Cave.Player
 
             damageContext = resourceMastery != null
                 ? resourceMastery.CreatePlayerDamageContext().WithTraits(
-                    DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy)
-                : new DamageContext(gameObject, DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy);
+                    DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy | DamageTrait.SignatureImpactAudio)
+                : new DamageContext(gameObject, DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy | DamageTrait.SignatureImpactAudio);
             hitTargets.Clear();
             axiomApplicationReceipt.Clear();
             impactTriggered = false;
@@ -233,7 +236,7 @@ namespace Cave.Player
             playerFlight?.StopForGroundSmash();
             GetComponent<SpinSwordAttack>()?.StopForCommittedFollowUp();
             collisionPhasing?.Begin(bodyCollider, committedDiveDirection);
-            CaveSfx.Play(CaveSfxCue.Whoosh, 0.85f);
+            CaveSfx.Play(CaveSfxCue.GroundSmashDescent, 0.85f);
             GetComponent<PlayerCurseController>()?.NotifyOffensiveCommitment();
             if (combatFlow == null)
             {
@@ -249,7 +252,7 @@ namespace Cave.Player
                 && resourceMastery != null)
             {
                 damageContext = resourceMastery.CreateManaDamageContext().WithTraits(
-                    DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy);
+                    DamageTrait.AreaOfEffect | DamageTrait.StaggerHeavy | DamageTrait.SignatureImpactAudio);
             }
             combatFlow?.NotifyGroundSlamCommitted();
             body.velocity = committedDiveDirection * diveSpeed;
@@ -322,6 +325,8 @@ namespace Cave.Player
 
             impactTriggered = true;
             body.velocity = Vector2.zero;
+            GroundSmashImpacted?.Invoke(impactPoint);
+            CaveSfx.PlayAt(CaveSfxCue.GroundSmashImpact, impactPoint, 0.95f);
             SpawnImpactVfx(impactPoint);
 
             bool tier3Owned = upgrades != null && upgrades.IsTier3Owned(SpecialMode.Flight);
@@ -387,6 +392,10 @@ namespace Cave.Player
                 damageable.GetComponent<EnemyStagger>()
                     ?.TryStagger(StaggerStrength.Heavy, heavyStaggerDuration);
             }
+
+            StructuralImpactRouter.ApplyArea(new StructuralImpactContext(
+                gameObject, impactPoint, Vector2.down, Mathf.Max(1f, resolvedDamage),
+                damageContext.WithTraits(DamageTrait.Heavy), false, true, GetInstanceID() ^ Time.frameCount), resolvedRadius);
 
             EndGroundSmash(true);
         }

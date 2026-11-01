@@ -1,5 +1,6 @@
 using System.Collections;
 using Cave.Axioms.Elemental;
+using Cave.Audio;
 using Cave.Combat;
 using Cave.Progression;
 using Cave.Projectiles;
@@ -7,6 +8,13 @@ using UnityEngine;
 
 namespace Cave.Enemies
 {
+    public enum EnemyStatusKind
+    {
+        Burn,
+        Slow,
+        Immobilize
+    }
+
     [RequireComponent(typeof(Damageable))]
     public sealed class EnemyStatusEffects : MonoBehaviour
     {
@@ -28,6 +36,9 @@ namespace Cave.Enemies
         public bool IsBurning => burnRoutine != null;
         public bool IsSlowed => Time.time < slowEndsAt;
         public bool IsImmobilized => Time.time < immobilizedUntil;
+        public event System.Action<EnemyStatusKind> StatusStarted;
+        public event System.Action<EnemyStatusKind> StatusRefreshed;
+        public event System.Action<EnemyStatusKind> StatusEnded;
 
         private struct BurnDefinition
         {
@@ -78,6 +89,7 @@ namespace Cave.Enemies
                 return;
             }
 
+            bool wasActive = IsSlowed;
             strongestSlowMultiplier = Mathf.Min(
                 strongestSlowMultiplier,
                 Mathf.Clamp(movementMultiplier, 0.05f, 1f));
@@ -88,6 +100,8 @@ namespace Cave.Enemies
             {
                 slowRoutine = StartCoroutine(SlowUntilExpired());
             }
+
+            NotifyStatusApplied(EnemyStatusKind.Slow, wasActive);
         }
 
         public bool ApplyImmobilize(float duration)
@@ -99,6 +113,7 @@ namespace Cave.Enemies
                 return false;
             }
 
+            bool wasActive = IsImmobilized;
             immobilizedUntil = Mathf.Max(immobilizedUntil, Time.time + duration);
             SetMovementMultiplier(0f);
             RefreshFrostVisual();
@@ -106,6 +121,8 @@ namespace Cave.Enemies
             {
                 immobilizeRoutine = StartCoroutine(ImmobilizeUntilExpired());
             }
+
+            NotifyStatusApplied(EnemyStatusKind.Immobilize, wasActive);
 
             return true;
         }
@@ -138,6 +155,7 @@ namespace Cave.Enemies
                 return;
             }
 
+            bool wasActive = IsBurning;
             activeBurn = new BurnDefinition
             {
                 DamagePerTick = damagePerTick,
@@ -156,6 +174,7 @@ namespace Cave.Enemies
 
             statusVisuals?.SetBurnActive(true);
             burnRoutine = StartCoroutine(BurnForDuration(activeBurn));
+            NotifyStatusApplied(EnemyStatusKind.Burn, wasActive);
         }
 
         /// <summary>
@@ -198,6 +217,7 @@ namespace Cave.Enemies
             slowRoutine = null;
             ApplyCurrentMovementMultiplier();
             RefreshFrostVisual();
+            NotifyStatusEnded(EnemyStatusKind.Slow);
         }
 
         private IEnumerator ImmobilizeUntilExpired()
@@ -211,6 +231,7 @@ namespace Cave.Enemies
             immobilizeRoutine = null;
             ApplyCurrentMovementMultiplier();
             RefreshFrostVisual();
+            NotifyStatusEnded(EnemyStatusKind.Immobilize);
         }
 
         private void SetMovementMultiplier(float multiplier)
@@ -235,6 +256,7 @@ namespace Cave.Enemies
                 slowRoutine = null;
                 strongestSlowMultiplier = 1f;
                 slowEndsAt = 0f;
+                NotifyStatusEnded(EnemyStatusKind.Slow);
                 removed = true;
             }
 
@@ -245,6 +267,7 @@ namespace Cave.Enemies
                 activeBurn = default;
                 applyingBurnDamage = false;
                 statusVisuals?.SetBurnActive(false);
+                NotifyStatusEnded(EnemyStatusKind.Burn);
                 removed = true;
             }
 
@@ -274,7 +297,9 @@ namespace Cave.Enemies
             {
                 yield return tickDelay;
                 applyingBurnDamage = true;
-                damageable.TakeDamage(burn.DamagePerTick, burn.DamageContext);
+                damageable.TakeDamage(
+                    burn.DamagePerTick,
+                    burn.DamageContext.WithTraits(DamageTrait.Periodic));
                 applyingBurnDamage = false;
 
                 if (!gameObject.activeInHierarchy)
@@ -286,6 +311,7 @@ namespace Cave.Enemies
             burnRoutine = null;
             activeBurn = default;
             statusVisuals?.SetBurnActive(false);
+            NotifyStatusEnded(EnemyStatusKind.Burn);
         }
 
         private void HandleDied()
@@ -309,6 +335,35 @@ namespace Cave.Enemies
                 activeBurn.Duration,
                 activeBurn.DamageContext,
                 activeBurn.DamageableLayers);
+        }
+
+        private void NotifyStatusApplied(EnemyStatusKind kind, bool wasActive)
+        {
+            if (wasActive)
+            {
+                StatusRefreshed?.Invoke(kind);
+                return;
+            }
+
+            StatusStarted?.Invoke(kind);
+            switch (kind)
+            {
+                case EnemyStatusKind.Burn:
+                    CaveSfx.PlayAt(CaveSfxCue.StatusBurnStart, transform.position, 0.65f);
+                    break;
+                case EnemyStatusKind.Slow:
+                    CaveSfx.PlayAt(CaveSfxCue.StatusSlowStart, transform.position, 0.55f);
+                    break;
+                case EnemyStatusKind.Immobilize:
+                    CaveSfx.PlayAt(CaveSfxCue.StatusImmobilizeStart, transform.position, 0.7f);
+                    break;
+            }
+        }
+
+        private void NotifyStatusEnded(EnemyStatusKind kind)
+        {
+            StatusEnded?.Invoke(kind);
+            CaveSfx.PlayAt(CaveSfxCue.StatusReleased, transform.position, 0.45f);
         }
 
         private void OnDisable()

@@ -1,0 +1,152 @@
+{
+  "action": "death",
+  "frame_count": 10,
+  "source_sheet": "corrupted_qilin_death.png",
+  "method": "Provisional minimum-alpha seams for touching sprites/glow. Review before Unity import.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_death_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        0,
+        397,
+        434
+      ],
+      "size_pixels": [
+        397,
+        434
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        397,
+        23,
+        793,
+        433
+      ],
+      "size_pixels": [
+        396,
+        410
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        793,
+        19,
+        1194,
+        433
+      ],
+      "size_pixels": [
+        401,
+        414
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1190,
+        35,
+        1594,
+        433
+      ],
+      "size_pixels": [
+        404,
+        398
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1586,
+        49,
+        1983,
+        432
+      ],
+      "size_pixels": [
+        397,
+        383
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        0,
+        398,
+        424,
+        793
+      ],
+      "size_pixels": [
+        424,
+        395
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        397,
+        398,
+        833,
+        793
+      ],
+      "size_pixels": [
+        436,
+        395
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        793,
+        399,
+        1232,
+        793
+      ],
+      "size_pixels": [
+        439,
+        394
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1190,
+        401,
+        1594,
+        793
+      ],
+      "size_pixels": [
+        404,
+        392
+      ]
+    },
+    {
+      "file": "CorruptedQilin_death_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1586,
+        403,
+        1983,
+        793
+      ],
+      "size_pixels": [
+        397,
+        390
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

@@ -57,8 +57,9 @@ namespace Cave.Combat
         [SerializeField, Min(0f)] private float normalEnemyStaggerDuration = 0.35f;
         [SerializeField, Min(0f)] private float perfectEnemyStaggerDuration = 0.6f;
 
-        [Header("Brace Entry")]
-        [SerializeField, Min(0.05f)] private float braceEntryWindow = 0.65f;
+        // Retained solely to deserialize authored prefabs/scenes from the old
+        // Guard-to-Brace restriction. It is intentionally never consulted.
+        [SerializeField, HideInInspector] private float braceEntryWindow = 0.65f;
 
         [Header("Successful Parry Resource Rewards")]
         [SerializeField, Range(0f, 1f)] private float normalStaminaRestoreFraction = 0.08f;
@@ -122,6 +123,9 @@ namespace Cave.Combat
         private PlayerGuardBreak guardBreak;
         private PlayerBrace brace;
         private GuardResonanceState guardResonance;
+        // Set only by the Brace-I attack exit path.  It is deliberately not a
+        // general "hold guard to auto-guard" convenience feature.
+        private bool queuedBraceAttackGuardReturn;
 
         public event System.Action<PlayerDefenseQuality> DefenseSucceeded;
 
@@ -133,9 +137,12 @@ namespace Cave.Combat
         public bool IsGuardHeld => IsActive && GameInput.ParryHeld;
         public bool IsCounterWindowActive => counterWindowQuality != PlayerDefenseQuality.None
             && Time.time <= counterWindowExpiresAt;
-        public bool IsBraceEntryWindowActive => currentPhase == ParryPhase.Guard
-            && IsGuardHeld
-            && Time.time <= guardPhaseStartedAt + braceEntryWindow;
+        /// <summary>
+        /// Brace remains available for the complete valid sustained-Guard stance.
+        /// The historical serialized entry window is intentionally no longer
+        /// consulted; the normal PlayerBrace eligibility checks remain intact.
+        /// </summary>
+        public bool IsBraceEntryWindowActive => currentPhase == ParryPhase.Guard && IsGuardHeld;
 
         private float counterWindowExpiresAt;
         private float guardPhaseStartedAt;
@@ -223,6 +230,11 @@ namespace Cave.Combat
 
             if (currentPhase == ParryPhase.Ready)
             {
+                if (TryEnterQueuedBraceAttackGuard())
+                {
+                    return;
+                }
+
                 if (GameInput.ParryPressed && Time.time >= nextStanceTime)
                 {
                     BeginStance();
@@ -363,7 +375,18 @@ namespace Cave.Combat
             if (brace != null && brace.TryDeflectIncoming(damageContext))
             {
                 incomingDamage = 0;
+                CompleteBraceDeflect(damageContext);
                 return true;
+            }
+
+            // Quick Brace itself has no protection. Its one-shot interruption
+            // consequence is evaluated only after a committed discounted action
+            // and never changes the amount or resolution of this incoming hit.
+            if (brace != null
+                && currentPhase != ParryPhase.Guard
+                && brace.TryPunishUnsafeQuickFollowUp(damageContext))
+            {
+                return false;
             }
 
             if (brace != null && (brace.IsQuickBrace || brace.IsDeepBrace))
@@ -468,8 +491,29 @@ namespace Cave.Combat
             }
         }
 
+        /// <summary>A Brace follow-up spends the sustained Guard posture before it attacks.</summary>
+        public void CancelForBraceOffense()
+        {
+            if (IsActive)
+            {
+                EndStance(false);
+            }
+        }
+
+        /// <summary>
+        /// A Quick Brace attack spends its Brace posture, then may return to
+        /// ordinary sustained Guard after the active attack completes.  The
+        /// request is cancelled by released input, Guard Break, or Resonance;
+        /// it never grants timed-parry protection or overlaps Brace bonuses.
+        /// </summary>
+        public void QueueGuardAfterBraceAttack()
+        {
+            queuedBraceAttackGuardReturn = true;
+        }
+
         public void BreakGuard()
         {
+            queuedBraceAttackGuardReturn = false;
             if (currentPhase == ParryPhase.Broken)
             {
                 return;
@@ -487,6 +531,7 @@ namespace Cave.Combat
         /// <summary>Ends only the sustained Guard posture; timed parry phases remain intact.</summary>
         public void EndSustainedGuardForDestabilization()
         {
+            queuedBraceAttackGuardReturn = false;
             if (currentPhase == ParryPhase.Guard)
             {
                 EndStance(false);
@@ -519,6 +564,7 @@ namespace Cave.Combat
             nextStanceTime = Time.time + cooldown;
             if (broken)
             {
+                queuedBraceAttackGuardReturn = false;
                 currentPhase = ParryPhase.Broken;
                 PlayFeedbackPulse(brokenStageColor, lateStageScale, brokenFeedbackDuration);
             }
@@ -526,6 +572,39 @@ namespace Cave.Combat
             {
                 SetPhase(ParryPhase.Ready);
             }
+        }
+
+        private bool TryEnterQueuedBraceAttackGuard()
+        {
+            if (!queuedBraceAttackGuardReturn)
+            {
+                return false;
+            }
+
+            if (!GameInput.ParryHeld
+                || (guardBreak != null && !guardBreak.CanUseCombatActions)
+                || (guardResonance != null && !guardResonance.CanSustainGuard))
+            {
+                queuedBraceAttackGuardReturn = false;
+                return false;
+            }
+
+            if (brace != null && brace.IsBraced)
+            {
+                return false;
+            }
+
+            ChargedAttack charged = GetComponent<ChargedAttack>();
+            if ((stamina != null && stamina.IsAttacking)
+                || (charged != null && (charged.IsCharging || charged.IsAttacking)))
+            {
+                return false;
+            }
+
+            queuedBraceAttackGuardReturn = false;
+            SetPhase(ParryPhase.Guard);
+            SetStanceVisualActive(true);
+            return true;
         }
 
         private void RestoreParryResources(bool isPerfect)
@@ -540,21 +619,77 @@ namespace Cave.Combat
                 stamina = GetComponent<SpinSwordAttack>();
             }
 
-            float staminaFraction = isPerfect
-                ? perfectStaminaRestoreFraction
-                : normalStaminaRestoreFraction;
             float manaFraction = isPerfect
                 ? perfectManaRestoreFraction
                 : normalManaRestoreFraction;
-            if (stamina != null)
-            {
-                stamina.RestoreStamina(stamina.MaximumStamina * staminaFraction);
-            }
+            RestoreParryStamina(isPerfect);
 
             if (playerMana != null)
             {
                 playerMana.RestoreMana(playerMana.MaximumMana * manaFraction);
             }
+        }
+
+        /// <summary>
+        /// Brace I deflection is a committed offensive response, not a second
+        /// Parry result. It therefore receives only the existing Normal-Parry
+        /// Stamina calculation; it deliberately grants neither Mana nor any
+        /// Perfect-Parry follow-up/evidence effects.
+        /// </summary>
+        private void CompleteBraceDeflect(DamageContext damageContext)
+        {
+            RestoreParryStamina(false);
+
+            BraceDeflectFeedback.Create(
+                GetBraceDeflectEffectPosition(damageContext.Source),
+                facingDirection,
+                new Color(0.38f, 0.93f, 1f, 0.95f),
+                0.16f,
+                GetBraceDeflectSortingOrder());
+        }
+
+        /// <summary>Single source of truth for the serialized normal/perfect Parry stamina policy.</summary>
+        private void RestoreParryStamina(bool isPerfect)
+        {
+            if (stamina == null)
+            {
+                stamina = GetComponent<SpinSwordAttack>();
+            }
+
+            if (stamina == null)
+            {
+                return;
+            }
+
+            float fraction = isPerfect
+                ? perfectStaminaRestoreFraction
+                : normalStaminaRestoreFraction;
+            stamina.RestoreStamina(stamina.MaximumStamina * fraction);
+        }
+
+        private Vector2 GetBraceDeflectEffectPosition(GameObject source)
+        {
+            Collider2D sourceCollider = source != null ? source.GetComponentInChildren<Collider2D>() : null;
+            if (sourceCollider != null)
+            {
+                return sourceCollider.ClosestPoint(GetSuccessfulParryEffectPosition());
+            }
+
+            return GetSuccessfulParryEffectPosition();
+        }
+
+        private int GetBraceDeflectSortingOrder()
+        {
+            if (stamina != null && stamina.SwordVisualObject != null)
+            {
+                SpriteRenderer renderer = stamina.SwordVisualObject.GetComponentInChildren<SpriteRenderer>(true);
+                if (renderer != null)
+                {
+                    return renderer.sortingOrder + 2;
+                }
+            }
+
+            return 8;
         }
 
         private void CompleteSuccessfulParry(ParryPhase phase, GameObject opponent = null)
@@ -616,6 +751,18 @@ namespace Cave.Combat
                 counterWindowExpiresAt,
                 Time.time + counterWindowDuration);
             counterWindowRemaining = Mathf.Max(0f, counterWindowExpiresAt - Time.time);
+            switch (quality)
+            {
+                case PlayerDefenseQuality.Block:
+                    CaveSfx.Play(CaveSfxCue.BlockImpact, 0.8f);
+                    break;
+                case PlayerDefenseQuality.PerfectParry:
+                    CaveSfx.Play(CaveSfxCue.PerfectParry, 0.9f);
+                    break;
+                case PlayerDefenseQuality.NormalParry:
+                    CaveSfx.Play(CaveSfxCue.Parry, 0.8f);
+                    break;
+            }
             DefenseSucceeded?.Invoke(quality);
         }
 
@@ -706,11 +853,6 @@ namespace Cave.Combat
             float scale = isPerfect ? perfectStageScale * 1.08f : normalStageScale;
             float radius = isPerfect ? perfectParryPulseRadius : successfulParryPulseRadius;
             AreaPulseEffect.Create(GetSuccessfulParryEffectPosition(), radius, color, perfectFeedbackDuration);
-            CaveSfx.Play(CaveSfxCue.Whoosh, isPerfect ? 1f : 0.8f);
-            if (isPerfect)
-            {
-                CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
-            }
             PlayFeedbackPulse(color, scale, perfectFeedbackDuration);
         }
 

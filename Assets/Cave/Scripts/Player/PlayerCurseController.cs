@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Cave.Combat;
 using Cave.Enemies;
-using Cave.InputSystem;
 using Cave.Progression;
 using UnityEngine;
  
@@ -288,6 +287,8 @@ namespace Cave.Player
         public int ConfiguredGuaranteedRealDetectives => guaranteedRealDetectives;
         public float ConfiguredMasteryGainMultiplier => masteryGainMultiplier;
         public float ConfiguredWorldLevelGrowthMultiplier => worldLevelGrowthMultiplier;
+        public float DistractionCooldownRemaining => distractionCooldownRemaining;
+        public float ConfiguredDistractionCooldown => distractionCooldown;
 
         private bool IsManaPrepared => mana != null
             && mana.MaximumMana > 0f
@@ -343,10 +344,6 @@ namespace Cave.Player
             UpdateCurseMovementMultiplier();
             UpdateInsanityCombatExit();
             UpdateTerminalInsanity();
-            if (curseOfDistractionActive && GameInput.UseDistractionPressed)
-            {
-                TryDeployDistraction();
-            }
         }
 
         public bool IsActive(PlayerCurseType curse)

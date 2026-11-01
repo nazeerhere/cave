@@ -61,6 +61,9 @@ namespace Cave.Enemies
 
         protected override void ConfigureCapabilities()
         {
+            // Presentation-only addition. SkeletonFrameAnimator reads the
+            // already-authoritative enemy state and never drives it.
+            SkeletonFrameAnimator.EnsureOn(gameObject);
             meleeCombat = GetComponent<EnemyMeleeCombat>();
             swarmIdentity = GetComponent<EnemySwarm>();
             inheritance = GetComponent<SkeletonInheritance>();

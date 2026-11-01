@@ -1,6 +1,7 @@
 using System;
 using Cave.Axioms.Control;
 using Cave.Axioms.Mastery;
+using Cave.Audio;
 using UnityEngine;
 
 namespace Cave.Axioms.Convergence
@@ -83,6 +84,7 @@ namespace Cave.Axioms.Convergence
 
             AxiomConvergenceEvent convergence = new AxiomConvergenceEvent(gameObject, target, chargeTier, quality, timestamp);
             Recognized?.Invoke(convergence);
+            CaveSfx.PlayAt(CaveSfxCue.Convergence, transform.position, .95f);
             AxiomRuntimeState runtime = GetComponent<AxiomRuntimeState>();
             if (runtime == null) runtime = gameObject.AddComponent<AxiomRuntimeState>();
             runtime.RaiseFeedback(new AxiomFeedbackEvent(

@@ -1,0 +1,124 @@
+{
+  "action": "burrow_entry",
+  "frame_count": 8,
+  "source_sheet": "grotto_mender_burrow_entry.png",
+  "method": "Provisional minimum-alpha seams for touching sprites/glow. Review before Unity import.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_burrow_entry_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        63,
+        482,
+        487
+      ],
+      "size_pixels": [
+        482,
+        424
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        447,
+        82,
+        949,
+        493
+      ],
+      "size_pixels": [
+        502,
+        411
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        888,
+        23,
+        1371,
+        495
+      ],
+      "size_pixels": [
+        483,
+        472
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1331,
+        21,
+        1760,
+        494
+      ],
+      "size_pixels": [
+        429,
+        473
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        447,
+        465,
+        855
+      ],
+      "size_pixels": [
+        465,
+        408
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        444,
+        460,
+        887,
+        857
+      ],
+      "size_pixels": [
+        443,
+        397
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        887,
+        458,
+        1330,
+        887
+      ],
+      "size_pixels": [
+        443,
+        429
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_entry_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1328,
+        454,
+        1759,
+        861
+      ],
+      "size_pixels": [
+        431,
+        407
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

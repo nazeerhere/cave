@@ -1,0 +1,96 @@
+{
+  "action": "idle",
+  "frame_count": 6,
+  "source_sheet": "grotto_mender_idle.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_idle_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        17,
+        546,
+        596
+      ],
+      "size_pixels": [
+        546,
+        579
+      ]
+    },
+    {
+      "file": "GrottoMender_idle_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        457,
+        17,
+        1064,
+        600
+      ],
+      "size_pixels": [
+        607,
+        583
+      ]
+    },
+    {
+      "file": "GrottoMender_idle_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        973,
+        23,
+        1536,
+        594
+      ],
+      "size_pixels": [
+        563,
+        571
+      ]
+    },
+    {
+      "file": "GrottoMender_idle_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        0,
+        527,
+        544,
+        1024
+      ],
+      "size_pixels": [
+        544,
+        497
+      ]
+    },
+    {
+      "file": "GrottoMender_idle_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        489,
+        535,
+        1036,
+        1024
+      ],
+      "size_pixels": [
+        547,
+        489
+      ]
+    },
+    {
+      "file": "GrottoMender_idle_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        955,
+        535,
+        1536,
+        1024
+      ],
+      "size_pixels": [
+        581,
+        489
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

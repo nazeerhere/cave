@@ -15,6 +15,9 @@ namespace Cave.UI
 
         private CanvasGroup canvasGroup;
         private Text studyingText;
+        private Text evidenceText;
+        private Text predictionProgressText;
+        private Text towerStageText;
         private Text[] historyTexts;
         private Image[] historyFrames;
         private Text predictedText;
@@ -26,10 +29,15 @@ namespace Cave.UI
         private DetectiveResearchOutcome displayedOutcome;
         private float pulseEndsAt;
         private Color pulseColor;
+        private EquipmentWheelHud equipmentWheel;
+        private Transform blockingCombatOverlay;
 
         public void Configure(
             CanvasGroup group,
             Text observationLabel,
+            Text evidenceLabel,
+            Text predictionProgressLabel,
+            Text towerStageLabel,
             Text[] recordedHistory,
             Image[] recordedFrames,
             Text predicted,
@@ -38,6 +46,9 @@ namespace Cave.UI
         {
             canvasGroup = group;
             studyingText = observationLabel;
+            evidenceText = evidenceLabel;
+            predictionProgressText = predictionProgressLabel;
+            towerStageText = towerStageLabel;
             historyTexts = recordedHistory;
             historyFrames = recordedFrames;
             predictedText = predicted;
@@ -60,11 +71,28 @@ namespace Cave.UI
         private void Update()
         {
             EnsureCoordinator();
+            if (equipmentWheel == null)
+            {
+                equipmentWheel = FindObjectOfType<EquipmentWheelHud>(true);
+            }
+
+            if (blockingCombatOverlay == null && transform.parent != null)
+            {
+                blockingCombatOverlay = transform.parent.Find("Sovereign Gambit Tactical HUD");
+            }
+
             if (canvasGroup != null)
             {
+                bool overlayBlocking = (equipmentWheel != null
+                        && equipmentWheel.gameObject.activeInHierarchy)
+                    || (blockingCombatOverlay != null
+                        && blockingCombatOverlay.gameObject.activeInHierarchy);
+                float unobstructedTarget = overlayBlocking
+                        ? 0f
+                        : targetAlpha;
                 canvasGroup.alpha = Mathf.MoveTowards(
                     canvasGroup.alpha,
-                    targetAlpha,
+                    unobstructedTarget,
                     fadeSpeed * Time.unscaledDeltaTime);
             }
 
@@ -87,6 +115,8 @@ namespace Cave.UI
 
             coordinator.ResearchDisplayChanged -= Refresh;
             coordinator.ResearchDisplayChanged += Refresh;
+            coordinator.TowerStatusChanged -= Refresh;
+            coordinator.TowerStatusChanged += Refresh;
             Refresh();
         }
 
@@ -106,6 +136,23 @@ namespace Cave.UI
                     : coordinator.ResearchPhase == DetectiveResearchPhase.Outcome
                         ? "DETECTIVE STUDY  •  RESULT"
                         : "DETECTIVE STUDY  •  OBSERVING";
+            }
+
+            if (evidenceText != null)
+            {
+                evidenceText.text = FormatEvidence(coordinator.CurrentObservedPattern.Count);
+            }
+
+            if (predictionProgressText != null)
+            {
+                predictionProgressText.text = FormatPredictionProgress(
+                    coordinator.CurrentResearchStage,
+                    coordinator.CurrentStageCorrectPredictions);
+            }
+
+            if (towerStageText != null)
+            {
+                towerStageText.text = FormatTowerStage(coordinator.CurrentResearchStage);
             }
 
             for (int index = 0; historyTexts != null && index < historyTexts.Length; index++)
@@ -278,6 +325,33 @@ namespace Cave.UI
             }
         }
 
+        public static string FormatEvidence(int evidenceCount)
+        {
+            return "EVIDENCE  "
+                + Mathf.Clamp(evidenceCount, 0, DetectiveResearchRules.RequiredEvidenceCount)
+                + "/"
+                + DetectiveResearchRules.RequiredEvidenceCount;
+        }
+
+        public static string FormatPredictionProgress(int stage, int correctPredictions)
+        {
+            int required = DetectiveResearchRules.RequiredCorrectPredictions(stage);
+            return required <= 0
+                ? "CORRECT PREDICTIONS  MAX STAGE"
+                : "CORRECT PREDICTIONS  "
+                    + Mathf.Clamp(correctPredictions, 0, required)
+                    + "/"
+                    + required;
+        }
+
+        public static string FormatTowerStage(int stage)
+        {
+            int clamped = Mathf.Clamp(stage, 0, DetectiveResearchRules.MaximumTowerStage);
+            return clamped >= DetectiveResearchRules.MaximumTowerStage
+                ? "TOWER STAGE  3  •  MAX STAGE"
+                : "TOWER STAGE  " + clamped;
+        }
+
         private static Color ResolveCategoryColor(PlayerActionCategory category)
         {
             switch (category)
@@ -304,6 +378,7 @@ namespace Cave.UI
             if (coordinator != null)
             {
                 coordinator.ResearchDisplayChanged -= Refresh;
+                coordinator.TowerStatusChanged -= Refresh;
             }
         }
     }

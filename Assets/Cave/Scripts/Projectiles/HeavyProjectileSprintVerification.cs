@@ -10,7 +10,9 @@ namespace Cave.Projectiles
         {
             if (!VerifyChargeThresholds(out failure)
                 || !VerifyHeavyProgression(out failure)
+                || !VerifyHeavyKnockbackProgression(out failure)
                 || !VerifyHeavyNeverPierces(out failure)
+                || !HeavyProjectilePresentation.HasRequiredArt(out failure)
                 || !VerifyMergeGeometryAndCap(out failure)
                 || !VerifyHeavyFollowUpEntries(out failure)
                 || !VerifyProjectilePresentationRouting(out failure))
@@ -58,6 +60,32 @@ namespace Cave.Projectiles
                 && ChargedProjectilePolicy.ResolveHeavyDamage(7, fullScale, 1.4f, 3f) == 33
                 && Mathf.Approximately(ChargedProjectilePolicy.DefaultHeavyExplosionRadius, 3.5f);
             failure = valid ? null : "Heavy visual progression, capped size-derived damage, or explosion radius was incorrect.";
+            return valid;
+        }
+
+        private static bool VerifyHeavyKnockbackProgression(out string failure)
+        {
+            float minimum = ChargedProjectilePolicy.HeavyKnockback(0f, 6f, 12f);
+            float middle = ChargedProjectilePolicy.HeavyKnockback(.5f, 6f, 12f);
+            float maximum = ChargedProjectilePolicy.HeavyKnockback(1f, 6f, 12f);
+            float clamped = ChargedProjectilePolicy.HeavyKnockback(4f, 12f, 6f);
+            Vector2 centered = ChargedProjectilePolicy.HeavyExplosionDirection(
+                Vector2.zero,
+                Vector2.zero,
+                new Vector2(-2f, 0f));
+            Vector2 fallback = ChargedProjectilePolicy.HeavyExplosionDirection(
+                Vector2.zero,
+                Vector2.zero,
+                Vector2.zero);
+            bool valid = Mathf.Approximately(minimum, ChargedProjectilePolicy.DefaultHeavyMinimumKnockback)
+                && Mathf.Approximately(middle, 9f)
+                && Mathf.Approximately(maximum, ChargedProjectilePolicy.DefaultHeavyMaximumKnockback)
+                && Mathf.Approximately(clamped, 12f)
+                && centered == Vector2.left
+                && fallback == Vector2.right;
+            failure = valid
+                ? null
+                : "Heavy knockback did not monotonically capture charge or resolve deterministic explosion directions.";
             return valid;
         }
 

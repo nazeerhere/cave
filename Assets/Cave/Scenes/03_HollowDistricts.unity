@@ -5133,7 +5133,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   kind: 2
   identifier: ToDeepVeins
-  destinationScene: Cave_Level01
+  destinationScene: 04_DeepVeins
   boundsSize: {x: 1, y: 1}
 --- !u!1 &1721277151
 GameObject:

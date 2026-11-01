@@ -15,11 +15,31 @@ namespace Cave.UI
         private Text manaText;
         private Text speedText;
         private Text powerText;
+        private Text healthPotionText;
+        private Text manaPotionText;
+        private Text healthPotionRegenerationText;
+        private Text manaPotionRegenerationText;
+        private Text diskDamageText;
+        private Text diskAreaText;
+        private Text diskPullText;
+        private Text structuralCarapaceText;
+        private Text regenerationCarapaceText;
+        private Text latticeCarapaceText;
         private Text feedbackText;
         private Text shardGainPopupText;
         private Button healthButton;
         private Button manaButton;
         private Button speedButton;
+        private Button healthPotionButton;
+        private Button manaPotionButton;
+        private Button healthPotionRegenerationButton;
+        private Button manaPotionRegenerationButton;
+        private Button diskDamageButton;
+        private Button diskAreaButton;
+        private Button diskPullButton;
+        private Button structuralCarapaceButton;
+        private Button regenerationCarapaceButton;
+        private Button latticeCarapaceButton;
         private Coroutine feedbackRoutine;
         private Coroutine shardPopupRoutine;
 
@@ -91,31 +111,72 @@ namespace Cave.UI
             shardText.fontStyle = FontStyle.Bold;
             shardText.color = CaveUiTheme.GeneralShard;
 
-            healthButton = CreateButton(root.transform, font, string.Empty, new Vector2(0f, 70f));
-            SetRect(healthButton.GetComponent<RectTransform>(), new Vector2(0f, 70f), new Vector2(880f, 34f));
+            healthPotionButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, 84f));
+            healthPotionText = healthPotionButton.GetComponentInChildren<Text>();
+            healthPotionButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseHealthPotionEfficiency(), "Health Potion Efficiency"));
+
+            manaPotionButton = CreateUpgradeButton(root.transform, font, new Vector2(225f, 84f));
+            manaPotionText = manaPotionButton.GetComponentInChildren<Text>();
+            manaPotionButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseManaPotionEfficiency(), "Mana Potion Efficiency"));
+
+            healthButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, 50f));
             healthText = healthButton.GetComponentInChildren<Text>();
             healthButton.onClick.AddListener(() => Purchase(progression.TryPurchaseHealthRegeneration(), "Health Regeneration"));
 
-            manaButton = CreateButton(root.transform, font, string.Empty, new Vector2(0f, 25f));
-            SetRect(manaButton.GetComponent<RectTransform>(), new Vector2(0f, 25f), new Vector2(880f, 34f));
+            manaButton = CreateUpgradeButton(root.transform, font, new Vector2(225f, 50f));
             manaText = manaButton.GetComponentInChildren<Text>();
             manaButton.onClick.AddListener(() => Purchase(progression.TryPurchaseManaRegeneration(), "Mana Regeneration"));
 
-            speedButton = CreateButton(root.transform, font, string.Empty, new Vector2(0f, -20f));
-            SetRect(speedButton.GetComponent<RectTransform>(), new Vector2(0f, -20f), new Vector2(880f, 34f));
+            speedButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, 16f));
             speedText = speedButton.GetComponentInChildren<Text>();
             speedButton.onClick.AddListener(() => Purchase(progression.TryPurchaseSpeedBurst(), "Speed Burst"));
 
-            Button power = CreateButton(root.transform, font, string.Empty, new Vector2(0f, -65f));
-            SetRect(power.GetComponent<RectTransform>(), new Vector2(0f, -65f), new Vector2(880f, 34f));
+            Button power = CreateUpgradeButton(root.transform, font, new Vector2(225f, 16f));
             powerText = power.GetComponentInChildren<Text>();
             HoldRepeatButton repeatPurchase = power.gameObject.AddComponent<HoldRepeatButton>();
             repeatPurchase.Configure(
                 progression.TryPurchasePower,
                 succeeded => Purchase(succeeded, "Power"));
 
+            healthPotionRegenerationButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, -18f));
+            healthPotionRegenerationText = healthPotionRegenerationButton.GetComponentInChildren<Text>();
+            healthPotionRegenerationButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseHealthPotionRegeneration(), "Health Potion Regeneration"));
+
+            manaPotionRegenerationButton = CreateUpgradeButton(root.transform, font, new Vector2(225f, -18f));
+            manaPotionRegenerationText = manaPotionRegenerationButton.GetComponentInChildren<Text>();
+            manaPotionRegenerationButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseManaPotionRegeneration(), "Mana Potion Regeneration"));
+
+            diskDamageButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, -52f));
+            diskDamageText = diskDamageButton.GetComponentInChildren<Text>();
+            diskDamageButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseDiskDamage(), "Oblivion Disk Damage"));
+
+            diskAreaButton = CreateUpgradeButton(root.transform, font, new Vector2(225f, -52f));
+            diskAreaText = diskAreaButton.GetComponentInChildren<Text>();
+            diskAreaButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseDiskArea(), "Oblivion Disk Area"));
+
+            diskPullButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, -86f));
+            diskPullText = diskPullButton.GetComponentInChildren<Text>();
+            diskPullButton.onClick.AddListener(() => Purchase(
+                progression.TryPurchaseDiskPullStrength(), "Oblivion Disk Pull"));
+
+            structuralCarapaceButton = CreateUpgradeButton(root.transform, font, new Vector2(-225f, -120f));
+            structuralCarapaceText = structuralCarapaceButton.GetComponentInChildren<Text>();
+            structuralCarapaceButton.onClick.AddListener(() => Purchase(progression.TryPurchaseStructuralReinforcement(), "Structural Reinforcement"));
+            regenerationCarapaceButton = CreateUpgradeButton(root.transform, font, new Vector2(225f, -120f));
+            regenerationCarapaceText = regenerationCarapaceButton.GetComponentInChildren<Text>();
+            regenerationCarapaceButton.onClick.AddListener(() => Purchase(progression.TryPurchaseLivingRegeneration(), "Living Regeneration"));
+            latticeCarapaceButton = CreateUpgradeButton(root.transform, font, new Vector2(0f, -154f));
+            latticeCarapaceText = latticeCarapaceButton.GetComponentInChildren<Text>();
+            latticeCarapaceButton.onClick.AddListener(() => Purchase(progression.TryPurchaseAnchoredLattice(), "Anchored Lattice"));
+
             feedbackText = CreateText(root.transform, font, string.Empty, 11);
-            SetRect(feedbackText.rectTransform, new Vector2(0f, -99f), new Vector2(860f, 18f));
+            SetRect(feedbackText.rectTransform, new Vector2(0f, -188f), new Vector2(860f, 18f));
             feedbackText.color = CaveUiTheme.BorderBright;
 
             shardGainPopupText = CreateText(canvas, font, string.Empty, 22);
@@ -160,6 +221,12 @@ namespace Cave.UI
             }
 
             shardText.text = "SHARDS  ◆  " + progression.GeneralShards;
+            healthPotionText.text = "HEALTH POTION EFFICIENCY L" + progression.HealthPotionEfficiencyLevel
+                + "  •  +" + FormatPercent(progression.PotionEfficiencyIncreasePerLevel)
+                + " NEW POTENCY\nNEXT " + progression.HealthPotionEfficiencyCost + " ◆";
+            manaPotionText.text = "MANA POTION EFFICIENCY L" + progression.ManaPotionEfficiencyLevel
+                + "  •  +" + FormatPercent(progression.PotionEfficiencyIncreasePerLevel)
+                + " NEW POTENCY\nNEXT " + progression.ManaPotionEfficiencyCost + " ◆";
             healthText.text = "HEALTH REGEN L" + progression.HealthRegenerationLevel
                 + "  •  "
                 + FormatPercent(progression.HealthRegenerationPercentPerTick)
@@ -176,9 +243,44 @@ namespace Cave.UI
             powerText.text = "POWER +1%  •  " + progression.PowerCostPerPurchase
                 + " ◆  (TOTAL +"
                 + Mathf.RoundToInt(progression.PermanentDamagePercent * 100f) + "%)";
+            healthPotionRegenerationText.text = "HEALTH POTION REGEN L"
+                + progression.HealthPotionRegenerationLevel + "  •  "
+                + FormatPercent(progression.HealthPotionRegenerationPercent) + " / "
+                + FormatSeconds(progression.PotionRegenerationDuration) + "s\nNEXT "
+                + progression.HealthPotionRegenerationCost + " ◆";
+            manaPotionRegenerationText.text = "MANA POTION REGEN L"
+                + progression.ManaPotionRegenerationLevel + "  •  "
+                + FormatPercent(progression.ManaPotionRegenerationPercent) + " / "
+                + FormatSeconds(progression.PotionRegenerationDuration) + "s\nNEXT "
+                + progression.ManaPotionRegenerationCost + " ◆";
+            diskDamageText.text = "DISK DAMAGE L" + progression.DiskDamageLevel
+                + "  •  +" + progression.DiskDamageBonus + "\nNEXT "
+                + progression.DiskDamageCost + " ◆";
+            diskAreaText.text = "DISK AREA L" + progression.DiskAreaLevel
+                + "  •  x" + progression.DiskAreaMultiplier.ToString("0.##") + "\nNEXT "
+                + progression.DiskAreaCost + " ◆";
+            structuralCarapaceText.text = "STRUCTURAL REINFORCEMENT L" + progression.StructuralReinforcementLevel
+                + "  •  +" + progression.StructuralReinforcementDurabilityPerLevel + " DURABILITY\nNEXT " + progression.StructuralReinforcementCost + " ◆";
+            regenerationCarapaceText.text = "LIVING REGENERATION L" + progression.LivingRegenerationLevel
+                + "  •  +" + FormatPercent(progression.LivingRegenerationEfficiencyPerLevel) + " REPAIR\nNEXT " + progression.LivingRegenerationCost + " ◆";
+            latticeCarapaceText.text = "ANCHORED LATTICE L" + progression.AnchoredLatticeLevel + " / 5"
+                + "  •  +8% CONTROL RESIST\n" + (progression.AnchoredLatticeCost > 0 ? "NEXT " + progression.AnchoredLatticeCost + " ◆" : "MAX" );
+            diskPullText.text = "DISK PULL L" + progression.DiskPullStrengthLevel
+                + "  •  x" + progression.DiskPullStrengthMultiplier.ToString("0.##") + "\nNEXT "
+                + progression.DiskPullStrengthCost + " ◆";
             healthButton.interactable = true;
             manaButton.interactable = true;
+            healthPotionButton.interactable = true;
+            manaPotionButton.interactable = true;
             speedButton.interactable = !progression.SpeedBurstOwned;
+            healthPotionRegenerationButton.interactable = true;
+            manaPotionRegenerationButton.interactable = true;
+            diskDamageButton.interactable = true;
+            diskAreaButton.interactable = true;
+            diskPullButton.interactable = true;
+            structuralCarapaceButton.interactable = true;
+            regenerationCarapaceButton.interactable = true;
+            latticeCarapaceButton.interactable = progression.AnchoredLatticeCost > 0;
         }
 
         private static string FormatPercent(float normalizedPercent)
@@ -272,6 +374,13 @@ namespace Cave.UI
             text.resizeTextForBestFit = true;
             text.resizeTextMinSize = 9;
             text.resizeTextMaxSize = 13;
+            return button;
+        }
+
+        private static Button CreateUpgradeButton(Transform parent, Font font, Vector2 position)
+        {
+            Button button = CreateButton(parent, font, string.Empty, position);
+            SetRect(button.GetComponent<RectTransform>(), position, new Vector2(430f, 30f));
             return button;
         }
 

@@ -10,7 +10,7 @@ namespace Cave.World
     [RequireComponent(typeof(Collider2D))]
     public sealed class LevelTransition : MonoBehaviour
     {
-        [SerializeField] private string destinationScene = "Sprint5_Hazards";
+        [SerializeField] private string destinationScene = "01_UpperCave";
         [SerializeField] private string destinationSpawnIdentifier = "MainEntrance";
         [SerializeField] private bool requireInteraction = true;
         [SerializeField] private bool showInteractionPrompt = true;

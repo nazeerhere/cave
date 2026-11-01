@@ -800,7 +800,7 @@ MonoBehaviour:
   dragDuration: 0.48
   dragSpeed: 9
   hookDamage: 1
-  hookCooldown: 2.35
+  hookCooldown: 5.875
   pinRange: 2
   pinDuration: 1.75
   pinDamage: 1

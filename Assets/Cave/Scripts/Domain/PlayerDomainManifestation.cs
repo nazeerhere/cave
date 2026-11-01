@@ -23,16 +23,24 @@ namespace Cave.Domain
     [DisallowMultipleComponent]
     public sealed class PlayerDomainManifestation : MonoBehaviour
     {
+        /// <summary>
+        /// Active Domains consume forty percent of the previous five-per-second
+        /// rate. This is intentionally a consumption-only policy: activation,
+        /// recharge, and Reserve allocation rules remain owned by their
+        /// existing systems.
+        /// </summary>
+        public const float DefaultChargeDrainPerSecond = 2f;
+
         [Header("Timing")]
         [SerializeField, Min(0f)] private float activationDuration = .5f;
         [SerializeField, Min(0f)] private float cooldownDuration = 3f;
         [SerializeField, Min(.01f)] private float minimumActivationCharge = 30f;
-        [SerializeField, Min(0f)] private float chargeDrainPerSecond = 5f;
+        [SerializeField, Min(0f)] private float chargeDrainPerSecond = DefaultChargeDrainPerSecond;
 
         [Header("Radius from Domain mastery")]
-        [SerializeField, Min(.1f)] private float minimumRadius = 2.4f;
-        [SerializeField, Min(0f)] private float radiusPerMasteredPhenomenon = .35f;
-        [SerializeField, Min(.1f)] private float maximumRadius = 5.2f;
+        [SerializeField, Min(.1f)] private float minimumRadius = 6f;
+        [SerializeField, Min(0f)] private float radiusPerMasteredPhenomenon = .875f;
+        [SerializeField, Min(.1f)] private float maximumRadius = 13f;
 
         private PlayerDomainReserve reserve;
         private PlayerDomainLawCollection laws;
@@ -85,7 +93,7 @@ namespace Cave.Domain
             }
             else if (State == DomainManifestationState.Active)
             {
-                float requestedDrain = chargeDrainPerSecond * Time.deltaTime;
+                float requestedDrain = RequestedDrainForDelta(chargeDrainPerSecond, Time.deltaTime);
                 float payableDrain = Mathf.Min(requestedDrain, reserve != null ? reserve.CurrentCharge : 0f);
                 if (payableDrain <= 0f || reserve == null || !reserve.TrySpendCharge(payableDrain))
                 {
@@ -103,7 +111,7 @@ namespace Cave.Domain
                 RefreshReadiness();
             }
 
-            if (visual != null) visual.Present(IsActive, Radius);
+            if (visual != null) visual.Present(State, Radius);
         }
 
         public bool TryRequestActivation()
@@ -170,6 +178,12 @@ namespace Cave.Domain
                 minimumRadius, Mathf.Max(minimumRadius, maximumRadius));
         }
 
+        /// <summary>Pure, frame-rate independent active-Drain calculation.</summary>
+        public static float RequestedDrainForDelta(float drainPerSecond, float deltaTime)
+        {
+            return Mathf.Max(0f, drainPerSecond) * Mathf.Max(0f, deltaTime);
+        }
+
         private void BeginCollapse()
         {
             if (State == DomainManifestationState.Collapsing || State == DomainManifestationState.Cooldown) return;
@@ -190,7 +204,7 @@ namespace Cave.Domain
             if (State == next) return;
             State = next;
             StateChanged?.Invoke(State);
-            if (visual != null) visual.Present(IsActive, Radius);
+            if (visual != null) visual.Present(State, Radius);
         }
 
         private void RefreshReadiness()
@@ -221,63 +235,7 @@ namespace Cave.Domain
 
             visual = child.GetComponent<DomainManifestationVisual>();
             if (visual == null) visual = child.gameObject.AddComponent<DomainManifestationVisual>();
-            visual.Present(false, Radius);
-        }
-    }
-
-    /// <summary>Visual-only concentric gold/cobalt manifestation cue with no collider or gameplay authority.</summary>
-    [DisallowMultipleComponent]
-    internal sealed class DomainManifestationVisual : MonoBehaviour
-    {
-        private const int Segments = 40;
-        private LineRenderer cobalt;
-        private LineRenderer gold;
-
-        private void Awake() { EnsureLines(); }
-
-        public void Present(bool visible, float radius)
-        {
-            EnsureLines();
-            cobalt.enabled = visible;
-            gold.enabled = visible;
-            if (!visible) return;
-
-            SetRing(cobalt, radius, 0f);
-            SetRing(gold, radius * .82f, Mathf.PI * .25f);
-        }
-
-        private void EnsureLines()
-        {
-            if (cobalt != null && gold != null) return;
-            cobalt = CreateLine("Cobalt Ring", new Color(.13f, .48f, .9f, .35f), .035f);
-            gold = CreateLine("Gold Ring", new Color(1f, .73f, .23f, .5f), .025f);
-        }
-
-        private LineRenderer CreateLine(string name, Color color, float width)
-        {
-            GameObject ring = new GameObject(name);
-            ring.transform.SetParent(transform, false);
-            LineRenderer line = ring.AddComponent<LineRenderer>();
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null) line.material = new Material(shader);
-            line.useWorldSpace = false;
-            line.loop = true;
-            line.positionCount = Segments;
-            line.startWidth = width;
-            line.endWidth = width;
-            line.startColor = color;
-            line.endColor = color;
-            line.sortingOrder = 20;
-            return line;
-        }
-
-        private static void SetRing(LineRenderer line, float radius, float phase)
-        {
-            for (int index = 0; index < Segments; index++)
-            {
-                float angle = phase + (Mathf.PI * 2f * index / Segments);
-                line.SetPosition(index, new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
-            }
+            visual.Present(State, Radius);
         }
     }
 }

@@ -19,6 +19,13 @@ namespace Cave.Player
     [RequireComponent(typeof(PlayerCurrency))]
     public sealed class PlayerLandmineInventory : MonoBehaviour
     {
+        internal const float BalancedMineEnergy = 24f;
+        internal const float BalancedMineLifetime = 216f;
+        internal const float BalancedTriggerRadius = 1.95f;
+        internal const float BalancedLocalPulseRadius = 3.6f;
+        internal const float BalancedBlastRadius = 6.6f;
+        internal const float BalancedMaximumLinkDistance = 18f;
+
         private const string DiskCapacityKey = "Cave.OblivionDisk.Capacity";
         private const int MaximumDiskCapacity = 3;
 
@@ -27,6 +34,32 @@ namespace Cave.Player
         [SerializeField, Min(0.1f)] private float rechargeSecondsPerCharge = 12f;
         [SerializeField, Min(0)] private int ownedHealthPotions;
         [SerializeField, Min(0)] private int ownedManaPotions;
+
+        [Serializable]
+        private struct PotionStack
+        {
+            [SerializeField, Min(1)] private int quantity;
+            [SerializeField, Min(1)] private int potencyBasisPoints;
+            [SerializeField, Min(0)] private long acquiredSequence;
+
+            public PotionStack(int quantity, int potencyBasisPoints, long acquiredSequence)
+            {
+                this.quantity = Mathf.Max(1, quantity);
+                this.potencyBasisPoints = Mathf.Max(1, potencyBasisPoints);
+                this.acquiredSequence = Math.Max(0L, acquiredSequence);
+            }
+
+            public int Quantity => quantity;
+            public int PotencyBasisPoints => potencyBasisPoints;
+            public long AcquiredSequence => acquiredSequence;
+            public float Potency => potencyBasisPoints / 10000f;
+        }
+
+        // Counts above remain serialized migration fields for existing player
+        // instances. Mechanical ownership lives in these purchase snapshots.
+        [SerializeField] private List<PotionStack> healthPotionStacks = new List<PotionStack>();
+        [SerializeField] private List<PotionStack> manaPotionStacks = new List<PotionStack>();
+        [SerializeField, Min(0)] private long nextPotionAcquisitionSequence;
 
         [Header("Potion Effects")]
         [SerializeField, Range(0.01f, 1f)] private float healthPotionRestorePercent = 0.25f;
@@ -47,17 +80,18 @@ namespace Cave.Player
 
         [Header("Field Node Tuning")]
         [SerializeField, Min(1)] private int mineHealth = 8;
-        [SerializeField, Min(0.1f)] private float mineEnergy = 8f;
-        [SerializeField, Min(0f)] private float mineLifetime = 72f;
-        [SerializeField, Min(0.1f)] private float maximumLinkDistance = 9f;
+        [SerializeField, Min(0.1f)] private float mineEnergy = BalancedMineEnergy;
+        [SerializeField, Min(0f)] private float mineLifetime = BalancedMineLifetime;
+        [SerializeField, Min(0.1f)] private float maximumLinkDistance = BalancedMaximumLinkDistance;
         [SerializeField, Min(0.01f)] private float fieldBaseStrength = 12f;
         [SerializeField, Min(0.01f)] private float fieldDistanceOffset = 1f;
         [SerializeField, Min(0.1f)] private float fieldDistanceExponent = 1.25f;
 
         [Header("Fallback Mine Tuning")]
         [SerializeField, Min(0f)] private float armingDelay = 0.65f;
-        [SerializeField, Min(0.1f)] private float triggerRadius = 0.65f;
-        [SerializeField, Min(0.1f)] private float blastRadius = 2.2f;
+        [SerializeField, Min(0.1f)] private float triggerRadius = BalancedTriggerRadius;
+        [SerializeField, Min(0.1f)] private float localPulseRadius = BalancedLocalPulseRadius;
+        [SerializeField, Min(0.1f)] private float blastRadius = BalancedBlastRadius;
         [SerializeField, Min(0)] private int damage = 2;
         [SerializeField, Min(0f)] private float knockback = 11f;
         [SerializeField] private LayerMask enemyLayers = ~0;
@@ -66,13 +100,11 @@ namespace Cave.Player
         private PlayerHealth playerHealth;
         private PlayerMana playerMana;
         private PlayerResourceMastery mastery;
+        private PlayerPermanentProgression progression;
         private Collider2D playerCollider;
         private FieldNetwork fieldNetwork;
         private readonly List<PlayerLandmine> activeMines = new List<PlayerLandmine>(3);
         private ulong placementSequence;
-        private bool trackingMineInput;
-        private bool sacrificeTriggered;
-        private float mineInputStartedAt;
         private int diskCapacity;
         private int storedDiskCharges;
         private float nextDiskChargeAt;
@@ -84,8 +116,12 @@ namespace Cave.Player
         public event Action<PlayerLandmine> LandminePlaced;
 
         public int CurrencyCost => NextDiskCapacityCost;
-        public int OwnedHealthPotions => ownedHealthPotions;
-        public int OwnedManaPotions => ownedManaPotions;
+        public int OwnedHealthPotions => CountPotions(healthPotionStacks);
+        public int OwnedManaPotions => CountPotions(manaPotionStacks);
+        public float NextHealthPotionRestorePercent => ResolveNextPotionPotency(
+            healthPotionStacks, healthPotionRestorePercent);
+        public float NextManaPotionRestorePercent => ResolveNextPotionPotency(
+            manaPotionStacks, manaPotionRestorePercent);
         public int OwnedLandmines => storedDiskCharges;
         public int DiskCapacity => diskCapacity;
         public int StoredDiskCharges => storedDiskCharges;
@@ -93,6 +129,7 @@ namespace Cave.Player
             ? 0
             : currencyCost * (diskCapacity + 1);
         public float RechargeSecondsPerCharge => rechargeSecondsPerCharge;
+        public float SacrificeHoldThreshold => sacrificeHoldThreshold;
         public bool IsDiskUnlocked => diskCapacity > 0;
         public bool IsDiskRecharging => diskCapacity > 0 && storedDiskCharges < diskCapacity;
         public float FieldLinkDistance => maximumLinkDistance;
@@ -115,7 +152,9 @@ namespace Cave.Player
             playerHealth = GetComponent<PlayerHealth>();
             playerMana = GetComponent<PlayerMana>();
             mastery = GetComponent<PlayerResourceMastery>();
+            progression = GetComponent<PlayerPermanentProgression>();
             playerCollider = GetComponent<Collider2D>();
+            MigrateLegacyPotionCounts();
             LoadDiskCapacity();
             fieldNetwork = GetComponent<FieldNetwork>();
             if (fieldNetwork == null) fieldNetwork = gameObject.AddComponent<FieldNetwork>();
@@ -153,7 +192,6 @@ namespace Cave.Player
                 TryUseManaPotion();
             }
 
-            HandleMineInput();
             UpdateDiskRecharge();
         }
 
@@ -162,9 +200,9 @@ namespace Cave.Player
             switch (type)
             {
                 case PlayerConsumableType.HealthPotion:
-                    return ownedHealthPotions;
+                    return OwnedHealthPotions;
                 case PlayerConsumableType.ManaPotion:
-                    return ownedManaPotions;
+                    return OwnedManaPotions;
                 default:
                     return storedDiskCharges;
             }
@@ -172,18 +210,28 @@ namespace Cave.Player
 
         public void AddHealthPotion()
         {
-            ownedHealthPotions++;
+            AddHealthPotion(healthPotionRestorePercent);
+        }
+
+        public void AddHealthPotion(float potency)
+        {
+            AddPotion(healthPotionStacks, potency);
             ConsumableQuantityChanged?.Invoke(
                 PlayerConsumableType.HealthPotion,
-                ownedHealthPotions);
+                OwnedHealthPotions);
         }
 
         public void AddManaPotion()
         {
-            ownedManaPotions++;
+            AddManaPotion(manaPotionRestorePercent);
+        }
+
+        public void AddManaPotion(float potency)
+        {
+            AddPotion(manaPotionStacks, potency);
             ConsumableQuantityChanged?.Invoke(
                 PlayerConsumableType.ManaPotion,
-                ownedManaPotions);
+                OwnedManaPotions);
         }
 
         public bool TryUseHealthPotion()
@@ -193,23 +241,27 @@ namespace Cave.Player
                 playerHealth = GetComponent<PlayerHealth>();
             }
 
-            if (ownedHealthPotions <= 0 || playerHealth == null)
+            if (OwnedHealthPotions <= 0 || playerHealth == null)
             {
                 return false;
             }
 
+            float potency;
+            if (!TryPeekPotion(healthPotionStacks, healthPotionRestorePercent, out potency)) return false;
+
             int restoreAmount = Mathf.Max(
                 1,
-                Mathf.CeilToInt(playerHealth.MaxHealth * healthPotionRestorePercent));
+                Mathf.CeilToInt(playerHealth.MaxHealth * potency));
             if (!playerHealth.RestoreHealth(restoreAmount))
             {
                 return false;
             }
 
-            ownedHealthPotions--;
+            ConsumeNextPotion(healthPotionStacks);
+            ResolveProgression()?.NotifyHealthPotionConsumed();
             ConsumableQuantityChanged?.Invoke(
                 PlayerConsumableType.HealthPotion,
-                ownedHealthPotions);
+                OwnedHealthPotions);
             return true;
         }
 
@@ -220,31 +272,56 @@ namespace Cave.Player
                 playerMana = GetComponent<PlayerMana>();
             }
 
-            if (ownedManaPotions <= 0 || playerMana == null)
+            if (OwnedManaPotions <= 0 || playerMana == null)
             {
                 return false;
             }
 
+            float potency;
+            if (!TryPeekPotion(manaPotionStacks, manaPotionRestorePercent, out potency)) return false;
+
             float restoreAmount = Mathf.Max(
                 0.01f,
-                playerMana.MaximumMana * manaPotionRestorePercent);
+                playerMana.MaximumMana * potency);
             if (!playerMana.RestoreMana(restoreAmount))
             {
                 return false;
             }
 
-            ownedManaPotions--;
+            ConsumeNextPotion(manaPotionStacks);
+            ResolveProgression()?.NotifyManaPotionConsumed();
             ConsumableQuantityChanged?.Invoke(
                 PlayerConsumableType.ManaPotion,
-                ownedManaPotions);
+                OwnedManaPotions);
             return true;
+        }
+
+        public int GetNextDiskCapacityCost(int diskUpgradeRanks)
+        {
+            if (NextDiskCapacityCost <= 0)
+            {
+                return 0;
+            }
+
+            return ResolveDiskCapacityPrice(NextDiskCapacityCost, diskUpgradeRanks);
+        }
+
+        public static int ResolveDiskCapacityPrice(int originalPrice, int diskUpgradeRanks)
+        {
+            return Mathf.CeilToInt(Mathf.Max(0, originalPrice)
+                * (1f + .25f * Mathf.Max(0, diskUpgradeRanks)));
         }
 
         public bool TryPurchaseLandmine()
         {
+            return TryPurchaseLandmine(0);
+        }
+
+        public bool TryPurchaseLandmine(int diskUpgradeRanks)
+        {
             if (diskCapacity >= MaximumDiskCapacity
                 || currency == null
-                || !currency.TrySpend(NextDiskCapacityCost))
+                || !currency.TrySpend(GetNextDiskCapacityCost(diskUpgradeRanks)))
             {
                 return false;
             }
@@ -279,6 +356,11 @@ namespace Cave.Player
             if (landminePrefab != null)
             {
                 mine = Instantiate(landminePrefab, position, Quaternion.identity);
+                mine.ConfigureEffectiveRanges(
+                    triggerRadius,
+                    localPulseRadius,
+                    blastRadius,
+                    enemyLayers);
             }
             else
             {
@@ -288,6 +370,7 @@ namespace Cave.Player
                 mine.ConfigureFallback(
                     armingDelay,
                     triggerRadius,
+                    localPulseRadius,
                     blastRadius,
                     damage,
                     knockback,
@@ -305,6 +388,14 @@ namespace Cave.Player
                 : default;
             mine.ConfigurePresentation(diskVisualPrefab, localPulseVisualPrefab,
                 overloadVisualPrefab, sacrificeExplosionVisualPrefab);
+            PlayerPermanentProgression permanentProgression = ResolveProgression();
+            if (permanentProgression != null)
+            {
+                mine.ConfigureProgressionUpgrades(
+                    permanentProgression.DiskDamageBonus,
+                    permanentProgression.DiskAreaMultiplier,
+                    permanentProgression.DiskPullStrengthMultiplier);
+            }
             mine.Arm(gameObject, context);
             mine.ConfigureFieldNode(
                 fieldNetwork,
@@ -326,26 +417,14 @@ namespace Cave.Player
             return true;
         }
 
-        private void HandleMineInput()
+        private PlayerPermanentProgression ResolveProgression()
         {
-            if (GameInput.PlaceLandminePressed)
+            if (progression == null)
             {
-                trackingMineInput = true;
-                sacrificeTriggered = false;
-                mineInputStartedAt = Time.time;
+                progression = GetComponent<PlayerPermanentProgression>();
             }
 
-            if (trackingMineInput && !sacrificeTriggered && GameInput.PlaceLandmineHeld
-                && Time.time >= mineInputStartedAt + sacrificeHoldThreshold)
-            {
-                sacrificeTriggered = TrySacrificeWeakestMine();
-            }
-
-            if (trackingMineInput && GameInput.PlaceLandmineReleased)
-            {
-                if (!sacrificeTriggered) TryPlaceLandmine();
-                trackingMineInput = false;
-            }
+            return progression;
         }
 
         public bool TrySacrificeWeakestMine()
@@ -389,8 +468,6 @@ namespace Cave.Player
 
         public void ResetRunInventory()
         {
-            trackingMineInput = false;
-            sacrificeTriggered = false;
             for (int index = activeMines.Count - 1; index >= 0; index--)
             {
                 PlayerLandmine mine = activeMines[index];
@@ -400,15 +477,43 @@ namespace Cave.Player
             }
             activeMines.Clear();
             placementSequence = 0UL;
+            healthPotionStacks.Clear();
+            manaPotionStacks.Clear();
             ownedHealthPotions = 0;
             ownedManaPotions = 0;
-            // Oblivion Disk is permanent equipment. A run reset clears placed
-            // nodes but restores the earned capacity rather than deleting it.
-            storedDiskCharges = diskCapacity;
-            nextDiskChargeAt = 0f;
+            // Capacity is permanent equipment, while its ready disks are
+            // current-run inventory. Start a new run empty and let the
+            // existing sequential recharge restore charges normally.
+            storedDiskCharges = 0;
+            nextDiskChargeAt = diskCapacity > 0
+                ? Time.time + rechargeSecondsPerCharge
+                : 0f;
             ConsumableQuantityChanged?.Invoke(PlayerConsumableType.HealthPotion, 0);
             ConsumableQuantityChanged?.Invoke(PlayerConsumableType.ManaPotion, 0);
             NotifyDiskStateChanged();
+        }
+
+        /// <summary>Read-only UI description of purchase-time potion stacks.</summary>
+        public string DescribePotionStacks(PlayerConsumableType type)
+        {
+            List<PotionStack> source = type == PlayerConsumableType.HealthPotion
+                ? healthPotionStacks
+                : type == PlayerConsumableType.ManaPotion
+                    ? manaPotionStacks
+                    : null;
+            if (source == null || source.Count == 0) return "—";
+
+            List<PotionStack> ordered = new List<PotionStack>(source);
+            ordered.Sort(ComparePotionStacks);
+            string result = string.Empty;
+            for (int index = 0; index < ordered.Count; index++)
+            {
+                PotionStack stack = ordered[index];
+                if (stack.Quantity <= 0) continue;
+                if (result.Length > 0) result += "  •  ";
+                result += Mathf.RoundToInt(stack.Potency * 100f) + "% ×" + stack.Quantity;
+            }
+            return result.Length == 0 ? "—" : result;
         }
 
         private void LoadDiskCapacity()
@@ -416,6 +521,102 @@ namespace Cave.Player
             diskCapacity = Mathf.Clamp(PlayerPrefs.GetInt(DiskCapacityKey, 0), 0, MaximumDiskCapacity);
             storedDiskCharges = diskCapacity;
             nextDiskChargeAt = 0f;
+        }
+
+        private void MigrateLegacyPotionCounts()
+        {
+            if (healthPotionStacks == null) healthPotionStacks = new List<PotionStack>();
+            if (manaPotionStacks == null) manaPotionStacks = new List<PotionStack>();
+            if (healthPotionStacks.Count == 0 && ownedHealthPotions > 0)
+            {
+                healthPotionStacks.Add(new PotionStack(
+                    ownedHealthPotions,
+                    ToBasisPoints(healthPotionRestorePercent),
+                    nextPotionAcquisitionSequence++));
+            }
+            if (manaPotionStacks.Count == 0 && ownedManaPotions > 0)
+            {
+                manaPotionStacks.Add(new PotionStack(
+                    ownedManaPotions,
+                    ToBasisPoints(manaPotionRestorePercent),
+                    nextPotionAcquisitionSequence++));
+            }
+            SyncLegacyPotionCounts();
+        }
+
+        private void AddPotion(List<PotionStack> stacks, float potency)
+        {
+            if (stacks == null) return;
+            stacks.Add(new PotionStack(1, ToBasisPoints(potency), nextPotionAcquisitionSequence++));
+            SyncLegacyPotionCounts();
+        }
+
+        private static int CountPotions(List<PotionStack> stacks)
+        {
+            if (stacks == null) return 0;
+            int count = 0;
+            for (int index = 0; index < stacks.Count; index++)
+            {
+                count += Mathf.Max(0, stacks[index].Quantity);
+            }
+            return count;
+        }
+
+        private static int ComparePotionStacks(PotionStack left, PotionStack right)
+        {
+            int potency = left.PotencyBasisPoints.CompareTo(right.PotencyBasisPoints);
+            return potency != 0 ? potency : left.AcquiredSequence.CompareTo(right.AcquiredSequence);
+        }
+
+        private static int ToBasisPoints(float potency)
+        {
+            return Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp01(potency) * 10000f), 1, 10000);
+        }
+
+        private static float ResolveNextPotionPotency(List<PotionStack> stacks, float fallback)
+        {
+            float potency;
+            return TryPeekPotion(stacks, fallback, out potency) ? potency : Mathf.Clamp01(fallback);
+        }
+
+        private static bool TryPeekPotion(List<PotionStack> stacks, float fallback, out float potency)
+        {
+            potency = Mathf.Clamp01(fallback);
+            if (stacks == null || stacks.Count == 0) return false;
+            int selected = -1;
+            for (int index = 0; index < stacks.Count; index++)
+            {
+                if (stacks[index].Quantity <= 0) continue;
+                if (selected < 0 || ComparePotionStacks(stacks[index], stacks[selected]) < 0) selected = index;
+            }
+            if (selected < 0) return false;
+            potency = stacks[selected].Potency;
+            return true;
+        }
+
+        private void ConsumeNextPotion(List<PotionStack> stacks)
+        {
+            if (stacks == null) return;
+            int selected = -1;
+            for (int index = 0; index < stacks.Count; index++)
+            {
+                if (stacks[index].Quantity <= 0) continue;
+                if (selected < 0 || ComparePotionStacks(stacks[index], stacks[selected]) < 0) selected = index;
+            }
+            if (selected < 0) return;
+            PotionStack consumed = stacks[selected];
+            if (consumed.Quantity <= 1) stacks.RemoveAt(selected);
+            else stacks[selected] = new PotionStack(
+                consumed.Quantity - 1,
+                consumed.PotencyBasisPoints,
+                consumed.AcquiredSequence);
+            SyncLegacyPotionCounts();
+        }
+
+        private void SyncLegacyPotionCounts()
+        {
+            ownedHealthPotions = CountPotions(healthPotionStacks);
+            ownedManaPotions = CountPotions(manaPotionStacks);
         }
 
         private void UpdateDiskRecharge()

@@ -30,7 +30,11 @@ namespace Cave.Player
 
         public void ApplyStun(float duration)
         {
-            float resolvedDuration = Mathf.Max(0f, duration);
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            float resistanceMultiplier = carapace != null
+                ? ResonantCarapacePolicy.ResolvePhysicalControlMultiplier(carapace.PhysicalControlResistance)
+                : 1f;
+            float resolvedDuration = Mathf.Max(0f, duration) * resistanceMultiplier;
             if (resolvedDuration <= 0f)
             {
                 return;

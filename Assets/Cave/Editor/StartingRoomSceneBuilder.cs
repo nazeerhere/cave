@@ -12,8 +12,17 @@ namespace Cave.Editor
     public static class StartingRoomSceneBuilder
     {
         private const string StartingScenePath = "Assets/Cave/Scenes/00_StartingRoom.unity";
-        private const string MainScenePath = "Assets/Cave/Scenes/Sprint5_Hazards.unity";
-        private const string MainSceneName = "Sprint5_Hazards";
+        private const string MainScenePath = "Assets/Cave/Scenes/01_UpperCave.unity";
+        private const string MainSceneName = "01_UpperCave";
+        private static readonly string[] ProductionScenePaths =
+        {
+            StartingScenePath,
+            MainScenePath,
+            "Assets/Cave/Scenes/02_Stronghold.unity",
+            "Assets/Cave/Scenes/03_HollowDistricts.unity",
+            "Assets/Cave/Scenes/04_DeepVeins.unity",
+            "Assets/Cave/Scenes/05_HeartChamber.unity"
+        };
 
         [MenuItem("Tools/Cave/Build Starting Room")]
         public static void BuildFromMenu()
@@ -213,20 +222,26 @@ namespace Cave.Editor
 
         private static void ConfigureBuildSettings()
         {
-            List<EditorBuildSettingsScene> orderedScenes = new List<EditorBuildSettingsScene>
+            List<EditorBuildSettingsScene> orderedScenes = new List<EditorBuildSettingsScene>();
+            for (int i = 0; i < ProductionScenePaths.Length; i++)
             {
-                new EditorBuildSettingsScene(StartingScenePath, true),
-                new EditorBuildSettingsScene(MainScenePath, true)
-            };
+                orderedScenes.Add(new EditorBuildSettingsScene(ProductionScenePaths[i], true));
+            }
 
             foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
             {
-                if (scene.path == StartingScenePath || scene.path == MainScenePath)
+                bool productionScene = false;
+                for (int i = 0; i < ProductionScenePaths.Length; i++)
                 {
-                    continue;
+                    if (scene.path != ProductionScenePaths[i]) continue;
+                    productionScene = true;
+                    break;
                 }
 
-                orderedScenes.Add(scene);
+                if (!productionScene)
+                {
+                    orderedScenes.Add(new EditorBuildSettingsScene(scene.path, false));
+                }
             }
 
             EditorBuildSettings.scenes = orderedScenes.ToArray();

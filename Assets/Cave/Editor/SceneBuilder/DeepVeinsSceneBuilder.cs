@@ -16,8 +16,7 @@ namespace Cave.Editor.SceneBuilder
     {
         public const string ScenePath = "Assets/Cave/Scenes/04_DeepVeins.unity";
         private const string SourceScenePath = "Assets/Cave/Scenes/Sprint5_Hazards.unity";
-        // A final-boss scene is not authored yet. Keep this marker valid and conspicuous for retargeting.
-        private const string TemporaryFinalBossTarget = "Cave_Level01";
+        private const string FinalBossTarget = "05_HeartChamber";
 
         [MenuItem("Tools/Cave/Scene Builder/Build 04 Deep Veins (New Scene Only)")]
         public static void BuildFromMenu()
@@ -172,7 +171,7 @@ namespace Cave.Editor.SceneBuilder
         {
             CaveSceneBuilderV1.PlacePlayerSpawn("Deep Veins Player Spawn", roots.PlayerSpawn, new Vector2(0f, 0.8f), "FromHollowDistricts");
             CaveSceneBuilderV1.PlaceInteractableMarker("Heart Threshold Landmark Marker", roots.Interactables, new Vector2(0f, -18.7f), "HeartThresholdLandmark");
-            CaveSceneBuilderV1.PlaceRoomTransitionMarker("Deep Veins Final Boss Exit", roots.Transitions, new Vector2(0f, -19.0f), "ToFinalBoss", TemporaryFinalBossTarget);
+            CaveSceneBuilderV1.PlaceRoomTransitionMarker("Deep Veins Final Boss Exit", roots.Transitions, new Vector2(0f, -19.0f), "ToFinalBoss", FinalBossTarget);
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Deep Veins Central Spawn", roots.EnemySpawns, new Vector2(-3f, 0.7f), "DeepVeinsCentral01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Deep Veins Left Ruin Spawn", roots.EnemySpawns, new Vector2(-23f, 2.1f), "DeepVeinsLeftRuin01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Deep Veins Right Ruin Spawn", roots.EnemySpawns, new Vector2(23f, 2.2f), "DeepVeinsRightRuin01");

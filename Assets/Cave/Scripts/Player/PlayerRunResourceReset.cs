@@ -1,4 +1,6 @@
 using Cave.Combat;
+using Cave.Domain;
+using Cave.Inventory;
 using UnityEngine;
 
 namespace Cave.Player
@@ -44,6 +46,8 @@ namespace Cave.Player
                 GetComponent<PlayerCurrency>()?.ResetRunCurrency();
             }
             GetComponent<PlayerLandmineInventory>()?.ResetRunInventory();
+            GetComponent<PlayerCollectedInventory>()?.RemoveDeathLossItems();
+            GetComponent<PlayerDomainLawCollection>()?.ResetRunLaws();
             GetComponent<PlayerSpecialMode>()?.ResetRunMode();
             GetComponent<PlayerRecoveryModifiers>()?.ClearTemporaryModifiers();
             GetComponent<PlayerSlowStatus>()?.ClearSlow();

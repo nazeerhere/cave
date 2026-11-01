@@ -12,12 +12,27 @@ namespace Cave.Player
 
         private PlayerCurrency playerCurrency;
         private PlayerLandmineInventory consumables;
+        private PlayerPermanentProgression progression;
 
-        public int HealthPotionCost => settings != null ? settings.HealthPotionCost : 0;
-        public float HealthPotionRestorePercent => settings != null ? settings.HealthPotionRestorePercent : 0f;
-        public int ManaPotionCost => settings != null ? settings.ManaPotionCost : 0;
-        public float ManaPotionRestorePercent => settings != null ? settings.ManaPotionRestorePercent : 0f;
-        public int LandmineCost => ResolveConsumables() != null ? consumables.CurrencyCost : 0;
+        public int HealthPotionCost => settings != null
+            ? PotionEconomyPolicy.ResolvePrice(settings.HealthPotionCost, settings.HealthPotionRestorePercent,
+                HealthPotionRestorePercent, ResolveProgression()?.HealthPotionRegenerationLevel ?? 0)
+            : 0;
+        public float HealthPotionRestorePercent => settings != null
+            ? PotionEconomyPolicy.ResolvePotency(settings.HealthPotionRestorePercent, ResolveProgression()?.HealthPotionEfficiencyLevel ?? 0,
+                ResolveProgression()?.PotionEfficiencyIncreasePerLevel ?? 0f)
+            : 0f;
+        public int ManaPotionCost => settings != null
+            ? PotionEconomyPolicy.ResolvePrice(settings.ManaPotionCost, settings.ManaPotionRestorePercent,
+                ManaPotionRestorePercent, ResolveProgression()?.ManaPotionRegenerationLevel ?? 0)
+            : 0;
+        public float ManaPotionRestorePercent => settings != null
+            ? PotionEconomyPolicy.ResolvePotency(settings.ManaPotionRestorePercent, ResolveProgression()?.ManaPotionEfficiencyLevel ?? 0,
+                ResolveProgression()?.PotionEfficiencyIncreasePerLevel ?? 0f)
+            : 0f;
+        public int LandmineCost => ResolveConsumables() != null
+            ? consumables.GetNextDiskCapacityCost(ResolveProgression()?.DiskCombinedUpgradeLevel ?? 0)
+            : 0;
         public int OwnedHealthPotions => ResolveConsumables() != null
             ? consumables.OwnedHealthPotions
             : 0;
@@ -40,6 +55,7 @@ namespace Cave.Player
         {
             playerCurrency = GetComponent<PlayerCurrency>();
             consumables = GetComponent<PlayerLandmineInventory>();
+            progression = GetComponent<PlayerPermanentProgression>();
         }
 
         internal void Configure(SpecialModeTier2Settings shopSettings)
@@ -54,12 +70,12 @@ namespace Cave.Player
             PlayerLandmineInventory inventory = ResolveConsumables();
             if (settings == null
                 || inventory == null
-                || !playerCurrency.TrySpend(settings.HealthPotionCost))
+                || !playerCurrency.TrySpend(HealthPotionCost))
             {
                 return false;
             }
 
-            inventory.AddHealthPotion();
+            inventory.AddHealthPotion(HealthPotionRestorePercent);
             ownedQuantity = inventory.OwnedHealthPotions;
             return true;
         }
@@ -70,12 +86,12 @@ namespace Cave.Player
             PlayerLandmineInventory inventory = ResolveConsumables();
             if (settings == null
                 || inventory == null
-                || !playerCurrency.TrySpend(settings.ManaPotionCost))
+                || !playerCurrency.TrySpend(ManaPotionCost))
             {
                 return false;
             }
 
-            inventory.AddManaPotion();
+            inventory.AddManaPotion(ManaPotionRestorePercent);
             ownedQuantity = inventory.OwnedManaPotions;
             return true;
         }
@@ -83,7 +99,8 @@ namespace Cave.Player
         public bool TryBuyLandmine()
         {
             PlayerLandmineInventory inventory = ResolveConsumables();
-            return inventory != null && inventory.TryPurchaseLandmine();
+            return inventory != null && inventory.TryPurchaseLandmine(
+                ResolveProgression()?.DiskCombinedUpgradeLevel ?? 0);
         }
 
         private PlayerLandmineInventory ResolveConsumables()
@@ -94,6 +111,39 @@ namespace Cave.Player
             }
 
             return consumables;
+        }
+
+        private PlayerPermanentProgression ResolveProgression()
+        {
+            if (progression == null)
+            {
+                progression = GetComponent<PlayerPermanentProgression>();
+            }
+
+            return progression;
+        }
+    }
+
+    /// <summary>Shared deterministic potion economics; currency is always rounded up.</summary>
+    public static class PotionEconomyPolicy
+    {
+        public static float ResolvePotency(float basePotency, int level, float increasePerLevel)
+        {
+            return Mathf.Clamp01(Mathf.Max(0f, basePotency)
+                + Mathf.Max(0, level) * Mathf.Max(0f, increasePerLevel));
+        }
+
+        public static int ResolvePrice(
+            int basePrice,
+            float basePotency,
+            float potency,
+            int associatedUpgradeRank = 0)
+        {
+            float safeBasePotency = Mathf.Max(.0001f, basePotency);
+            float resolvedBasePrice = Mathf.Max(0, basePrice);
+            float potencyAdjustedPrice = resolvedBasePrice * Mathf.Max(0f, potency) / safeBasePotency;
+            float progressionSurcharge = resolvedBasePrice * .25f * Mathf.Max(0, associatedUpgradeRank);
+            return Mathf.Max(0, Mathf.CeilToInt(potencyAdjustedPrice + progressionSurcharge));
         }
     }
 }

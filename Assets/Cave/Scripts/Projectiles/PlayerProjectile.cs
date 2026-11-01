@@ -8,10 +8,18 @@ using Cave.Interactions;
 using Cave.Player;
 using Cave.Progression;
 using Cave.Diagnostics;
+using Cave.Environmental;
 using UnityEngine;
 
 namespace Cave.Projectiles
 {
+    public enum PlayerProjectileLifecycleEvent
+    {
+        Launched,
+        Impacted,
+        Expired
+    }
+
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public sealed class PlayerProjectile : MonoBehaviour, IEnemyParryableProjectile
     {
@@ -31,6 +39,11 @@ namespace Cave.Projectiles
         [SerializeField, Min(0.01f)] private float burnTickInterval = 1f;
         [SerializeField, Min(0f)] private float burnDuration = 3f;
 
+        [Header("Heavy Presentation")]
+        [Tooltip("Presentation-only terminal effect. Heavy collision and damage remain in BeginHeavyImpact.")]
+        [SerializeField] private GameObject heavyExplosionVisualPrefab;
+        [SerializeField, Min(.01f)] private float heavyExplosionVisualLifetime = .8f;
+
         private Rigidbody2D body;
         private Collider2D projectileCollider;
         private SpecialMode firedMode;
@@ -38,6 +51,7 @@ namespace Cave.Projectiles
         private DamageContext damageContext;
         private bool hasLaunched;
         private bool hasImpacted;
+        private bool lifecycleTerminalRaised;
         private int remainingEnemyHits = 1;
         private readonly HashSet<Damageable> hitTargets = new HashSet<Damageable>();
         private readonly ElementalAxiomApplicationReceipt axiomApplicationReceipt = new ElementalAxiomApplicationReceipt();
@@ -64,6 +78,9 @@ namespace Cave.Projectiles
         private bool runtimeReferencesCached;
         private bool isHeavyProjectile;
         private float heavyExplosionRadius;
+        private float heavyKnockback;
+        private bool heavyImpactVisualSpawned;
+        private int structuralImpactSequence;
         private GameObject launchOwner;
         private GameObject ownerOverride;
         private readonly List<Collider2D> ignoredOwnerColliders = new List<Collider2D>();
@@ -75,12 +92,19 @@ namespace Cave.Projectiles
         private bool firstTerminalTraced;
         private bool firstMovementTraced;
         private bool telemetryRegistered;
+        private float configuredStandardSpeed;
+        private float intrinsicImpulse;
+        private float launchedSpeed;
+        private int standardImpactSequence;
 
         public int BaseDamage => baseDamage;
+        public float AuthoredSpeed => speed;
         public int SkillTier => firedTier;
         public int RemainingEnemyHits => remainingEnemyHits;
         public bool IsPiercing => remainingEnemyHits > 1;
         public bool IsHeavyProjectile => isHeavyProjectile;
+        /// <summary>Projectile-owned lifecycle seam for future travel loops.</summary>
+        public event System.Action<PlayerProjectile, PlayerProjectileLifecycleEvent> LifecycleChanged;
         public bool UsesProvidedPresentation => usesProvidedPresentation;
         public bool UsesImaginaryPresentation => usesImaginaryPresentation;
         public bool CanBeEnemyParried => hasLaunched && !hasImpacted && !reflectedByEnemy;
@@ -105,19 +129,35 @@ namespace Cave.Projectiles
         }
 
         /// <summary>
+        /// Pattern-owned launch inputs. Zero speed preserves the prefab's
+        /// authored speed; Heavy never reads this configuration.
+        /// </summary>
+        public void ConfigureStandardPattern(float requestedSpeed, float requestedIntrinsicImpulse)
+        {
+            configuredStandardSpeed = Mathf.Max(0f, requestedSpeed);
+            intrinsicImpulse = Mathf.Max(0f, requestedIntrinsicImpulse);
+        }
+
+        /// <summary>
         /// Configures the launched instance as the terminal Heavy expression of
         /// the current projectile path. Heavy never inherits rapid pierce.
         /// The heavy silhouette scales only a visual child. The root owns the
         /// Rigidbody2D and Collider2D, so its physical footprint stays stable.
         /// </summary>
-        public void ConfigureHeavyProjectile(float scaleMultiplier, float explosionRadius)
+        public void ConfigureHeavyProjectile(
+            float scaleMultiplier,
+            float explosionRadius,
+            float knockback,
+            float committedCharge)
         {
             isHeavyProjectile = true;
             heavyExplosionRadius = Mathf.Max(0.1f, explosionRadius);
+            heavyKnockback = Mathf.Max(0f, knockback);
             remainingEnemyHits = ChargedProjectilePolicy.HeavyMaximumEnemyHits;
             damageContext = damageContext.WithTraits(DamageTrait.Heavy | DamageTrait.AreaOfEffect);
             heavyVisualScale = Mathf.Max(1f, scaleMultiplier);
             ApplyVisualScale(tierScale * heavyVisualScale);
+            ApplyHeavyTravelPresentation(committedCharge);
         }
 
         private void Awake()
@@ -203,13 +243,21 @@ namespace Cave.Projectiles
             tier3Settings = specialModeSettings;
             isHeavyProjectile = false;
             heavyExplosionRadius = 0f;
+            heavyKnockback = 0f;
+            heavyImpactVisualSpawned = false;
             heavyVisualScale = 1f;
+            configuredStandardSpeed = isHeavyProjectile ? 0f : configuredStandardSpeed;
+            launchedSpeed = isHeavyProjectile
+                ? speed
+                : configuredStandardSpeed > 0f ? configuredStandardSpeed : speed;
+            standardImpactSequence = 0;
             transform.localScale = baseScale;
             hitTargets.Clear();
             axiomApplicationReceipt.Clear();
             reflectedByEnemy = false;
             enemyParryOwner = null;
             hasLaunched = true;
+            lifecycleTerminalRaised = false;
             if (!telemetryRegistered) { telemetryRegistered = true; RuntimeTelemetry.Acquired(RuntimeWorkCategory.Projectile); }
             claimSuspended = false;
             interactionDestroyedReported = false;
@@ -228,7 +276,8 @@ namespace Cave.Projectiles
                 true,
                 1);
             ConfigureTierVisuals();
-            body.velocity = direction.normalized * speed;
+            body.velocity = direction.normalized * launchedSpeed;
+            LifecycleChanged?.Invoke(this, PlayerProjectileLifecycleEvent.Launched);
             TraceSpawn();
             Invoke(nameof(Expire), lifetime);
         }
@@ -248,6 +297,7 @@ namespace Cave.Projectiles
 
             claimSuspended = true;
             hasImpacted = true;
+            RaiseTerminalLifecycle(PlayerProjectileLifecycleEvent.Expired);
             frenzyActivation?.Complete();
             frenzyActivation = null;
             CancelInvoke();
@@ -359,24 +409,24 @@ namespace Cave.Projectiles
             if ((environmentLayers.value & (1 << other.gameObject.layer)) != 0)
             {
                 TraceFirstTerminal(isHeavyProjectile ? "heavy-environment-hit" : "environment-hit", other);
-                CaveSfx.Play(CaveSfxCue.Hit, 0.55f);
                 if (isHeavyProjectile)
                 {
                     BeginHeavyImpact();
                 }
                 else
                 {
+                    ApplyStandardStructuralImpulse(other);
                     BeginImpact();
                 }
                 Destroy(gameObject);
             }
         }
 
-        private void ResolveProjectileHit(Damageable damageable)
+        private bool ResolveProjectileHit(Damageable damageable)
         {
             if (damageable == null || !hitTargets.Add(damageable))
             {
-                return;
+                return false;
             }
 
             int frenzyDamage = resolvedDamage;
@@ -414,6 +464,52 @@ namespace Cave.Projectiles
             }
 
             ApplyStatusEffect(damageable, appliedDamage > 0);
+            ApplyStandardProjectileImpulse(damageable);
+            return true;
+        }
+
+        private void ApplyStandardProjectileImpulse(Damageable damageable)
+        {
+            if (isHeavyProjectile || damageable == null || intrinsicImpulse <= 0f)
+            {
+                return;
+            }
+
+            KnockbackReceiver receiver = damageable.GetComponent<KnockbackReceiver>();
+            if (receiver == null)
+            {
+                return;
+            }
+
+            Vector2 velocity = body != null ? body.velocity : Vector2.right;
+            Vector2 direction = velocity.sqrMagnitude > .0001f ? velocity.normalized : Vector2.right;
+            receiver.ApplyKnockback(direction * StandardProjectileImpulsePolicy.Resolve(
+                intrinsicImpulse,
+                velocity.magnitude,
+                speed));
+        }
+
+        private void ApplyStandardStructuralImpulse(Collider2D collider)
+        {
+            if (isHeavyProjectile || collider == null || intrinsicImpulse <= 0f)
+            {
+                return;
+            }
+
+            Vector2 velocity = body != null ? body.velocity : Vector2.right;
+            float impulse = StandardProjectileImpulsePolicy.Resolve(
+                intrinsicImpulse,
+                velocity.magnitude,
+                speed);
+            StructuralImpactRouter.Apply(collider, new StructuralImpactContext(
+                launchOwner != null ? launchOwner : gameObject,
+                transform.position,
+                velocity,
+                impulse * StandardProjectileImpulsePolicy.DestructibleResistanceMultiplier,
+                damageContext,
+                true,
+                false,
+                unchecked(GetInstanceID() * 397 ^ ++standardImpactSequence)));
         }
 
         private void BeginHeavyImpact()
@@ -435,11 +531,103 @@ namespace Cave.Projectiles
                 Damageable damageable = overlaps[index] != null
                     ? overlaps[index].GetComponentInParent<Damageable>()
                     : null;
-                ResolveProjectileHit(damageable);
+                if (ResolveProjectileHit(damageable))
+                {
+                    ApplyHeavyKnockback(damageable);
+                }
             }
 
-            CaveSfx.Play(CaveSfxCue.Explosion, 0.75f);
+            // The terminal Heavy explosion is also the sole structural event;
+            // its projectile instance id deduplicates every covered object.
+            StructuralImpactRouter.ApplyArea(new StructuralImpactContext(
+                launchOwner != null ? launchOwner : gameObject,
+                transform.position,
+                body != null ? body.velocity : Vector2.right,
+                Mathf.Max(1f, resolvedDamage),
+                damageContext,
+                true,
+                true,
+                unchecked(GetInstanceID() * 397 ^ ++structuralImpactSequence)), heavyExplosionRadius);
+
+            SpawnHeavyImpactVisual();
             BeginImpact();
+        }
+
+        /// <summary>
+        /// Heavy applies force only as part of its deduplicated terminal AoE.
+        /// ResolveProjectileHit gates this call, so collider overlap order and
+        /// multi-collider enemies cannot receive duplicate force.
+        /// </summary>
+        private void ApplyHeavyKnockback(Damageable damageable)
+        {
+            if (damageable == null || heavyKnockback <= 0f)
+            {
+                return;
+            }
+
+            KnockbackReceiver receiver = damageable.GetComponent<KnockbackReceiver>();
+            if (receiver == null)
+            {
+                return;
+            }
+
+            Vector2 travelDirection = body != null ? body.velocity : Vector2.right;
+            Vector2 direction = ChargedProjectilePolicy.HeavyExplosionDirection(
+                transform.position,
+                damageable.transform.position,
+                travelDirection);
+            receiver.ApplyKnockback(direction * heavyKnockback);
+        }
+
+        private void SpawnHeavyImpactVisual()
+        {
+            if (heavyImpactVisualSpawned) return;
+            heavyImpactVisualSpawned = true;
+            if (HeavyProjectilePresentation.TrySpawnFallout(
+                    firedMode,
+                    usesImaginaryPresentation,
+                    transform.position,
+                    heavyExplosionRadius,
+                    ResolveVisualSortingOrder() + 1))
+            {
+                return;
+            }
+
+            // The older CFX prefab remains an intentional fallback only for a
+            // missing approved sheet; it never layers beneath the approved
+            // Fallout sequence.
+            if (heavyExplosionVisualPrefab == null) return;
+            GameObject visual = Instantiate(heavyExplosionVisualPrefab, transform.position, Quaternion.identity);
+            // The source effect is authored around the 3.5-unit terminal
+            // radius. This only follows the already-resolved radius; it has no
+            // collider, target query, or damage authority.
+            float scale = Mathf.Max(.01f, heavyExplosionRadius / ChargedProjectilePolicy.DefaultHeavyExplosionRadius);
+            visual.transform.localScale *= scale;
+            Destroy(visual, Mathf.Max(.01f, heavyExplosionVisualLifetime));
+        }
+
+        private void ApplyHeavyTravelPresentation(float committedCharge)
+        {
+            Sprite presentation;
+            if (!HeavyProjectilePresentation.TryResolveTravel(
+                    firedMode,
+                    usesImaginaryPresentation,
+                    committedCharge,
+                    out presentation))
+            {
+                return;
+            }
+
+            for (int index = 0; index < visualRenderers.Length; index++)
+            {
+                SpriteRenderer renderer = visualRenderers[index];
+                if (renderer == null) continue;
+                renderer.sprite = presentation;
+                renderer.drawMode = SpriteDrawMode.Simple;
+                renderer.color = Color.white;
+            }
+
+            usesProvidedPresentation = true;
         }
 
         public bool TryEnemyParry(GameObject defender)
@@ -550,7 +738,7 @@ namespace Cave.Projectiles
             }
         }
 
-        private void BeginImpact()
+        private void BeginImpact(bool audibleImpact = true)
         {
             if (hasImpacted)
             {
@@ -558,6 +746,14 @@ namespace Cave.Projectiles
             }
 
             hasImpacted = true;
+            RaiseTerminalLifecycle(PlayerProjectileLifecycleEvent.Impacted);
+            if (audibleImpact && !reflectedByEnemy)
+            {
+                // The projectile owns this terminal sound. Damageable suppresses
+                // generic projectile impacts so one ordinary collision is one cue.
+                CaveSfx.PlayAt(CaveSfxCue.PlayerProjectileImpact, transform.position,
+                    isHeavyProjectile ? .85f : .65f);
+            }
             frenzyActivation?.Complete();
             if (firedTier >= 3
                 && tier3Settings != null
@@ -596,7 +792,12 @@ namespace Cave.Projectiles
         {
             usesImaginaryPresentation = launchOwner != null
                 && launchOwner.GetComponent<PhaseCombatState>()?.HasImaginaryActive == true;
-            usesProvidedPresentation = ApplyProvidedPresentation();
+            // The dedicated Heavy prefab carries its own authored projectile
+            // silhouette. Do not replace it with the ordinary mode-stage art
+            // during Launch; ConfigureHeavyProjectile still owns only its
+            // presentation scale after launch commits.
+            bool usesDedicatedHeavyPresentation = heavyExplosionVisualPrefab != null;
+            usesProvidedPresentation = !usesDedicatedHeavyPresentation && ApplyProvidedPresentation();
 
             if (tier3Settings == null)
             {
@@ -605,6 +806,7 @@ namespace Cave.Projectiles
 
             Color tierColor = tier3Settings.GetProjectileTierColor(firedMode, firedTier);
             if (!usesProvidedPresentation
+                && !usesDedicatedHeavyPresentation
                 && (firedMode == SpecialMode.SlowShot || firedMode == SpecialMode.BurnShot))
             {
                 for (int index = 0; index < visualRenderers.Length; index++)
@@ -827,7 +1029,7 @@ namespace Cave.Projectiles
             }
 
             TraceFirstTerminal("lifetime-expired", null);
-            BeginImpact();
+            BeginImpact(false);
             Destroy(gameObject);
         }
 
@@ -837,6 +1039,7 @@ namespace Cave.Projectiles
             if (hasLaunched && !hasImpacted)
             {
                 TraceFirstTerminal("disabled-without-impact", null);
+                RaiseTerminalLifecycle(PlayerProjectileLifecycleEvent.Expired);
             }
 
             frenzyActivation?.Complete();
@@ -861,6 +1064,7 @@ namespace Cave.Projectiles
             if (hasLaunched && !hasImpacted)
             {
                 TraceFirstTerminal("destroyed-without-impact", null);
+                RaiseTerminalLifecycle(PlayerProjectileLifecycleEvent.Expired);
             }
 
             if (!interactionDestroyedReported && interactionIdentity != null)
@@ -873,6 +1077,17 @@ namespace Cave.Projectiles
             {
                 Destroy(tierTrailMaterial);
             }
+        }
+
+        private void RaiseTerminalLifecycle(PlayerProjectileLifecycleEvent lifecycleEvent)
+        {
+            if (lifecycleTerminalRaised)
+            {
+                return;
+            }
+
+            lifecycleTerminalRaised = true;
+            LifecycleChanged?.Invoke(this, lifecycleEvent);
         }
 
         [System.Diagnostics.Conditional("UNITY_EDITOR")]
@@ -1073,6 +1288,214 @@ namespace Cave.Projectiles
             return family == "Imaginary_Axiom"
                 ? "imaginary_axiom_stage_" + stage
                 : family.ToLowerInvariant() + "_stage_" + stage;
+        }
+    }
+
+    /// <summary>
+    /// Presentation-only manifest for the approved Heavy travel atlas and its
+    /// mode-matched Fallout sheets. Physics, hit queries, and damage never
+    /// read these assets.
+    /// </summary>
+    internal static class HeavyProjectilePresentation
+    {
+        private const string TravelPath = "Projectiles/Heavy/Travel/heavy_projectiles";
+        private const string FalloutRoot = "Projectiles/Heavy/Fallout/";
+        private const float TravelPixelsPerUnit = 1200f;
+        // The Fallout sheets depict the full terminal area rather than a
+        // travelling projectile, so their rendered diameter maps to the
+        // established 3.5-unit Heavy radius at the authored base scale.
+        private const float FalloutPixelsPerUnit = 90f;
+        private const float FalloutFrameSeconds = .09f;
+        private static readonly Dictionary<string, Sprite> TravelSprites = new Dictionary<string, Sprite>();
+        private static readonly Dictionary<string, Sprite[]> FalloutSprites = new Dictionary<string, Sprite[]>();
+
+        // Rectangles are measured from the approved 1122x1402 travel atlas in
+        // Unity's bottom-left texture coordinates. Each family retains its
+        // original silhouette bounds; no resampling or source-pixel rewrite
+        // is performed.
+        private static readonly Rect[,] TravelRects =
+        {
+            { new Rect(0f, 1102f, 285f, 300f), new Rect(285f, 1102f, 380f, 300f), new Rect(665f, 1102f, 457f, 300f) },
+            { new Rect(0f, 832f, 285f, 270f), new Rect(285f, 832f, 380f, 270f), new Rect(665f, 832f, 457f, 270f) },
+            { new Rect(0f, 542f, 285f, 290f), new Rect(285f, 542f, 380f, 290f), new Rect(665f, 542f, 457f, 290f) },
+            { new Rect(0f, 252f, 285f, 290f), new Rect(285f, 252f, 380f, 290f), new Rect(665f, 252f, 457f, 290f) },
+            { new Rect(0f, 0f, 285f, 252f), new Rect(285f, 0f, 380f, 252f), new Rect(665f, 0f, 457f, 252f) }
+        };
+
+        internal static bool TryResolveTravel(
+            SpecialMode mode,
+            bool imaginaryOverride,
+            float committedCharge,
+            out Sprite sprite)
+        {
+            sprite = null;
+            Texture2D texture = Resources.Load<Texture2D>(TravelPath);
+            if (texture == null || texture.width != 1122 || texture.height != 1402)
+            {
+                return false;
+            }
+
+            int family = FamilyIndex(mode, imaginaryOverride);
+            int stage = StageIndex(committedCharge);
+            string key = family + ":" + stage;
+            if (!TravelSprites.TryGetValue(key, out sprite))
+            {
+                sprite = Sprite.Create(
+                    texture,
+                    TravelRects[family, stage],
+                    new Vector2(.5f, .5f),
+                    TravelPixelsPerUnit,
+                    0,
+                    SpriteMeshType.FullRect);
+                TravelSprites[key] = sprite;
+            }
+
+            return sprite != null;
+        }
+
+        internal static bool TrySpawnFallout(
+            SpecialMode mode,
+            bool imaginaryOverride,
+            Vector2 position,
+            float explosionRadius,
+            int sortingOrder)
+        {
+            Sprite[] frames;
+            if (!TryResolveFallout(FamilyIndex(mode, imaginaryOverride), out frames))
+            {
+                return false;
+            }
+
+            GameObject visual = new GameObject("Heavy Projectile Fallout Visual");
+            visual.transform.position = position;
+            HeavyProjectileFalloutVisual player = visual.AddComponent<HeavyProjectileFalloutVisual>();
+            player.Configure(
+                frames,
+                Mathf.Max(.01f, explosionRadius / ChargedProjectilePolicy.DefaultHeavyExplosionRadius),
+                sortingOrder,
+                FalloutFrameSeconds);
+            return true;
+        }
+
+        internal static bool HasRequiredArt(out string failure)
+        {
+            Texture2D travel = Resources.Load<Texture2D>(TravelPath);
+            if (travel == null || travel.width != 1122 || travel.height != 1402)
+            {
+                failure = "Heavy travel atlas is missing or is not the approved 1122x1402 source.";
+                return false;
+            }
+
+            for (int family = 0; family < 5; family++)
+            {
+                Texture2D fallout = Resources.Load<Texture2D>(FalloutRoot + FalloutFileName(family));
+                if (fallout == null || fallout.width != 1254 || fallout.height != 1254)
+                {
+                    failure = "Heavy Fallout sheet is missing or is not the approved 1254x1254 source: "
+                        + FalloutFileName(family) + ".";
+                    return false;
+                }
+            }
+
+            failure = null;
+            return true;
+        }
+
+        private static bool TryResolveFallout(int family, out Sprite[] frames)
+        {
+            string key = FalloutFileName(family);
+            if (FalloutSprites.TryGetValue(key, out frames))
+            {
+                return frames != null && frames.Length == 4;
+            }
+
+            Texture2D texture = Resources.Load<Texture2D>(FalloutRoot + key);
+            if (texture == null || texture.width != 1254 || texture.height != 1254)
+            {
+                frames = null;
+                return false;
+            }
+
+            const float CellSize = 627f;
+            // Source order is top-left, top-right, bottom-left, bottom-right;
+            // Sprite rects use Unity's bottom-left coordinate convention.
+            frames = new[]
+            {
+                CreateFalloutFrame(texture, new Rect(0f, CellSize, CellSize, CellSize)),
+                CreateFalloutFrame(texture, new Rect(CellSize, CellSize, CellSize, CellSize)),
+                CreateFalloutFrame(texture, new Rect(0f, 0f, CellSize, CellSize)),
+                CreateFalloutFrame(texture, new Rect(CellSize, 0f, CellSize, CellSize))
+            };
+            FalloutSprites[key] = frames;
+            return true;
+        }
+
+        private static Sprite CreateFalloutFrame(Texture2D texture, Rect rect)
+        {
+            return Sprite.Create(texture, rect, new Vector2(.5f, .5f), FalloutPixelsPerUnit, 0, SpriteMeshType.FullRect);
+        }
+
+        private static int FamilyIndex(SpecialMode mode, bool imaginaryOverride)
+        {
+            if (imaginaryOverride) return 4;
+            switch (mode)
+            {
+                case SpecialMode.BurnShot: return 0;
+                case SpecialMode.SlowShot: return 1;
+                case SpecialMode.Flight: return 2;
+                case SpecialMode.DamageBoost: return 3;
+                default: return 0;
+            }
+        }
+
+        private static int StageIndex(float committedCharge)
+        {
+            float value = Mathf.Clamp01(committedCharge);
+            return value < 1f / 3f ? 0 : value < 2f / 3f ? 1 : 2;
+        }
+
+        private static string FalloutFileName(int family)
+        {
+            switch (family)
+            {
+                case 0: return "fire_fallout";
+                case 1: return "ice_fallout";
+                case 2: return "wind_fallout";
+                case 3: return "strength_fallout";
+                default: return "imaginary_fallout";
+            }
+        }
+    }
+
+    /// <summary>One-shot, non-interactive playback for approved Fallout frames.</summary>
+    internal sealed class HeavyProjectileFalloutVisual : MonoBehaviour
+    {
+        private SpriteRenderer spriteRenderer;
+        private Sprite[] frames;
+        private float frameSeconds;
+        private float startedAt;
+
+        internal void Configure(Sprite[] sourceFrames, float scale, int sortingOrder, float secondsPerFrame)
+        {
+            frames = sourceFrames;
+            frameSeconds = Mathf.Max(.01f, secondsPerFrame);
+            startedAt = Time.time;
+            spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
+            spriteRenderer.sprite = frames[0];
+            spriteRenderer.sortingOrder = sortingOrder;
+            transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private void Update()
+        {
+            int frame = Mathf.FloorToInt((Time.time - startedAt) / frameSeconds);
+            if (frame >= frames.Length)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            spriteRenderer.sprite = frames[frame];
         }
     }
 }

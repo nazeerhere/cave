@@ -1,0 +1,124 @@
+{
+  "action": "tendril_lash",
+  "frame_count": 8,
+  "source_sheet": "grotto_mender_tendril_lash.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_tendril_lash_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        19,
+        455,
+        498
+      ],
+      "size_pixels": [
+        455,
+        479
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        416,
+        37,
+        871,
+        496
+      ],
+      "size_pixels": [
+        455,
+        459
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        775,
+        25,
+        1365,
+        508
+      ],
+      "size_pixels": [
+        590,
+        483
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1337,
+        55,
+        1774,
+        508
+      ],
+      "size_pixels": [
+        437,
+        453
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        15,
+        481,
+        488,
+        867
+      ],
+      "size_pixels": [
+        473,
+        386
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        420,
+        481,
+        921,
+        863
+      ],
+      "size_pixels": [
+        501,
+        382
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        856,
+        463,
+        1360,
+        872
+      ],
+      "size_pixels": [
+        504,
+        409
+      ]
+    },
+    {
+      "file": "GrottoMender_tendril_lash_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1327,
+        535,
+        1774,
+        873
+      ],
+      "size_pixels": [
+        447,
+        338
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

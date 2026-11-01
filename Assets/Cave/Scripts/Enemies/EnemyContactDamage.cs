@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cave.Audio;
 using Cave.Combat;
+using Cave.Environmental;
 using Cave.Player;
 using UnityEngine;
 
@@ -116,6 +117,16 @@ namespace Cave.Enemies
                 return;
             }
 
+            Vector2 point = collision.contactCount > 0 ? collision.GetContact(0).point : (Vector2)transform.position;
+            if (StructuralImpactRouter.Apply(collision.collider, new StructuralImpactContext(
+                gameObject, point, collision.relativeVelocity,
+                Mathf.Max(1, runtimeContactDamage),
+                new DamageContext(gameObject, damageTraits | DamageTrait.Direct | DamageTrait.Melee),
+                false, false, GetInstanceID() ^ Time.frameCount)))
+            {
+                return;
+            }
+
             TryApplyInsanityFriendlyContactDamage(collision.collider);
         }
 
@@ -226,7 +237,10 @@ namespace Cave.Enemies
                 traits |= DamageTrait.GuardBreak;
             }
 
-            CaveSfx.Play(CaveSfxCue.Whoosh, isGuardBreak ? 0.85f : 0.55f);
+            CaveSfx.PlayAt(
+                isGuardBreak ? CaveSfxCue.EnemyGuardBreak : CaveSfxCue.EnemyMeleeSwing,
+                transform.position,
+                isGuardBreak ? 0.85f : 0.55f);
             target.TryTakeDamage(damage, new DamageContext(gameObject, traits));
         }
 

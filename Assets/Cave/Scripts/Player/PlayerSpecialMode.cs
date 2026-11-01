@@ -2,6 +2,7 @@ using System;
 using Cave.Axioms;
 using Cave.Axioms.Control;
 using Cave.Axioms.Mastery;
+using Cave.Audio;
 using Cave.Combat;
 using Cave.Domain;
 using UnityEngine;
@@ -117,6 +118,7 @@ namespace Cave.Player
 
             CurrentMode = newMode;
             SpecialModeChanged?.Invoke(CurrentMode);
+            PlayModeChangedCue(CurrentMode);
             return true;
         }
 
@@ -146,6 +148,28 @@ namespace Cave.Player
 
             CurrentMode = startingMode;
             SpecialModeChanged?.Invoke(CurrentMode);
+            PlayModeChangedCue(CurrentMode);
+        }
+
+        // These are presentation labels for the established four playable
+        // SpecialMode identities; selection authority remains above.
+        private static void PlayModeChangedCue(SpecialMode mode)
+        {
+            switch (mode)
+            {
+                case SpecialMode.BurnShot:
+                    CaveSfx.Play(CaveSfxCue.SkillPathHeat, .7f);
+                    break;
+                case SpecialMode.SlowShot:
+                    CaveSfx.Play(CaveSfxCue.SkillPathOrder, .7f);
+                    break;
+                case SpecialMode.Flight:
+                    CaveSfx.Play(CaveSfxCue.SkillPathFlow, .7f);
+                    break;
+                case SpecialMode.DamageBoost:
+                    CaveSfx.Play(CaveSfxCue.SkillPathMass, .7f);
+                    break;
+            }
         }
     }
 }

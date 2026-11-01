@@ -1,0 +1,124 @@
+{
+  "action": "glide",
+  "frame_count": 8,
+  "source_sheet": "grotto_mender_glide.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_glide_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        45,
+        420,
+        552
+      ],
+      "size_pixels": [
+        420,
+        507
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        367,
+        67,
+        820,
+        520
+      ],
+      "size_pixels": [
+        453,
+        453
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        753,
+        55,
+        1202,
+        542
+      ],
+      "size_pixels": [
+        449,
+        487
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1135,
+        37,
+        1536,
+        504
+      ],
+      "size_pixels": [
+        401,
+        467
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        585,
+        433,
+        994
+      ],
+      "size_pixels": [
+        433,
+        409
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        313,
+        519,
+        802,
+        986
+      ],
+      "size_pixels": [
+        489,
+        467
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        687,
+        551,
+        1182,
+        990
+      ],
+      "size_pixels": [
+        495,
+        439
+      ]
+    },
+    {
+      "file": "GrottoMender_glide_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1119,
+        523,
+        1536,
+        1024
+      ],
+      "size_pixels": [
+        417,
+        501
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

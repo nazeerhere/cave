@@ -3,6 +3,7 @@ using Cave.Enemies;
 using Cave.Player;
 using Cave.Progression;
 using Cave.Projectiles;
+using Cave.Inventory;
 using Cave.World;
 using Cave.UI;
 using UnityEngine;
@@ -150,6 +151,23 @@ namespace Cave.Pickups
                     playerHealth.gameObject.AddComponent<PlayerLandmineInventory>();
                 }
 
+                // Collected materials and equipment are separate from the
+                // existing potion/Oblivion-Disk authority above.
+                if (!playerHealth.TryGetComponent(out PlayerCollectedInventory _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerCollectedInventory>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerResonantCarapace _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerResonantCarapace>();
+                }
+
+                if (!playerHealth.TryGetComponent(out PlayerResonantCarapaceVisual _))
+                {
+                    playerHealth.gameObject.AddComponent<PlayerResonantCarapaceVisual>();
+                }
+
                 if (!playerHealth.TryGetComponent(out PlayerSpecialMode _))
                 {
                     playerHealth.gameObject.AddComponent<PlayerSpecialMode>();
@@ -164,6 +182,8 @@ namespace Cave.Pickups
                 {
                     playerHealth.gameObject.AddComponent<PlayerCurseController>();
                 }
+
+                PlayerEquipmentController.EnsureOn(playerHealth.gameObject);
 
                 if (!playerHealth.TryGetComponent(out PlayerRunResourceReset _))
                 {

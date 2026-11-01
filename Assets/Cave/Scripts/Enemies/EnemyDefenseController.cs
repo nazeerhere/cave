@@ -1,6 +1,7 @@
 using System;
 using Cave.Axioms.Frequency;
 using Cave.Axioms.Phase;
+using Cave.Audio;
 using Cave.Combat;
 using UnityEngine;
 
@@ -222,6 +223,7 @@ namespace Cave.Enemies
                 {
                     ShowDefenseImpact(blockColor);
                     ApplyAttackerRecoil(context);
+                    CaveSfx.PlayAt(CaveSfxCue.EnemyBlockImpact, transform.position, 0.8f);
                 }
 
                 return postureBlockedHit;
@@ -240,6 +242,7 @@ namespace Cave.Enemies
                 // cadence reference for this attacker/defender pair.
                 guardResonance?.RegisterGuardContact(context.Source, Time.time);
                 ApplyAttackerRecoil(context);
+                CaveSfx.PlayAt(CaveSfxCue.EnemyBlockImpact, transform.position, 0.8f);
             }
 
             return succeeded;
@@ -526,6 +529,7 @@ namespace Cave.Enemies
                 0.24f,
                 -25f * facingDirection);
             GuardBroken?.Invoke();
+            CaveSfx.PlayAt(CaveSfxCue.EnemyGuardBreak, transform.position, 0.9f);
             return true;
         }
 

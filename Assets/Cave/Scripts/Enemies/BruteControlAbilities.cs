@@ -19,7 +19,7 @@ namespace Cave.Enemies
         [SerializeField, Min(0.05f)] private float dragDuration = 0.48f;
         [SerializeField, Min(0f)] private float dragSpeed = 9f;
         [SerializeField, Min(0)] private int hookDamage = 1;
-        [SerializeField, Min(0f)] private float hookCooldown = 2.35f;
+        [SerializeField, Min(0f)] private float hookCooldown = 5.875f;
 
         [Header("Pin / Wall Pressure")]
         [SerializeField, Min(0.1f)] private float pinRange = 1.2f;
@@ -293,7 +293,11 @@ namespace Cave.Enemies
         private IEnumerator PerformPin(PlayerHealth target, bool wallPressure)
         {
             currentAction = wallPressure ? "Wall Pin" : "Pin";
-            movement?.SetCombatMovementIntent(0f, pinDuration);
+            PlayerResonantCarapace carapace = target != null ? target.GetComponent<PlayerResonantCarapace>() : null;
+            float resolvedPinDuration = pinDuration * (carapace != null
+                ? ResonantCarapacePolicy.ResolvePhysicalControlMultiplier(carapace.PhysicalControlResistance)
+                : 1f);
+            movement?.SetCombatMovementIntent(0f, resolvedPinDuration);
             yield return new WaitForSeconds(0.12f);
             if (!CanContinue(target))
             {
@@ -314,7 +318,7 @@ namespace Cave.Enemies
                 CaveSfx.PlayClip(grabClip, 0.8f);
             }
 
-            yield return new WaitForSeconds(pinDuration);
+            yield return new WaitForSeconds(resolvedPinDuration);
             EndAction(ref nextPinTime, pinCooldown);
         }
 

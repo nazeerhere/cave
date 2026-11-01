@@ -1,0 +1,124 @@
+{
+  "action": "walk",
+  "frame_count": 8,
+  "source_sheet": "corrupted_qilin_walk.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_walk_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        0,
+        470,
+        500
+      ],
+      "size_pixels": [
+        470,
+        500
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        439,
+        0,
+        921,
+        506
+      ],
+      "size_pixels": [
+        482,
+        506
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        888,
+        0,
+        1387,
+        503
+      ],
+      "size_pixels": [
+        499,
+        503
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1311,
+        0,
+        1774,
+        494
+      ],
+      "size_pixels": [
+        463,
+        494
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        436,
+        494,
+        887
+      ],
+      "size_pixels": [
+        494,
+        451
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        431,
+        439,
+        929,
+        887
+      ],
+      "size_pixels": [
+        498,
+        448
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        886,
+        436,
+        1367,
+        887
+      ],
+      "size_pixels": [
+        481,
+        451
+      ]
+    },
+    {
+      "file": "CorruptedQilin_walk_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1318,
+        428,
+        1774,
+        887
+      ],
+      "size_pixels": [
+        456,
+        459
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

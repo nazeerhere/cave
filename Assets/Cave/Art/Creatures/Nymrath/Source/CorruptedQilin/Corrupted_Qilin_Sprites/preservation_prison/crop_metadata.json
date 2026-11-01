@@ -1,0 +1,152 @@
+{
+  "action": "preservation_prison",
+  "frame_count": 10,
+  "source_sheet": "corrupted_qilin_preservation_prison.png",
+  "method": "Provisional minimum-alpha seams for touching sprites/glow. Review before Unity import.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_preservation_prison_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        17,
+        404,
+        397
+      ],
+      "size_pixels": [
+        404,
+        380
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        397,
+        15,
+        793,
+        397
+      ],
+      "size_pixels": [
+        396,
+        382
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        793,
+        15,
+        1190,
+        399
+      ],
+      "size_pixels": [
+        397,
+        384
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1190,
+        17,
+        1586,
+        401
+      ],
+      "size_pixels": [
+        396,
+        384
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1586,
+        17,
+        1983,
+        396
+      ],
+      "size_pixels": [
+        397,
+        379
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        0,
+        396,
+        403,
+        793
+      ],
+      "size_pixels": [
+        403,
+        397
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        397,
+        396,
+        806,
+        793
+      ],
+      "size_pixels": [
+        409,
+        397
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        793,
+        396,
+        1191,
+        793
+      ],
+      "size_pixels": [
+        398,
+        397
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1190,
+        395,
+        1586,
+        793
+      ],
+      "size_pixels": [
+        396,
+        398
+      ]
+    },
+    {
+      "file": "CorruptedQilin_preservation_prison_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1586,
+        394,
+        1983,
+        793
+      ],
+      "size_pixels": [
+        397,
+        399
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

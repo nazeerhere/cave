@@ -28,8 +28,8 @@ MonoBehaviour:
   strengthTier3DamageMultiplier: 2
   strengthTier2DamageBonus: 1
   strengthTier3DamageBonus: 2
-  flightTier2EfficiencyBonus: 0.05
-  flightTier3EfficiencyBonus: 0.1
+  flightTier2EfficiencyBonus: 0.3
+  flightTier3EfficiencyBonus: 0.7
   slowShotTier2PierceCount: 2
   slowShotTier3PierceCount: 2
   burnShotTier2PierceCount: 3

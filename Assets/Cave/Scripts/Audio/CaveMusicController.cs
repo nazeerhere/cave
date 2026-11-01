@@ -57,10 +57,12 @@ namespace Cave.Audio
             source.loop = true;
             source.spatialBlend = 0f;
             source.priority = 64;
+            source.volume = CaveAudioSettings.MusicVolume;
             musicLibrary = musicLibrary != null
                 ? musicLibrary
                 : Resources.Load<CaveMusicLibrary>(LibraryResourceName);
             SceneManager.sceneLoaded += HandleSceneLoaded;
+            CaveAudioSettings.VolumesChanged += HandleAudioVolumesChanged;
         }
 
         private void Start()
@@ -159,6 +161,16 @@ namespace Cave.Audio
             }
         }
 
+        private void HandleAudioVolumesChanged()
+        {
+            if (source != null)
+            {
+                // Do not restart or replace the current track merely because a
+                // preference changed. CrossFade continues to own its envelope.
+                source.volume = CaveAudioSettings.MusicVolume;
+            }
+        }
+
         private static CaveMusicState ResolveSceneDefault()
         {
             string sceneName = SceneManager.GetActiveScene().name.ToLowerInvariant();
@@ -175,6 +187,7 @@ namespace Cave.Audio
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= HandleSceneLoaded;
+            CaveAudioSettings.VolumesChanged -= HandleAudioVolumesChanged;
             if (instance == this)
             {
                 instance = null;

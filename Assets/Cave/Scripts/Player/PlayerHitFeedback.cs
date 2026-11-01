@@ -29,12 +29,14 @@ namespace Cave.Player
         private void OnEnable()
         {
             playerHealth.DamageTaken += HandleDamageTaken;
+            playerHealth.Died += HandleDied;
             playerHealth.Respawned += HandleRespawned;
         }
 
         private void OnDisable()
         {
             playerHealth.DamageTaken -= HandleDamageTaken;
+            playerHealth.Died -= HandleDied;
             playerHealth.Respawned -= HandleRespawned;
             if (pulseRoutine != null)
             {
@@ -48,7 +50,10 @@ namespace Cave.Player
         private void HandleDamageTaken()
         {
             hitFlash.Play();
-            CaveSfx.Play(CaveSfxCue.Hit, 0.9f);
+            if (playerHealth.CurrentHealth > 0)
+            {
+                CaveSfx.Play(CaveSfxCue.PlayerHurt, 0.9f);
+            }
             AreaPulseEffect.Create(transform.position, pulseRadius, pulseColor, pulseDuration);
             if (pulseRoutine != null)
             {
@@ -60,7 +65,12 @@ namespace Cave.Player
 
         private void HandleRespawned()
         {
-            CaveSfx.Play(CaveSfxCue.Spawn, 0.8f);
+            CaveSfx.Play(CaveSfxCue.PlayerRespawn, 0.8f);
+        }
+
+        private void HandleDied()
+        {
+            CaveSfx.Play(CaveSfxCue.PlayerDeath, 0.9f);
         }
 
         private IEnumerator PlayScalePulse()

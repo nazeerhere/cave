@@ -250,10 +250,16 @@ namespace Cave.UI
                     return "Place Landmine";
                 case GameAction.UseDistraction:
                     return "Use Distraction";
+                case GameAction.SelectEquipment:
+                    return "Select Equipment";
+                case GameAction.ActivateEquipment:
+                    return "Activate Equipment";
                 case GameAction.Interact:
                     return "Interact";
                 case GameAction.SummonCurseAltar:
                     return "Curse Altar / Domain (Tap / Hold)";
+                case GameAction.Nexus:
+                    return "Nexus";
                 default:
                     return InsertSpaces(action.ToString());
             }

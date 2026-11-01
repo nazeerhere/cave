@@ -21,7 +21,10 @@ namespace Cave.Domain
         public DomainAuthoredLaw AuthoredLaw { get; }
     }
 
-    /// <summary>Persistent player-owned authored Laws. The collection itself is the active composition.</summary>
+    /// <summary>
+    /// Player-owned authored Laws for the current run. The collection itself is
+    /// the active composition; persistent authoring is intentionally excluded.
+    /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerDomainLawCollection : MonoBehaviour
     {
@@ -40,7 +43,16 @@ namespace Cave.Domain
             return owner == null ? null : owner.GetComponent<PlayerDomainLawCollection>() ?? owner.AddComponent<PlayerDomainLawCollection>();
         }
 
-        private void Awake() { Load(); }
+        private void Awake()
+        {
+            // Earlier builds persisted this collection. Clear that retired
+            // payload once so a newly created run cannot inherit old Laws.
+            if (PlayerPrefs.HasKey(SaveKey))
+            {
+                PlayerPrefs.DeleteKey(SaveKey);
+                PlayerPrefs.Save();
+            }
+        }
 
         public DomainLawAuthoringCommitResult TryAuthor(DomainLaw candidate, DomainAuthoringContext context)
         {
@@ -52,29 +64,6 @@ namespace Cave.Domain
             {
                 string id = Guid.NewGuid().ToString("N");
                 DomainAuthoredLaw authored = new DomainAuthoredLaw(id, candidate);
-                List<DomainAuthoredLaw> pending = new List<DomainAuthoredLaw>(laws) { authored };
-                string payload;
-                bool hadPreviousPayload = PlayerPrefs.HasKey(SaveKey);
-                string previousPayload = hadPreviousPayload
-                    ? PlayerPrefs.GetString(SaveKey, string.Empty)
-                    : null;
-                try
-                {
-                    payload = SerializeForPersistence(pending);
-                    PlayerPrefs.SetString(SaveKey, payload);
-                    PlayerPrefs.Save();
-                }
-                catch
-                {
-                    // A failed persistence attempt cannot leave a visible
-                    // in-memory commit or a speculative saved payload behind.
-                    if (hadPreviousPayload) PlayerPrefs.SetString(SaveKey, previousPayload);
-                    else PlayerPrefs.DeleteKey(SaveKey);
-                    try { PlayerPrefs.Save(); }
-                    catch { }
-                    return new DomainLawAuthoringCommitResult(false, eligibility, null);
-                }
-
                 laws.Add(authored);
                 composition = eligibility.Proposed;
                 Changed?.Invoke();
@@ -83,17 +72,13 @@ namespace Cave.Domain
             finally { committing = false; }
         }
 
-        private void Load()
+        /// <summary>Called only by the actual player new-run lifecycle.</summary>
+        public void ResetRunLaws()
         {
+            if (laws.Count == 0 && composition.Count == 0) return;
             laws.Clear();
             composition = DomainComposition.Empty;
-            string payload = PlayerPrefs.GetString(SaveKey, string.Empty);
-            if (string.IsNullOrEmpty(payload)) return;
-            List<DomainAuthoredLaw> loaded;
-            DomainComposition rebuilt;
-            if (!TryDeserializeForPersistence(payload, out loaded, out rebuilt)) return;
-            laws.AddRange(loaded);
-            composition = rebuilt;
+            Changed?.Invoke();
         }
 
         internal static string SerializeForPersistence(IReadOnlyList<DomainAuthoredLaw> source)

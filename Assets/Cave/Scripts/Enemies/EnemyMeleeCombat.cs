@@ -658,6 +658,7 @@ namespace Cave.Enemies
                 attack.StrikeAngle,
                 attack.WeaponScale,
                 attack.WeaponVerticalOffset);
+            CaveSfx.PlayAt(CaveSfxCue.EnemyMeleeSwing, transform.position, attack.IsCharged ? 0.9f : 0.7f);
             ResolveTrollAttackHit(attack);
             yield return new WaitForSeconds(attack.ActiveDuration);
             RestoreFeedback();
@@ -685,7 +686,6 @@ namespace Cave.Enemies
             {
                 AttackHitResolved?.Invoke(target, DamageTrait.Melee | attack.ExtraTraits);
             }
-            CaveSfx.Play(CaveSfxCue.Whoosh, attack.IsCharged ? 0.9f : 0.7f);
             if (target.CurrentHealth >= healthBeforeHit || attack.Knockback <= 0f)
             {
                 return;
@@ -783,6 +783,7 @@ namespace Cave.Enemies
                 attack.StrikeAngle,
                 attack.WeaponScale,
                 attack.WeaponVerticalOffset);
+            CaveSfx.PlayAt(CaveSfxCue.EnemyMeleeSwing, transform.position, 0.8f);
             guardBreakStepSucceeded = ResolveGuardBreakHit(attack);
             yield return new WaitForSeconds(attack.ActiveDuration);
             RestoreFeedback();
@@ -823,7 +824,7 @@ namespace Cave.Enemies
                 guardBreakTelegraphColor,
                 0.22f,
                 -25f * ResolveTargetFacing());
-            CaveSfx.Play(CaveSfxCue.Hit, 0.85f);
+            CaveSfx.PlayAt(CaveSfxCue.EnemyGuardBreak, target.transform.position, 0.85f);
             return true;
         }
 
@@ -1200,6 +1201,9 @@ namespace Cave.Enemies
                 SetWeaponPose(basicStrikeAngle, 1f);
             }
 
+            attackCommitted = true;
+            CaveSfx.PlayAt(CaveSfxCue.EnemyMeleeSwing, transform.position, isChargedAttack ? 0.85f : 0.65f);
+
             bool inMeleeRange = target != null && IsTargetWithinRange(range);
             bool inShockwaveRange = createsShockwave
                 && target != null
@@ -1219,7 +1223,6 @@ namespace Cave.Enemies
                 {
                     AttackHitResolved?.Invoke(target, traits);
                 }
-                CaveSfx.Play(CaveSfxCue.Whoosh, 0.65f);
                 if (createsShockwave)
                 {
                     Cave.Combat.AreaPulseEffect.Create(

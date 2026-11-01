@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Cave.Axioms.Mastery;
+using Cave.Audio;
 using Cave.Enemies;
 using Cave.InputSystem;
 using Cave.Player;
@@ -187,6 +188,7 @@ namespace Cave.Combat
         [SerializeField, Min(0f)] private float maximumFrenzyMasteryDurationBonus = 2f;
         [SerializeField, Min(0f)] private float baseInfusionCost = 1f;
         [SerializeField, Min(0f)] private float manaPerAcceptedDamage = 0.25f;
+        [SerializeField, Min(0f)] private float frenzyManaDrainPerSecond = 3f;
         [SerializeField, Min(0.05f)] private float combatContextRadius = 7f;
 
         [Header("Frenzy Damage")]
@@ -269,6 +271,10 @@ namespace Cave.Combat
 
         public event Action StateChanged;
         public event Action<string> FeedbackRequested;
+        /// <summary>Lifecycle seam for a future owned sustain loop.</summary>
+        public event Action<bool> FrenzyStateChanged;
+        /// <summary>Raised after an action has committed to an active Frenzy.</summary>
+        public event Action<FrenzyBreakActivation> FrenzyBreakCommitted;
 
         public bool IsPreparingFrenzy => isPreparingFrenzy;
         public bool IsFrenzyActive => frenzyArmed && Time.time <= frenzyExpiresAt;
@@ -325,6 +331,7 @@ namespace Cave.Combat
             altar = GetComponent<PlayerCurseAltarController>();
             upgradeState = GetComponent<PlayerSpecialModeUpgradeState>();
             EnsureFrenzyMastery();
+            FrenzyGeometryController.EnsureOn(gameObject);
             if (stamina == null)
             {
                 enabled = false;
@@ -473,6 +480,8 @@ namespace Cave.Combat
                 formalChainInProgress = false;
             }
 
+            FrenzyBreakCommitted?.Invoke(activation);
+            CaveSfx.PlayAt(CaveSfxCue.FrenzyBreak, transform.position, .9f);
             StateChanged?.Invoke();
             return true;
         }
@@ -662,6 +671,8 @@ namespace Cave.Combat
                 + (frenzyMastery != null ? frenzyMastery.DurationBonus : 0f);
             frenzyExpiresAt = Time.time + currentFrenzyDuration;
             SpawnFrenzyAura(armedInfusion);
+            FrenzyStateChanged?.Invoke(true);
+            CaveSfx.PlayAt(CaveSfxCue.FrenzyActivated, transform.position, .85f);
             FeedbackRequested?.Invoke(
                 "FRENZY ACTIVE — " + armedInfusion.ToString().ToUpperInvariant());
             StateChanged?.Invoke();
@@ -712,9 +723,20 @@ namespace Cave.Combat
                 ClearFollowUpToken();
             }
 
+            if (frenzyArmed && IsFrenzyActive && frenzyManaDrainPerSecond > 0f)
+            {
+                if (mana != null) mana.DrainMana(frenzyManaDrainPerSecond * Time.deltaTime);
+                if (mana == null || mana.CurrentMana <= 0.0001f)
+                {
+                    ClearFrenzy(true);
+                    FeedbackRequested?.Invoke("FRENZY ENDED — MANA DEPLETED");
+                    return;
+                }
+            }
+
             if (frenzyArmed && !IsFrenzyActive)
             {
-                ClearFrenzy();
+                ClearFrenzy(true);
                 FeedbackRequested?.Invoke("FRENZY EXPIRED");
             }
         }
@@ -1009,8 +1031,9 @@ namespace Cave.Combat
             StateChanged?.Invoke();
         }
 
-        private void ClearFrenzy()
+        private void ClearFrenzy(bool expired = false)
         {
+            bool wasActive = frenzyArmed;
             if (activeAura != null)
             {
                 Destroy(activeAura);
@@ -1023,6 +1046,14 @@ namespace Cave.Combat
             armedInfusion = FrenzyBreakInfusion.Physical;
             frenzyExpiresAt = 0f;
             currentFrenzyDuration = 0f;
+            if (wasActive)
+            {
+                FrenzyStateChanged?.Invoke(false);
+                if (expired)
+                {
+                    CaveSfx.PlayAt(CaveSfxCue.FrenzyExpired, transform.position, .7f);
+                }
+            }
             StateChanged?.Invoke();
         }
 

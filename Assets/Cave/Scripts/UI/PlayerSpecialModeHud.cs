@@ -21,7 +21,7 @@ namespace Cave.UI
             Shop,
             Domain,
             Mastery,
-            Cosmetics
+            Loadout
         }
 
         [SerializeField] private Text currentModeText;
@@ -60,8 +60,8 @@ namespace Cave.UI
         [Header("Nexus Tabs")]
         [SerializeField] private GameObject masteryContent;
         [SerializeField] private Button masteryTabButton;
-        [SerializeField] private GameObject cosmeticsContent;
-        [SerializeField] private Button cosmeticsTabButton;
+        [SerializeField] private GameObject loadoutContent;
+        [SerializeField] private Button loadoutTabButton;
         private SelectionTab activeTab;
 
         private static readonly SpecialMode[] Modes =
@@ -98,6 +98,7 @@ namespace Cave.UI
 
         public RectTransform PermanentProgressionMount => permanentProgressionMount;
         public RectTransform GeneralShardSummaryMount => generalShardSummaryMount;
+        public Transform SkillPathMount => modesContent != null ? modesContent.transform : null;
 
         public void Configure(
             Text modeText,
@@ -181,20 +182,20 @@ namespace Cave.UI
         public void ConfigureNexusTabs(
             GameObject masteryTabContent,
             Button masteryTab,
-            GameObject cosmeticsTabContent,
-            Button cosmeticsTab)
+            GameObject loadoutTabContent,
+            Button loadoutTab)
         {
             masteryContent = masteryTabContent;
             masteryTabButton = masteryTab;
-            cosmeticsContent = cosmeticsTabContent;
-            cosmeticsTabButton = cosmeticsTab;
+            loadoutContent = loadoutTabContent;
+            loadoutTabButton = loadoutTab;
             if (masteryTabButton != null)
             {
                 masteryTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Mastery));
             }
-            if (cosmeticsTabButton != null)
+            if (loadoutTabButton != null)
             {
-                cosmeticsTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Cosmetics));
+                loadoutTabButton.onClick.AddListener(() => ShowTab(SelectionTab.Loadout));
             }
             ShowTab(activeTab);
         }
@@ -265,7 +266,17 @@ namespace Cave.UI
 
         private void Update()
         {
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Tab))
+            if (PlayerEquipmentController.AnyWheelOpen)
+            {
+                if (GameInput.NexusPressed)
+                {
+                    GameInput.ConsumeMenuInputForCurrentFrame();
+                    PlayerEquipmentController.CancelAnyOpenWheel();
+                }
+                return;
+            }
+
+            if (GameInput.NexusPressed)
             {
                 ToggleSelectionPanel();
                 GameInput.ConsumeMenuInputForCurrentFrame();
@@ -402,8 +413,10 @@ namespace Cave.UI
             if (resourceShop.TryBuyLandmine())
             {
                 SetFeedback(
-                    "Oblivion Disk capacity " + resourceShop.DiskCapacity + " unlocked. Place with "
-                    + GameInput.Bindings.GetBinding(GameAction.PlaceLandmine).Primary + ".");
+                    "Oblivion Disk capacity " + resourceShop.DiskCapacity + " unlocked. Equip with "
+                    + GameInput.Bindings.GetBinding(GameAction.SelectEquipment).Primary
+                    + " and use with "
+                    + GameInput.Bindings.GetBinding(GameAction.ActivateEquipment).Primary + ".");
                 CaveSfx.Play(CaveSfxCue.Bonus, 0.7f);
             }
             else
@@ -458,7 +471,7 @@ namespace Cave.UI
             bool showShop = tab == SelectionTab.Shop;
             bool showDomain = tab == SelectionTab.Domain;
             bool showMastery = tab == SelectionTab.Mastery;
-            bool showCosmetics = tab == SelectionTab.Cosmetics;
+            bool showLoadout = tab == SelectionTab.Loadout;
             if (modesContent != null)
             {
                 modesContent.SetActive(showModes);
@@ -479,19 +492,21 @@ namespace Cave.UI
                 masteryContent.SetActive(showMastery);
             }
 
-            if (cosmeticsContent != null)
+            if (loadoutContent != null)
             {
-                cosmeticsContent.SetActive(showCosmetics);
+                loadoutContent.SetActive(showLoadout);
             }
 
-            SetModeHeaderVisible(!showDomain && !showMastery && !showCosmetics);
-            SetDomainFooterVisible(!showDomain && !showMastery && !showCosmetics);
+            SetModeHeaderVisible(!showDomain && !showMastery && !showLoadout);
+            // The footer belongs to Shop. The redesigned Skill Path consumes the
+            // full vertical page and owns its own status line.
+            SetDomainFooterVisible(showShop);
 
             SetTabVisual(modesTabButton, showModes);
             SetTabVisual(shopTabButton, showShop);
             SetTabVisual(domainTabButton, showDomain);
             SetTabVisual(masteryTabButton, showMastery);
-            SetTabVisual(cosmeticsTabButton, showCosmetics);
+            SetTabVisual(loadoutTabButton, showLoadout);
             CaveUiArt.ApplySkillTab(modesTabButton, showModes, false);
             CaveUiArt.ApplySkillTab(shopTabButton, showShop, true);
             CaveUiArt.ApplySkillTab(domainTabButton, showDomain, false);
@@ -501,7 +516,7 @@ namespace Cave.UI
             DomainUiSkin.ApplyNavigation(shopTabButton, showShop);
             DomainUiSkin.ApplyNavigation(domainTabButton, showDomain);
             DomainUiSkin.ApplyNavigation(masteryTabButton, showMastery);
-            DomainUiSkin.ApplyNavigation(cosmeticsTabButton, showCosmetics);
+            DomainUiSkin.ApplyNavigation(loadoutTabButton, showLoadout);
             ApplyDomainTabAccent(showDomain);
             if (showDomain)
             {
@@ -512,7 +527,7 @@ namespace Cave.UI
                 : showShop ? shopTabButton
                 : showDomain ? domainTabButton
                 : showMastery ? masteryTabButton
-                : cosmeticsTabButton;
+                : loadoutTabButton;
             if (EventSystem.current != null && activeButton != null)
             {
                 EventSystem.current.SetSelectedGameObject(activeButton.gameObject);
@@ -521,7 +536,7 @@ namespace Cave.UI
 
         public void ShowNexusTab(int tabIndex)
         {
-            if (tabIndex < (int)SelectionTab.Modes || tabIndex > (int)SelectionTab.Cosmetics)
+            if (tabIndex < (int)SelectionTab.Modes || tabIndex > (int)SelectionTab.Loadout)
             {
                 return;
             }
@@ -656,7 +671,12 @@ namespace Cave.UI
                 healthPotionText.text = "HEALTH POTION\nRestore: "
                     + Mathf.RoundToInt(resourceShop.HealthPotionRestorePercent * 100f)
                     + "%  |  Cost: " + resourceShop.HealthPotionCost
-                    + "\nOwned: " + resourceShop.OwnedHealthPotions + "  |  Use: "
+                    + "\nOwned: " + resourceShop.OwnedHealthPotions
+                    + "  |  Next: " + Mathf.RoundToInt(landmines != null
+                        ? landmines.NextHealthPotionRestorePercent * 100f : 0f) + "%"
+                    + "\nStock: " + (landmines != null
+                        ? landmines.DescribePotionStacks(PlayerConsumableType.HealthPotion) : "—")
+                    + "  |  Use: "
                     + GameInput.Bindings.GetBinding(GameAction.UseHealthPotion).Primary;
             }
 
@@ -665,7 +685,12 @@ namespace Cave.UI
                 manaPotionText.text = "MANA POTION\nRestore: "
                     + Mathf.RoundToInt(resourceShop.ManaPotionRestorePercent * 100f)
                     + "%  |  Cost: " + resourceShop.ManaPotionCost
-                    + "\nOwned: " + resourceShop.OwnedManaPotions + "  |  Use: "
+                    + "\nOwned: " + resourceShop.OwnedManaPotions
+                    + "  |  Next: " + Mathf.RoundToInt(landmines != null
+                        ? landmines.NextManaPotionRestorePercent * 100f : 0f) + "%"
+                    + "\nStock: " + (landmines != null
+                        ? landmines.DescribePotionStacks(PlayerConsumableType.ManaPotion) : "—")
+                    + "  |  Use: "
                     + GameInput.Bindings.GetBinding(GameAction.UseManaPotion).Primary;
             }
 
@@ -677,8 +702,9 @@ namespace Cave.UI
                 landmineText.text = resourceShop.NextDiskCapacityLabel
                     + "\nCharges: " + FormatDiskPips(resourceShop.StoredDiskCharges, resourceShop.DiskCapacity)
                     + "  |  Cost: " + cost
-                    + "\nRecharge: " + resourceShop.DiskRechargeSeconds.ToString("0") + "s  |  Place: "
-                    + GameInput.Bindings.GetBinding(GameAction.PlaceLandmine).Primary;
+                    + "\nRecharge: " + resourceShop.DiskRechargeSeconds.ToString("0") + "s  |  Equip / Use: "
+                    + GameInput.Bindings.GetBinding(GameAction.SelectEquipment).Primary + " / "
+                    + GameInput.Bindings.GetBinding(GameAction.ActivateEquipment).Primary;
             }
         }
 

@@ -71,9 +71,13 @@ namespace Cave.InputSystem
             && WasPressed(GameAction.UseHealthPotion);
         public static bool UseManaPotionPressed => GameplayInputEnabled
             && WasPressed(GameAction.UseManaPotion);
+        [Obsolete("Use ActivateEquipmentPressed through PlayerEquipmentController.")]
         public static bool PlaceLandminePressed => GameplayInputEnabled && WasPressed(GameAction.PlaceLandmine);
+        [Obsolete("Use ActivateEquipmentHeld through PlayerEquipmentController.")]
         public static bool PlaceLandmineHeld => GameplayInputEnabled && IsHeld(GameAction.PlaceLandmine);
+        [Obsolete("Use ActivateEquipmentReleased through PlayerEquipmentController.")]
         public static bool PlaceLandmineReleased => GameplayInputEnabled && WasReleased(GameAction.PlaceLandmine);
+        [Obsolete("Use PlayerEquipmentController.")]
         public static bool UseDistractionPressed => GameplayInputEnabled
             && WasPressed(GameAction.UseDistraction);
         public static bool InteractPressed => GameplayInputEnabled && WasPressed(GameAction.Interact);
@@ -86,8 +90,38 @@ namespace Cave.InputSystem
         public static bool SummonCurseAltarReleased => GameplayInputEnabled
             && WasReleased(GameAction.SummonCurseAltar);
         public static bool DashPressed => GameplayInputEnabled && WasPressed(GameAction.Dash);
+        public static bool DashHeld => GameplayInputEnabled && IsHeld(GameAction.Dash);
+        public static bool DashReleased => GameplayInputEnabled && WasReleased(GameAction.Dash);
         public static bool PausePressed => !WasInputConsumedThisFrame && WasPressed(GameAction.Pause);
+        /// <summary>Menu input remains available while gameplay input is suppressed so Nexus can close itself.</summary>
+        public static bool NexusPressed => !WasInputConsumedThisFrame && WasPressed(GameAction.Nexus);
+        public static bool RecallManifestationPressed => GameplayInputEnabled
+            && WasPressed(GameAction.RecallManifestation);
+        public static bool SelectEquipmentPressed => GameplayInputEnabled
+            && WasPressed(GameAction.SelectEquipment);
+        // Held/released remain readable after the wheel suppresses ordinary
+        // gameplay input, allowing its own opening key to close it safely.
+        public static bool SelectEquipmentHeld => IsHeld(GameAction.SelectEquipment);
+        public static bool SelectEquipmentReleased => WasReleased(GameAction.SelectEquipment);
+        public static bool ActivateEquipmentPressed => GameplayInputEnabled
+            && WasPressed(GameAction.ActivateEquipment);
+        public static bool ActivateEquipmentHeld => GameplayInputEnabled
+            && IsHeld(GameAction.ActivateEquipment);
+        public static bool ActivateEquipmentReleased => GameplayInputEnabled
+            && WasReleased(GameAction.ActivateEquipment);
         public static bool MenuCancelPressed => !WasInputConsumedThisFrame && WasKeyPressed(KeyCode.Escape);
+
+        public static Vector2 ReadRawEquipmentSelectionDirection()
+        {
+            KeyBinding left = CurrentBindings.GetBinding(GameAction.MoveLeft);
+            KeyBinding right = CurrentBindings.GetBinding(GameAction.MoveRight);
+            float horizontal = (IsKeyHeld(right.Primary) || IsKeyHeld(right.Secondary) ? 1f : 0f)
+                - (IsKeyHeld(left.Primary) || IsKeyHeld(left.Secondary) ? 1f : 0f);
+            float vertical = (IsKeyHeld(KeyCode.UpArrow) ? 1f : 0f)
+                - (IsKeyHeld(KeyCode.DownArrow) ? 1f : 0f);
+            Vector2 direction = new Vector2(horizontal, vertical);
+            return direction.sqrMagnitude > 1f ? direction.normalized : direction;
+        }
 
         private static bool WasInputConsumedThisFrame => consumedInputFrame == Time.frameCount;
 

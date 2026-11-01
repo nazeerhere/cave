@@ -68,6 +68,8 @@ namespace Cave.Player
         private bool isDead;
         private Sprite displayedSprite;
         private int appliedHeavyVisualRevision = -1;
+        private HeavyVisualSource appliedHeavyVisualSource = HeavyVisualSource.None;
+        private bool usingAlternateHeavyChargeFrames;
 
         private enum VisualState
         {
@@ -87,6 +89,17 @@ namespace Cave.Player
             Interact,
             Cast,
             Brace
+        }
+
+        private enum HeavyVisualSource
+        {
+            None,
+            Charge,
+            Heavy1,
+            Heavy2,
+            Heavy3,
+            Heavy4,
+            Heavy5
         }
 
         private void Awake()
@@ -209,11 +222,8 @@ namespace Cave.Player
                 currentFrames = FramesForState(currentState);
                 stateStartedAt = Time.time;
             }
-            else if (currentState == VisualState.Heavy
-                && chargedAttack != null
-                && appliedHeavyVisualRevision != chargedAttack.HeavyVisualRevision)
+            else if (currentState == VisualState.Heavy && HeavyFramesRequireRefresh())
             {
-                appliedHeavyVisualRevision = chargedAttack.HeavyVisualRevision;
                 currentFrames = FramesForState(VisualState.Heavy);
                 stateStartedAt = Time.time;
             }
@@ -343,22 +353,76 @@ namespace Cave.Player
                 : PlayerSkinSelection.DefaultMiner;
             if (selectedSkin != PlayerSkinSelection.DefaultMiner)
             {
+                HeavyVisualSource heavySource = state == VisualState.Heavy
+                    ? ResolveHeavyVisualSource()
+                    : HeavyVisualSource.None;
                 string animationName = state == VisualState.Heavy
-                    ? "Heavy_" + Mathf.Clamp((chargedAttack != null ? chargedAttack.ActiveHeavyIndex : 0) + 1, 1, 5)
+                    ? AlternateHeavyAnimationNameFor(heavySource == HeavyVisualSource.Charge,
+                        chargedAttack != null ? chargedAttack.ActiveHeavyIndex : 0)
                     : state.ToString();
                 Sprite[] selectedFrames = PlayerSkinLibrary.LoadFrames(selectedSkin, animationName);
+                bool loadedDedicatedCharge = heavySource == HeavyVisualSource.Charge && selectedFrames.Length > 0;
+                if (state == VisualState.Heavy && selectedFrames.Length == 0
+                    && heavySource == HeavyVisualSource.Charge)
+                {
+                    // A partial imported skin may not yet have its charge frames. Keep its
+                    // normal heavy presentation functional before falling back to Miner art.
+                    selectedFrames = PlayerSkinLibrary.LoadFrames(selectedSkin,
+                        AlternateHeavyAnimationNameFor(false,
+                            chargedAttack != null ? chargedAttack.ActiveHeavyIndex : 0));
+                }
                 if (selectedFrames.Length > 0)
                 {
                     if (state == VisualState.Heavy)
                     {
                         appliedHeavyVisualRevision = chargedAttack != null ? chargedAttack.HeavyVisualRevision : -1;
+                        appliedHeavyVisualSource = heavySource;
+                        usingAlternateHeavyChargeFrames = loadedDedicatedCharge;
                     }
 
                     return selectedFrames;
                 }
             }
 
+            if (state == VisualState.Heavy)
+            {
+                usingAlternateHeavyChargeFrames = false;
+                appliedHeavyVisualSource = HeavyVisualSource.None;
+            }
+
             return DefaultFramesForState(state);
+        }
+
+        private bool HeavyFramesRequireRefresh()
+        {
+            int revision = chargedAttack != null ? chargedAttack.HeavyVisualRevision : -1;
+            if (revision != appliedHeavyVisualRevision) return true;
+
+            PlayerSkinSelection selectedSkin = skinCosmetics != null
+                ? skinCosmetics.SelectedAppearance
+                : PlayerSkinSelection.DefaultMiner;
+            return selectedSkin != PlayerSkinSelection.DefaultMiner
+                && ResolveHeavyVisualSource() != appliedHeavyVisualSource;
+        }
+
+        private HeavyVisualSource ResolveHeavyVisualSource()
+        {
+            return chargedAttack != null && chargedAttack.IsCharging
+                ? HeavyVisualSource.Charge
+                : HeavyVisualSourceForActiveIndex();
+        }
+
+        private HeavyVisualSource HeavyVisualSourceForActiveIndex()
+        {
+            int index = Mathf.Clamp(chargedAttack != null ? chargedAttack.ActiveHeavyIndex : 0, 0, 4);
+            return (HeavyVisualSource)((int)HeavyVisualSource.Heavy1 + index);
+        }
+
+        internal static string AlternateHeavyAnimationNameFor(bool isCharging, int activeHeavyIndex)
+        {
+            return isCharging
+                ? "Heavy_Charge"
+                : "Heavy_" + Mathf.Clamp(activeHeavyIndex + 1, 1, 5);
         }
 
         private Sprite[] DefaultFramesForState(VisualState state)
@@ -402,6 +466,11 @@ namespace Cave.Player
                     int heavyStart = chargedAttack != null ? chargedAttack.HeavyVisualFrameStart : 0;
                     if (chargedAttack != null && chargedAttack.IsCharging)
                     {
+                        if (usingAlternateHeavyChargeFrames)
+                        {
+                            int chargeFrame = Mathf.FloorToInt((Time.time - stateStartedAt) * framesPerSecond);
+                            return currentFrames[chargeFrame % currentFrames.Length];
+                        }
                         return currentFrames[Mathf.Min(1, Mathf.Max(0,
                             Mathf.FloorToInt((Time.time - stateStartedAt) * framesPerSecond)))];
                     }

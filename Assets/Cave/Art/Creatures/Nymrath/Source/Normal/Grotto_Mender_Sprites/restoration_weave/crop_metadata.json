@@ -1,0 +1,124 @@
+{
+  "action": "restoration_weave",
+  "frame_count": 8,
+  "source_sheet": "grotto_mender_restoration_weave.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_restoration_weave_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        80,
+        440,
+        450
+      ],
+      "size_pixels": [
+        440,
+        370
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        452,
+        73,
+        895,
+        510
+      ],
+      "size_pixels": [
+        443,
+        437
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        870,
+        55,
+        1359,
+        494
+      ],
+      "size_pixels": [
+        489,
+        439
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1346,
+        78,
+        1761,
+        450
+      ],
+      "size_pixels": [
+        415,
+        372
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        492,
+        454,
+        887
+      ],
+      "size_pixels": [
+        454,
+        395
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        449,
+        496,
+        889,
+        869
+      ],
+      "size_pixels": [
+        440,
+        373
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        864,
+        457,
+        1341,
+        853
+      ],
+      "size_pixels": [
+        477,
+        396
+      ]
+    },
+    {
+      "file": "GrottoMender_restoration_weave_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1344,
+        495,
+        1774,
+        849
+      ],
+      "size_pixels": [
+        430,
+        354
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

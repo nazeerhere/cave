@@ -58,13 +58,14 @@ namespace Cave.Enemies
         [SerializeField, Min(0f)] private float minimumObservationRangeBonus = 0.5f;
         [SerializeField, Min(0f)] private float maximumObservationRangeBonus = 1.5f;
         [SerializeField, Min(0.1f)] private float minimumObservationDuration = 6f;
-        [SerializeField, Min(0.1f)] private float maximumObservationDuration = 10f;
+        [SerializeField, Min(0.1f)] private float maximumObservationDuration =
+            DetectiveResearchRules.ProvisionalMaximumObservationDuration;
         [SerializeField, Min(0f)] private float researchCycleCooldown = 2f;
-        [SerializeField, Range(2, 5)] private int normalPatternLength = 3;
-        [SerializeField, Range(3, 5)] private int maximumPatternLength = 5;
+        [SerializeField, Min(7)] private int normalPatternLength =
+            DetectiveResearchRules.RequiredEvidenceCount;
+        [SerializeField, Min(7)] private int maximumPatternLength =
+            DetectiveResearchRules.RequiredEvidenceCount;
         [SerializeField, Min(1)] private int repeatedMoveEventsPerSample = 3;
-        [SerializeField, Min(0f)] private float successfulResearchReward = 8f;
-        [SerializeField] private float[] researchStageThresholds = { 8f, 18f, 32f };
         [SerializeField, Min(0f)] private float researchOutcomeDisplayDuration = 1.2f;
         [SerializeField, Min(0f)] private float tacticalBiasDuration = 20f;
         [SerializeField, Range(0f, 1f)] private float sacrificialIntentChance = 0.2f;
@@ -79,8 +80,8 @@ namespace Cave.Enemies
         [SerializeField, Min(0)] private int activeCloneCount;
         [SerializeField] private DetectiveTower activeTower;
         [SerializeField, Range(0f, 1f)] private float constructionProgress;
-        [SerializeField, Min(0f)] private float accumulatedResearch;
         [SerializeField, Min(0)] private int currentResearchStage;
+        [SerializeField, Min(0)] private int currentStageCorrectPredictions;
         [SerializeField] private Vector2 constructionPosition;
         [SerializeField] private DetectiveResearchPhase researchPhase;
         [SerializeField] private DetectiveResearchOutcome lastResearchOutcome;
@@ -90,6 +91,7 @@ namespace Cave.Enemies
         [SerializeField, Range(-1f, 1f)] private float tacticalHorizontalBias;
         [SerializeField, Min(0f)] private float researchCycleObservationTime;
         [SerializeField, Min(0)] private int consecutiveMoveRepetitions;
+        [SerializeField] private bool predictionAttemptResolved;
         [SerializeField] private bool researchHudVisible;
         [SerializeField, Min(0f)] private float globalCloneCooldownRemaining;
 
@@ -133,8 +135,12 @@ namespace Cave.Enemies
         public float GlobalCloneCooldown => globalCloneCooldown;
         public DetectiveTower ActiveTower => activeTower;
         public float ConstructionProgress => constructionProgress;
-        public float AccumulatedResearch => accumulatedResearch;
         public int CurrentResearchStage => currentResearchStage;
+        public int CurrentStageCorrectPredictions => currentStageCorrectPredictions;
+        public int RequiredCorrectPredictions =>
+            DetectiveResearchRules.RequiredCorrectPredictions(currentResearchStage);
+        public bool IsAtMaximumResearchStage =>
+            currentResearchStage >= DetectiveResearchRules.MaximumTowerStage;
         public float MinimumObservationRange => minimumObservationRange
             + minimumObservationRangeBonus;
         public float MaximumObservationRange => maximumObservationRange
@@ -322,8 +328,10 @@ namespace Cave.Enemies
             }
 
             activeTower = null;
-            accumulatedResearch = 0f;
-            currentResearchStage = 0;
+            DetectiveResearchRules.ResetTowerProgress(
+                ref currentResearchStage,
+                ref currentStageCorrectPredictions,
+                ref predictionAttemptResolved);
             tacticalHorizontalBias = 0f;
             tacticalBiasExpiresAt = 0f;
             ResetResearchCycle(false);
@@ -570,9 +578,10 @@ namespace Cave.Enemies
             }
 
             researchCycleObservationTime += Time.deltaTime;
-            bool enoughActions = currentObservedPattern.Count >= RequiredPatternLength;
-            if (enoughActions
-                && researchCycleObservationTime >= minimumObservationDuration)
+            if (DetectiveResearchRules.CanBeginPrediction(
+                    currentObservedPattern.Count,
+                    researchCycleObservationTime,
+                    minimumObservationDuration))
             {
                 BeginPrediction();
             }
@@ -633,11 +642,22 @@ namespace Cave.Enemies
             lastResearchOutcome = success
                 ? DetectiveResearchOutcome.Success
                 : DetectiveResearchOutcome.Corrupted;
-            if (success)
+            if (!DetectiveResearchRules.TryResolvePrediction(
+                    success,
+                    ref predictionAttemptResolved,
+                    ref currentResearchStage,
+                    ref currentStageCorrectPredictions,
+                    out bool stageAdvanced))
             {
-                accumulatedResearch += successfulResearchReward;
-                RefreshResearchStage();
+                return;
             }
+
+            if (stageAdvanced)
+            {
+                activeTower?.ApplyResearchStage(currentResearchStage);
+            }
+
+            TowerStatusChanged?.Invoke();
 
             float learnedDirection = Mathf.Abs(lastObservedHorizontalDirection) > 0.01f
                 ? Mathf.Sign(lastObservedHorizontalDirection)
@@ -652,31 +672,15 @@ namespace Cave.Enemies
 
         private void RecordObservedAction(PlayerActionCategory category)
         {
-            if (currentObservedPattern.Count >= maximumPatternLength)
+            if (!DetectiveResearchRules.TryRecordObservation(
+                    currentObservedPattern,
+                    category,
+                    repeatedMoveEventsPerSample,
+                    ref consecutiveMoveRepetitions))
             {
                 return;
             }
 
-            bool isMove = category == PlayerActionCategory.Reposition;
-            bool previousRecordedActionWasMove = currentObservedPattern.Count > 0
-                && currentObservedPattern[currentObservedPattern.Count - 1]
-                    == PlayerActionCategory.Reposition;
-            if (isMove && previousRecordedActionWasMove)
-            {
-                consecutiveMoveRepetitions++;
-                if (consecutiveMoveRepetitions < repeatedMoveEventsPerSample)
-                {
-                    return;
-                }
-
-                consecutiveMoveRepetitions = 0;
-            }
-            else
-            {
-                consecutiveMoveRepetitions = 0;
-            }
-
-            currentObservedPattern.Add(category);
             ResearchDisplayChanged?.Invoke();
         }
 
@@ -690,6 +694,7 @@ namespace Cave.Enemies
 
             consecutiveMoveRepetitions = 0;
             predictedNextAction = currentObservedPattern[0];
+            predictionAttemptResolved = false;
             researchPhase = DetectiveResearchPhase.Predicting;
             ResearchDisplayChanged?.Invoke();
         }
@@ -697,6 +702,7 @@ namespace Cave.Enemies
         private void ExpireResearchCycle()
         {
             consecutiveMoveRepetitions = 0;
+            predictionAttemptResolved = false;
             predictedNextAction = default;
             lastResearchOutcome = DetectiveResearchOutcome.Expired;
             researchPhase = DetectiveResearchPhase.Outcome;
@@ -726,6 +732,7 @@ namespace Cave.Enemies
             predictedNextAction = default;
             researchCycleObservationTime = 0f;
             consecutiveMoveRepetitions = 0;
+            predictionAttemptResolved = false;
             lastObservedHorizontalDirection = 0f;
             researchPhase = DetectiveResearchPhase.Collecting;
             SetResearchHudVisible(true);
@@ -745,6 +752,7 @@ namespace Cave.Enemies
             predictedNextAction = default;
             researchCycleObservationTime = 0f;
             consecutiveMoveRepetitions = 0;
+            predictionAttemptResolved = false;
             researchPhase = startCooldown
                 ? DetectiveResearchPhase.Cooldown
                 : DetectiveResearchPhase.Idle;
@@ -760,41 +768,18 @@ namespace Cave.Enemies
             }
         }
 
-        private void RefreshResearchStage()
-        {
-            int resolvedStage = 0;
-            for (int index = 0; index < researchStageThresholds.Length; index++)
-            {
-                if (accumulatedResearch >= researchStageThresholds[index])
-                {
-                    resolvedStage = index + 1;
-                }
-            }
-
-            resolvedStage = Mathf.Clamp(
-                resolvedStage,
-                0,
-                recoveryMultipliersByResearchStage.Length - 1);
-            if (resolvedStage == currentResearchStage)
-            {
-                return;
-            }
-
-            currentResearchStage = resolvedStage;
-            activeTower?.ApplyResearchStage(currentResearchStage);
-            TowerStatusChanged?.Invoke();
-        }
-
         private int ResolveRequiredPatternLength()
         {
+            // The Detective curse may make the encounter more demanding elsewhere,
+            // but it cannot raise or lower the approved seven-evidence contract.
             PlayerCurseController curse = observedPlayer != null
                 ? observedPlayer.GetComponent<PlayerCurseController>()
                 : PlayerCurseController.Active;
             int curseBonus = curse != null ? curse.AdditionalResearchActions : 0;
-            return Mathf.Clamp(
-                normalPatternLength + curseBonus,
-                2,
-                maximumPatternLength);
+            return DetectiveResearchRules.ResolveEvidenceRequirement(
+                normalPatternLength,
+                maximumPatternLength,
+                curseBonus);
         }
 
         private void SetResearchHudVisible(bool visible)
@@ -810,6 +795,10 @@ namespace Cave.Enemies
 
         private void CompleteTower()
         {
+            DetectiveResearchRules.ResetTowerProgress(
+                ref currentResearchStage,
+                ref currentStageCorrectPredictions,
+                ref predictionAttemptResolved);
             DetectiveTower tower;
             if (towerPrefab != null)
             {
@@ -1024,14 +1013,20 @@ namespace Cave.Enemies
                 maximumObservationRange);
             fullConstructionDuration = Mathf.Max(0.1f, fullConstructionDuration);
             maximumObservationDuration = Mathf.Max(
+                DetectiveResearchRules.ProvisionalMaximumObservationDuration,
                 minimumObservationDuration,
                 maximumObservationDuration);
-            maximumPatternLength = Mathf.Clamp(maximumPatternLength, 3, 5);
+            maximumPatternLength = DetectiveResearchRules.RequiredEvidenceCount;
             repeatedMoveEventsPerSample = Mathf.Max(1, repeatedMoveEventsPerSample);
-            normalPatternLength = Mathf.Clamp(
-                normalPatternLength,
-                2,
-                maximumPatternLength);
+            normalPatternLength = DetectiveResearchRules.RequiredEvidenceCount;
+            currentResearchStage = Mathf.Clamp(
+                currentResearchStage,
+                0,
+                DetectiveResearchRules.MaximumTowerStage);
+            currentStageCorrectPredictions = Mathf.Clamp(
+                currentStageCorrectPredictions,
+                0,
+                Mathf.Max(0, RequiredCorrectPredictions - 1));
         }
 
         private void OnDestroy()

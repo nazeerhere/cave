@@ -1,0 +1,124 @@
+{
+  "action": "restoration_weave",
+  "frame_count": 8,
+  "source_sheet": "corrupted_qilin_restoration_weave.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_restoration_weave_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        0,
+        478,
+        520
+      ],
+      "size_pixels": [
+        478,
+        520
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        422,
+        15,
+        945,
+        496
+      ],
+      "size_pixels": [
+        523,
+        481
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        890,
+        39,
+        1369,
+        510
+      ],
+      "size_pixels": [
+        479,
+        471
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1338,
+        9,
+        1774,
+        498
+      ],
+      "size_pixels": [
+        436,
+        489
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        488,
+        459,
+        887
+      ],
+      "size_pixels": [
+        459,
+        399
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        436,
+        436,
+        921,
+        887
+      ],
+      "size_pixels": [
+        485,
+        451
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        870,
+        447,
+        1355,
+        887
+      ],
+      "size_pixels": [
+        485,
+        440
+      ]
+    },
+    {
+      "file": "CorruptedQilin_restoration_weave_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1317,
+        439,
+        1764,
+        887
+      ],
+      "size_pixels": [
+        447,
+        448
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

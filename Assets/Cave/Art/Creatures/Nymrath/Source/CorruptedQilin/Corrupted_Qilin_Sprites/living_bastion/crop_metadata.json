@@ -1,0 +1,152 @@
+{
+  "action": "living_bastion",
+  "frame_count": 10,
+  "source_sheet": "corrupted_qilin_living_bastion.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_living_bastion_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        10,
+        385,
+        429
+      ],
+      "size_pixels": [
+        385,
+        419
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        386,
+        31,
+        804,
+        419
+      ],
+      "size_pixels": [
+        418,
+        388
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        799,
+        47,
+        1219,
+        415
+      ],
+      "size_pixels": [
+        420,
+        368
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1204,
+        48,
+        1634,
+        444
+      ],
+      "size_pixels": [
+        430,
+        396
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1612,
+        13,
+        1974,
+        437
+      ],
+      "size_pixels": [
+        362,
+        424
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        0,
+        379,
+        437,
+        793
+      ],
+      "size_pixels": [
+        437,
+        414
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        396,
+        377,
+        820,
+        769
+      ],
+      "size_pixels": [
+        424,
+        392
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        787,
+        382,
+        1231,
+        793
+      ],
+      "size_pixels": [
+        444,
+        411
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1196,
+        416,
+        1628,
+        793
+      ],
+      "size_pixels": [
+        432,
+        377
+      ]
+    },
+    {
+      "file": "CorruptedQilin_living_bastion_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1619,
+        408,
+        1969,
+        793
+      ],
+      "size_pixels": [
+        350,
+        385
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

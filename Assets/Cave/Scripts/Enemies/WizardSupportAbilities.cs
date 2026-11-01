@@ -45,7 +45,7 @@ namespace Cave.Enemies
         [SerializeField, Min(0.1f)] private float healTickInterval = 1f;
         [SerializeField, Min(0.1f)] private float maximumHealChannel = 4f;
         [SerializeField, Min(0.1f)] private float healRange = 6f;
-        [SerializeField, Min(0f)] private float healCooldown = 2f;
+        [SerializeField, Min(0f)] private float healCooldown = 4f;
         [SerializeField] private LayerMask allyLayers = ~0;
 
         [Header("Healing Corruption")]

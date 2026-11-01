@@ -42,9 +42,9 @@ namespace Cave.Player
         private bool jumpConsumedForAirborneCycle;
         private float jumpRequestExpiresAt = float.NegativeInfinity;
         private float externalMovementLockUntil;
-        // Pin ownership is explicit so interrupting one Brute cannot release an
-        // unrelated stun/knockback lock or another Brute's active pin.
-        private readonly HashSet<int> pinMovementLockOwners = new HashSet<int>();
+        // Scoped ownership prevents one transient crowd-control source from
+        // releasing another source's movement restriction.
+        private readonly HashSet<int> scopedMovementLockOwners = new HashSet<int>();
         private float statusMovementMultiplier = 1f;
         private float curseMovementMultiplier = 1f;
         private float braceMovementMultiplier = 1f;
@@ -58,7 +58,7 @@ namespace Cave.Player
         private readonly Collider2D[] groundCheckResults = new Collider2D[8];
 
         public bool IsGrounded { get; private set; }
-        public bool IsExternallyMovementLocked => Time.time < externalMovementLockUntil || pinMovementLockOwners.Count > 0;
+        public bool IsExternallyMovementLocked => Time.time < externalMovementLockUntil || scopedMovementLockOwners.Count > 0;
         public float StatusMovementMultiplier => statusMovementMultiplier;
 
         private void Awake()
@@ -129,7 +129,7 @@ namespace Cave.Player
 
             if (!wasGrounded && IsGrounded && body.velocity.y <= 0f)
             {
-                CaveSfx.Play(CaveSfxCue.Landing, 0.65f);
+                CaveSfx.Play(CaveSfxCue.PlayerLanding, 0.65f);
             }
 
             wasGrounded = IsGrounded;
@@ -193,34 +193,47 @@ namespace Cave.Player
                 IsGrounded = false;
                 LogLandingTransition("jump initiated", groundCollider);
                 Jumped?.Invoke();
+                CaveSfx.Play(CaveSfxCue.PlayerJump, 0.7f);
             }
         }
 
         public void ApplyExternalKnockback(Vector2 velocity, float controlLockDuration)
         {
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            float carapaceMultiplier = carapace != null
+                ? ResonantCarapacePolicy.ResolvePhysicalControlMultiplier(carapace.PhysicalControlResistance)
+                : 1f;
             externalMovementLockUntil = Mathf.Max(
                 externalMovementLockUntil,
-                Time.time + Mathf.Max(0f, controlLockDuration));
+                Time.time + Mathf.Max(0f, controlLockDuration) * carapaceMultiplier);
             AxiomPlayerMovementControl axiomMovement = GetComponent<AxiomPlayerMovementControl>();
             float multiplier = axiomMovement != null
                 ? axiomMovement.GetIncomingKnockbackMultiplier()
                 : 1f;
-            body.velocity = velocity * multiplier;
+            body.velocity = velocity * multiplier * carapaceMultiplier;
         }
 
         public void ApplyExternalControlLock(float duration)
         {
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            float carapaceMultiplier = carapace != null
+                ? ResonantCarapacePolicy.ResolvePhysicalControlMultiplier(carapace.PhysicalControlResistance)
+                : 1f;
             externalMovementLockUntil = Mathf.Max(
                 externalMovementLockUntil,
-                Time.time + Mathf.Max(0f, duration));
+                Time.time + Mathf.Max(0f, duration) * carapaceMultiplier);
             if (body != null)
             {
                 body.velocity = new Vector2(0f, body.velocity.y);
             }
         }
 
-        /// <summary>Scoped movement lock used only by an active Brute pin. The caller must release its own token.</summary>
-        public void SetBrutePinMovementLock(Object owner, bool locked)
+        /// <summary>
+        /// Acquires or releases this source's scoped movement lock.  Sources may
+        /// only release their own token, so overlapping control effects remain
+        /// independent.
+        /// </summary>
+        public void SetScopedMovementLock(Object owner, bool locked)
         {
             if (owner == null)
             {
@@ -230,7 +243,7 @@ namespace Cave.Player
             int id = owner.GetInstanceID();
             if (locked)
             {
-                pinMovementLockOwners.Add(id);
+                scopedMovementLockOwners.Add(id);
                 if (body != null)
                 {
                     body.velocity = new Vector2(0f, body.velocity.y);
@@ -238,8 +251,14 @@ namespace Cave.Player
             }
             else
             {
-                pinMovementLockOwners.Remove(id);
+                scopedMovementLockOwners.Remove(id);
             }
+        }
+
+        /// <summary>Compatibility name retained for the existing Brute pin.</summary>
+        public void SetBrutePinMovementLock(Object owner, bool locked)
+        {
+            SetScopedMovementLock(owner, locked);
         }
 
         public void SetStatusMovementMultiplier(float multiplier)

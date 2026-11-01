@@ -52,6 +52,10 @@ namespace Cave.InputSystem
         [SerializeField] private KeyBinding summonCurseAltar;
         [SerializeField] private KeyBinding dash;
         [SerializeField] private KeyBinding pause;
+        [SerializeField] private KeyBinding nexus;
+        [SerializeField] private KeyBinding recallManifestation;
+        [SerializeField] private KeyBinding selectEquipment;
+        [SerializeField] private KeyBinding activateEquipment;
 
         public static InputBindings CreateDefault()
         {
@@ -103,6 +107,14 @@ namespace Cave.InputSystem
                     return dash;
                 case GameAction.Pause:
                     return pause;
+                case GameAction.Nexus:
+                    return nexus;
+                case GameAction.RecallManifestation:
+                    return recallManifestation;
+                case GameAction.SelectEquipment:
+                    return selectEquipment;
+                case GameAction.ActivateEquipment:
+                    return activateEquipment;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, null);
             }
@@ -145,17 +157,25 @@ namespace Cave.InputSystem
             fireProjectile = new KeyBinding(KeyCode.B, KeyCode.None);
             useHealthPotion = new KeyBinding(KeyCode.Alpha1, KeyCode.None);
             useManaPotion = new KeyBinding(KeyCode.Alpha2, KeyCode.None);
-            placeLandmine = new KeyBinding(KeyCode.Q, KeyCode.None);
-            useDistraction = new KeyBinding(KeyCode.R, KeyCode.None);
+            // Retained only as serialized migration sources. Runtime equipment
+            // input is owned by the appended unified actions below.
+            placeLandmine = new KeyBinding(KeyCode.None, KeyCode.None);
+            useDistraction = new KeyBinding(KeyCode.None, KeyCode.None);
             interact = new KeyBinding(KeyCode.F, KeyCode.None);
             summonCurseAltar = new KeyBinding(KeyCode.RightShift, KeyCode.None);
             dash = new KeyBinding(KeyCode.LeftShift, KeyCode.None);
             pause = new KeyBinding(KeyCode.Escape, KeyCode.None);
+            nexus = new KeyBinding(KeyCode.Tab, KeyCode.None);
+            // G is unused by the established default map.
+            recallManifestation = new KeyBinding(KeyCode.G, KeyCode.None);
+            selectEquipment = new KeyBinding(KeyCode.R, KeyCode.None);
+            activateEquipment = new KeyBinding(KeyCode.Q, KeyCode.None);
         }
 
         public void LoadSavedBindings()
         {
             RestoreDefaults();
+            MigrateLegacyEquipmentBindings();
             bool hasSavedDashPrimary = PlayerPrefs.HasKey(
                 GetPlayerPrefsKey(GameAction.Dash, BindingSlot.Primary));
             bool hasSavedDashSecondary = PlayerPrefs.HasKey(
@@ -164,7 +184,9 @@ namespace Cave.InputSystem
 
             foreach (GameAction action in Enum.GetValues(typeof(GameAction)))
             {
-                if (action == GameAction.Dash)
+                if (action == GameAction.Dash
+                    || action == GameAction.PlaceLandmine
+                    || action == GameAction.UseDistraction)
                 {
                     continue;
                 }
@@ -188,6 +210,70 @@ namespace Cave.InputSystem
             }
 
             MigrateDirectionalJumpBinding();
+        }
+
+        private void MigrateLegacyEquipmentBindings()
+        {
+            bool hasSelect = HasAnySavedBinding(GameAction.SelectEquipment);
+            bool hasActivate = HasAnySavedBinding(GameAction.ActivateEquipment);
+            if (hasSelect || hasActivate)
+            {
+                return;
+            }
+
+            KeyBinding legacySelect = ReadSavedBinding(
+                GameAction.UseDistraction,
+                new KeyBinding(KeyCode.R, KeyCode.None));
+            KeyBinding legacyActivate = ReadSavedBinding(
+                GameAction.PlaceLandmine,
+                new KeyBinding(KeyCode.Q, KeyCode.None));
+
+            selectEquipment = legacySelect;
+            activateEquipment = legacyActivate;
+            placeLandmine = new KeyBinding(KeyCode.None, KeyCode.None);
+            useDistraction = new KeyBinding(KeyCode.None, KeyCode.None);
+
+            SaveBinding(GameAction.SelectEquipment, selectEquipment);
+            SaveBinding(GameAction.ActivateEquipment, activateEquipment);
+            SaveBinding(GameAction.PlaceLandmine, placeLandmine);
+            SaveBinding(GameAction.UseDistraction, useDistraction);
+            PlayerPrefs.Save();
+        }
+
+        private static bool HasAnySavedBinding(GameAction action)
+        {
+            return PlayerPrefs.HasKey(GetPlayerPrefsKey(action, BindingSlot.Primary))
+                || PlayerPrefs.HasKey(GetPlayerPrefsKey(action, BindingSlot.Secondary));
+        }
+
+        private static KeyBinding ReadSavedBinding(GameAction action, KeyBinding fallback)
+        {
+            KeyCode primary = ReadSavedKey(
+                GetPlayerPrefsKey(action, BindingSlot.Primary), fallback.Primary);
+            KeyCode secondary = ReadSavedKey(
+                GetPlayerPrefsKey(action, BindingSlot.Secondary), fallback.Secondary);
+            return new KeyBinding(primary, secondary);
+        }
+
+        private static KeyCode ReadSavedKey(string key, KeyCode fallback)
+        {
+            if (!PlayerPrefs.HasKey(key))
+            {
+                return fallback;
+            }
+
+            int value = PlayerPrefs.GetInt(key);
+            return Enum.IsDefined(typeof(KeyCode), value) ? (KeyCode)value : fallback;
+        }
+
+        private static void SaveBinding(GameAction action, KeyBinding binding)
+        {
+            PlayerPrefs.SetInt(
+                GetPlayerPrefsKey(action, BindingSlot.Primary),
+                (int)binding.Primary);
+            PlayerPrefs.SetInt(
+                GetPlayerPrefsKey(action, BindingSlot.Secondary),
+                (int)binding.Secondary);
         }
 
         public void Save()
@@ -334,6 +420,18 @@ namespace Cave.InputSystem
                     break;
                 case GameAction.Pause:
                     pause = binding;
+                    break;
+                case GameAction.Nexus:
+                    nexus = binding;
+                    break;
+                case GameAction.RecallManifestation:
+                    recallManifestation = binding;
+                    break;
+                case GameAction.SelectEquipment:
+                    selectEquipment = binding;
+                    break;
+                case GameAction.ActivateEquipment:
+                    activateEquipment = binding;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, null);

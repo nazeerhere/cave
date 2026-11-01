@@ -1,0 +1,124 @@
+{
+  "action": "tendril_lash",
+  "frame_count": 8,
+  "source_sheet": "corrupted_qilin_tendril_lash.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_tendril_lash_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        7,
+        513,
+        494
+      ],
+      "size_pixels": [
+        513,
+        487
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        392,
+        13,
+        925,
+        495
+      ],
+      "size_pixels": [
+        533,
+        482
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        823,
+        9,
+        1302,
+        520
+      ],
+      "size_pixels": [
+        479,
+        511
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1269,
+        13,
+        1774,
+        517
+      ],
+      "size_pixels": [
+        505,
+        504
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        471,
+        456,
+        887
+      ],
+      "size_pixels": [
+        456,
+        416
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        428,
+        457,
+        947,
+        887
+      ],
+      "size_pixels": [
+        519,
+        430
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        882,
+        459,
+        1365,
+        887
+      ],
+      "size_pixels": [
+        483,
+        428
+      ]
+    },
+    {
+      "file": "CorruptedQilin_tendril_lash_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1326,
+        440,
+        1774,
+        887
+      ],
+      "size_pixels": [
+        448,
+        447
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

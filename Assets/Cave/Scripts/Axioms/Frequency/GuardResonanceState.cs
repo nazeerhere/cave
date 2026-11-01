@@ -4,6 +4,8 @@ using Cave.Combat;
 using Cave.Enemies;
 using Cave.Axioms.Mastery;
 using Cave.Axioms.Elemental;
+using Cave.Audio;
+using Cave.Player;
 using Cave.World;
 using UnityEngine;
 
@@ -105,6 +107,7 @@ namespace Cave.Axioms.Frequency
             if (result.Outcome == GuardResonanceContactOutcome.Filtered)
             {
                 FrequencyFiltered?.Invoke(attacker);
+                PlayPlayerCue(CaveSfxCue.FrequencyFiltering, .7f);
                 RaiseFeedback(AxiomFeedbackType.FrequencyFiltered, attacker, timestamp);
                 return result;
             }
@@ -125,6 +128,12 @@ namespace Cave.Axioms.Frequency
                 destabilizedUntil = timestamp + Mathf.Max(0.01f, destabilizedDuration);
                 ResonanceBroken?.Invoke(attacker);
                 DestabilizedStarted?.Invoke();
+                PlayPlayerCue(CaveSfxCue.ResonanceBreak, .9f);
+                PlayPlayerCue(CaveSfxCue.DestabilizedStart, .75f);
+            }
+            else if (result.Outcome == GuardResonanceContactOutcome.Advanced)
+            {
+                PlayPlayerCue(CaveSfxCue.ResonanceStep, .55f);
             }
 
             return result;
@@ -170,6 +179,7 @@ namespace Cave.Axioms.Frequency
             }
 
             Counterphased?.Invoke(attacker);
+            PlayPlayerCue(CaveSfxCue.Counterphase, .8f);
             RaiseFeedback(AxiomFeedbackType.Counterphase, attacker, Time.time);
             RecordResonanceEvidence(MasteryEvidenceKind.Counterphase, 1f, 1f, attacker, Time.time);
             AxiomMasteryState.EnsureOn(gameObject).Record(new MasteryEvidence(
@@ -282,6 +292,15 @@ namespace Cave.Axioms.Frequency
             destabilized = false;
             destabilizedUntil = 0f;
             DestabilizedEnded?.Invoke();
+            PlayPlayerCue(CaveSfxCue.DestabilizedEnd, .6f);
+        }
+
+        private void PlayPlayerCue(CaveSfxCue cue, float volume)
+        {
+            if (GetComponent<PlayerSpecialMode>() != null)
+            {
+                CaveSfx.PlayAt(cue, transform.position, volume);
+            }
         }
 
         private void PruneDestroyedTrackers()

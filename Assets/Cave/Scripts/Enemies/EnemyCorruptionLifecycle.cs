@@ -427,6 +427,7 @@ namespace Cave.Enemies
             if (GetComponent<BossPhaseController>() != null) return;
             EnemyTeamBuffState.EnsureOn(gameObject);
             CorruptTeamAura.EnsureConfigured(gameObject);
+            StageTwoCorruptionState.EnsureOn(gameObject);
             if (GetComponent<CorruptedEnemyGeneralShardReward>() == null)
             {
                 gameObject.AddComponent<CorruptedEnemyGeneralShardReward>();

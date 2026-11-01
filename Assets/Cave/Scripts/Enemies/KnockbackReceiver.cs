@@ -1,3 +1,5 @@
+using Cave.Combat;
+using Cave.Environmental;
 using UnityEngine;
 
 namespace Cave.Enemies
@@ -13,6 +15,7 @@ namespace Cave.Enemies
         private FlyingSwarmController flyingController;
         private float knockbackResistance;
         private float teamAuraKnockbackResistance;
+        private float structuralImpactUntil;
 
         private void Awake()
         {
@@ -48,6 +51,19 @@ namespace Cave.Enemies
             body.velocity = Vector2.ClampMagnitude(
                 velocity * appliedMultiplier,
                 maximumKnockbackSpeed);
+            structuralImpactUntil = Time.time + movementLockDuration;
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (Time.time > structuralImpactUntil || collision == null || body == null) return;
+            float speed = body.velocity.magnitude;
+            if (speed <= .1f) return;
+            Vector2 point = collision.contactCount > 0 ? collision.GetContact(0).point : (Vector2)transform.position;
+            StructuralImpactRouter.Apply(collision.collider, new StructuralImpactContext(
+                gameObject, point, body.velocity, speed * .2f,
+                new DamageContext(gameObject, DamageTrait.Direct), false, false,
+                GetInstanceID() ^ Time.frameCount));
         }
 
         public void SetKnockbackResistance(float resistance)

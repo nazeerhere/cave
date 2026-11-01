@@ -1,0 +1,124 @@
+{
+  "action": "burrow_entry",
+  "frame_count": 8,
+  "source_sheet": "corrupted_qilin_burrow_entry.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_burrow_entry_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        5,
+        496,
+        566
+      ],
+      "size_pixels": [
+        496,
+        561
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        426,
+        17,
+        893,
+        549
+      ],
+      "size_pixels": [
+        467,
+        532
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        878,
+        9,
+        1335,
+        615
+      ],
+      "size_pixels": [
+        457,
+        606
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1323,
+        9,
+        1764,
+        609
+      ],
+      "size_pixels": [
+        441,
+        600
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        506,
+        508,
+        887
+      ],
+      "size_pixels": [
+        508,
+        381
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        444,
+        518,
+        946,
+        887
+      ],
+      "size_pixels": [
+        502,
+        369
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        868,
+        533,
+        1385,
+        887
+      ],
+      "size_pixels": [
+        517,
+        354
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_entry_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1404,
+        589,
+        1738,
+        887
+      ],
+      "size_pixels": [
+        334,
+        298
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

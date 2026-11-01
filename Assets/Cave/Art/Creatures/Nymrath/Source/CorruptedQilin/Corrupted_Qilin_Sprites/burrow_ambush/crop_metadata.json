@@ -1,0 +1,152 @@
+{
+  "action": "burrow_ambush",
+  "frame_count": 10,
+  "source_sheet": "corrupted_qilin_burrow_ambush.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_burrow_ambush_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        0,
+        371,
+        457
+      ],
+      "size_pixels": [
+        371,
+        457
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        281,
+        0,
+        728,
+        465
+      ],
+      "size_pixels": [
+        447,
+        465
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        708,
+        3,
+        1110,
+        461
+      ],
+      "size_pixels": [
+        402,
+        458
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1074,
+        7,
+        1548,
+        459
+      ],
+      "size_pixels": [
+        474,
+        452
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1482,
+        9,
+        1983,
+        413
+      ],
+      "size_pixels": [
+        501,
+        404
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        0,
+        421,
+        450,
+        793
+      ],
+      "size_pixels": [
+        450,
+        372
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        428,
+        437,
+        855,
+        793
+      ],
+      "size_pixels": [
+        427,
+        356
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        811,
+        407,
+        1225,
+        793
+      ],
+      "size_pixels": [
+        414,
+        386
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1180,
+        341,
+        1588,
+        793
+      ],
+      "size_pixels": [
+        408,
+        452
+      ]
+    },
+    {
+      "file": "CorruptedQilin_burrow_ambush_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1534,
+        364,
+        1975,
+        793
+      ],
+      "size_pixels": [
+        441,
+        429
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

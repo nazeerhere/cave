@@ -3,8 +3,11 @@ using Cave.Diagnostics;
 using Cave.Domain;
 using Cave.Enemies;
 using Cave.InputSystem;
+using Cave.Inventory;
+using Cave.Gambit;
 using Cave.Player;
 using Cave.Projectiles;
+using Cave.Progression;
 using Cave.World;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -70,10 +73,15 @@ namespace Cave.UI
                     rootCanvas != null ? rootCanvas.sortingOrder + 1 : 101);
                 EnsureHealthRatioHud(existingHud, font);
                 existingHud.Bind(playerHealth);
+                EnsureCarapaceHealthHud(
+                    existingHud,
+                    existingHud.transform.Find("Health Bar Background") as RectTransform);
                 EnsureStaminaHud(existingHud.transform.parent, font, spinSwordAttack);
                 EnsureManaHud(existingHud.transform.parent, font, playerMana);
                 EnsureCurrencyHud(existingHud.transform.parent, font, playerCurrency);
                 EnsureSpecialModeHud(existingHud.transform.parent, font, specialMode, playerCurrency);
+                EnsureDomainChargeHud(existingHud.transform.parent, font, specialMode);
+                EnsureCompactPlayerInformation(existingHud.transform.parent, font, playerHealth, playerCurrency, specialMode);
                 EnsureShieldHud(existingHud.transform.parent);
                 EnsureWorldLevelHud(existingHud.transform.parent, font);
                 EnsureDetectiveTowerStatusHud(existingHud.transform.parent, font);
@@ -85,6 +93,9 @@ namespace Cave.UI
                     playerMana,
                     playerCurrency);
                 EnsureActionHotbar(existingHud.transform.parent, font, playerHealth.gameObject);
+                EnsureEquipmentWheel(existingHud.transform.parent, font, playerHealth.gameObject);
+                EnsureSovereignGambitTacticalHud(existingHud.transform.parent, font, playerHealth.gameObject);
+                EnsureEnemyLocationBar(existingHud.transform.parent, font, playerHealth.transform);
                 EnsureDetectiveResearchHud(existingHud.transform.parent, font);
                 EnsureStatusEffectHud(existingHud.transform.parent, font, playerHealth.gameObject);
                 EnsureWizardWarpWarningHud(existingHud.transform.parent, font, playerHealth.gameObject);
@@ -175,10 +186,13 @@ namespace Cave.UI
             PlayerHealthHud healthHud = healthPanel.gameObject.AddComponent<PlayerHealthHud>();
             healthHud.Configure(healthFillImage, healthValueText, healthBackground);
             healthHud.Bind(playerHealth);
+            EnsureCarapaceHealthHud(healthHud, healthBarBackground);
             EnsureStaminaHud(gameplayHud, font, spinSwordAttack);
             EnsureManaHud(gameplayHud, font, playerMana);
             EnsureCurrencyHud(gameplayHud, font, playerCurrency);
             EnsureSpecialModeHud(gameplayHud, font, specialMode, playerCurrency);
+            EnsureDomainChargeHud(gameplayHud, font, specialMode);
+            EnsureCompactPlayerInformation(gameplayHud, font, playerHealth, playerCurrency, specialMode);
             EnsureShieldHud(gameplayHud);
             EnsureWorldLevelHud(gameplayHud, font);
             EnsureDetectiveTowerStatusHud(gameplayHud, font);
@@ -190,6 +204,9 @@ namespace Cave.UI
                 playerMana,
                 playerCurrency);
             EnsureActionHotbar(gameplayHud, font, playerHealth.gameObject);
+            EnsureEquipmentWheel(gameplayHud, font, playerHealth.gameObject);
+            EnsureSovereignGambitTacticalHud(gameplayHud, font, playerHealth.gameObject);
+            EnsureEnemyLocationBar(gameplayHud, font, playerHealth.transform);
             EnsureDetectiveResearchHud(gameplayHud, font);
             EnsureStatusEffectHud(gameplayHud, font, playerHealth.gameObject);
             EnsureWizardWarpWarningHud(gameplayHud, font, playerHealth.gameObject);
@@ -200,14 +217,14 @@ namespace Cave.UI
 
             RectTransform menus = CreateStretchRect("Menus", root.transform);
             EnsureMenuCanvas(menus, canvas.sortingOrder + 1);
-            GameObject pauseMenu = CreateMenuPanel("Pause Menu", menus, new Vector2(460f, 500f));
+            GameObject pauseMenu = CreateMenuPanel("Pause Menu", menus, new Vector2(460f, 570f));
             Text pauseCrest = CreateCenteredText(
                 "Pause Crest",
                 pauseMenu.transform,
                 font,
                 "◆",
                 26,
-                new Vector2(0f, 240f),
+                new Vector2(0f, 272f),
                 new Vector2(80f, 30f));
             pauseCrest.color = CaveUiTheme.BorderBright;
             Text pauseTitle = CreateCenteredText(
@@ -216,7 +233,7 @@ namespace Cave.UI
                 font,
                 "PAUSED",
                 34,
-                new Vector2(0f, 204f));
+                new Vector2(0f, 236f));
             pauseTitle.fontStyle = FontStyle.Bold;
             pauseTitle.color = CaveUiTheme.Gold;
             Text pauseSubtitle = CreateCenteredText(
@@ -225,45 +242,53 @@ namespace Cave.UI
                 font,
                 "THE CAVE WAITS",
                 14,
-                new Vector2(0f, 170f));
+                new Vector2(0f, 202f));
             pauseSubtitle.color = CaveUiTheme.SecondaryText;
             Button resumeButton = CreateButton(
                 "RESUME",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, 102f),
+                new Vector2(0f, 134f),
                 new Vector2(270f, 50f));
             Button resetLevelButton = CreateButton(
                 "RESET LEVEL",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, 40f),
+                new Vector2(0f, 72f),
                 new Vector2(270f, 50f));
             Button movesButton = CreateButton(
                 "MOVES LIST",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -22f),
+                new Vector2(0f, 10f),
                 new Vector2(270f, 50f));
             Button settingsButton = CreateButton(
                 "SETTINGS",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -146f),
+                new Vector2(0f, -176f),
                 new Vector2(270f, 50f));
             Button ledgerButton = CreateButton(
                 "ENEMY LEDGER",
                 pauseMenu.transform,
                 font,
-                new Vector2(0f, -84f),
+                new Vector2(0f, -52f),
                 new Vector2(270f, 50f));
+            Button inventoryButton = CreateButton(
+                "INVENTORY",
+                pauseMenu.transform,
+                font,
+                new Vector2(0f, -114f),
+                new Vector2(270f, 50f));
+            // Inventory migrated to Nexus Cosmetics; retain no standalone Pause entry.
+            inventoryButton.gameObject.SetActive(false);
             Text pauseHint = CreateCenteredText(
                 "Pause Hint",
                 pauseMenu.transform,
                 font,
                 "ESC  •  RESUME",
                 13,
-                new Vector2(0f, -232f));
+                new Vector2(0f, -266f));
             pauseHint.color = CaveUiTheme.SecondaryText;
 
             // The camera row extends the existing Settings menu without reducing
@@ -294,6 +319,7 @@ namespace Cave.UI
                 new Vector2(278f, 302f),
                 new Vector2(100f, 34f));
             developerSettingsButton.GetComponentInChildren<Text>().fontSize = 14;
+            developerSettingsButton.gameObject.SetActive(DeveloperDiagnosticsSettings.FeatureAvailable);
             CreateCardSurface("Controls Surface", settingsPanel.transform, new Vector2(0f, 102f), new Vector2(710f, 364f));
             CreateCardSurface("Audio Surface", settingsPanel.transform, new Vector2(0f, -168f), new Vector2(710f, 132f));
             Text controlsHeader = CreateCenteredText(
@@ -319,17 +345,19 @@ namespace Cave.UI
                 GameAction.FireProjectile,
                 GameAction.UseHealthPotion,
                 GameAction.UseManaPotion,
-                GameAction.PlaceLandmine,
-                GameAction.UseDistraction,
+                GameAction.SelectEquipment,
+                GameAction.ActivateEquipment,
                 GameAction.Interact,
                 GameAction.SummonCurseAltar,
                 GameAction.Dash,
-                GameAction.Pause
+                GameAction.Pause,
+                GameAction.Nexus,
+                GameAction.RecallManifestation
             };
             Button[] bindingButtons = new Button[configurableActions.Length];
 
             const float firstBindingY = 240f;
-            const float bindingSpacing = 20f;
+            const float bindingSpacing = 19f;
             for (int index = 0; index < configurableActions.Length; index++)
             {
                 float rowY = firstBindingY - index * bindingSpacing;
@@ -426,13 +454,13 @@ namespace Cave.UI
                 restoreDefaultsButton,
                 cancelButton);
 
-            GameObject developerSettingsPanel = CreateMenuPanel("Developer Settings Panel", menus, new Vector2(680f, 600f));
-            Text developerTitle = CreateCenteredText("Developer Settings Title", developerSettingsPanel.transform, font, "DEVELOPER SETTINGS", 26, new Vector2(0f, 246f));
+            GameObject developerSettingsPanel = CreateMenuPanel("Developer Settings Panel", menus, new Vector2(760f, 780f));
+            Text developerTitle = CreateCenteredText("Developer Settings Title", developerSettingsPanel.transform, font, "DEVELOPER SETTINGS", 26, new Vector2(0f, 342f));
             developerTitle.fontStyle = FontStyle.Bold;
             developerTitle.color = CaveUiTheme.Gold;
-            Text developerHint = CreateCenteredText("Developer Settings Hint", developerSettingsPanel.transform, font, "Development-only controls. Runtime systems remain authoritative.", 13, new Vector2(0f, 212f), new Vector2(600f, 30f));
+            Text developerHint = CreateCenteredText("Developer Settings Hint", developerSettingsPanel.transform, font, "Development-only controls. Runtime systems remain authoritative.", 13, new Vector2(0f, 310f), new Vector2(680f, 30f));
             developerHint.color = CaveUiTheme.SecondaryText;
-            CreateCardSurface("Developer Settings Surface", developerSettingsPanel.transform, new Vector2(0f, 12f), new Vector2(620f, 372f));
+            CreateCardSurface("Developer Settings Surface", developerSettingsPanel.transform, new Vector2(0f, 8f), new Vector2(700f, 620f));
             Button diagnosticsAvailability = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, 112f), new Vector2(278f, 66f));
             Button inspectorDetail = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, 112f), new Vector2(278f, 66f));
             Button traceMode = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, 34f), new Vector2(278f, 66f));
@@ -441,10 +469,19 @@ namespace Cave.UI
             Button governorControl = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, -44f), new Vector2(278f, 66f));
             Button domainTestOverride = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-152f, -122f), new Vector2(278f, 66f));
             Button unlockAllCosmetics = CreateButton("", developerSettingsPanel.transform, font, new Vector2(152f, -122f), new Vector2(278f, 66f));
-            Button developerBackButton = CreateButton("BACK", developerSettingsPanel.transform, font, new Vector2(0f, -194f), new Vector2(230f, 42f));
+            Button grantCarapace = CreateButton("", developerSettingsPanel.transform, font, new Vector2(-174f, -200f), new Vector2(330f, 66f));
+            Button unlockManifestations = CreateButton("", developerSettingsPanel.transform, font, new Vector2(174f, -200f), new Vector2(330f, 66f));
+            Button resetManifestations = CreateButton("", developerSettingsPanel.transform, font, new Vector2(0f, -270f), new Vector2(430f, 48f));
+            Text manifestationDiagnostics = CreateCenteredText("Manifestation Diagnostics", developerSettingsPanel.transform, font,
+                "MANIFESTATION RUNTIME", 12, new Vector2(0f, -315f), new Vector2(650f, 48f));
+            manifestationDiagnostics.color = CaveUiTheme.SecondaryText;
+            Button developerBackButton = CreateButton("BACK", developerSettingsPanel.transform, font, new Vector2(0f, -360f), new Vector2(230f, 42f));
             DeveloperDiagnosticsSettingsPanel developerSettings = developerSettingsPanel.AddComponent<DeveloperDiagnosticsSettingsPanel>();
-            developerSettings.Configure(settingsPanel, settingsController, diagnosticsAvailability, inspectorDetail, traceMode, ctcToggle, jevToggle, governorControl, domainTestOverride, unlockAllCosmetics, developerBackButton);
-            developerSettingsButton.onClick.AddListener(() => { settingsPanel.SetActive(false); developerSettingsPanel.SetActive(true); });
+            developerSettings.Configure(settingsPanel, settingsController, diagnosticsAvailability, inspectorDetail, traceMode, ctcToggle, jevToggle, governorControl, domainTestOverride, unlockAllCosmetics, grantCarapace, unlockManifestations, resetManifestations, manifestationDiagnostics, developerBackButton);
+            if (DeveloperDiagnosticsSettings.FeatureAvailable)
+            {
+                developerSettingsButton.onClick.AddListener(() => { settingsPanel.SetActive(false); developerSettingsPanel.SetActive(true); });
+            }
             developerSettingsPanel.SetActive(false);
 
             GameObject movesPanel = CreateMenuPanel("Moves List Panel", menus, new Vector2(940f, 690f));
@@ -563,6 +600,27 @@ namespace Cave.UI
             EnemyLedgerPagesHud ledgerPages = ledgerPanel.AddComponent<EnemyLedgerPagesHud>();
             ledgerPages.Configure(ledgerBody);
 
+            GameObject inventoryPanel = CreateMenuPanel("Inventory Panel", menus, new Vector2(860f, 620f));
+            Text inventoryTitle = CreateCenteredText("Inventory Title", inventoryPanel.transform, font, "INVENTORY — MATERIALS", 28, new Vector2(0f, 260f), new Vector2(760f, 38f));
+            inventoryTitle.fontStyle = FontStyle.Bold;
+            inventoryTitle.color = CaveUiTheme.Gold;
+            CreateCardSurface("Inventory Surface", inventoryPanel.transform, new Vector2(0f, 12f), new Vector2(760f, 430f));
+            Text inventoryBody = CreateCenteredText("Inventory Body", inventoryPanel.transform, font, string.Empty, 15, new Vector2(-2f, 10f), new Vector2(716f, 390f));
+            inventoryBody.alignment = TextAnchor.UpperLeft;
+            inventoryBody.horizontalOverflow = HorizontalWrapMode.Wrap;
+            inventoryBody.verticalOverflow = VerticalWrapMode.Overflow;
+            Image inventoryIcon = CreateCardSurface("Inventory Icon", inventoryPanel.transform, new Vector2(0f, 0f), Vector2.zero);
+            inventoryIcon.enabled = false;
+            Button materialsButton = CreateButton("MATERIALS", inventoryPanel.transform, font, new Vector2(-220f, 202f), new Vector2(190f, 42f));
+            Button consumablesButton = CreateButton("CONSUMABLES", inventoryPanel.transform, font, new Vector2(0f, 202f), new Vector2(190f, 42f));
+            Button equipmentButton = CreateButton("EQUIPMENT", inventoryPanel.transform, font, new Vector2(220f, 202f), new Vector2(190f, 42f));
+            Button inventoryBackButton = CreateButton("BACK", inventoryPanel.transform, font, new Vector2(0f, -260f), new Vector2(220f, 44f));
+            PauseInventoryPanel inventoryPresentation = inventoryPanel.AddComponent<PauseInventoryPanel>();
+            inventoryPresentation.Configure(inventoryTitle, inventoryBody, inventoryIcon);
+            materialsButton.onClick.AddListener(() => inventoryPresentation.ShowCategory(InventoryItemCategory.Materials));
+            consumablesButton.onClick.AddListener(() => inventoryPresentation.ShowCategory(InventoryItemCategory.Consumables));
+            equipmentButton.onClick.AddListener(() => inventoryPresentation.ShowCategory(InventoryItemCategory.Equipment));
+
             PauseMenuController pauseController = menus.gameObject.AddComponent<PauseMenuController>();
             pauseController.Configure(
                 pauseMenu,
@@ -578,6 +636,9 @@ namespace Cave.UI
                 ledgerPanel,
                 ledgerButton,
                 ledgerBackButton,
+                inventoryPanel,
+                inventoryButton,
+                inventoryBackButton,
                 ledgerBody,
                 movesLeftText,
                 movesRightText,
@@ -746,6 +807,66 @@ namespace Cave.UI
             }
 
             healthHud.Configure(fillImage, valueText, panel.GetComponent<Image>());
+            EnsureCarapaceHealthHud(healthHud, barBackground);
+        }
+
+        private static void EnsureCarapaceHealthHud(PlayerHealthHud healthHud, RectTransform healthBar)
+        {
+            if (healthHud == null || healthBar == null) return;
+            Transform panel = healthHud.transform;
+            RectTransform overlayFill = healthBar.Find("Carapace Overlay Fill") as RectTransform;
+            Image overlayImage;
+            if (overlayFill == null)
+            {
+                overlayFill = CreateStretchRect("Carapace Overlay Fill", healthBar);
+                overlayFill.offsetMin = new Vector2(1f, 1f);
+                overlayFill.offsetMax = new Vector2(-1f, -1f);
+                overlayFill.pivot = new Vector2(0f, .5f);
+                overlayImage = overlayFill.gameObject.AddComponent<Image>();
+                overlayImage.raycastTarget = false;
+            }
+            else
+            {
+                overlayImage = overlayFill.GetComponent<Image>();
+            }
+
+            Transform healthFill = healthBar.Find("Health Fill");
+            if (healthFill != null)
+            {
+                // The integrity fill is part of the track, below the health fill.
+                overlayFill.SetSiblingIndex(healthFill.GetSiblingIndex());
+            }
+            Image detail = EnsureCarapaceHudImage(
+                healthBar, "Carapace Overlay Detail", Vector2.zero, healthBar.sizeDelta);
+            detail.rectTransform.anchorMin = Vector2.zero;
+            detail.rectTransform.anchorMax = Vector2.one;
+            detail.rectTransform.pivot = new Vector2(.5f, .5f);
+            detail.rectTransform.offsetMin = new Vector2(1f, 1f);
+            detail.rectTransform.offsetMax = new Vector2(-1f, -1f);
+            detail.raycastTarget = false;
+
+            Image emblem = EnsureCarapaceHudImage(panel, "Carapace Shield Emblem", new Vector2(57f, -48f), new Vector2(25f, 28f));
+            Image state = EnsureCarapaceHudImage(panel, "Carapace State", new Vector2(286f, -48f), new Vector2(22f, 22f));
+            Image fracture = EnsureCarapaceHudImage(panel, "Carapace Fracture Response", new Vector2(178f, -48f), new Vector2(236f, 28f));
+            fracture.enabled = false;
+            PlayerCarapaceHealthHud carapaceHud = healthHud.GetComponent<PlayerCarapaceHealthHud>();
+            if (carapaceHud == null) carapaceHud = healthHud.gameObject.AddComponent<PlayerCarapaceHealthHud>();
+            carapaceHud.Configure(overlayImage, overlayFill, detail, emblem, state, fracture);
+            carapaceHud.Bind(Object.FindObjectOfType<PlayerResonantCarapace>());
+        }
+
+        private static Image EnsureCarapaceHudImage(Transform parent, string name, Vector2 position, Vector2 size)
+        {
+            RectTransform rect = parent.Find(name) as RectTransform;
+            if (rect == null)
+            {
+                rect = CreateRect(name, parent, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                    new Vector2(.5f, .5f), position, size);
+            }
+            Image image = rect.GetComponent<Image>();
+            if (image == null) image = rect.gameObject.AddComponent<Image>();
+            image.raycastTarget = false;
+            return image;
         }
 
         private static void EnsureStaminaHud(
@@ -1118,7 +1239,7 @@ namespace Cave.UI
                 new Vector2(204f, 296f),
                 new Vector2(190f, 44f));
             Button cosmeticsTabButton = CreateButton(
-                "COSMETICS",
+                "LOADOUT",
                 selectionPanel,
                 font,
                 new Vector2(408f, 296f),
@@ -1130,22 +1251,23 @@ namespace Cave.UI
             cosmeticsTabButton.GetComponentInChildren<Text>().fontSize = 16;
             modesTabButton.GetComponentInChildren<Text>().text = "SKILL PATH";
             Button closeModalButton = CreateButton(
-                "CLOSE  [TAB]", selectionPanel, font, new Vector2(570f, 330f), new Vector2(146f, 30f));
+                "CLOSE  [" + SettingsMenuController.FormatBinding(GameAction.Nexus).ToUpperInvariant() + "]",
+                selectionPanel, font, new Vector2(570f, 330f), new Vector2(146f, 30f));
             closeModalButton.GetComponentInChildren<Text>().fontSize = 11;
 
             CreateCardSurface(
                 "Active Mode Header",
                 selectionPanel,
-                new Vector2(0f, 163f),
-                new Vector2(960f, 42f));
+                new Vector2(0f, 218f),
+                new Vector2(1240f, 42f));
             Text panelCurrentMode = CreateCenteredText(
                 "Selected Mode",
                 selectionPanel,
                 font,
                 "ACTIVE PATH  •  SLOW SHOT",
                 14,
-                new Vector2(-274f, 163f),
-                new Vector2(510f, 30f));
+                new Vector2(-366f, 218f),
+                new Vector2(690f, 30f));
             panelCurrentMode.alignment = TextAnchor.MiddleLeft;
             panelCurrentMode.color = CaveUiTheme.PrimaryText;
             Text panelCurrency = CreateCenteredText(
@@ -1154,7 +1276,7 @@ namespace Cave.UI
                 font,
                 "◇ 0",
                 14,
-                new Vector2(372f, 163f),
+                new Vector2(504f, 218f),
                 new Vector2(160f, 30f));
             panelCurrency.alignment = TextAnchor.MiddleRight;
             panelCurrency.color = CaveUiTheme.Gold;
@@ -1165,34 +1287,36 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(0f, -42f),
-                new Vector2(960f, 486f));
+                new Vector2(0f, -62f),
+                new Vector2(1260f, 548f));
 
             Button[] modeButtons = new Button[4];
             Text[] modeLabels = new Text[4];
             Text[] modeInfoTexts = new Text[4];
             Button[] upgradeButtons = new Button[4];
             string[] initialLabels = { "Slow Shot", "Burn Shot", "Flight", "Strength" };
+            string[] modeIconNames = { "SlowShot", "BurnShot", "Flight", "Strength" };
             for (int index = 0; index < initialLabels.Length; index++)
             {
-                float rowY = 132f - index * 76f;
-                CreateCardSurface(initialLabels[index] + " Card", modesContent, new Vector2(0f, rowY), new Vector2(940f, 68f));
+                float rowY = 180f - index * 65f;
+                RectTransform modeCard = CreateCardSurface(initialLabels[index] + " Card", modesContent, new Vector2(0f, rowY), new Vector2(1240f, 58f)).rectTransform;
+                CreateNexusSkillIcon(initialLabels[index] + " Icon", modeCard, modeIconNames[index], new Vector2(-574f, 0f), new Vector2(48f, 48f));
                 modeInfoTexts[index] = CreateCenteredText(
                     initialLabels[index] + " Info",
                     modesContent,
                     font,
                     initialLabels[index].ToUpperInvariant() + "\nTier 1",
                     13,
-                    new Vector2(-146f, rowY),
-                    new Vector2(600f, 58f));
+                    new Vector2(-164f, rowY),
+                    new Vector2(760f, 52f));
                 modeInfoTexts[index].alignment = TextAnchor.MiddleLeft;
 
                 modeButtons[index] = CreateButton(
                     initialLabels[index] + " Switch",
                     modesContent,
                     font,
-                    new Vector2(352f, rowY + 17f),
-                    new Vector2(142f, 30f));
+                    new Vector2(506f, rowY + 14f),
+                    new Vector2(174f, 26f));
                 modeLabels[index] = modeButtons[index].GetComponentInChildren<Text>();
                 modeLabels[index].fontSize = 13;
 
@@ -1200,10 +1324,75 @@ namespace Cave.UI
                     initialLabels[index] + " Upgrade",
                     modesContent,
                     font,
-                    new Vector2(352f, rowY - 17f),
-                    new Vector2(142f, 30f));
+                    new Vector2(506f, rowY - 14f),
+                    new Vector2(174f, 26f));
                 upgradeButtons[index].GetComponentInChildren<Text>().fontSize = 13;
             }
+
+            Text firePatternHeading = CreateCenteredText(
+                "Fire Pattern Header",
+                modesContent,
+                font,
+                "◆  FIRE PATTERN  •  HOLD TO FIRE  ◆",
+                13,
+                new Vector2(0f, -69f),
+                new Vector2(760f, 22f));
+            firePatternHeading.fontStyle = FontStyle.Bold;
+            firePatternHeading.color = CaveUiTheme.Gold;
+            Button[] firePatternButtons = new Button[5];
+            Text[] firePatternLabels = new Text[5];
+            string[] patternIconNames = { "Precision", "Automatic", "Burst", "Volley", "SpoolUp" };
+            float[] firePatternPositions = { -492f, -246f, 0f, 246f, 492f };
+            for (int index = 0; index < firePatternButtons.Length; index++)
+            {
+                firePatternButtons[index] = CreateButton(
+                    "Fire Pattern " + index,
+                    modesContent,
+                    font,
+                    new Vector2(firePatternPositions[index], -108f),
+                    new Vector2(232f, 56f));
+                firePatternLabels[index] = firePatternButtons[index].GetComponentInChildren<Text>();
+                firePatternLabels[index].fontSize = 10;
+                RectTransform patternRect = firePatternButtons[index].GetComponent<RectTransform>();
+                CreateNexusSkillIcon("Pattern Icon " + index, patternRect, patternIconNames[index],
+                    new Vector2(-88f, 0f), new Vector2(44f, 44f));
+                RectTransform labelRect = firePatternLabels[index].rectTransform;
+                labelRect.offsetMin = new Vector2(50f, 2f);
+                labelRect.offsetMax = new Vector2(-4f, -2f);
+            }
+            Text firePatternProfile = CreateCenteredText("Fire Pattern Profile", modesContent, font,
+                "Projectile profile unavailable.", 10, new Vector2(0f, -164f), new Vector2(1210f, 54f));
+            firePatternProfile.alignment = TextAnchor.MiddleLeft;
+            firePatternProfile.color = CaveUiTheme.SecondaryText;
+            FirePatternSelectionPanel firePatternPanel = modesContent.gameObject.AddComponent<FirePatternSelectionPanel>();
+            firePatternPanel.Configure(specialMode.gameObject, firePatternButtons, firePatternLabels, firePatternProfile);
+
+            Text originHeading = CreateCenteredText("Manifestation Origin Header", modesContent, font,
+                "◆  MANIFESTATION ORIGIN  •  CHOOSE WHERE YOUR ETHEREAL FORM MANIFESTS  ◆",
+                13, new Vector2(0f, -204f), new Vector2(1000f, 22f));
+            originHeading.fontStyle = FontStyle.Bold;
+            originHeading.color = CaveUiTheme.Gold;
+            Button[] originButtons = new Button[3];
+            Text[] originLabels = new Text[3];
+            string[] originIcons = { "Body", "Anchor", "Orbital" };
+            float[] originX = { -412f, 0f, 412f };
+            for (int index = 0; index < originButtons.Length; index++)
+            {
+                originButtons[index] = CreateButton("Manifestation Origin " + index, modesContent, font,
+                    new Vector2(originX[index], -250f), new Vector2(394f, 80f));
+                originLabels[index] = originButtons[index].GetComponentInChildren<Text>();
+                originLabels[index].fontSize = 9;
+                originLabels[index].alignment = TextAnchor.MiddleLeft;
+                CreateNexusSkillIcon("Origin Icon " + index, originButtons[index].GetComponent<RectTransform>(),
+                    originIcons[index], new Vector2(-154f, 0f), new Vector2(64f, 64f));
+                originLabels[index].rectTransform.offsetMin = new Vector2(78f, 3f);
+                originLabels[index].rectTransform.offsetMax = new Vector2(-5f, -3f);
+            }
+            Text originStatus = CreateCenteredText("Manifestation Origin Status", modesContent, font,
+                "BODY  •  UNDEPLOYED", 10, new Vector2(0f, -306f), new Vector2(1220f, 20f));
+            originStatus.color = CaveUiTheme.BorderBright;
+            ManifestationOriginSelectionPanel originPanel = modesContent.gameObject.AddComponent<ManifestationOriginSelectionPanel>();
+            originPanel.Configure(specialMode.gameObject, originButtons, originLabels, originStatus);
 
             RectTransform shopContent = CreateRect(
                 "Shop Content",
@@ -1235,7 +1424,7 @@ namespace Cave.UI
             NexusMasteryPage masteryPage = masteryContent.gameObject.AddComponent<NexusMasteryPage>();
 
             RectTransform cosmeticsContent = CreateRect(
-                "Cosmetics Content",
+                "Loadout Content",
                 selectionPanel,
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
@@ -1244,7 +1433,7 @@ namespace Cave.UI
                 new Vector2(1260f, 630f));
             PlayerSwordCosmetics.EnsureInstalled(specialMode.gameObject);
             PlayerSkinCosmetics skins = PlayerSkinCosmetics.EnsureInstalled(specialMode.gameObject);
-            NexusCosmeticsPage cosmeticsPage = cosmeticsContent.gameObject.AddComponent<NexusCosmeticsPage>();
+            NexusLoadoutPage cosmeticsPage = cosmeticsContent.gameObject.AddComponent<NexusLoadoutPage>();
 
             Text consumablesHeading = CreateCenteredText("Consumables Header", shopContent, font,
                 "◆  CONSUMABLES  ◆", 16, new Vector2(0f, 208f), new Vector2(520f, 26f));
@@ -1326,7 +1515,7 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0f, -120f),
-                new Vector2(920f, 210f));
+                new Vector2(920f, 340f));
 
             RectTransform shardSummaryMount = CreateRect(
                 "General Shards Summary Mount",
@@ -1384,6 +1573,247 @@ namespace Cave.UI
                 masteryTabButton,
                 cosmeticsContent.gameObject,
                 cosmeticsTabButton);
+        }
+
+        private static void EnsureDomainChargeHud(
+            Transform gameplayHud,
+            Font font,
+            PlayerSpecialMode specialMode)
+        {
+            if (gameplayHud == null || specialMode == null)
+            {
+                return;
+            }
+
+            PlayerDomainReserve reserve = PlayerDomainReserve.EnsureOn(specialMode.gameObject);
+            PlayerDomainChargeHud existing = Object.FindObjectOfType<PlayerDomainChargeHud>(true);
+            if (existing != null)
+            {
+                existing.Bind(reserve);
+                return;
+            }
+
+            RectTransform panel = CreateRect(
+                "Domain Charge",
+                gameplayHud,
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-24f, -170f),
+                new Vector2(236f, 58f));
+            Image background = panel.gameObject.AddComponent<Image>();
+            background.color = CaveUiTheme.Surface;
+            AddPanelFrame(panel, new Color(0.38f, 0.76f, 0.92f, 0.82f));
+
+            Text label = CreateAnchoredText(
+                "Domain Charge Label",
+                panel,
+                font,
+                "DOMAIN CHARGE",
+                12,
+                TextAnchor.MiddleLeft,
+                new Vector2(14f, 13f),
+                new Vector2(118f, 20f));
+            label.fontStyle = FontStyle.Bold;
+            label.color = CaveUiTheme.PrimaryText;
+
+            Text value = CreateAnchoredText(
+                "Domain Charge Value",
+                panel,
+                font,
+                "0 / 0",
+                13,
+                TextAnchor.MiddleRight,
+                new Vector2(150f, 13f),
+                new Vector2(70f, 20f));
+            value.fontStyle = FontStyle.Bold;
+            value.color = new Color(0.64f, 0.88f, 1f, 1f);
+
+            RectTransform track = CreateRect(
+                "Domain Charge Track",
+                panel,
+                new Vector2(.5f, .5f),
+                new Vector2(.5f, .5f),
+                new Vector2(.5f, .5f),
+                new Vector2(0f, -13f),
+                new Vector2(198f, 10f));
+            Image trackImage = track.gameObject.AddComponent<Image>();
+            trackImage.color = new Color(0.018f, 0.035f, 0.065f, 0.96f);
+
+            RectTransform fill = CreateStretchRect("Domain Charge Fill", track);
+            fill.offsetMin = new Vector2(1f, 1f);
+            fill.offsetMax = new Vector2(-1f, -1f);
+            fill.pivot = new Vector2(0f, .5f);
+            Image fillImage = fill.gameObject.AddComponent<Image>();
+            fillImage.color = new Color(0.35f, 0.78f, 1f, .92f);
+
+            PlayerDomainChargeHud hud = panel.gameObject.AddComponent<PlayerDomainChargeHud>();
+            hud.Configure(fillImage, value);
+            hud.Bind(reserve);
+        }
+
+        /// <summary>
+        /// Replaces only the old stacked upper-right presentation. The existing
+        /// resource owners and modal controls remain intact beneath this view.
+        /// </summary>
+        private static void EnsureCompactPlayerInformation(
+            Transform gameplayHud,
+            Font font,
+            PlayerHealth playerHealth,
+            PlayerCurrency playerCurrency,
+            PlayerSpecialMode specialMode)
+        {
+            if (gameplayHud == null || playerHealth == null || specialMode == null)
+            {
+                return;
+            }
+
+            CompactPlayerInformationHud compact = gameplayHud.GetComponentInChildren<CompactPlayerInformationHud>(true);
+            if (compact == null)
+            {
+                RectTransform root = CreateRect(
+                    "Compact Player Information",
+                    gameplayHud,
+                    new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
+                    new Vector2(-18f, -22f), new Vector2(370f, 248f));
+                // The extracted paired panels are 2.59:1.  Preserve that art
+                // ratio instead of crushing ornamental borders into 45 pixels.
+                RectTransform currencyCard = CreateCompactHudCard(root, "Currency", new Vector2(-94f, -4f), new Vector2(174f, 66f), "CurrencyPanel");
+                RectTransform shardCard = CreateCompactHudCard(root, "General Shards", new Vector2(94f, -4f), new Vector2(174f, 66f), "GeneralShardsPanel");
+                RectTransform skillCard = CreateCompactHudCard(root, "Skill Path", new Vector2(-94f, -76f), new Vector2(174f, 66f), "SkillPathPanel");
+                RectTransform fireCard = CreateCompactHudCard(root, "Fire Pattern", new Vector2(94f, -76f), new Vector2(174f, 66f), "FirePatternPanel");
+                RectTransform chargeCard = CreateCompactHudCard(root, "Domain Charge", new Vector2(0f, -148f), new Vector2(362f, 66f), "DomainChargePanel");
+
+                Text currencyValue = CreateCompactHudValue(currencyCard, font, "Currency Value", CaveUiTheme.Currency);
+                Text shardsValue = CreateCompactHudValue(shardCard, font, "General Shards Value", CaveUiTheme.GeneralShard);
+                Text skillValue = CreateCompactHudValue(skillCard, font, "Skill Path Value", CaveUiTheme.PrimaryText);
+                Text fireValue = CreateCompactHudValue(fireCard, font, "Fire Pattern Value", CaveUiTheme.PrimaryText);
+                CreateCompactHudLabel(currencyCard, font, "Currency Label", "CURRENCY");
+                CreateCompactHudLabel(shardCard, font, "General Shards Label", "GENERAL SHARDS");
+                CreateCompactHudLabel(skillCard, font, "Skill Path Label", "SKILL PATH");
+                CreateCompactHudLabel(fireCard, font, "Fire Pattern Label", "FIRE PATTERN");
+
+                Text chargeLabel = CreateAnchoredText("Domain Charge Label", chargeCard, font, "DOMAIN CHARGE", 12,
+                    TextAnchor.MiddleLeft, new Vector2(76f, -18f), new Vector2(150f, 18f));
+                chargeLabel.fontStyle = FontStyle.Bold;
+                chargeLabel.color = CaveUiTheme.PrimaryText;
+                Text chargeValue = CreateAnchoredText("Domain Charge Value", chargeCard, font, "0 / 0", 13,
+                    TextAnchor.MiddleRight, new Vector2(236f, -18f), new Vector2(108f, 18f));
+                chargeValue.fontStyle = FontStyle.Bold;
+                chargeValue.color = CaveUiTheme.BorderBright;
+                RectTransform chargeTrack = CreateRect("Domain Charge Track", chargeCard,
+                    new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(.5f, .5f),
+                    new Vector2(48f, -44f), new Vector2(254f, 11f));
+                Image trackImage = chargeTrack.gameObject.AddComponent<Image>();
+                trackImage.color = CaveUiTheme.SurfaceInset;
+                RectTransform chargeFill = CreateStretchRect("Domain Charge Fill", chargeTrack);
+                chargeFill.offsetMin = new Vector2(1f, 1f);
+                chargeFill.offsetMax = new Vector2(-1f, -1f);
+                chargeFill.pivot = new Vector2(0f, .5f);
+                Image chargeFillImage = chargeFill.gameObject.AddComponent<Image>();
+                chargeFillImage.color = new Color(.22f, .8f, 1f, .94f);
+                Text manifestationStatus = CreateCenteredText("Manifestation Origin Status", root, font,
+                    "ORIGIN  BODY", 9, new Vector2(0f, -218f), new Vector2(360f, 22f));
+                manifestationStatus.color = CaveUiTheme.BorderBright;
+
+                compact = root.gameObject.AddComponent<CompactPlayerInformationHud>();
+                compact.Configure(currencyValue, shardsValue, skillValue, fireValue, chargeFillImage, chargeValue,
+                    null, null, null, null, manifestationStatus);
+
+                PlayerSpecialModeHud specialHud = Object.FindObjectOfType<PlayerSpecialModeHud>(true);
+                Button skillButton = skillCard.gameObject.AddComponent<Button>();
+                skillButton.transition = Selectable.Transition.None;
+                skillButton.targetGraphic = skillCard.GetComponent<Image>();
+                if (specialHud != null)
+                {
+                    skillButton.onClick.AddListener(specialHud.ToggleSelectionPanelFromUi);
+                }
+            }
+
+            PlayerPermanentProgression progression = playerHealth.GetComponent<PlayerPermanentProgression>();
+            PlayerFirePatternState firePatterns = playerHealth.GetComponent<PlayerFirePatternState>();
+            PlayerDomainReserve reserve = PlayerDomainReserve.EnsureOn(specialMode.gameObject);
+            compact.Bind(playerCurrency, progression, specialMode, firePatterns, reserve);
+
+            HideLegacyRightHud(gameplayHud, "Player Currency");
+            HideLegacyRightHud(gameplayHud, "Player Special Mode");
+            HideLegacyDomainChargeHuds();
+        }
+
+        private static RectTransform CreateCompactHudCard(RectTransform parent, string name, Vector2 position, Vector2 size, string spriteName)
+        {
+            RectTransform card = CreateRect(name, parent, new Vector2(.5f, 1f), new Vector2(.5f, 1f),
+                new Vector2(.5f, 1f), position, size);
+            Image image = card.gameObject.AddComponent<Image>();
+            Sprite sprite = Resources.Load<Sprite>("UI/HudCompact/Frames/" + spriteName);
+            if (sprite != null)
+            {
+                image.sprite = sprite;
+                image.type = Image.Type.Sliced;
+                image.color = Color.white;
+            }
+            else
+            {
+                image.color = CaveUiTheme.Surface;
+                AddPanelFrame(card, CaveUiTheme.BronzeLight, 1f);
+            }
+            return card;
+        }
+
+        private static void CreateCompactHudLabel(RectTransform card, Font font, string name, string value)
+        {
+            Text label = CreateAnchoredText(name, card, font, value, 10, TextAnchor.MiddleLeft,
+                new Vector2(47f, -17f), new Vector2(116f, 18f));
+            label.fontStyle = FontStyle.Bold;
+            label.color = CaveUiTheme.Gold;
+        }
+
+        private static Text CreateCompactHudValue(RectTransform card, Font font, string name, Color color)
+        {
+            Text value = CreateAnchoredText(name, card, font, "0", 16, TextAnchor.MiddleLeft,
+                new Vector2(47f, -45f), new Vector2(116f, 24f));
+            value.fontStyle = FontStyle.Bold;
+            value.color = color;
+            return value;
+        }
+
+        private static void HideLegacyRightHud(Transform gameplayHud, string childName)
+        {
+            Transform legacy = gameplayHud.Find(childName);
+            if (legacy != null && legacy.name != "Compact Player Information")
+            {
+                // The legacy special-mode bar also owns the live Nexus and Shop
+                // controller.  Removing its presentation must never disable its
+                // Update loop, click listeners, or runtime bindings.
+                if (legacy.GetComponent<PlayerSpecialModeHud>() != null)
+                {
+                    // Recover sessions produced by the old compact HUD path,
+                    // which deactivated this GameObject outright.
+                    legacy.gameObject.SetActive(true);
+                    CanvasGroup group = legacy.GetComponent<CanvasGroup>();
+                    if (group == null) group = legacy.gameObject.AddComponent<CanvasGroup>();
+                    group.alpha = 0f;
+                    group.interactable = false;
+                    group.blocksRaycasts = false;
+                    return;
+                }
+
+                legacy.gameObject.SetActive(false);
+            }
+        }
+
+        private static void HideLegacyDomainChargeHuds()
+        {
+            // Only the compact presentation owns a visible charge fill.  Legacy
+            // widgets remain bound for old scene compatibility but are hidden.
+            foreach (PlayerDomainChargeHud legacy in Object.FindObjectsOfType<PlayerDomainChargeHud>(true))
+            {
+                if (legacy == null) continue;
+                // Unlike the Nexus owner, this has no input/controller duties.
+                // Deactivation prevents its own reserve callback from restoring
+                // alpha and producing a second visible bar.
+                legacy.gameObject.SetActive(false);
+            }
         }
 
         private static void EnsureShieldHud(Transform gameplayHud)
@@ -1660,7 +2090,7 @@ namespace Cave.UI
                 new Vector2(24f, 22f),
                 new Vector2(226f, 82f));
 
-            string[] slotNames = { "HEALTH", "MANA", "MINE" };
+            string[] slotNames = { "HEALTH", "MANA", "EQUIPMENT" };
             string[] symbols = { "+", "✦", "◎" };
             Color[] accents =
             {
@@ -1672,12 +2102,14 @@ namespace Cave.UI
             {
                 GameAction.UseHealthPotion,
                 GameAction.UseManaPotion,
-                GameAction.PlaceLandmine
+                GameAction.ActivateEquipment
             };
 
             Image[] backgrounds = new Image[slotNames.Length];
             Text[] keyLabels = new Text[slotNames.Length];
             Text[] quantityLabels = new Text[slotNames.Length];
+            Text[] nameLabels = new Text[slotNames.Length];
+            Text[] symbolLabels = new Text[slotNames.Length];
             for (int index = 0; index < slotNames.Length; index++)
             {
                 float x = 36f + index * 76f;
@@ -1704,6 +2136,7 @@ namespace Cave.UI
                     new Vector2(60f, 16f));
                 itemName.color = CaveUiTheme.PrimaryText;
                 itemName.raycastTarget = false;
+                nameLabels[index] = itemName;
 
                 Text symbol = CreateCenteredText(
                     slotNames[index] + " Symbol",
@@ -1715,6 +2148,7 @@ namespace Cave.UI
                     new Vector2(52f, 34f));
                 symbol.color = accents[index];
                 symbol.raycastTarget = false;
+                symbolLabels[index] = symbol;
 
                 keyLabels[index] = CreateCenteredText(
                     slotNames[index] + " Key",
@@ -1740,11 +2174,224 @@ namespace Cave.UI
             }
 
             PlayerActionHotbarHud hotbarHud = hotbar.gameObject.AddComponent<PlayerActionHotbarHud>();
+            PlayerEquipmentController equipment = PlayerEquipmentController.EnsureOn(player);
             hotbarHud.Configure(
                 backgrounds,
                 keyLabels,
                 quantityLabels,
-                player != null ? player.GetComponent<PlayerLandmineInventory>() : null);
+                nameLabels,
+                symbolLabels,
+                player != null ? player.GetComponent<PlayerLandmineInventory>() : null,
+                equipment);
+        }
+
+        private static void EnsureEnemyLocationBar(
+            Transform gameplayHud,
+            Font font,
+            Transform player)
+        {
+            if (gameplayHud == null
+                || player == null
+                || Object.FindObjectOfType<EnemyLocationBarHud>(true) != null)
+            {
+                return;
+            }
+
+            RectTransform track = CreateRect(
+                "Enemy Location Bar",
+                gameplayHud,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -18f),
+                new Vector2(430f, 24f));
+            Image background = track.gameObject.AddComponent<Image>();
+            background.color = CaveUiTheme.Surface;
+            background.raycastTarget = false;
+            AddPanelFrame(track, CaveUiTheme.BronzeLight, 1f);
+            CanvasGroup group = track.gameObject.AddComponent<CanvasGroup>();
+            group.blocksRaycasts = false;
+            group.interactable = false;
+
+            const int markerCount = 7;
+            Text[] markers = new Text[markerCount];
+            for (int index = 0; index < markerCount; index++)
+            {
+                markers[index] = CreateCenteredText(
+                    "Enemy Threat " + index,
+                    track,
+                    font,
+                    "◆",
+                    13,
+                    Vector2.zero,
+                    new Vector2(24f, 20f));
+                markers[index].fontStyle = FontStyle.Bold;
+                markers[index].raycastTarget = false;
+            }
+
+            EnemyLocationBarHud hud = track.gameObject.AddComponent<EnemyLocationBarHud>();
+            hud.Configure(track, background, group, markers, player, 20f);
+        }
+
+        private static void EnsureEquipmentWheel(
+            Transform gameplayHud,
+            Font font,
+            GameObject player)
+        {
+            if (gameplayHud == null
+                || player == null
+                || Object.FindObjectOfType<EquipmentWheelHud>(true) != null)
+            {
+                return;
+            }
+
+            PlayerEquipmentController controller = PlayerEquipmentController.EnsureOn(player);
+            if (controller == null)
+            {
+                return;
+            }
+
+            RectTransform wheel = CreateStretchRect("Equipment Wheel", gameplayHud);
+            Image veil = wheel.gameObject.AddComponent<Image>();
+            veil.color = new Color(0.005f, 0.008f, 0.014f, 0.36f);
+            veil.raycastTarget = false;
+
+            RectTransform ring = CreateRect(
+                "Equipment Wheel Center",
+                wheel,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(252f, 252f));
+            Image ringImage = ring.gameObject.AddComponent<Image>();
+            ringImage.color = new Color(
+                CaveUiTheme.Surface.r,
+                CaveUiTheme.Surface.g,
+                CaveUiTheme.Surface.b,
+                0.94f);
+            ringImage.raycastTarget = false;
+            AddPanelFrame(ring, CaveUiTheme.Gold, 3f);
+
+            Text centerName = CreateCenteredText(
+                "Equipment Name",
+                ring,
+                font,
+                "EQUIPMENT",
+                19,
+                new Vector2(0f, 24f),
+                new Vector2(216f, 30f));
+            centerName.color = CaveUiTheme.Gold;
+            centerName.fontStyle = FontStyle.Bold;
+            Text centerDescription = CreateCenteredText(
+                "Equipment Description",
+                ring,
+                font,
+                string.Empty,
+                12,
+                new Vector2(0f, -28f),
+                new Vector2(210f, 78f));
+            centerDescription.color = CaveUiTheme.SecondaryText;
+            centerDescription.horizontalOverflow = HorizontalWrapMode.Wrap;
+            centerDescription.verticalOverflow = VerticalWrapMode.Truncate;
+
+            int itemCount = PlayerEquipmentController.EquipmentSlotCapacity;
+            Image[] backgrounds = new Image[itemCount];
+            Text[] names = new Text[itemCount];
+            Text[] symbols = new Text[itemCount];
+            Text[] statuses = new Text[itemCount];
+            for (int index = 0; index < itemCount; index++)
+            {
+                float angle = itemCount > 0 ? index * Mathf.PI * 2f / itemCount : 0f;
+                Vector2 position = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 246f;
+                RectTransform card = CreateRect(
+                    "Equipment Choice " + index,
+                    wheel,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    position,
+                    new Vector2(184f, 116f));
+                backgrounds[index] = card.gameObject.AddComponent<Image>();
+                backgrounds[index].color = CaveUiTheme.SurfaceInset;
+                backgrounds[index].raycastTarget = false;
+                AddPanelFrame(card, CaveUiTheme.BronzeLight, 2f);
+
+                names[index] = CreateCenteredText(
+                    "Choice Name",
+                    card,
+                    font,
+                    string.Empty,
+                    13,
+                    new Vector2(0f, 38f),
+                    new Vector2(170f, 22f));
+                names[index].fontStyle = FontStyle.Bold;
+                symbols[index] = CreateCenteredText(
+                    "Choice Symbol",
+                    card,
+                    font,
+                    string.Empty,
+                    34,
+                    new Vector2(0f, 4f),
+                    new Vector2(80f, 46f));
+                statuses[index] = CreateCenteredText(
+                    "Choice Status",
+                    card,
+                    font,
+                    string.Empty,
+                    11,
+                    new Vector2(0f, -39f),
+                    new Vector2(170f, 20f));
+            }
+
+            Text hint = CreateCenteredText(
+                "Equipment Wheel Hint",
+                wheel,
+                font,
+                string.Empty,
+                13,
+                new Vector2(0f, -244f),
+                new Vector2(690f, 26f));
+            hint.color = CaveUiTheme.PrimaryText;
+
+            EquipmentWheelHud hud = wheel.gameObject.AddComponent<EquipmentWheelHud>();
+            hud.Configure(
+                wheel.gameObject,
+                backgrounds,
+                names,
+                symbols,
+                statuses,
+                centerName,
+                centerDescription,
+                hint,
+                controller);
+        }
+
+        private static void EnsureSovereignGambitTacticalHud(Transform gameplayHud,Font font,GameObject player)
+        {
+            if(gameplayHud==null||player==null||Object.FindObjectOfType<SovereignGambitTacticalHud>(true)!=null)return;
+            SovereignGambitTacticalCommandController controller=player.GetComponent<SovereignGambitTacticalCommandController>();
+            if(controller==null)controller=player.AddComponent<SovereignGambitTacticalCommandController>();
+            RectTransform panel=CreateRect("Sovereign Gambit Tactical HUD",gameplayHud,
+                new Vector2(.5f,0f),new Vector2(.5f,0f),new Vector2(.5f,0f),new Vector2(0f,132f),new Vector2(820f,206f));
+            Image background=panel.gameObject.AddComponent<Image>();background.color=new Color(.015f,.025f,.045f,.95f);background.raycastTarget=false;
+            AddPanelFrame(panel,CaveUiTheme.Gold,2f);
+            Text title=CreateCenteredText("Title",panel,font,"SOVEREIGN GAMBIT  •  TACTICAL COMMAND",15,new Vector2(0f,86f),new Vector2(790f,24f));
+            title.color=CaveUiTheme.Gold;title.fontStyle=FontStyle.Bold;
+            Text[] hand=new Text[4];
+            for(int i=0;i<hand.Length;i++)
+            {
+                hand[i]=CreateCenteredText("Available Command "+i,panel,font,string.Empty,11,new Vector2(-294f+i*196f,46f),new Vector2(186f,50f));
+                hand[i].color=CaveUiTheme.PrimaryText;
+            }
+            Text queueTitle=CreateCenteredText("Queue Title",panel,font,"QUEUE",10,new Vector2(-336f,6f),new Vector2(90f,20f));queueTitle.color=CaveUiTheme.SecondaryText;
+            Text[] queue=new Text[2];
+            for(int i=0;i<queue.Length;i++)
+            { queue[i]=CreateCenteredText("Queued Command "+i,panel,font,string.Empty,10,new Vector2(-208f+i*232f,6f),new Vector2(220f,20f));queue[i].color=CaveUiTheme.SecondaryText; }
+            Text disk=CreateCenteredText("Selected Disk",panel,font,string.Empty,11,new Vector2(0f,-43f),new Vector2(780f,72f));disk.color=CaveUiTheme.PrimaryText;
+            Text feedback=CreateCenteredText("Command Feedback",panel,font,string.Empty,11,new Vector2(0f,-88f),new Vector2(780f,22f));feedback.color=CaveUiTheme.BorderBright;
+            SovereignGambitTacticalHud hud=panel.gameObject.AddComponent<SovereignGambitTacticalHud>();
+            hud.Configure(panel.gameObject,hand,queue,disk,feedback,controller);
         }
 
         private static void EnsureDetectiveResearchHud(Transform gameplayHud, Font font)
@@ -1761,8 +2408,8 @@ namespace Cave.UI
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(-200f, 112f),
-                new Vector2(520f, 104f));
+                new Vector2(0f, 250f),
+                new Vector2(700f, 148f));
             Image panelImage = panel.gameObject.AddComponent<Image>();
             panelImage.color = CaveUiTheme.Surface;
             panelImage.raycastTarget = false;
@@ -1783,25 +2430,58 @@ namespace Cave.UI
                 font,
                 "DETECTIVE STUDY  •  OBSERVING",
                 13,
-                new Vector2(0f, 34f),
-                new Vector2(470f, 22f));
+                new Vector2(0f, 58f),
+                new Vector2(650f, 22f));
             observationLabel.fontStyle = FontStyle.Bold;
             observationLabel.color = CaveUiTheme.PrimaryText;
 
-            const int slotCount = 6;
+            Text evidenceLabel = CreateCenteredText(
+                "Evidence Progress",
+                panel,
+                font,
+                "EVIDENCE  0/7",
+                11,
+                new Vector2(-232f, 33f),
+                new Vector2(210f, 20f));
+            evidenceLabel.color = CaveUiTheme.BorderBright;
+            evidenceLabel.fontStyle = FontStyle.Bold;
+
+            Text predictionProgressLabel = CreateCenteredText(
+                "Correct Prediction Progress",
+                panel,
+                font,
+                "CORRECT PREDICTIONS  0/1",
+                11,
+                new Vector2(0f, 33f),
+                new Vector2(260f, 20f));
+            predictionProgressLabel.color = CaveUiTheme.Gold;
+            predictionProgressLabel.fontStyle = FontStyle.Bold;
+
+            Text towerStageLabel = CreateCenteredText(
+                "Tower Stage",
+                panel,
+                font,
+                "TOWER STAGE  0",
+                11,
+                new Vector2(240f, 33f),
+                new Vector2(190f, 20f));
+            towerStageLabel.color = CaveUiTheme.BronzeLight;
+            towerStageLabel.fontStyle = FontStyle.Bold;
+
+            const int slotCount = DetectiveResearchRules.RequiredEvidenceCount;
             Text[] historyTexts = new Text[slotCount];
             Image[] historyFrames = new Image[slotCount];
             for (int index = 0; index < slotCount; index++)
             {
-                float x = -192f + index * 76f;
+                float x = -252f + index * 72f;
                 RectTransform slot = CreateRect(
                     "Observed Action " + (index + 1),
                     panel,
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
-                    new Vector2(x, -5f),
-                    new Vector2(62f, 36f));
+                    new Vector2(x, -8f),
+                    new Vector2(58f, 36f));
                 historyFrames[index] = slot.gameObject.AddComponent<Image>();
                 historyFrames[index].color = CaveUiTheme.SurfaceInset;
                 historyFrames[index].raycastTarget = false;
@@ -1819,7 +2499,7 @@ namespace Cave.UI
                     "·",
                     13,
                     Vector2.zero,
-                    new Vector2(56f, 28f));
+                    new Vector2(52f, 28f));
                 historyTexts[index].fontStyle = FontStyle.Bold;
                 historyTexts[index].raycastTarget = false;
 
@@ -1831,7 +2511,7 @@ namespace Cave.UI
                         font,
                         ">",
                         13,
-                        new Vector2(x + 38f, -5f),
+                        new Vector2(x + 36f, -8f),
                         new Vector2(14f, 24f));
                     arrow.color = CaveUiTheme.BronzeLight;
                     arrow.raycastTarget = false;
@@ -1844,8 +2524,8 @@ namespace Cave.UI
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(223f, -5f),
-                new Vector2(104f, 48f));
+                new Vector2(282f, -8f),
+                new Vector2(108f, 48f));
             Image predictionFrame = predictionSlot.gameObject.AddComponent<Image>();
             predictionFrame.color = CaveUiTheme.SurfaceInset;
             predictionFrame.raycastTarget = false;
@@ -1863,7 +2543,7 @@ namespace Cave.UI
                 "NEXT\n?",
                 12,
                 Vector2.zero,
-                new Vector2(94f, 42f));
+                new Vector2(98f, 42f));
             predictedText.fontStyle = FontStyle.Bold;
             predictedText.color = CaveUiTheme.Gold;
             predictedText.raycastTarget = false;
@@ -1874,8 +2554,8 @@ namespace Cave.UI
                 font,
                 string.Empty,
                 12,
-                new Vector2(0f, -38f),
-                new Vector2(470f, 20f));
+                new Vector2(0f, -58f),
+                new Vector2(650f, 20f));
             outcomeText.fontStyle = FontStyle.Bold;
             outcomeText.raycastTarget = false;
 
@@ -1884,6 +2564,9 @@ namespace Cave.UI
             hud.Configure(
                 canvasGroup,
                 observationLabel,
+                evidenceLabel,
+                predictionProgressLabel,
+                towerStageLabel,
                 historyTexts,
                 historyFrames,
                 predictedText,
@@ -3214,6 +3897,20 @@ namespace Cave.UI
             Color accent)
         {
             CreateSymbolIcon(name, parent, font, position, 54f, symbol, accent, 28);
+        }
+
+        private static Image CreateNexusSkillIcon(string name, Transform parent,
+            string spriteName, Vector2 position, Vector2 size)
+        {
+            RectTransform rect = CreateRect(name, parent,
+                new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(.5f, .5f),
+                position, size);
+            Image image = rect.gameObject.AddComponent<Image>();
+            image.sprite = NexusSkillArt.Get(spriteName);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = image.sprite != null ? Color.white : new Color(.25f, .72f, 1f, .45f);
+            return image;
         }
 
         private static Text CreateSymbolIcon(

@@ -148,19 +148,20 @@ namespace Cave.UI
         private void BuildFollowUpsPage(Transform parent, Font font)
         {
             CreateSection(parent, font, "FOLLOW-UPS / CHAINS", 220f);
-            CreateChainRow(parent, font, "SPIN", "Spin", "BASH", "Bash", "Spin then Guard Break", 166f, CaveUiTheme.BorderBright);
-            CreateChainRow(parent, font, "PARRY", "Guard", "HEAVY T2", "Heavy", "Normal Parry starts the Heavy chain at Tier 2", 106f, CaveUiTheme.BorderBright);
-            CreateChainRow(parent, font, "PERFECT PARRY", "Guard", "HEAVY T3", "Heavy", "Perfect Parry starts the Heavy chain at Tier 3", 46f, CaveUiTheme.Mana);
-            CreateChainRow(parent, font, "GUARD BREAK", "GuardBreak", "HEAVY T2", "Heavy", "Successful break starts the Heavy chain at Tier 2", -14f, CaveUiTheme.Gold);
-            CreateChainRow(parent, font, "HEAVY / GB", "Heavy", "CROSS STEP", "CrossStep", "Dash after commitment to reposition", -74f, CaveUiTheme.BorderBright);
+            CreateChainRow(parent, font, "SPIN", "Spin", "BASH", "Bash", "Spin, then Guard Break to Bash.", 190f, CaveUiTheme.BorderBright);
+            CreateChainRow(parent, font, "PARRY", "Guard", "HEAVY T2", "Heavy", "Normal Parry starts Heavy at Tier 2.", 140f, CaveUiTheme.BorderBright);
+            CreateChainRow(parent, font, "PERFECT PARRY", "Guard", "HEAVY T3", "Heavy", "Perfect Parry starts Heavy at Tier 3.", 90f, CaveUiTheme.Mana);
+            CreateChainRow(parent, font, "GUARD BREAK", "GuardBreak", "HEAVY T2", "Heavy", "A successful break starts Heavy at Tier 2.", 40f, CaveUiTheme.Gold);
+            CreateChainRow(parent, font, "HEAVY / GB", "Heavy", "CROSS STEP", "CrossStep", "Dash after a Heavy or Guard Break to Cross Step.", -10f, CaveUiTheme.BorderBright);
+            CreateChainRow(parent, font, "DEFENSE", "Guard", "SLIP / PUSH", "Dash", "After a successful defense: Dash slips; Guard Break counter-pushes.", -60f, CaveUiTheme.BorderBright);
             CreateBraceCard(parent, font);
         }
 
         private void BuildSkillsPage(Transform parent, Font font)
         {
             CreateCompactCard(parent, font, "SKILLS", "SLOW SHOT\nFrost response and ranged pressure.\n\nBURN SHOT\nFire response.\n\nFLIGHT\nWind movement and Ground Smash.", new Vector2(-276f, 56f), new Vector2(250f, 350f), CaveUiTheme.BorderBright);
-            CreateCompactCard(parent, font, "RESOURCES", "MANA\nPowers standard projectiles and skills.\n\nSTAMINA\nPowers Spin, Heavy, movement, and Ground Smash.\n\n" + Binding(GameAction.FireProjectile) + "  Fire the current mode projectile.", new Vector2(0f, 56f), new Vector2(250f, 350f), CaveUiTheme.Mana);
-            CreateCompactCard(parent, font, "SPECIAL RULES", "FRENZY BREAK\n" + Binding(GameAction.Interact) + " tap prepares Physical; hold infuses Mana.\n\nUNBLOCKABLE ≠ UNPARRYABLE\nSome attacks bypass Guard but can still be perfectly parried.", new Vector2(276f, 56f), new Vector2(250f, 350f), CaveUiTheme.Gold);
+            CreateCompactCard(parent, font, "RESOURCES", "MANA\nPowers standard projectiles and skills.\n\nSTAMINA\nPowers Spin, Heavy, movement, and Ground Smash.\n\n" + Binding(GameAction.FireProjectile) + "  Fire the current mode projectile.\nHold it with " + Binding(GameAction.ChargedAttack) + " to charge and release a Heavy projectile.", new Vector2(0f, 56f), new Vector2(250f, 350f), CaveUiTheme.Mana);
+            CreateCompactCard(parent, font, "SPECIAL RULES", "FRENZY BREAK\n" + Binding(GameAction.Interact) + " tap prepares Physical; hold infuses Mana.\n\nDOMAIN / ALTAR\n" + Binding(GameAction.SummonCurseAltar) + " tap places an Altar; hold 0.6s manifests or dismisses Domain.\n\nUNBLOCKABLE ≠ UNPARRYABLE\nSome attacks bypass Guard but can still be perfectly parried.", new Vector2(276f, 56f), new Vector2(250f, 350f), CaveUiTheme.Gold);
         }
 
         private static void CreateSection(Transform parent, Font font, string title, float y)
@@ -209,7 +210,7 @@ namespace Cave.UI
 
         private static void CreateBraceCard(Transform parent, Font font)
         {
-            CreateCompactCard(parent, font, "BRACE", "GUARD + GB after the Parry window enters Brace.\n\nQUICK — mobile and cheaper next exit.\nFULL / BRACE I — restores 5% max Stamina per second; can Deflect.\nDEEP / BRACE II — immobile; restores 3% max Stamina + 5% max Mana per second.", new Vector2(0f, -192f), new Vector2(808f, 116f), CaveUiTheme.Mana);
+            CreateCompactCard(parent, font, "BRACE", "Enter from sustained Guard with Guard Break after the Parry window.\n\nQUICK — brief and mobile; your next Spin or Heavy costs half Stamina.\nFULL / BRACE I — slowed; restores 5% max Stamina per second. Commit Spin or Heavy into eligible melee to Deflect: cancel the hit, gain the Normal-Parry Stamina reward, and retain Brace.\nDEEP / BRACE II — immobile recovery; restores 3% max Stamina + 5% max Mana per second.", new Vector2(0f, -170f), new Vector2(808f, 170f), CaveUiTheme.Mana);
         }
 
         private static void CreateCompactCard(Transform parent, Font font, string title, string body, Vector2 position, Vector2 size, Color accent)

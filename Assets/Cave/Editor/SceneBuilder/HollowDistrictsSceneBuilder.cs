@@ -17,7 +17,7 @@ namespace Cave.Editor.SceneBuilder
     {
         public const string ScenePath = "Assets/Cave/Scenes/03_HollowDistricts.unity";
         private const string SourceScenePath = "Assets/Cave/Scenes/Sprint5_Hazards.unity";
-        private const string TemporaryDeepVeinsTarget = "Cave_Level01";
+        private const string DeepVeinsTarget = "04_DeepVeins";
 
         [MenuItem("Tools/Cave/Scene Builder/Build 03 Hollow Districts (New Scene Only)")]
         public static void BuildFromMenu()
@@ -160,7 +160,7 @@ namespace Cave.Editor.SceneBuilder
         {
             CaveSceneBuilderV1.PlacePlayerSpawn("Hollow Districts Player Spawn", roots.PlayerSpawn, new Vector2(-29.5f, -0.55f), "FromStronghold");
             CaveSceneBuilderV1.PlaceInteractableMarker("Hollow Catacomb Landmark Marker", roots.Interactables, new Vector2(-5.5f, -9.9f), "HollowCatacombLandmark");
-            CaveSceneBuilderV1.PlaceRoomTransitionMarker("Hollow Districts Deep Veins Exit", roots.Transitions, new Vector2(36.2f, -0.25f), "ToDeepVeins", TemporaryDeepVeinsTarget);
+            CaveSceneBuilderV1.PlaceRoomTransitionMarker("Hollow Districts Deep Veins Exit", roots.Transitions, new Vector2(36.2f, -0.25f), "ToDeepVeins", DeepVeinsTarget);
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Hollow Main Floor Spawn", roots.EnemySpawns, new Vector2(-7.0f, -0.35f), "HollowMainFloor01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Bridge One Spawn", roots.EnemySpawns, new Vector2(-2.5f, 6.6f), "HollowBridgeOne01");
             CaveSceneBuilderV1.PlaceEnemySpawnMarker("Future Bridge Two Spawn", roots.EnemySpawns, new Vector2(5.0f, 12.2f), "HollowBridgeTwo01");

@@ -607,16 +607,11 @@ MonoBehaviour:
   minimumObservationRangeBonus: 0.5
   maximumObservationRangeBonus: 1.5
   minimumObservationDuration: 6
-  maximumObservationDuration: 10
+  maximumObservationDuration: 20
   researchCycleCooldown: 2
-  normalPatternLength: 3
-  maximumPatternLength: 5
+  normalPatternLength: 7
+  maximumPatternLength: 7
   repeatedMoveEventsPerSample: 3
-  successfulResearchReward: 8
-  researchStageThresholds:
-  - 8
-  - 18
-  - 32
   researchOutcomeDisplayDuration: 1.2
   tacticalBiasDuration: 20
   sacrificialIntentChance: 0.2
@@ -627,8 +622,8 @@ MonoBehaviour:
   activeCloneCount: 0
   activeTower: {fileID: 0}
   constructionProgress: 0
-  accumulatedResearch: 0
   currentResearchStage: 0
+  currentStageCorrectPredictions: 0
   constructionPosition: {x: 0, y: 0}
   researchPhase: 0
   lastResearchOutcome: 0
@@ -637,6 +632,7 @@ MonoBehaviour:
   tacticalHorizontalBias: 0
   researchCycleObservationTime: 0
   consecutiveMoveRepetitions: 0
+  predictionAttemptResolved: 0
   researchHudVisible: 0
   globalCloneCooldownRemaining: 0
 --- !u!114 &3201618348735130790

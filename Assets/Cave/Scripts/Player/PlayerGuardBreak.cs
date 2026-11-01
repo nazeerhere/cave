@@ -138,8 +138,7 @@ namespace Cave.Player
                         0.72f,
                         counterColor,
                         0.28f);
-                    CaveSfx.Play(CaveSfxCue.Whoosh, 0.8f);
-                    CaveSfx.Play(CaveSfxCue.Bonus, 0.55f);
+                    CaveSfx.Play(CaveSfxCue.GuardBreak, 0.75f);
                 }
 
                 // The same input is consumed by the incoming contest. Pressing it
@@ -284,7 +283,11 @@ namespace Cave.Player
 
         public void ApplyPlayerStagger(float duration)
         {
-            float resolvedDuration = Mathf.Max(0f, duration);
+            PlayerResonantCarapace carapace = GetComponent<PlayerResonantCarapace>();
+            float resistanceMultiplier = carapace != null
+                ? ResonantCarapacePolicy.ResolvePhysicalControlMultiplier(carapace.PhysicalControlResistance)
+                : 1f;
+            float resolvedDuration = Mathf.Max(0f, duration) * resistanceMultiplier;
             if (resolvedDuration <= 0f)
             {
                 return;
@@ -358,7 +361,7 @@ namespace Cave.Player
                 offensiveColor,
                 duration,
                 facing < 0f ? 180f : 0f);
-            CaveSfx.Play(CaveSfxCue.Whoosh, 0.75f);
+            CaveSfx.Play(CaveSfxCue.SwordSwing, 0.75f);
 
             float endsAt = Time.time + duration;
             while (Time.time < endsAt)
@@ -458,7 +461,7 @@ namespace Cave.Player
                 offensiveColor,
                 Mathf.Max(0.15f, windup),
                 facing < 0f ? 180f : 0f);
-            CaveSfx.Play(CaveSfxCue.Whoosh, 0.55f);
+            CaveSfx.Play(CaveSfxCue.SwordSwing, 0.55f);
             yield return new WaitForSeconds(windup);
 
             ResolveOffensiveHit(facing);
@@ -514,7 +517,11 @@ namespace Cave.Player
             BruteControlAbilities bruteControl = closest.GetComponent<BruteControlAbilities>();
             bool brokeBrutePin = bruteControl != null
                 && bruteControl.TryBreakPinFromGuardBreak(GetComponent<PlayerHealth>());
-            if (!brokePosture && !caughtWindup && !damagedMeleeShield && !brokeBrutePin)
+            StageTwoBruteProjection projectedPin = closest.GetComponent<StageTwoBruteProjection>();
+            bool brokeProjectedPin = projectedPin != null
+                && projectedPin.TryBreakPinFromGuardBreak(GetComponent<PlayerHealth>());
+            if (!brokePosture && !caughtWindup && !damagedMeleeShield && !brokeBrutePin
+                && !brokeProjectedPin)
             {
                 return;
             }
@@ -529,6 +536,8 @@ namespace Cave.Player
             {
                 guardBreakImpactPosition = closestCollider.ClosestPoint(transform.position);
             }
+
+            CaveSfx.PlayAt(CaveSfxCue.GuardBreak, guardBreakImpactPosition, 0.9f);
 
             SpawnGuardBreakVfx(guardBreakImpactPosition);
 

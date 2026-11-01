@@ -1,0 +1,180 @@
+{
+  "action": "spectral_stampede",
+  "frame_count": 12,
+  "source_sheet": "corrupted_qilin_spectral_stampede.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "CorruptedQilin_spectral_stampede_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        19,
+        388,
+        447
+      ],
+      "size_pixels": [
+        388,
+        428
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        315,
+        21,
+        767,
+        460
+      ],
+      "size_pixels": [
+        452,
+        439
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        725,
+        23,
+        1126,
+        452
+      ],
+      "size_pixels": [
+        401,
+        429
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1067,
+        9,
+        1447,
+        461
+      ],
+      "size_pixels": [
+        380,
+        452
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        398,
+        418,
+        772
+      ],
+      "size_pixels": [
+        418,
+        374
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        373,
+        412,
+        801,
+        766
+      ],
+      "size_pixels": [
+        428,
+        354
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        741,
+        414,
+        1120,
+        764
+      ],
+      "size_pixels": [
+        379,
+        350
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1077,
+        432,
+        1445,
+        791
+      ],
+      "size_pixels": [
+        368,
+        359
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        0,
+        722,
+        384,
+        1086
+      ],
+      "size_pixels": [
+        384,
+        364
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        369,
+        731,
+        768,
+        1086
+      ],
+      "size_pixels": [
+        399,
+        355
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_10.png",
+      "index": 10,
+      "source_bbox_top_left": [
+        721,
+        733,
+        1102,
+        1086
+      ],
+      "size_pixels": [
+        381,
+        353
+      ]
+    },
+    {
+      "file": "CorruptedQilin_spectral_stampede_11.png",
+      "index": 11,
+      "source_bbox_top_left": [
+        1082,
+        754,
+        1448,
+        1086
+      ],
+      "size_pixels": [
+        366,
+        332
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

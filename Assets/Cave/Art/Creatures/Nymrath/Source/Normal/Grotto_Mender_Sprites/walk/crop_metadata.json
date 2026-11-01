@@ -1,0 +1,124 @@
+{
+  "action": "walk",
+  "frame_count": 8,
+  "source_sheet": "grotto_mender_walk.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_walk_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        49,
+        478,
+        494
+      ],
+      "size_pixels": [
+        478,
+        445
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        449,
+        65,
+        908,
+        502
+      ],
+      "size_pixels": [
+        459,
+        437
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        878,
+        43,
+        1349,
+        472
+      ],
+      "size_pixels": [
+        471,
+        429
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1311,
+        80,
+        1774,
+        456
+      ],
+      "size_pixels": [
+        463,
+        376
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        470,
+        472,
+        853
+      ],
+      "size_pixels": [
+        472,
+        383
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        450,
+        469,
+        915,
+        861
+      ],
+      "size_pixels": [
+        465,
+        392
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        851,
+        469,
+        1366,
+        887
+      ],
+      "size_pixels": [
+        515,
+        418
+      ]
+    },
+    {
+      "file": "GrottoMender_walk_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1335,
+        477,
+        1774,
+        865
+      ],
+      "size_pixels": [
+        439,
+        388
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

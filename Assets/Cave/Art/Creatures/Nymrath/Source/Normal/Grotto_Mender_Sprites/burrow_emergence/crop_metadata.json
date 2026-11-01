@@ -1,0 +1,124 @@
+{
+  "action": "burrow_emergence",
+  "frame_count": 8,
+  "source_sheet": "grotto_mender_burrow_emergence.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_burrow_emergence_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        17,
+        130,
+        387,
+        484
+      ],
+      "size_pixels": [
+        370,
+        354
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        283,
+        31,
+        915,
+        508
+      ],
+      "size_pixels": [
+        632,
+        477
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        761,
+        21,
+        1347,
+        468
+      ],
+      "size_pixels": [
+        586,
+        447
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1188,
+        19,
+        1760,
+        492
+      ],
+      "size_pixels": [
+        572,
+        473
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        0,
+        481,
+        454,
+        863
+      ],
+      "size_pixels": [
+        454,
+        382
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        392,
+        469,
+        872,
+        842
+      ],
+      "size_pixels": [
+        480,
+        373
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        862,
+        455,
+        1343,
+        841
+      ],
+      "size_pixels": [
+        481,
+        386
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_emergence_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        1331,
+        463,
+        1774,
+        887
+      ],
+      "size_pixels": [
+        443,
+        424
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

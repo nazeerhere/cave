@@ -182,6 +182,79 @@ namespace Cave.Missions
             return false;
         }
 
+        /// <summary>
+        /// Establishes the bounded Standard Gambit population through the same
+        /// authored sockets, catalog filters, active caps, and mission identity
+        /// lifecycle as every other production mode. The Sovereign socket must
+        /// be physically reachable by the player's maximum three-disk network.
+        /// </summary>
+        public bool BeginSovereignGambit(
+            Vector2 anchorPosition,
+            float maximumNetworkReach,
+            out MissionSpawnIdentity sovereign,
+            List<MissionSpawnIdentity> supportingEnemies)
+        {
+            sovereign = null;
+            supportingEnemies?.Clear();
+            if (!CanOperate() || maximumNetworkReach <= 0f) return false;
+
+            activePolicy = "Sovereign Gambit";
+            EnemyEncounterZone selectedZone = null;
+            EnemySpawnSocket selectedSocket = null;
+            float selectedDistance = float.NegativeInfinity;
+            for (int zoneIndex = 0; zoneIndex < encounterZones.Length; zoneIndex++)
+            {
+                EnemyEncounterZone zone = encounterZones[zoneIndex];
+                if (zone == null || !zone.IsSpawnActive || zone.ActiveCount >= zone.ActiveCap) continue;
+                for (int socketIndex = 0; socketIndex < zone.Sockets.Count; socketIndex++)
+                {
+                    EnemySpawnSocket socket = zone.Sockets[socketIndex];
+                    if (socket == null || (socket.MissionUsage & MissionSpawnUsage.Normal) == 0
+                        || !socket.IsSafeToSpawn(playerTransform, socketOverlapBuffer)) continue;
+                    float distance = Vector2.Distance(anchorPosition, socket.transform.position);
+                    if (!SovereignGambitMissionRules.IsSovereignSocketReachable(distance, maximumNetworkReach)
+                        || distance <= selectedDistance) continue;
+                    if (PickCatalogEntry(socket, MissionSpawnUsage.Normal) == null) continue;
+                    selectedZone = zone;
+                    selectedSocket = socket;
+                    selectedDistance = distance;
+                }
+            }
+
+            if (selectedSocket == null
+                || !TrySpawnAtSocket(selectedZone, selectedSocket, MissionSpawnUsage.Normal,
+                    false, true, null, out sovereign))
+            {
+                activePolicy = "Sovereign Gambit (No Valid Sovereign Socket)";
+                return false;
+            }
+
+            // Supporting pressure is deliberately finite. It uses authored
+            // initial populations but never owns a clear-to-win condition.
+            const int supportCap = 3;
+            int supportSpawned = 0;
+            for (int zoneIndex = 0; zoneIndex < encounterZones.Length && supportSpawned < supportCap; zoneIndex++)
+            {
+                EnemyEncounterZone zone = encounterZones[zoneIndex];
+                if (zone == null) continue;
+                int desired = Mathf.Min(zone.InitialPopulation, supportCap);
+                for (int count = 0; count < desired && supportSpawned < supportCap; count++)
+                {
+                    if (TrySpawn(zone, MissionSpawnUsage.Normal, false, false, false, null, out MissionSpawnIdentity support))
+                    {
+                        supportingEnemies?.Add(support);
+                        supportSpawned++;
+                    }
+                }
+            }
+            if (supportSpawned == 0)
+            {
+                activePolicy = "Sovereign Gambit (No Supporting Pressure)";
+                return false;
+            }
+            return true;
+        }
+
         public void BeginContainment()
         {
             if (!CanOperate()) return;
@@ -273,8 +346,23 @@ namespace Cave.Missions
                 || zone.ActiveCount >= zone.ActiveCap) return false;
             EnemySpawnSocket socket = PickSocket(zone, usage, reinforcement);
             if (socket == null) return false;
+            return TrySpawnAtSocket(zone, socket, usage, reinforcement, objective, pressureSource, out spawnedIdentity);
+        }
+
+        private bool TrySpawnAtSocket(
+            EnemyEncounterZone zone,
+            EnemySpawnSocket socket,
+            MissionSpawnUsage usage,
+            bool reinforcement,
+            bool objective,
+            CorruptionSource pressureSource,
+            out MissionSpawnIdentity spawnedIdentity)
+        {
+            spawnedIdentity = null;
+            if (zone == null || socket == null || activeIdentities.Count >= globalActiveCap
+                || zone.ActiveCount >= zone.ActiveCap) return false;
             MissionEnemyCatalogEntry entry = PickCatalogEntry(socket, usage);
-            if (entry == null) return false;
+            if (entry == null || entry.Prefab == null || entry.Prefab.GetComponent<Damageable>() == null) return false;
 
             GameObject spawned = Instantiate(entry.Prefab, socket.transform.position, socket.transform.rotation);
             spawned.name = entry.Prefab.name + " [Mission " + zone.ZoneId + "]";

@@ -414,7 +414,7 @@ namespace Cave.Editor.VisualQA
 
         private static string GetCommandLineArgument(string name)
         {
-            string[] arguments = Environment.GetCommandLineArgs();
+            string[] arguments = System.Environment.GetCommandLineArgs();
             for (int index = 0; index < arguments.Length - 1; index++)
             {
                 if (string.Equals(arguments[index], name, StringComparison.OrdinalIgnoreCase))

@@ -5207,7 +5207,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   kind: 2
   identifier: ToFinalBoss
-  destinationScene: Cave_Level01
+  destinationScene: 05_HeartChamber
   boundsSize: {x: 1, y: 1}
 --- !u!1 &1275096607
 GameObject:

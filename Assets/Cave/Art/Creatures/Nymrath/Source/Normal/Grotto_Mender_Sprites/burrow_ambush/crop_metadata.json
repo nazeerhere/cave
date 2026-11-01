@@ -1,0 +1,152 @@
+{
+  "action": "burrow_ambush",
+  "frame_count": 10,
+  "source_sheet": "grotto_mender_burrow_ambush.png",
+  "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+  "alpha_threshold_for_detection_only": 32,
+  "all_visible_RGBA_pixels_preserved": true,
+  "resizing": false,
+  "frames": [
+    {
+      "file": "GrottoMender_burrow_ambush_00.png",
+      "index": 0,
+      "source_bbox_top_left": [
+        0,
+        52,
+        421,
+        463
+      ],
+      "size_pixels": [
+        421,
+        411
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_01.png",
+      "index": 1,
+      "source_bbox_top_left": [
+        348,
+        53,
+        805,
+        467
+      ],
+      "size_pixels": [
+        457,
+        414
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_02.png",
+      "index": 2,
+      "source_bbox_top_left": [
+        739,
+        37,
+        1185,
+        427
+      ],
+      "size_pixels": [
+        446,
+        390
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_03.png",
+      "index": 3,
+      "source_bbox_top_left": [
+        1170,
+        29,
+        1565,
+        453
+      ],
+      "size_pixels": [
+        395,
+        424
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_04.png",
+      "index": 4,
+      "source_bbox_top_left": [
+        1578,
+        27,
+        1983,
+        457
+      ],
+      "size_pixels": [
+        405,
+        430
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_05.png",
+      "index": 5,
+      "source_bbox_top_left": [
+        0,
+        458,
+        490,
+        769
+      ],
+      "size_pixels": [
+        490,
+        311
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_06.png",
+      "index": 6,
+      "source_bbox_top_left": [
+        406,
+        454,
+        871,
+        763
+      ],
+      "size_pixels": [
+        465,
+        309
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_07.png",
+      "index": 7,
+      "source_bbox_top_left": [
+        795,
+        445,
+        1213,
+        765
+      ],
+      "size_pixels": [
+        418,
+        320
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_08.png",
+      "index": 8,
+      "source_bbox_top_left": [
+        1204,
+        442,
+        1594,
+        793
+      ],
+      "size_pixels": [
+        390,
+        351
+      ]
+    },
+    {
+      "file": "GrottoMender_burrow_ambush_09.png",
+      "index": 9,
+      "source_bbox_top_left": [
+        1549,
+        454,
+        1971,
+        775
+      ],
+      "size_pixels": [
+        422,
+        321
+      ]
+    }
+  ],
+  "unity_pivot_scale_alignment": "NOT VALIDATED"
+}

@@ -105,7 +105,13 @@ namespace Cave.Gambit
         private SovereignGambitRuntime runtime;
         public void Bind(SovereignGambitRuntime value) { runtime=value; }
         public bool IsStrategicallyProtected => runtime!=null&&runtime.EnemySovereignProtectionActive;
-        public bool CanReceiveCombatDamageFromPlayer(DamageContext context) => runtime==null||!context.IsPlayerDamage||!runtime.EnemySovereignProtectionActive;
+        /// <summary>Strategic protection is actor-local and blocks every damage
+        /// source while active. This prevents hazards or allied effects from
+        /// killing the one Sovereign outside Check and making the match
+        /// unwinnable. Ordinary enemies never receive this component.</summary>
+        public static bool AllowsDamage(bool strategicallyProtected) => !strategicallyProtected;
+        public bool CanReceiveDamage(DamageContext context) => AllowsDamage(IsStrategicallyProtected);
+        public bool CanReceiveCombatDamageFromPlayer(DamageContext context) => CanReceiveDamage(context);
     }
 
     /// <summary>Opt-in physical Anchor bridge. Its transform supplies only location; topology remains runtime-owned.</summary>
@@ -115,13 +121,18 @@ namespace Cave.Gambit
         [SerializeField] private string anchorId;
         [SerializeField] private Vector2 footprint=Vector2.one;
         private SovereignGambitRuntime runtime;
+        private bool invalidateOnDestroy;
         public SovereignAnchorLifecycle Lifecycle => runtime!=null?runtime.AnchorLifecycle:SovereignAnchorLifecycle.Unplaced;
+        public void Configure(string id,Vector2 physicalFootprint)
+        { anchorId=id;footprint=new Vector2(Mathf.Max(.05f,physicalFootprint.x),Mathf.Max(.05f,physicalFootprint.y)); }
         public bool TryPlace(SovereignGambitRuntime match,ISovereignAnchorPlacementValidator validator)
         {
             if(match==null||string.IsNullOrEmpty(anchorId))return false;runtime=match;
-            return runtime.TryPlaceAnchor(new SovereignAnchorPlacementRequest(runtime.MatchId,new StrategicNodeId(anchorId),transform.position,footprint),validator).Accepted;
+            bool accepted=runtime.TryPlaceAnchor(new SovereignAnchorPlacementRequest(runtime.MatchId,new StrategicNodeId(anchorId),transform.position,footprint),validator).Accepted;
+            invalidateOnDestroy=accepted;return accepted;
         }
-        private void OnDestroy() { if(runtime!=null&&runtime.PlayerAnchorValid)runtime.InvalidatePlayerAnchor(); }
+        public void ReleaseWithoutInvalidation(){invalidateOnDestroy=false;runtime=null;}
+        private void OnDestroy() { if(invalidateOnDestroy&&runtime!=null&&runtime.PlayerAnchorValid)runtime.InvalidatePlayerAnchor(); }
     }
 
     /// <summary>Opt-in physical enemy Sovereign bridge. Damageable remains the health owner; Gambit only validates the defeat.</summary>
@@ -134,6 +145,8 @@ namespace Cave.Gambit
         private SovereignGambitRuntime runtime;
         private Damageable damageable;
         private bool subscribed;
+        public void Configure(string id,float regionRadius)
+        { sovereignId=id;strategicRegionRadius=Mathf.Max(.05f,regionRadius); }
         public bool Bind(SovereignGambitRuntime match)
         {
             if(match==null||string.IsNullOrEmpty(sovereignId))return false;runtime=match;damageable=damageable!=null?damageable:GetComponent<Damageable>();
@@ -141,6 +154,13 @@ namespace Cave.Gambit
             Subscribe();return runtime.RegisterEnemySovereign(new StrategicTargetId(sovereignId),new StrategicInfluenceRegion(transform.position,strategicRegionRadius));
         }
         public bool RefreshStrategicRegion() => runtime!=null&&runtime.SetEnemySovereignRegion(new StrategicInfluenceRegion(transform.position,strategicRegionRadius));
+        public void Unbind()
+        {
+            if(subscribed&&damageable!=null)damageable.Died-=HandleDied;
+            subscribed=false;
+            GetComponent<SovereignStrategicProtection>()?.Bind(null);
+            runtime=null;
+        }
         private void OnEnable() { Subscribe(); }
         private void OnDisable() { if(subscribed&&damageable!=null)damageable.Died-=HandleDied;subscribed=false; }
         private void Subscribe() { damageable=damageable!=null?damageable:GetComponent<Damageable>();if(subscribed||damageable==null)return;damageable.Died+=HandleDied;subscribed=true; }

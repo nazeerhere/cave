@@ -18,7 +18,16 @@ namespace Cave.Gambit
                 return new SovereignGambitStrategicObjective(SovereignGambitObjectiveKind.DisruptCheckContributor,contributor.SourceId,100);
             }
             if(context.PlayerAnchorInCheck)return new SovereignGambitStrategicObjective(SovereignGambitObjectiveKind.PressureAnchor,"player-anchor",80);
-            return default;
+            for(int index=0;index<context.Connectors.Count;index++)
+            {
+                StrategicConnectorFact connector=context.Connectors[index];
+                if(connector.IsConnected&&connector.IsCriticalConnector)
+                    return new SovereignGambitStrategicObjective(SovereignGambitObjectiveKind.PressureCriticalConnector,connector.NodeId.Value,70);
+            }
+            // A Standard match must create visible strategic pressure before a
+            // network is complete. The production agent still follows ordinary
+            // movement and attack cadence; this is only a fact-derived target.
+            return new SovereignGambitStrategicObjective(SovereignGambitObjectiveKind.PressureAnchor,"player-anchor",40);
         }
     }
 }

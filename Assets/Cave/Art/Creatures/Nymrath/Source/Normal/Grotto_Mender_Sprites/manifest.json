@@ -1,0 +1,1476 @@
+[
+  {
+    "action": "idle",
+    "frame_count": 6,
+    "source_sheet": "grotto_mender_idle.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_idle_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          17,
+          546,
+          596
+        ],
+        "size_pixels": [
+          546,
+          579
+        ]
+      },
+      {
+        "file": "GrottoMender_idle_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          457,
+          17,
+          1064,
+          600
+        ],
+        "size_pixels": [
+          607,
+          583
+        ]
+      },
+      {
+        "file": "GrottoMender_idle_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          973,
+          23,
+          1536,
+          594
+        ],
+        "size_pixels": [
+          563,
+          571
+        ]
+      },
+      {
+        "file": "GrottoMender_idle_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          0,
+          527,
+          544,
+          1024
+        ],
+        "size_pixels": [
+          544,
+          497
+        ]
+      },
+      {
+        "file": "GrottoMender_idle_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          489,
+          535,
+          1036,
+          1024
+        ],
+        "size_pixels": [
+          547,
+          489
+        ]
+      },
+      {
+        "file": "GrottoMender_idle_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          955,
+          535,
+          1536,
+          1024
+        ],
+        "size_pixels": [
+          581,
+          489
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "walk",
+    "frame_count": 8,
+    "source_sheet": "grotto_mender_walk.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_walk_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          49,
+          478,
+          494
+        ],
+        "size_pixels": [
+          478,
+          445
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          449,
+          65,
+          908,
+          502
+        ],
+        "size_pixels": [
+          459,
+          437
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          878,
+          43,
+          1349,
+          472
+        ],
+        "size_pixels": [
+          471,
+          429
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1311,
+          80,
+          1774,
+          456
+        ],
+        "size_pixels": [
+          463,
+          376
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          0,
+          470,
+          472,
+          853
+        ],
+        "size_pixels": [
+          472,
+          383
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          450,
+          469,
+          915,
+          861
+        ],
+        "size_pixels": [
+          465,
+          392
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          851,
+          469,
+          1366,
+          887
+        ],
+        "size_pixels": [
+          515,
+          418
+        ]
+      },
+      {
+        "file": "GrottoMender_walk_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          1335,
+          477,
+          1774,
+          865
+        ],
+        "size_pixels": [
+          439,
+          388
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "glide",
+    "frame_count": 8,
+    "source_sheet": "grotto_mender_glide.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_glide_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          45,
+          420,
+          552
+        ],
+        "size_pixels": [
+          420,
+          507
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          367,
+          67,
+          820,
+          520
+        ],
+        "size_pixels": [
+          453,
+          453
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          753,
+          55,
+          1202,
+          542
+        ],
+        "size_pixels": [
+          449,
+          487
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1135,
+          37,
+          1536,
+          504
+        ],
+        "size_pixels": [
+          401,
+          467
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          0,
+          585,
+          433,
+          994
+        ],
+        "size_pixels": [
+          433,
+          409
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          313,
+          519,
+          802,
+          986
+        ],
+        "size_pixels": [
+          489,
+          467
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          687,
+          551,
+          1182,
+          990
+        ],
+        "size_pixels": [
+          495,
+          439
+        ]
+      },
+      {
+        "file": "GrottoMender_glide_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          1119,
+          523,
+          1536,
+          1024
+        ],
+        "size_pixels": [
+          417,
+          501
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "burrow_entry",
+    "frame_count": 8,
+    "source_sheet": "grotto_mender_burrow_entry.png",
+    "method": "Provisional minimum-alpha seams for touching sprites/glow. Review before Unity import.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_burrow_entry_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          63,
+          482,
+          487
+        ],
+        "size_pixels": [
+          482,
+          424
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          447,
+          82,
+          949,
+          493
+        ],
+        "size_pixels": [
+          502,
+          411
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          888,
+          23,
+          1371,
+          495
+        ],
+        "size_pixels": [
+          483,
+          472
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1331,
+          21,
+          1760,
+          494
+        ],
+        "size_pixels": [
+          429,
+          473
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          0,
+          447,
+          465,
+          855
+        ],
+        "size_pixels": [
+          465,
+          408
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          444,
+          460,
+          887,
+          857
+        ],
+        "size_pixels": [
+          443,
+          397
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          887,
+          458,
+          1330,
+          887
+        ],
+        "size_pixels": [
+          443,
+          429
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_entry_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          1328,
+          454,
+          1759,
+          861
+        ],
+        "size_pixels": [
+          431,
+          407
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "burrow_emergence",
+    "frame_count": 8,
+    "source_sheet": "grotto_mender_burrow_emergence.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_burrow_emergence_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          17,
+          130,
+          387,
+          484
+        ],
+        "size_pixels": [
+          370,
+          354
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          283,
+          31,
+          915,
+          508
+        ],
+        "size_pixels": [
+          632,
+          477
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          761,
+          21,
+          1347,
+          468
+        ],
+        "size_pixels": [
+          586,
+          447
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1188,
+          19,
+          1760,
+          492
+        ],
+        "size_pixels": [
+          572,
+          473
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          0,
+          481,
+          454,
+          863
+        ],
+        "size_pixels": [
+          454,
+          382
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          392,
+          469,
+          872,
+          842
+        ],
+        "size_pixels": [
+          480,
+          373
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          862,
+          455,
+          1343,
+          841
+        ],
+        "size_pixels": [
+          481,
+          386
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_emergence_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          1331,
+          463,
+          1774,
+          887
+        ],
+        "size_pixels": [
+          443,
+          424
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "hit",
+    "frame_count": 5,
+    "source_sheet": "grotto_mender_hit.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_hit_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          13,
+          17,
+          546,
+          614
+        ],
+        "size_pixels": [
+          533,
+          597
+        ]
+      },
+      {
+        "file": "GrottoMender_hit_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          445,
+          23,
+          1048,
+          584
+        ],
+        "size_pixels": [
+          603,
+          561
+        ]
+      },
+      {
+        "file": "GrottoMender_hit_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          1023,
+          19,
+          1523,
+          872
+        ],
+        "size_pixels": [
+          500,
+          853
+        ]
+      },
+      {
+        "file": "GrottoMender_hit_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          0,
+          538,
+          567,
+          1024
+        ],
+        "size_pixels": [
+          567,
+          486
+        ]
+      },
+      {
+        "file": "GrottoMender_hit_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          459,
+          533,
+          1468,
+          1024
+        ],
+        "size_pixels": [
+          1009,
+          491
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "death",
+    "frame_count": 10,
+    "source_sheet": "grotto_mender_death.png",
+    "method": "Provisional minimum-alpha seams for touching sprites/glow. Review before Unity import.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_death_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          13,
+          417,
+          407
+        ],
+        "size_pixels": [
+          417,
+          394
+        ]
+      },
+      {
+        "file": "GrottoMender_death_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          397,
+          13,
+          811,
+          407
+        ],
+        "size_pixels": [
+          414,
+          394
+        ]
+      },
+      {
+        "file": "GrottoMender_death_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          793,
+          21,
+          1194,
+          411
+        ],
+        "size_pixels": [
+          401,
+          390
+        ]
+      },
+      {
+        "file": "GrottoMender_death_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1190,
+          13,
+          1588,
+          412
+        ],
+        "size_pixels": [
+          398,
+          399
+        ]
+      },
+      {
+        "file": "GrottoMender_death_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          1586,
+          0,
+          1982,
+          411
+        ],
+        "size_pixels": [
+          396,
+          411
+        ]
+      },
+      {
+        "file": "GrottoMender_death_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          0,
+          396,
+          417,
+          793
+        ],
+        "size_pixels": [
+          417,
+          397
+        ]
+      },
+      {
+        "file": "GrottoMender_death_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          397,
+          397,
+          820,
+          793
+        ],
+        "size_pixels": [
+          423,
+          396
+        ]
+      },
+      {
+        "file": "GrottoMender_death_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          793,
+          398,
+          1208,
+          793
+        ],
+        "size_pixels": [
+          415,
+          395
+        ]
+      },
+      {
+        "file": "GrottoMender_death_08.png",
+        "index": 8,
+        "source_bbox_top_left": [
+          1190,
+          399,
+          1594,
+          793
+        ],
+        "size_pixels": [
+          404,
+          394
+        ]
+      },
+      {
+        "file": "GrottoMender_death_09.png",
+        "index": 9,
+        "source_bbox_top_left": [
+          1586,
+          398,
+          1974,
+          793
+        ],
+        "size_pixels": [
+          388,
+          395
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "alert",
+    "frame_count": 6,
+    "source_sheet": "grotto_mender_alert.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_alert_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          79,
+          524,
+          516
+        ],
+        "size_pixels": [
+          524,
+          437
+        ]
+      },
+      {
+        "file": "GrottoMender_alert_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          469,
+          57,
+          1034,
+          552
+        ],
+        "size_pixels": [
+          565,
+          495
+        ]
+      },
+      {
+        "file": "GrottoMender_alert_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          1025,
+          39,
+          1536,
+          520
+        ],
+        "size_pixels": [
+          511,
+          481
+        ]
+      },
+      {
+        "file": "GrottoMender_alert_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          0,
+          547,
+          537,
+          1024
+        ],
+        "size_pixels": [
+          537,
+          477
+        ]
+      },
+      {
+        "file": "GrottoMender_alert_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          525,
+          559,
+          1051,
+          990
+        ],
+        "size_pixels": [
+          526,
+          431
+        ]
+      },
+      {
+        "file": "GrottoMender_alert_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          1027,
+          547,
+          1536,
+          1000
+        ],
+        "size_pixels": [
+          509,
+          453
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "restoration_weave",
+    "frame_count": 8,
+    "source_sheet": "grotto_mender_restoration_weave.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_restoration_weave_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          80,
+          440,
+          450
+        ],
+        "size_pixels": [
+          440,
+          370
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          452,
+          73,
+          895,
+          510
+        ],
+        "size_pixels": [
+          443,
+          437
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          870,
+          55,
+          1359,
+          494
+        ],
+        "size_pixels": [
+          489,
+          439
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1346,
+          78,
+          1761,
+          450
+        ],
+        "size_pixels": [
+          415,
+          372
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          0,
+          492,
+          454,
+          887
+        ],
+        "size_pixels": [
+          454,
+          395
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          449,
+          496,
+          889,
+          869
+        ],
+        "size_pixels": [
+          440,
+          373
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          864,
+          457,
+          1341,
+          853
+        ],
+        "size_pixels": [
+          477,
+          396
+        ]
+      },
+      {
+        "file": "GrottoMender_restoration_weave_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          1344,
+          495,
+          1774,
+          849
+        ],
+        "size_pixels": [
+          430,
+          354
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "living_bastion",
+    "frame_count": 10,
+    "source_sheet": "grotto_mender_living_bastion.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_living_bastion_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          23,
+          401,
+          453
+        ],
+        "size_pixels": [
+          401,
+          430
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          327,
+          27,
+          820,
+          469
+        ],
+        "size_pixels": [
+          493,
+          442
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          787,
+          39,
+          1205,
+          467
+        ],
+        "size_pixels": [
+          418,
+          428
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1204,
+          43,
+          1599,
+          405
+        ],
+        "size_pixels": [
+          395,
+          362
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          1623,
+          32,
+          1979,
+          406
+        ],
+        "size_pixels": [
+          356,
+          374
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          16,
+          420,
+          405,
+          767
+        ],
+        "size_pixels": [
+          389,
+          347
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          400,
+          440,
+          820,
+          793
+        ],
+        "size_pixels": [
+          420,
+          353
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          805,
+          438,
+          1209,
+          766
+        ],
+        "size_pixels": [
+          404,
+          328
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_08.png",
+        "index": 8,
+        "source_bbox_top_left": [
+          1178,
+          462,
+          1600,
+          777
+        ],
+        "size_pixels": [
+          422,
+          315
+        ]
+      },
+      {
+        "file": "GrottoMender_living_bastion_09.png",
+        "index": 9,
+        "source_bbox_top_left": [
+          1595,
+          509,
+          1983,
+          777
+        ],
+        "size_pixels": [
+          388,
+          268
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "tendril_lash",
+    "frame_count": 8,
+    "source_sheet": "grotto_mender_tendril_lash.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_tendril_lash_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          19,
+          455,
+          498
+        ],
+        "size_pixels": [
+          455,
+          479
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          416,
+          37,
+          871,
+          496
+        ],
+        "size_pixels": [
+          455,
+          459
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          775,
+          25,
+          1365,
+          508
+        ],
+        "size_pixels": [
+          590,
+          483
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1337,
+          55,
+          1774,
+          508
+        ],
+        "size_pixels": [
+          437,
+          453
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          15,
+          481,
+          488,
+          867
+        ],
+        "size_pixels": [
+          473,
+          386
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          420,
+          481,
+          921,
+          863
+        ],
+        "size_pixels": [
+          501,
+          382
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          856,
+          463,
+          1360,
+          872
+        ],
+        "size_pixels": [
+          504,
+          409
+        ]
+      },
+      {
+        "file": "GrottoMender_tendril_lash_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          1327,
+          535,
+          1774,
+          873
+        ],
+        "size_pixels": [
+          447,
+          338
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  },
+  {
+    "action": "burrow_ambush",
+    "frame_count": 10,
+    "source_sheet": "grotto_mender_burrow_ambush.png",
+    "method": "Nearest connected alpha-core ownership; all visible source RGBA pixels preserved.",
+    "alpha_threshold_for_detection_only": 32,
+    "all_visible_RGBA_pixels_preserved": true,
+    "resizing": false,
+    "frames": [
+      {
+        "file": "GrottoMender_burrow_ambush_00.png",
+        "index": 0,
+        "source_bbox_top_left": [
+          0,
+          52,
+          421,
+          463
+        ],
+        "size_pixels": [
+          421,
+          411
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_01.png",
+        "index": 1,
+        "source_bbox_top_left": [
+          348,
+          53,
+          805,
+          467
+        ],
+        "size_pixels": [
+          457,
+          414
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_02.png",
+        "index": 2,
+        "source_bbox_top_left": [
+          739,
+          37,
+          1185,
+          427
+        ],
+        "size_pixels": [
+          446,
+          390
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_03.png",
+        "index": 3,
+        "source_bbox_top_left": [
+          1170,
+          29,
+          1565,
+          453
+        ],
+        "size_pixels": [
+          395,
+          424
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_04.png",
+        "index": 4,
+        "source_bbox_top_left": [
+          1578,
+          27,
+          1983,
+          457
+        ],
+        "size_pixels": [
+          405,
+          430
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_05.png",
+        "index": 5,
+        "source_bbox_top_left": [
+          0,
+          458,
+          490,
+          769
+        ],
+        "size_pixels": [
+          490,
+          311
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_06.png",
+        "index": 6,
+        "source_bbox_top_left": [
+          406,
+          454,
+          871,
+          763
+        ],
+        "size_pixels": [
+          465,
+          309
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_07.png",
+        "index": 7,
+        "source_bbox_top_left": [
+          795,
+          445,
+          1213,
+          765
+        ],
+        "size_pixels": [
+          418,
+          320
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_08.png",
+        "index": 8,
+        "source_bbox_top_left": [
+          1204,
+          442,
+          1594,
+          793
+        ],
+        "size_pixels": [
+          390,
+          351
+        ]
+      },
+      {
+        "file": "GrottoMender_burrow_ambush_09.png",
+        "index": 9,
+        "source_bbox_top_left": [
+          1549,
+          454,
+          1971,
+          775
+        ],
+        "size_pixels": [
+          422,
+          321
+        ]
+      }
+    ],
+    "unity_pivot_scale_alignment": "NOT VALIDATED"
+  }
+]

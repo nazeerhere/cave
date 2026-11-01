@@ -5,6 +5,7 @@ using Cave.Axioms.Phase;
 using Cave.Enemies;
 using Cave.Player;
 using Cave.Gambit;
+using Cave.FieldControl;
 using UnityEngine;
 
 namespace Cave.Combat
@@ -38,6 +39,11 @@ namespace Cave.Combat
         private void Awake()
         {
             InitializeRuntimeState();
+        }
+
+        private void OnEnable()
+        {
+            EnemyThreatRegistry.Register(this);
         }
 
         /// <summary>
@@ -92,8 +98,24 @@ namespace Cave.Combat
             }
 
             damageContext = CurseAltarZone.BindPlayerDamageZone(damageContext);
+            StageTwoSkeletonPhase stageTwoPhase = GetComponent<StageTwoSkeletonPhase>();
+            if (stageTwoPhase != null && stageTwoPhase.TryPhaseIncomingAttack(damageContext))
+            {
+                DamageResolved?.Invoke(damageContext, true, 0);
+                return 0;
+            }
+            FieldNode fieldNode = GetComponent<FieldNode>();
+            if (fieldNode != null)
+            {
+                amount = fieldNode.ResolveIncomingPhysicalDamage(amount, damageContext);
+                if (amount <= 0)
+                {
+                    DamageResolved?.Invoke(damageContext, false, 0);
+                    return 0;
+                }
+            }
             SovereignStrategicProtection gambitProtection = GetComponent<SovereignStrategicProtection>();
-            if (gambitProtection != null && !gambitProtection.CanReceiveCombatDamageFromPlayer(damageContext))
+            if (gambitProtection != null && !gambitProtection.CanReceiveDamage(damageContext))
             {
                 DamageResolved?.Invoke(damageContext, true, 0);
                 return 0;
@@ -136,6 +158,12 @@ namespace Cave.Combat
                 amount = phaseCombatState.ResolveIncomingDamage(amount);
             }
 
+            StageTwoCollectiveReceiver collective = GetComponent<StageTwoCollectiveReceiver>();
+            if (collective != null)
+            {
+                amount = collective.ResolveIncomingDamage(amount);
+            }
+
             int healthBeforeDamage = CurrentHealth;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
             int appliedDamage = healthBeforeDamage - CurrentHealth;
@@ -144,10 +172,22 @@ namespace Cave.Combat
                 false,
                 appliedDamage);
             CurseAltarZone.NotifyPlayerDamageResolved(damageContext, this, appliedDamage);
-            CaveSfx.Play(CaveSfxCue.Hit, 0.75f);
+            if (appliedDamage > 0
+                && CurrentHealth > 0
+                && !damageContext.HasTrait(DamageTrait.Periodic)
+                && !damageContext.HasTrait(DamageTrait.Projectile)
+                && !damageContext.HasTrait(DamageTrait.SignatureImpactAudio)
+                && !damageContext.HasTrait(DamageTrait.AreaOfEffect))
+            {
+                CaveSfxCue impactCue = damageContext.HasTrait(DamageTrait.Heavy)
+                    ? CaveSfxCue.EnemyHeavyImpact
+                    : CaveSfxCue.EnemyBodyImpact;
+                CaveSfx.PlayAt(impactCue, transform.position, 0.75f);
+            }
 
             if (CurrentHealth == 0)
             {
+                CaveSfx.PlayAt(CaveSfxCue.EnemyDeath, transform.position, 0.9f);
                 GetComponent<EnemyCorruptionLifecycle>()?.PrepareForDeath();
                 damageContext.ReportKillingBlow(this);
                 CurseAltarZone.NotifyEnemyDied(this, damageContext);
@@ -309,6 +349,7 @@ namespace Cave.Combat
 
         private void OnDisable()
         {
+            EnemyThreatRegistry.Unregister(this);
             if (flashRoutine != null)
             {
                 StopCoroutine(flashRoutine);

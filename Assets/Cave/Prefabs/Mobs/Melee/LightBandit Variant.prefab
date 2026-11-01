@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 5447772708581115527}
   - component: {fileID: 2783238722226578792}
   - component: {fileID: 2391800847001952740}
-  - component: {fileID: 9102725590727518708}
   - component: {fileID: 2099390354}
   - component: {fileID: 2099390355}
   - component: {fileID: 2099390362}
@@ -28,6 +27,7 @@ GameObject:
   - component: {fileID: 2099390369}
   - component: {fileID: 2099390370}
   - component: {fileID: 2099390372}
+  - component: {fileID: 578999064027143700}
   m_Layer: 9
   m_Name: LightBandit Variant
   m_TagString: Untagged
@@ -185,19 +185,6 @@ MonoBehaviour:
   maxHealth: 15
   damageFlashDuration: 0.15
   damageFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
---- !u!114 &9102725590727518708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 549618956361917736}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  archetypes: 1
 --- !u!114 &2099390354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -521,3 +508,16 @@ MonoBehaviour:
   grounded: 0
   moving: 0
   deathTriggered: 0
+--- !u!114 &578999064027143700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549618956361917736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeb36cacb143f494287b68e2e225367a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  archetypes: 1

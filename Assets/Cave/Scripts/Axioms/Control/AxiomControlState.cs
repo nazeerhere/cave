@@ -2,7 +2,9 @@ using System;
 using Cave.Axioms.Elemental;
 using Cave.Axioms.Mastery;
 using Cave.Axioms.Thresholds;
+using Cave.Audio;
 using Cave.Domain;
+using Cave.Player;
 using UnityEngine;
 
 namespace Cave.Axioms.Control
@@ -201,6 +203,8 @@ namespace Cave.Axioms.Control
         /// <summary>Coarse transition only; presentation never determines control state.</summary>
         public event Action<AxiomKind, AxiomTemporalLockStage, AxiomTemporalLockStage> TemporalStageChanged;
         public event Action<AxiomKind> TemporalActivityStarted;
+        /// <summary>Raised once when an actor enters or leaves controlled equilibrium.</summary>
+        public event Action<AxiomKind, bool> ControlledEquilibriumChanged;
 
         private void Awake()
         {
@@ -354,6 +358,10 @@ namespace Cave.Axioms.Control
 
             bool refreshed = hasCurrent;
             OpportunityOpened?.Invoke(kind, next.Error, refreshed);
+            if (!refreshed)
+            {
+                PlayPlayerTemporalCue(next.Error.ErrorKind, false);
+            }
             runtime.RaiseFeedback(new AxiomFeedbackEvent(
                 kind,
                 refreshed ? AxiomFeedbackType.ControlOpportunityRefreshed : AxiomFeedbackType.ControlOpportunityOpened,
@@ -515,6 +523,7 @@ namespace Cave.Axioms.Control
                 target,
                 timestamp));
             InterventionSucceeded?.Invoke(kind, opportunity.Error, LastInterventionQuality, timestamp);
+            PlayPlayerTemporalCue(opportunity.Error.ErrorKind, true);
             RaiseInterventionOutcome(opportunity, correctionDirection, true, timestamp);
             return true;
         }
@@ -732,10 +741,43 @@ namespace Cave.Axioms.Control
         {
             AxiomControlledEquilibriumTracker tracker = GetEquilibriumTracker(kind);
             if (tracker == null) return;
+            bool wasControlled = tracker.IsControlled;
             AxiomDynamicsParameters parameters;
             float dwell = dynamicsState != null && dynamicsState.TryGetParameters(kind, out parameters)
                 ? parameters.ControlledEquilibriumDwellSeconds : 0f;
-            tracker.Advance(AxiomControlBandEvaluator.Evaluate(actual, reference), dwell, timestamp);
+            bool isControlled = tracker.Advance(AxiomControlBandEvaluator.Evaluate(actual, reference), dwell, timestamp);
+            if (wasControlled == isControlled) return;
+            ControlledEquilibriumChanged?.Invoke(kind, isControlled);
+            if (isControlled && GetComponent<PlayerSpecialMode>() != null)
+            {
+                CaveSfx.PlayAt(CaveSfxCue.ControlledEquilibrium, transform.position, .7f);
+            }
+        }
+
+        private void PlayPlayerTemporalCue(AxiomErrorKind dimension, bool applied)
+        {
+            if (GetComponent<PlayerSpecialMode>() == null)
+            {
+                return;
+            }
+
+            CaveSfxCue cue;
+            switch (dimension)
+            {
+                case AxiomErrorKind.State:
+                    cue = applied ? CaveSfxCue.StateLock : CaveSfxCue.TemporalState;
+                    break;
+                case AxiomErrorKind.Rate:
+                    cue = applied ? CaveSfxCue.RateLock : CaveSfxCue.TemporalRate;
+                    break;
+                case AxiomErrorKind.Acceleration:
+                    cue = applied ? CaveSfxCue.AccelerationLock : CaveSfxCue.TemporalAcceleration;
+                    break;
+                default:
+                    return;
+            }
+
+            CaveSfx.PlayAt(cue, transform.position, applied ? .75f : .45f);
         }
 
         private AxiomControlledEquilibriumTracker GetEquilibriumTracker(AxiomKind kind)
